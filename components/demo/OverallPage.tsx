@@ -117,6 +117,21 @@ export function OverallPage({
         className="pointer-events-none absolute inset-x-0"
         style={{ bottom: TREND_BOTTOM_OFFSET, height: TREND_HEIGHT, zIndex: 1 }}
       >
+        {/* Centered pill label on top of trend line */}
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center">
+          <span
+            className="rounded-full px-2.5 py-0.5 font-medium uppercase"
+            style={{
+              fontSize: 8,
+              letterSpacing: "0.12em",
+              color: "var(--text-body-subtle)",
+              background: "color-mix(in srgb, var(--accent-purple) 8%, rgba(34, 28, 63, 0.55))",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            Weekly trend
+          </span>
+        </div>
         <TrendCurve
           data={trendData}
           color="var(--accent-purple)"

@@ -49,12 +49,14 @@ export function SatelliteScores({ love, health, work, deltas, isActive }: Satell
 
             {/* Label with icon */}
             <div
-              className="flex items-center gap-1"
-              style={{ color: "var(--text-body-subtle)" }}
+              className="inline-flex items-center justify-center gap-1"
+              style={{ color: config.color }}
             >
-              {config.icon({ size: 12 })}
+              <span className="flex shrink-0 items-center" style={{ height: 12 }}>
+                {config.icon({ size: 12 })}
+              </span>
               <span
-                className="font-medium"
+                className="font-medium leading-none"
                 style={{ fontSize: 9, letterSpacing: "0.12em" }}
               >
                 {config.label}

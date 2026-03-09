@@ -82,9 +82,9 @@ export function DomainDetailSheet({
               {rows.map(({ key, label, Icon }) => (
                 <div key={key} className="flex gap-3">
                   <div
-                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center"
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center"
                   >
-                    <Icon className="h-3.5 w-3.5" style={{ color }} />
+                    <Icon className="h-6 w-6" style={{ color }} />
                   </div>
                   <div>
                     <p
