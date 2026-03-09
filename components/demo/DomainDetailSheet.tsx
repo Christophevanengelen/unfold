@@ -44,10 +44,9 @@ export function DomainDetailSheet({
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop — extends beyond content area to cover status bar + BottomNav */}
+          {/* Backdrop — fixed covers entire mobile frame (contained by translateZ(0) on frame) */}
           <motion.div
-            className="absolute inset-x-0 z-40 bg-black/40"
-            style={{ top: -100, bottom: -56 }}
+            className="fixed inset-0 z-40 bg-black/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

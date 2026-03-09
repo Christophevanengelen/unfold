@@ -1,4 +1,5 @@
 import { AppStoreBadges } from "./AppStoreBadges";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 interface HeroProps {
   t: (key: string, fallback?: string) => string;
@@ -6,25 +7,24 @@ interface HeroProps {
 
 export function Hero({ t }: HeroProps) {
   return (
-    <section className="relative overflow-hidden bg-bg-brand-strong py-24 md:py-32 lg:py-40">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-accent-purple">
+    <section className="relative overflow-hidden py-28 md:py-36 lg:py-44">
+      <div className="relative z-10 mx-auto max-w-7xl px-6">
+        {/* All hero text + CTA as one cohesive block */}
+        <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center" threshold={0.05}>
+          <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
             {t("hero.eyebrow", "Your personal momentum engine")}
           </p>
-          <h1 className="font-display text-4xl font-bold leading-tight text-white md:text-5xl lg:text-7xl">
+          <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white md:text-6xl lg:text-7xl">
             {t("hero.title", "Know when life moves in your favor")}
           </h1>
-          <p className="mt-6 text-lg leading-relaxed text-brand-7 md:text-xl">
+          <p className="mt-6 text-lg leading-relaxed text-brand-10 md:text-xl">
             {t("hero.subtitle", "Understand your daily rhythms across Love, Health, and Work. Make better decisions with clarity, not guesswork.")}
           </p>
           <div className="mt-10">
             <AppStoreBadges />
           </div>
-        </div>
+        </ScrollReveal>
       </div>
-      {/* Gradient orb decoration */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-accent-purple/20 blur-3xl" />
     </section>
   );
 }

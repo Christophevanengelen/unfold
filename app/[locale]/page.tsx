@@ -9,7 +9,6 @@ import { ScienceTechnology } from "@/components/landing/ScienceTechnology";
 import { DesignedForClarity } from "@/components/landing/DesignedForClarity";
 import { Pricing } from "@/components/landing/Pricing";
 import { FinalCTA } from "@/components/landing/FinalCTA";
-import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 export async function generateMetadata({
   params,
@@ -29,34 +28,19 @@ export default async function LandingPage({
   const translations = await getTranslations(locale, "landing");
 
   return (
-    <>
-      <ScrollReveal variant="fadeIn" threshold={0.05}>
+    <div className="landing-immersive">
+      <div className="landing-gradients" aria-hidden="true" />
+      <div className="relative z-10">
         <Hero t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-      <ScrollReveal variant="fadeUp" delay={0}>
         <FreeAwareness t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-      <ScrollReveal variant="fadeUp">
         <DailyScores t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-      <ScrollReveal variant="fadeUp">
         <Compatibility t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-      <ScrollReveal variant="fadeUp">
         <PremiumMomentum t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-      <ScrollReveal variant="scaleIn">
         <ScienceTechnology t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-      <ScrollReveal variant="fadeUp">
         <DesignedForClarity t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-      <ScrollReveal variant="scaleIn">
         <Pricing t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-      <ScrollReveal variant="fadeUp">
         <FinalCTA t={(key, fallback) => t(translations, key, fallback)} />
-      </ScrollReveal>
-    </>
+      </div>
+    </div>
   );
 }

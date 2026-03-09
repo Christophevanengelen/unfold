@@ -7,26 +7,21 @@ interface FooterProps {
 
 export function Footer({ locale }: FooterProps) {
   return (
-    <footer className="border-t border-border-muted bg-bg-secondary">
+    <footer className="border-t border-white/5 bg-[#120D24]">
       <div className="mx-auto max-w-7xl px-6 py-16">
         <div className="flex flex-col items-center gap-8">
-          <Link href={`/${locale}`}>
+          <Link href={`/${locale}`} className="flex items-center gap-3">
             <Image
-              src="/logo/logo-dark.svg"
-              alt="Unfold"
-              width={100}
-              height={23}
-              className="block dark:hidden"
+              src="/logo/icon-mark.svg"
+              alt=""
+              width={30}
+              height={30}
             />
-            <Image
-              src="/logo/logo-light.svg"
-              alt="Unfold"
-              width={100}
-              height={23}
-              className="hidden dark:block"
-            />
+            <span className="font-display text-xl font-normal text-[#BEB7DD]" style={{ letterSpacing: "0.2em" }}>
+              unfold
+            </span>
           </Link>
-          <p className="text-center text-sm text-text-body-subtle">
+          <p className="text-center text-sm text-[#A8A1C4]">
             &copy; {new Date().getFullYear()} Unfold. All rights reserved.
           </p>
         </div>

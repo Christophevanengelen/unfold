@@ -1,10 +1,10 @@
 export function AppStoreBadges() {
   return (
     <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-      {/* App Store badge placeholder */}
+      {/* App Store badge */}
       <a
         href="#"
-        className="flex h-14 w-44 items-center justify-center rounded-xl bg-white/10 border border-white/20 text-white transition-colors hover:bg-white/20"
+        className="glass-btn flex h-14 w-44 items-center justify-center rounded-xl text-white"
         aria-label="Download on the App Store"
       >
         <div className="flex items-center gap-2">
@@ -17,10 +17,10 @@ export function AppStoreBadges() {
           </div>
         </div>
       </a>
-      {/* Google Play badge placeholder */}
+      {/* Google Play badge */}
       <a
         href="#"
-        className="flex h-14 w-44 items-center justify-center rounded-xl bg-white/10 border border-white/20 text-white transition-colors hover:bg-white/20"
+        className="glass-btn flex h-14 w-44 items-center justify-center rounded-xl text-white"
         aria-label="Get it on Google Play"
       >
         <div className="flex items-center gap-2">

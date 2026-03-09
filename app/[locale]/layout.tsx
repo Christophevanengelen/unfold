@@ -17,7 +17,7 @@ export default async function LocaleLayout({
   }
 
   return (
-    <div dir={getDirection(locale)} className="flex min-h-screen flex-col">
+    <div dir={getDirection(locale)} className="flex min-h-screen flex-col bg-[#150F2E]">
       <Header locale={locale} />
       <main className="flex-1">{children}</main>
       <Footer locale={locale} />

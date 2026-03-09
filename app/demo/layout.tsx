@@ -23,13 +23,12 @@ export default function DemoLayout({
   const isHome = pathname === "/demo";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-brand-3 p-4">
+    <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#150F2E" }}>
       {/* Mobile frame */}
       <div
         className="relative flex h-[812px] w-[375px] flex-col overflow-hidden rounded-[2.5rem] border border-brand-6/40 bg-bg-primary"
         style={{
-          boxShadow:
-            "0 8px 40px rgba(124, 107, 191, 0.15), 0 2px 12px rgba(0, 0, 0, 0.08)",
+          transform: "translateZ(0)",
         }}
       >
         {/* Gradient background layer — ambient mesh glow */}
@@ -46,20 +45,22 @@ export default function DemoLayout({
           }}
         />
 
-        {/* Status bar */}
-        <div className="flex items-center justify-between px-6 pt-3 pb-2">
-          <span className="text-xs font-medium text-text-body-subtle">
-            9:41
-          </span>
-          <UnfoldLogo size={22} />
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
-            aria-label="Profile"
-          >
-            A
-          </button>
-        </div>
+        {/* Status bar — hidden on onboarding/invite flows */}
+        {!hideNav && (
+          <div className="flex items-center justify-between px-6 pt-3 pb-2">
+            <span className="text-xs font-medium text-text-body-subtle">
+              9:41
+            </span>
+            <UnfoldLogo size={22} />
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
+              aria-label="Profile"
+            >
+              A
+            </button>
+          </div>
+        )}
 
         {/* Content — full width for swipe pages, padded for other routes */}
         <PremiumTeaserContext.Provider value={() => setPremiumOpen(true)}>

@@ -293,7 +293,7 @@
   /* Card chrome — 3D carousel cards */
   --card-bg: color-mix(in srgb, var(--bg-secondary) 60%, var(--bg-primary));
   --card-border: color-mix(in srgb, var(--border-light) 30%, transparent);
-  --card-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  --card-shadow: 0 8px 40px rgba(20, 15, 45, 0.5);
 
   /* App background gradient — ambient mesh glow */
   --gradient-top: rgba(149, 133, 204, 0.40);
@@ -374,18 +374,100 @@ h1, h2, h3, h4, h5, h6 {
 
 .dark .shadow-card {
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.3),
-    0 4px 12px rgba(0, 0, 0, 0.2);
+    0 1px 3px rgba(20, 15, 45, 0.35),
+    0 4px 12px rgba(20, 15, 45, 0.25);
 }
 
 .dark .shadow-elevated {
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.4),
-    0 12px 40px rgba(0, 0, 0, 0.3);
+    0 4px 16px rgba(20, 15, 45, 0.45),
+    0 12px 40px rgba(20, 15, 45, 0.35);
 }
 
 .dark .glass {
   background: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+}
+
+/* ==============================================
+   Landing Page — Premium Utilities
+   ============================================== */
+
+/* Glass card — frosted translucent surface (app demo context) */
+.glass-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border-radius: 1.5rem;
+}
+
+/* Landing glass card — always dark immersive context */
+.landing-glass {
+  background: color-mix(in srgb, #1B1535 70%, transparent);
+  border: 1px solid color-mix(in srgb, white 8%, transparent);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border-radius: 1.5rem;
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, white 5%, transparent),
+    0 4px 24px color-mix(in srgb, #150F2E 30%, transparent);
+}
+
+/* Landing page — full dark immersive background */
+.landing-immersive {
+  background: #150F2E;
+  position: relative;
+  overflow: hidden;
+
+  /* Force dark palette regardless of user's theme setting */
+  --brand-8: #736A9F;
+  --brand-9: #8C84B2;
+  --brand-10: #A8A1C4;
+  --brand-11: #C7C2D8;
+  --brand-12: #E6E2F2;
+  --brand-13: #FDFCFE;
+  --text-heading: #E6E2F2;
+  --text-body: #C7C2D8;
+  --text-body-subtle: #A8A1C4;
+  --accent-purple: #9585CC;
+  --accent-green: #3CB179;
+  --accent-blue: #5B7FEE;
+  --accent-pink: #F25FA0;
+  --accent-orange: #FF8B3E;
+  --border-muted: #2A244B;
+  --border-light: #3F3766;
+  color: #C7C2D8;
+}
+/* Flowing gradient orbs — 10 orbs scattered across the page */
+.landing-immersive > .landing-gradients {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 25% at 50% 0%, color-mix(in srgb, #7C6BBF 28%, transparent) 0%, transparent 55%),
+    radial-gradient(circle 500px at 5% 12%, color-mix(in srgb, #E93D82 10%, transparent) 0%, transparent 60%),
+    radial-gradient(circle 400px at 95% 18%, color-mix(in srgb, #3E63DD 10%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 15% at 50% 30%, color-mix(in srgb, #7C6BBF 6%, transparent) 0%, transparent 50%),
+    radial-gradient(circle 450px at 8% 45%, color-mix(in srgb, #3E63DD 8%, transparent) 0%, transparent 60%),
+    radial-gradient(circle 400px at 90% 50%, color-mix(in srgb, #E93D82 7%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 18% at 50% 65%, color-mix(in srgb, #7C6BBF 12%, transparent) 0%, transparent 50%),
+    radial-gradient(circle 350px at 12% 78%, color-mix(in srgb, #E93D82 8%, transparent) 0%, transparent 60%),
+    radial-gradient(circle 400px at 88% 82%, color-mix(in srgb, #3E63DD 8%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 120% 25% at 50% 100%, color-mix(in srgb, #7C6BBF 22%, transparent) 0%, transparent 55%);
+}
+
+/* Glass button — frosted store badges & CTAs */
+.glass-btn {
+  background: color-mix(in srgb, white 8%, transparent);
+  border: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(20, 15, 45, 0.35);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.glass-btn:hover {
+  background: color-mix(in srgb, white 15%, transparent);
+  box-shadow: 0 6px 32px rgba(20, 15, 45, 0.45);
 }
 
 /* Hide scrollbar for horizontal scroll containers */

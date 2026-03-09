@@ -1,4 +1,5 @@
-import { Link } from "flowbite-react-icons/outline";
+import Image from "next/image";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 interface CompatibilityProps {
   t: (key: string, fallback?: string) => string;
@@ -6,29 +7,36 @@ interface CompatibilityProps {
 
 export function Compatibility({ t }: CompatibilityProps) {
   return (
-    <section className="bg-bg-primary py-24 md:py-32">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-accent-purple">
+    <section className="relative overflow-hidden py-24 md:py-32">
+      <div className="relative z-10 mx-auto max-w-7xl px-6">
+        {/* Header text — one cohesive block */}
+        <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
+          <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
             {t("compat.eyebrow", "Better together")}
           </p>
-          <h2 className="font-display text-3xl font-bold md:text-5xl">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
             {t("compat.title", "Compare your rhythms")}
           </h2>
-          <p className="mt-6 text-lg text-text-body-subtle">
+          <p className="mt-6 text-lg text-brand-10">
             {t("compat.subtitle", "Share your invite code. Discover how your momentum aligns with someone who matters. Find your shared peak moments.")}
           </p>
-        </div>
-        <div className="mt-16 flex justify-center">
-          <div className="rounded-2xl border border-border-light bg-bg-secondary p-12 text-center">
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-bg-brand-soft">
-              <Link className="h-10 w-10 text-accent-purple" />
-            </div>
-            <p className="mt-6 font-display text-xl font-semibold">
+        </ScrollReveal>
+
+        {/* Illustration — appears after header as you scroll */}
+        <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.15}>
+          <div className="landing-glass p-12 text-center">
+            <Image
+              src="/illustrations/compare.svg"
+              alt=""
+              width={280}
+              height={280}
+              className="mx-auto"
+            />
+            <p className="mt-6 font-display text-xl font-semibold text-white">
               {t("compat.cta", "Invite someone. Compare your signals.")}
             </p>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

@@ -1,4 +1,4 @@
-import { ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
+import { ScrollReveal, ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
 
 interface PremiumMomentumProps {
   t: (key: string, fallback?: string) => string;
@@ -25,25 +25,28 @@ export function PremiumMomentum({ t }: PremiumMomentumProps) {
   ];
 
   return (
-    <section className="bg-bg-brand-strong py-24 md:py-32">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-logo-lavender">
+    <section className="relative overflow-hidden py-24 md:py-32">
+      <div className="relative z-10 mx-auto max-w-7xl px-6">
+        {/* Header text — one cohesive block */}
+        <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
+          <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
             {t("premium.eyebrow", "Premium")}
           </p>
-          <h2 className="font-display text-3xl font-bold text-white md:text-5xl">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
             {t("premium.title", "See further. Move smarter.")}
           </h2>
-          <p className="mt-6 text-lg text-brand-7">
+          <p className="mt-6 text-lg text-brand-10">
             {t("premium.subtitle", "Unlock the full power of your personal momentum engine.")}
           </p>
-        </div>
+        </ScrollReveal>
+
+        {/* Feature cards — stagger in after header */}
         <ScrollRevealGroup className="mt-16 grid gap-6 md:grid-cols-2" stagger={0.12}>
           {features.map((f) => (
             <ScrollRevealItem key={f.title} variant="fadeUp">
-              <div className="rounded-2xl border border-brand-8/30 bg-brand-11/50 p-8">
+              <div className="landing-glass p-8">
                 <h3 className="font-display text-xl font-semibold text-white">{f.title}</h3>
-                <p className="mt-3 text-brand-7">{f.desc}</p>
+                <p className="mt-3 text-brand-10">{f.desc}</p>
               </div>
             </ScrollRevealItem>
           ))}
