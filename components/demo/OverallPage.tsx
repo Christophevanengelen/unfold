@@ -31,7 +31,7 @@ interface OverallPageProps {
  */
 
 /** Fixed distance from card bottom to trend curve bottom edge */
-const TREND_BOTTOM_OFFSET = 100;
+const TREND_BOTTOM_OFFSET = 160;
 
 export function OverallPage({
   isActive,

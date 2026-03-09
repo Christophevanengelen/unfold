@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${uniformRounded.variable} antialiased`}>
+      <body className={`${uniformRounded.variable} ${uniformRounded.className} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

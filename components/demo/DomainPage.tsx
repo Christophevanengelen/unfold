@@ -38,7 +38,7 @@ interface DomainPageProps {
  */
 
 /** Fixed distance from card bottom to trend curve bottom edge */
-const TREND_BOTTOM_OFFSET = 150;
+const TREND_BOTTOM_OFFSET = 210;
 
 export function DomainPage({
   domain,

@@ -40,7 +40,7 @@ export function TranslationTable({ rows, languages }: TranslationTableProps) {
           {rows.map((row) => (
             <tr key={row.key} className="hover:bg-bg-secondary/50">
               <td className="px-4 py-3">
-                <p className="font-mono text-xs text-text-body">{row.key}</p>
+                <p className="text-xs text-text-body">{row.key}</p>
                 {row.description && (
                   <p className="mt-0.5 text-xs text-text-body-subtle">{row.description}</p>
                 )}

@@ -20,6 +20,8 @@
   /* Font families */
   --font-display: var(--font-uniform-rounded);
   --font-body: var(--font-uniform-rounded);
+  --font-sans: var(--font-uniform-rounded);
+  --font-mono: var(--font-uniform-rounded);
 
   /* ── Neutral Scale (brand-0 → brand-13) ──
      Purple-tinted mauve. Used for backgrounds, text, borders.

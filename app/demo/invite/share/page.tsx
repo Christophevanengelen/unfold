@@ -122,7 +122,7 @@ export default function InviteShare() {
         variants={fadeInUp}
       >
         <p className="text-xs text-text-body-subtle">Your invite code</p>
-        <p className="mt-1 font-mono text-lg font-bold tracking-wider text-text-brand">
+        <p className="mt-1 text-lg font-bold tracking-wider text-text-brand">
           {mockUser.inviteCode}
         </p>
       </motion.div>
