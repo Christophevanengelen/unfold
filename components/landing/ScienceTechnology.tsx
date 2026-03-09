@@ -1,3 +1,5 @@
+import { ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
+
 interface ScienceTechnologyProps {
   t: (key: string, fallback?: string) => string;
 }
@@ -17,18 +19,20 @@ export function ScienceTechnology({ t }: ScienceTechnologyProps) {
             {t("science.subtitle", "Unfold combines behavioral science with advanced pattern recognition to surface your personal momentum signals.")}
           </p>
         </div>
-        <div className="mt-16 grid gap-8 md:grid-cols-3">
+        <ScrollRevealGroup className="mt-16 grid gap-8 md:grid-cols-3" stagger={0.15}>
           {[
             { title: t("science.pattern.title", "Pattern recognition"), desc: t("science.pattern.desc", "Advanced algorithms identify recurring rhythms in your daily momentum data.") },
             { title: t("science.personal.title", "Personal calibration"), desc: t("science.personal.desc", "Your signals are uniquely yours. The engine learns and adapts to your patterns.") },
             { title: t("science.privacy.title", "Privacy-first"), desc: t("science.privacy.desc", "Your data belongs to you. Encrypted. Private. Never shared.") },
           ].map((item) => (
-            <div key={item.title} className="text-center">
-              <h3 className="font-display text-lg font-semibold">{item.title}</h3>
-              <p className="mt-3 text-text-body-subtle">{item.desc}</p>
-            </div>
+            <ScrollRevealItem key={item.title} variant="fadeUp">
+              <div className="text-center">
+                <h3 className="font-display text-lg font-semibold">{item.title}</h3>
+                <p className="mt-3 text-text-body-subtle">{item.desc}</p>
+              </div>
+            </ScrollRevealItem>
           ))}
-        </div>
+        </ScrollRevealGroup>
       </div>
     </section>
   );

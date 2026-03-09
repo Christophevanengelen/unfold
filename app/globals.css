@@ -1,16 +1,29 @@
 @import "tailwindcss";
 
-/* ============================================
-   UNFOLD DESIGN SYSTEM — CSS Custom Properties
-   Source: Figma tokens (Light mode / Dark mode)
-   ============================================ */
+/* ==============================================
+   UNFOLD DESIGN SYSTEM v2
+   ──────────────────────────────────────────────
+   Built on Radix color methodology:
+   • Purple-tinted neutrals (mauve) — never plain gray
+   • Muted, sophisticated accents — premium, not neon
+   • Independently tuned dark mode (not just inverted)
+   • Clear hierarchy — no collapsed tokens
+
+   Scale architecture (brand-0 → brand-13):
+   0-1:  Backgrounds          6-7:  Borders
+   2-3:  Component surfaces    8-9:  Solids / icons
+   4-5:  Interactive states   10-12: Text
+                               13:   High contrast
+   ============================================== */
 
 @theme inline {
   /* Font families */
-  --font-display: var(--font-goodly);
-  --font-body: var(--font-inter);
+  --font-display: var(--font-uniform-rounded);
+  --font-body: var(--font-uniform-rounded);
 
-  /* Brand purple scale */
+  /* ── Neutral Scale (brand-0 → brand-13) ──
+     Purple-tinted mauve. Used for backgrounds, text, borders.
+     Light: white → near-black | Dark: near-black → white      */
   --color-brand-0: var(--brand-0);
   --color-brand-1: var(--brand-1);
   --color-brand-2: var(--brand-2);
@@ -26,27 +39,47 @@
   --color-brand-12: var(--brand-12);
   --color-brand-13: var(--brand-13);
 
-  /* Semantic colors */
+  /* ── Accent Scale (violet-1 → violet-12) ──
+     Brand purple for surfaces, buttons, interactive fills.
+     Anchored to ~#7C6BBF (muted, premium).                    */
+  --color-violet-1: var(--violet-1);
+  --color-violet-2: var(--violet-2);
+  --color-violet-3: var(--violet-3);
+  --color-violet-4: var(--violet-4);
+  --color-violet-5: var(--violet-5);
+  --color-violet-6: var(--violet-6);
+  --color-violet-7: var(--violet-7);
+  --color-violet-8: var(--violet-8);
+  --color-violet-9: var(--violet-9);
+  --color-violet-10: var(--violet-10);
+  --color-violet-11: var(--violet-11);
+  --color-violet-12: var(--violet-12);
+
+  /* ── Semantic Backgrounds ── */
   --color-bg-primary: var(--bg-primary);
   --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
   --color-bg-brand: var(--bg-brand);
   --color-bg-brand-soft: var(--bg-brand-soft);
   --color-bg-brand-strong: var(--bg-brand-strong);
 
+  /* ── Semantic Text ── */
   --color-text-heading: var(--text-heading);
   --color-text-body: var(--text-body);
   --color-text-body-subtle: var(--text-body-subtle);
   --color-text-brand: var(--text-brand);
   --color-text-brand-strong: var(--text-brand-strong);
   --color-text-disabled: var(--text-disabled);
+  --color-text-on-brand: var(--text-on-brand);
 
+  /* ── Semantic Borders ── */
   --color-border-muted: var(--border-muted);
   --color-border-light: var(--border-light);
   --color-border-base: var(--border-base);
   --color-border-dark: var(--border-dark);
   --color-border-brand: var(--border-brand);
 
-  /* State colors */
+  /* ── State Colors ── */
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
@@ -54,135 +87,209 @@
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
 
-  /* Accents */
+  /* ── Accent Colors ── */
   --color-accent-purple: var(--accent-purple);
-  --color-accent-sky: var(--accent-sky);
-  --color-accent-teal: var(--accent-teal);
+  --color-accent-green: var(--accent-green);
+  --color-accent-blue: var(--accent-blue);
   --color-accent-pink: var(--accent-pink);
-  --color-accent-cyan: var(--accent-cyan);
-  --color-accent-fuchsia: var(--accent-fuchsia);
-  --color-accent-indigo: var(--accent-indigo);
   --color-accent-orange: var(--accent-orange);
 
-  /* Logo */
+  /* ── Logo (Fixed brand marks) ── */
   --color-logo-lavender: #C1A7FF;
   --color-logo-light: #DACAFF;
   --color-logo-deep: #40306D;
+
+  /* ── Animations ── */
+  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
 }
 
-/* ============================================
-   Light Mode (default)
-   ============================================ */
+/* ==============================================
+   LIGHT MODE
+   ============================================== */
 :root {
-  --brand-0: #FFFFFF;
-  --brand-1: #F3F4F6;
-  --brand-2: #EFEEF6;
-  --brand-3: #DCD8ED;
-  --brand-4: #BEB7DD;
-  --brand-5: #A094CE;
-  --brand-6: #8676BE;
-  --brand-7: #6C58AC;
-  --brand-8: #574296;
-  --brand-9: #40306D;
-  --brand-10: #2D224D;
-  --brand-11: #1B142E;
-  --brand-12: #130F22;
-  --brand-13: #030712;
+  /* Neutral scale — purple-tinted mauve (white → near-black) */
+  --brand-0: #FDFCFE;
+  --brand-1: #F5F1FA;
+  --brand-2: #ECE7F5;
+  --brand-3: #E2DCEE;
+  --brand-4: #D6CEE6;
+  --brand-5: #C8BFDC;
+  --brand-6: #B7ACD0;
+  --brand-7: #A397C0;
+  --brand-8: #8C7FAE;
+  --brand-9: #756899;
+  --brand-10: #5C5083;
+  --brand-11: #433770;
+  --brand-12: #2A2055;
+  --brand-13: #150F2A;
 
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #EFEEF6;
-  --bg-brand: #40306D;
-  --bg-brand-soft: #DCD8ED;
-  --bg-brand-strong: #2D224D;
+  /* Violet accent scale */
+  --violet-1: #FDFBFF;
+  --violet-2: #F6F1FF;
+  --violet-3: #ECE4FE;
+  --violet-4: #DFD5FC;
+  --violet-5: #D0C3F8;
+  --violet-6: #BEAEF2;
+  --violet-7: #A996E9;
+  --violet-8: #937CDD;
+  --violet-9: #7C6BBF;
+  --violet-10: #6D5CB0;
+  --violet-11: #5C4B9B;
+  --violet-12: #302060;
 
-  --text-heading: #1B142E;
-  --text-body: #574296;
-  --text-body-subtle: #6C58AC;
-  --text-brand: #40306D;
-  --text-brand-strong: #1B142E;
-  --text-disabled: #8676BE;
+  /* Semantic backgrounds */
+  --bg-primary: #F5F1FA;
+  --bg-secondary: #ECE7F5;
+  --bg-tertiary: #E2DCEE;
+  --bg-brand: #7C6BBF;
+  --bg-brand-soft: #ECE4FE;
+  --bg-brand-strong: #302060;
 
-  --border-muted: #EFEEF6;
-  --border-light: #DCD8ED;
-  --border-base: #BEB7DD;
-  --border-dark: #2D224D;
-  --border-brand: #40306D;
+  /* Semantic text */
+  --text-heading: #150F2A;
+  --text-body: #5C5083;
+  --text-body-subtle: #8C7FAE;
+  --text-brand: #5C4B9B;
+  --text-brand-strong: #302060;
+  --text-disabled: #B7ACD0;
+  --text-on-brand: #FFFFFF;
 
-  --success: #007A55;
-  --success-soft: #ECFDF5;
-  --danger: #C70036;
-  --danger-soft: #FEF0F2;
-  --warning: #FF5A1F;
-  --warning-soft: #FFF8F1;
+  /* Semantic borders */
+  --border-muted: #E2DCEE;
+  --border-light: #D6CEE6;
+  --border-base: #C8BFDC;
+  --border-dark: #8C7FAE;
+  --border-brand: #7C6BBF;
 
-  --accent-purple: #AD46FF;
-  --accent-sky: #00A6F4;
-  --accent-teal: #009689;
-  --accent-pink: #E60076;
-  --accent-cyan: #00B8DB;
-  --accent-fuchsia: #C800DE;
-  --accent-indigo: #4F39F6;
-  --accent-orange: #FF8A4C;
+  /* State colors */
+  --success: #18794E;
+  --success-soft: #DFF3EA;
+  --danger: #E5484D;
+  --danger-soft: #FFE5E5;
+  --warning: #F76B15;
+  --warning-soft: #FFF1E0;
+
+  /* Accent colors */
+  --accent-purple: #7C6BBF;
+  --accent-green: #30A46C;
+  --accent-blue: #3E63DD;
+  --accent-pink: #E93D82;
+  --accent-orange: #F76B15;
+
+  /* Domain tints — subtle background washes per domain */
+  --bg-love-tint: color-mix(in srgb, #E93D82 5%, var(--bg-primary));
+  --bg-health-tint: color-mix(in srgb, #30A46C 5%, var(--bg-primary));
+  --bg-work-tint: color-mix(in srgb, #3E63DD 5%, var(--bg-primary));
+  --bg-overall-tint: color-mix(in srgb, #7C6BBF 5%, var(--bg-primary));
+
+  /* Domain glows — radial gradients for hero backgrounds */
+  --glow-love: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #E93D82 12%, transparent) 0%, transparent 70%);
+  --glow-health: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #30A46C 12%, transparent) 0%, transparent 70%);
+  --glow-work: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #3E63DD 12%, transparent) 0%, transparent 70%);
+  --glow-overall: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #7C6BBF 12%, transparent) 0%, transparent 70%);
+
+  /* Card chrome — 3D carousel cards */
+  --card-bg: color-mix(in srgb, var(--bg-secondary) 80%, var(--bg-primary));
+  --card-border: color-mix(in srgb, var(--border-muted) 60%, transparent);
+  --card-shadow: 0 8px 40px color-mix(in srgb, var(--brand-12) 15%, transparent);
 }
 
-/* ============================================
-   Dark Mode
-   ============================================ */
+/* ==============================================
+   DARK MODE
+   Independently tuned — not a simple inversion.
+   Deep purple backgrounds, lifted accents.
+   ============================================== */
 .dark {
-  --brand-0: #030712;
-  --brand-1: #130F22;
-  --brand-2: #1B142E;
-  --brand-3: #2D224D;
-  --brand-4: #40306D;
-  --brand-5: #574296;
-  --brand-6: #6C58AC;
-  --brand-7: #8676BE;
-  --brand-8: #A094CE;
-  --brand-9: #BEB7DD;
-  --brand-10: #DCD8ED;
-  --brand-11: #EFEEF6;
-  --brand-12: #F3F4F6;
-  --brand-13: #FFFFFF;
+  /* Neutral scale — purple-tinted mauve (near-black → white) */
+  --brand-0: #150F2A;
+  --brand-1: #1B1535;
+  --brand-2: #221C3F;
+  --brand-3: #2A244B;
+  --brand-4: #342D58;
+  --brand-5: #3F3766;
+  --brand-6: #4C4477;
+  --brand-7: #5D548A;
+  --brand-8: #736A9F;
+  --brand-9: #8C84B2;
+  --brand-10: #A8A1C4;
+  --brand-11: #C7C2D8;
+  --brand-12: #E6E2F2;
+  --brand-13: #FDFCFE;
 
-  --bg-primary: #130F22;
-  --bg-secondary: #1B142E;
-  --bg-brand: #574296;
-  --bg-brand-soft: #1B142E;
-  --bg-brand-strong: #40306D;
+  /* Violet accent scale */
+  --violet-1: #1A1538;
+  --violet-2: #231D48;
+  --violet-3: #2F275E;
+  --violet-4: #3B3272;
+  --violet-5: #483E86;
+  --violet-6: #574D9A;
+  --violet-7: #695EAF;
+  --violet-8: #7E73C2;
+  --violet-9: #9585CC;
+  --violet-10: #A899D7;
+  --violet-11: #BFAFE0;
+  --violet-12: #E8E2F7;
 
-  --text-heading: #FFFFFF;
-  --text-body: #8676BE;
-  --text-body-subtle: #8676BE;
-  --text-brand: #6C58AC;
-  --text-brand-strong: #8676BE;
-  --text-disabled: #574296;
+  /* Semantic backgrounds */
+  --bg-primary: #1B1535;
+  --bg-secondary: #221C3F;
+  --bg-tertiary: #2A244B;
+  --bg-brand: #695EAF;
+  --bg-brand-soft: #2F275E;
+  --bg-brand-strong: #483E86;
 
-  --border-muted: #1B142E;
-  --border-light: #2D224D;
-  --border-base: #2D224D;
-  --border-dark: #574296;
-  --border-brand: #6C58AC;
+  /* Semantic text — each level clearly distinct */
+  --text-heading: #E6E2F2;
+  --text-body: #C7C2D8;
+  --text-body-subtle: #A8A1C4;
+  --text-brand: #BFAFE0;
+  --text-brand-strong: #9585CC;
+  --text-disabled: #5D548A;
+  --text-on-brand: #FFFFFF;
 
-  --success: #009966;
-  --success-soft: #002C22;
-  --danger: #C70036;
-  --danger-soft: #4D0218;
-  --warning: #D03801;
-  --warning-soft: #441306;
+  /* Semantic borders — each level clearly distinct */
+  --border-muted: #2A244B;
+  --border-light: #3F3766;
+  --border-base: #4C4477;
+  --border-dark: #736A9F;
+  --border-brand: #9585CC;
 
-  --accent-purple: #AD46FF;
-  --accent-sky: #00A6F4;
-  --accent-teal: #00BBA7;
-  --accent-pink: #F6339A;
-  --accent-cyan: #00B8DB;
-  --accent-fuchsia: #E12AFB;
-  --accent-indigo: #615FFF;
-  --accent-orange: #FF8A4C;
+  /* State colors — tuned for dark backgrounds */
+  --success: #30A46C;
+  --success-soft: #0D2B1E;
+  --danger: #E5484D;
+  --danger-soft: #3B1219;
+  --warning: #F76B15;
+  --warning-soft: #3A1607;
+
+  /* Accent colors — slightly lifted for dark mode readability */
+  --accent-purple: #9585CC;
+  --accent-green: #3CB179;
+  --accent-blue: #5B7FEE;
+  --accent-pink: #F25FA0;
+  --accent-orange: #FF8B3E;
+
+  /* Domain tints — subtle background washes per domain */
+  --bg-love-tint: color-mix(in srgb, #F25FA0 6%, var(--bg-primary));
+  --bg-health-tint: color-mix(in srgb, #3CB179 6%, var(--bg-primary));
+  --bg-work-tint: color-mix(in srgb, #5B7FEE 6%, var(--bg-primary));
+  --bg-overall-tint: color-mix(in srgb, #9585CC 6%, var(--bg-primary));
+
+  /* Domain glows — radial gradients for hero backgrounds */
+  --glow-love: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #F25FA0 15%, transparent) 0%, transparent 70%);
+  --glow-health: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #3CB179 15%, transparent) 0%, transparent 70%);
+  --glow-work: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #5B7FEE 15%, transparent) 0%, transparent 70%);
+  --glow-overall: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #9585CC 15%, transparent) 0%, transparent 70%);
+
+  /* Card chrome — 3D carousel cards */
+  --card-bg: color-mix(in srgb, var(--bg-secondary) 60%, var(--bg-primary));
+  --card-border: color-mix(in srgb, var(--border-light) 30%, transparent);
+  --card-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
 }
 
-/* ============================================
+/* ==============================================
    Base Styles
-   ============================================ */
+   ============================================== */
 body {
   background: var(--bg-primary);
   color: var(--text-body);
@@ -192,4 +299,84 @@ body {
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-heading);
   font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+}
+
+/* ==============================================
+   Animations
+   ============================================== */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes arc-breathe {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
+/* ── Domain Hero Keyframes ── */
+@keyframes love-breathe {
+  0%, 100% { transform: scaleY(1); opacity: 0.6; }
+  50% { transform: scaleY(1.15); opacity: 0.9; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+@keyframes bar-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes dot-breathe {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ==============================================
+   Glassmorphism & Premium Utilities
+   ============================================== */
+.glass {
+  background: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+}
+
+.shadow-card {
+  box-shadow:
+    0 1px 3px color-mix(in srgb, var(--brand-10) 8%, transparent),
+    0 4px 12px color-mix(in srgb, var(--brand-10) 4%, transparent);
+}
+
+.shadow-elevated {
+  box-shadow:
+    0 4px 16px color-mix(in srgb, var(--brand-10) 12%, transparent),
+    0 12px 40px color-mix(in srgb, var(--brand-10) 8%, transparent);
+}
+
+.dark .shadow-card {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-elevated {
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.dark .glass {
+  background: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

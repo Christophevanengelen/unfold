@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "unfold-dev",
+      "runtimeExecutable": "/usr/bin/env",
+      "runtimeArgs": [
+        "PATH=/Users/jhondoe/.nvm/versions/node/v22.22.0/bin:/usr/local/bin:/usr/bin:/bin",
+        "HOME=/Users/jhondoe",
+        "/Users/jhondoe/.nvm/versions/node/v22.22.0/bin/node",
+        "node_modules/.bin/next",
+        "dev",
+        "--port",
+        "3333"
+      ],
+      "port": 3333
+    }
+  ]
+}

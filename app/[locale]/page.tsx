@@ -9,6 +9,7 @@ import { ScienceTechnology } from "@/components/landing/ScienceTechnology";
 import { DesignedForClarity } from "@/components/landing/DesignedForClarity";
 import { Pricing } from "@/components/landing/Pricing";
 import { FinalCTA } from "@/components/landing/FinalCTA";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 export async function generateMetadata({
   params,
@@ -29,15 +30,33 @@ export default async function LandingPage({
 
   return (
     <>
-      <Hero t={(key, fallback) => t(translations, key, fallback)} />
-      <FreeAwareness t={(key, fallback) => t(translations, key, fallback)} />
-      <DailyScores t={(key, fallback) => t(translations, key, fallback)} />
-      <Compatibility t={(key, fallback) => t(translations, key, fallback)} />
-      <PremiumMomentum t={(key, fallback) => t(translations, key, fallback)} />
-      <ScienceTechnology t={(key, fallback) => t(translations, key, fallback)} />
-      <DesignedForClarity t={(key, fallback) => t(translations, key, fallback)} />
-      <Pricing t={(key, fallback) => t(translations, key, fallback)} />
-      <FinalCTA t={(key, fallback) => t(translations, key, fallback)} />
+      <ScrollReveal variant="fadeIn" threshold={0.05}>
+        <Hero t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
+      <ScrollReveal variant="fadeUp" delay={0}>
+        <FreeAwareness t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
+      <ScrollReveal variant="fadeUp">
+        <DailyScores t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
+      <ScrollReveal variant="fadeUp">
+        <Compatibility t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
+      <ScrollReveal variant="fadeUp">
+        <PremiumMomentum t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
+      <ScrollReveal variant="scaleIn">
+        <ScienceTechnology t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
+      <ScrollReveal variant="fadeUp">
+        <DesignedForClarity t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
+      <ScrollReveal variant="scaleIn">
+        <Pricing t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
+      <ScrollReveal variant="fadeUp">
+        <FinalCTA t={(key, fallback) => t(translations, key, fallback)} />
+      </ScrollReveal>
     </>
   );
 }

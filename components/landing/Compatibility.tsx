@@ -1,3 +1,5 @@
+import { Link } from "flowbite-react-icons/outline";
+
 interface CompatibilityProps {
   t: (key: string, fallback?: string) => string;
 }
@@ -20,7 +22,7 @@ export function Compatibility({ t }: CompatibilityProps) {
         <div className="mt-16 flex justify-center">
           <div className="rounded-2xl border border-border-light bg-bg-secondary p-12 text-center">
             <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-bg-brand-soft">
-              <span className="text-4xl">🔗</span>
+              <Link className="h-10 w-10 text-accent-purple" />
             </div>
             <p className="mt-6 font-display text-xl font-semibold">
               {t("compat.cta", "Invite someone. Compare your signals.")}

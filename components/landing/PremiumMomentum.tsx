@@ -1,3 +1,5 @@
+import { ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
+
 interface PremiumMomentumProps {
   t: (key: string, fallback?: string) => string;
 }
@@ -36,14 +38,16 @@ export function PremiumMomentum({ t }: PremiumMomentumProps) {
             {t("premium.subtitle", "Unlock the full power of your personal momentum engine.")}
           </p>
         </div>
-        <div className="mt-16 grid gap-6 md:grid-cols-2">
+        <ScrollRevealGroup className="mt-16 grid gap-6 md:grid-cols-2" stagger={0.12}>
           {features.map((f) => (
-            <div key={f.title} className="rounded-2xl border border-brand-8/30 bg-brand-11/50 p-8">
-              <h3 className="font-display text-xl font-semibold text-white">{f.title}</h3>
-              <p className="mt-3 text-brand-7">{f.desc}</p>
-            </div>
+            <ScrollRevealItem key={f.title} variant="fadeUp">
+              <div className="rounded-2xl border border-brand-8/30 bg-brand-11/50 p-8">
+                <h3 className="font-display text-xl font-semibold text-white">{f.title}</h3>
+                <p className="mt-3 text-brand-7">{f.desc}</p>
+              </div>
+            </ScrollRevealItem>
           ))}
-        </div>
+        </ScrollRevealGroup>
       </div>
     </section>
   );

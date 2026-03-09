@@ -16,6 +16,7 @@ export interface DailyMomentum {
   };
   overall: number; // 0-100 composite score
   insight: string; // Daily insight text (localized)
+  label?: string; // Human-readable summary ("Strong work momentum")
 }
 
 export interface MomentumScore {
@@ -23,6 +24,24 @@ export interface MomentumScore {
   trend: "rising" | "stable" | "declining";
   peakHour?: number; // 0-23, optimal hour for this axis
   description: string; // Short description (localized)
+}
+
+// Structured 4-line insight (bottom card on every page)
+export interface StructuredInsight {
+  mainRead: string; // "Today favors Work"
+  bestWindow: string; // "Peak around 11am"
+  suggestedMove: string; // "Protect 10-12 for focused work"
+  caution: string; // "Energy may soften after lunch"
+}
+
+// Detailed report (shown on satellite score tap)
+export interface DomainDetail {
+  scoreTitle: string; // "Work is rising today"
+  whatItMeans: string; // "Focus and decision-making are better supported..."
+  bestUse: string; // "Do your most demanding task between 10am and 12pm"
+  watchOut: string; // "Momentum may soften later..."
+  whenItGetsBetter: string; // "Your next stronger work window builds tomorrow afternoon"
+  premiumTeaser: string; // "Unlock future peaks and timing windows"
 }
 
 // ─── Trend Data ─────────────────────────────────────────────
@@ -54,6 +73,8 @@ export interface CompatibilityResult {
     description: string;
   }[];
   sharedPeaks: string[]; // ISO dates of aligned peak moments
+  whatMakesYouWork?: string; // Insight about partner dynamics
+  bestDaysTogether?: { date: string; context: string }[]; // Annotated shared peaks
 }
 
 // ─── Premium: Future Windows ────────────────────────────────

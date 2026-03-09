@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChartPie } from "flowbite-react-icons/outline";
+import { Globe } from "flowbite-react-icons/outline";
+import { FilePen } from "flowbite-react-icons/outline";
+import { ChartLineUp } from "flowbite-react-icons/outline";
+import { ArrowLeft } from "flowbite-react-icons/outline";
+import type { ComponentType, SVGAttributes } from "react";
 
-const navItems = [
-  { href: "/admin", label: "Dashboard", icon: "📊" },
-  { href: "/admin/translations", label: "Translations", icon: "🌐" },
-  { href: "/admin/content", label: "Content", icon: "📝" },
-  { href: "/admin/kpi", label: "KPI Cockpit", icon: "📈" },
+const navItems: { href: string; label: string; icon: ComponentType<SVGAttributes<SVGElement>> }[] = [
+  { href: "/admin", label: "Dashboard", icon: ChartPie },
+  { href: "/admin/translations", label: "Translations", icon: Globe },
+  { href: "/admin/content", label: "Content", icon: FilePen },
+  { href: "/admin/kpi", label: "KPI Cockpit", icon: ChartLineUp },
 ];
 
 export function Sidebar() {
@@ -35,7 +41,7 @@ export function Sidebar() {
                   : "text-text-body hover:bg-bg-primary hover:text-text-heading"
               }`}
             >
-              <span>{item.icon}</span>
+              <item.icon className="h-5 w-5" />
               {item.label}
             </Link>
           );
@@ -46,7 +52,8 @@ export function Sidebar() {
           href="/"
           className="flex items-center gap-2 text-sm text-text-body-subtle hover:text-text-body"
         >
-          ← Back to site
+          <ArrowLeft className="h-4 w-4" />
+          Back to site
         </Link>
       </div>
     </aside>

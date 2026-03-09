@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { goodly, inter } from "@/lib/fonts";
+import { uniformRounded } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${goodly.variable} ${inter.variable} antialiased`}>
+      <body className={`${uniformRounded.variable} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

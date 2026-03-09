@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-
-const tabs = [
-  { href: "/demo", label: "Today" },
-  { href: "/demo/yesterday", label: "Yesterday" },
-  { href: "/demo/tomorrow", label: "Tomorrow" },
-  { href: "/demo/compatibility", label: "Match" },
-  { href: "/demo/premium", label: "Premium" },
-];
+import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
+import { BottomNav } from "@/components/demo/BottomNav";
+import { ProfileDrawer } from "@/components/demo/ProfileDrawer";
+import { PremiumTeaser } from "@/components/demo/PremiumTeaser";
+import { PremiumTeaserContext } from "@/components/demo/PremiumTeaserContext";
 
 export default function DemoLayout({
   children,
@@ -17,43 +14,66 @@ export default function DemoLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [premiumOpen, setPremiumOpen] = useState(false);
+
+  // Hide bottom nav on onboarding/invite flows
+  const HIDDEN_NAV_ROUTES = ["/demo/onboarding", "/demo/invite"];
+  const hideNav = HIDDEN_NAV_ROUTES.some((r) => pathname.startsWith(r));
+  const isHome = pathname === "/demo";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-brand-3 p-4">
       {/* Mobile frame */}
-      <div className="flex h-[812px] w-[375px] flex-col overflow-hidden rounded-[2.5rem] border-4 border-brand-10 bg-bg-primary shadow-2xl">
+      <div
+        className="relative flex h-[812px] w-[375px] flex-col overflow-hidden rounded-[2.5rem] border border-brand-6/40 bg-bg-primary"
+        style={{
+          boxShadow:
+            "0 8px 40px rgba(124, 107, 191, 0.15), 0 2px 12px rgba(0, 0, 0, 0.08)",
+        }}
+      >
         {/* Status bar */}
-        <div className="flex items-center justify-between px-6 pt-3 pb-1">
-          <span className="text-xs font-medium text-text-body-subtle">9:41</span>
-          <span className="font-display text-sm font-bold text-accent-purple">Unfold</span>
-          <span className="text-xs text-text-body-subtle">Demo</span>
+        <div className="flex items-center justify-between px-6 pt-3 pb-2">
+          <span className="text-xs font-medium text-text-body-subtle">
+            9:41
+          </span>
+          <UnfoldLogo size={22} />
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
+            aria-label="Profile"
+          >
+            A
+          </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        {/* Content — full width for swipe pages, padded for other routes */}
+        <PremiumTeaserContext.Provider value={() => setPremiumOpen(true)}>
+          <div
+            className={`flex-1 ${
+              isHome
+                ? "relative z-10"
+                : "overflow-y-auto overflow-x-hidden px-5 py-3"
+            }`}
+          >
+            {children}
+          </div>
+        </PremiumTeaserContext.Provider>
 
-        {/* Tab bar */}
-        <nav className="flex border-t border-border-light bg-bg-secondary/80 backdrop-blur-sm">
-          {tabs.map((tab) => {
-            const isActive =
-              tab.href === "/demo"
-                ? pathname === "/demo"
-                : pathname.startsWith(tab.href);
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={`flex-1 py-3 text-center text-xs font-medium transition-colors ${
-                  isActive
-                    ? "text-accent-purple"
-                    : "text-text-body-subtle hover:text-text-body"
-                }`}
-              >
-                {tab.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Bottom nav (hidden on flows) */}
+        {!hideNav && <BottomNav />}
+
+        {/* Profile drawer */}
+        <ProfileDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        />
+
+        {/* Premium teaser */}
+        <PremiumTeaser
+          open={premiumOpen}
+          onClose={() => setPremiumOpen(false)}
+        />
       </div>
     </div>
   );
