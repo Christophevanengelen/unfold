@@ -32,6 +32,20 @@ export default function DemoLayout({
             "0 8px 40px rgba(124, 107, 191, 0.15), 0 2px 12px rgba(0, 0, 0, 0.08)",
         }}
       >
+        {/* Gradient background layer — ambient mesh glow */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          aria-hidden="true"
+          style={{
+            background: [
+              "radial-gradient(ellipse 140% 45% at 50% -5%, var(--gradient-top) 0%, transparent 65%)",
+              "radial-gradient(circle 300px at 15% 75%, var(--gradient-left) 0%, transparent 70%)",
+              "radial-gradient(circle 250px at 90% 90%, var(--gradient-right) 0%, transparent 70%)",
+              "radial-gradient(ellipse 100% 35% at 50% 105%, var(--gradient-bottom) 0%, transparent 60%)",
+            ].join(", "),
+          }}
+        />
+
         {/* Status bar */}
         <div className="flex items-center justify-between px-6 pt-3 pb-2">
           <span className="text-xs font-medium text-text-body-subtle">

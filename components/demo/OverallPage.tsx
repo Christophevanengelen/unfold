@@ -31,7 +31,7 @@ interface OverallPageProps {
  */
 
 /** Fixed distance from card bottom to trend curve bottom edge */
-const TREND_BOTTOM_OFFSET = 160;
+const TREND_BOTTOM_OFFSET = 140;
 
 export function OverallPage({
   isActive,
@@ -115,17 +115,17 @@ export function OverallPage({
       {/* === TREND CURVE — absolutely positioned, NEVER moves === */}
       <div
         className="pointer-events-none absolute inset-x-0"
-        style={{ bottom: TREND_BOTTOM_OFFSET, height: TREND_HEIGHT, zIndex: 1 }}
+        style={{ bottom: 0, height: TREND_BOTTOM_OFFSET + TREND_HEIGHT, zIndex: 1 }}
       >
         {/* Centered pill label on top of trend line */}
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center">
+        <div className="pointer-events-none absolute inset-x-0 z-10 flex -translate-y-1/2 justify-center" style={{ top: TREND_HEIGHT * 0.75 }}>
           <span
             className="rounded-full px-2.5 py-0.5 font-medium uppercase"
             style={{
               fontSize: 8,
               letterSpacing: "0.12em",
               color: "var(--text-body-subtle)",
-              background: "color-mix(in srgb, var(--accent-purple) 8%, rgba(34, 28, 63, 0.55))",
+              background: "color-mix(in srgb, var(--accent-purple) 8%, color-mix(in srgb, var(--bg-secondary) 65%, transparent))",
               backdropFilter: "blur(8px)",
             }}
           >
@@ -137,6 +137,7 @@ export function OverallPage({
           color="var(--accent-purple)"
           width={cardWidth}
           height={TREND_HEIGHT}
+          fillHeight={TREND_BOTTOM_OFFSET + TREND_HEIGHT}
           isActive={isActive}
         />
       </div>

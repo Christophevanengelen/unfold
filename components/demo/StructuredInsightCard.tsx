@@ -25,35 +25,35 @@ export function StructuredInsightCard({
       <div
         className="relative overflow-hidden rounded-xl px-4 py-3.5"
         style={{
-          background: `linear-gradient(to bottom, color-mix(in srgb, ${color} 10%, rgba(34, 28, 63, 0.25)) 0%, color-mix(in srgb, ${color} 5%, rgba(34, 28, 63, 0.5)) 50%, color-mix(in srgb, ${color} 3%, rgba(34, 28, 63, 0.7)) 100%)`,
+          background: `linear-gradient(to bottom, color-mix(in srgb, ${color} 10%, color-mix(in srgb, var(--bg-secondary) 35%, transparent)) 0%, color-mix(in srgb, ${color} 5%, color-mix(in srgb, var(--bg-secondary) 60%, transparent)) 50%, color-mix(in srgb, ${color} 3%, color-mix(in srgb, var(--bg-secondary) 80%, transparent)) 100%)`,
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
         }}
       >
         {/* Headline — primary read */}
         <p
-          className="text-sm font-semibold leading-snug"
+          className="text-sm font-semibold leading-tight"
           style={{ color: "var(--text-heading)" }}
         >
           {insight.mainRead}
         </p>
 
         {/* Supporting lines */}
-        <div className="mt-2 space-y-1.5">
+        <div className="mt-1.5 space-y-0.5">
           <p
-            className="text-xs leading-relaxed"
+            className="text-xs leading-snug"
             style={{ color: "var(--text-body)" }}
           >
             {insight.bestWindow}
           </p>
           <p
-            className="text-xs leading-relaxed"
+            className="text-xs leading-snug"
             style={{ color: "var(--text-body)" }}
           >
             {insight.suggestedMove}
           </p>
           <p
-            className="text-xs leading-relaxed"
+            className="text-xs leading-snug"
             style={{ color: "var(--text-body-subtle)", opacity: 0.7 }}
           >
             {insight.caution}

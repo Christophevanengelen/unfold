@@ -190,10 +190,17 @@
   --glow-work: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #3E63DD 12%, transparent) 0%, transparent 70%);
   --glow-overall: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #7C6BBF 12%, transparent) 0%, transparent 70%);
 
-  /* Card chrome — 3D carousel cards */
-  --card-bg: color-mix(in srgb, var(--bg-secondary) 80%, var(--bg-primary));
+  /* Card chrome — 3D carousel cards (semi-transparent for frosted glass) */
+  --card-bg: color-mix(in srgb, var(--bg-secondary) 65%, transparent);
   --card-border: color-mix(in srgb, var(--border-muted) 60%, transparent);
   --card-shadow: 0 8px 40px color-mix(in srgb, var(--brand-12) 15%, transparent);
+
+  /* App background gradient — ambient mesh glow */
+  --gradient-top: rgba(124, 107, 191, 0.28);
+  --gradient-left: rgba(233, 61, 130, 0.14);
+  --gradient-right: rgba(62, 99, 221, 0.14);
+  --gradient-bottom: rgba(124, 107, 191, 0.18);
+
 }
 
 /* ==============================================
@@ -287,6 +294,13 @@
   --card-bg: color-mix(in srgb, var(--bg-secondary) 60%, var(--bg-primary));
   --card-border: color-mix(in srgb, var(--border-light) 30%, transparent);
   --card-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+  /* App background gradient — ambient mesh glow */
+  --gradient-top: rgba(149, 133, 204, 0.40);
+  --gradient-left: rgba(242, 95, 160, 0.18);
+  --gradient-right: rgba(91, 127, 238, 0.18);
+  --gradient-bottom: rgba(149, 133, 204, 0.22);
+
 }
 
 /* ==============================================

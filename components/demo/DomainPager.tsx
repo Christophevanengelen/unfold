@@ -214,7 +214,9 @@ export function DomainPager() {
                   width: cardWidth,
                   minWidth: cardWidth,
                   scrollSnapAlign: "center",
-                  background: "var(--card-bg)",
+                  background: "color-mix(in srgb, var(--card-bg) 70%, transparent)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
                   border: "1px solid var(--card-border)",
                   boxShadow: isCurrent
                     ? "var(--card-shadow)"

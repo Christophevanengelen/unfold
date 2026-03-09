@@ -7,6 +7,8 @@ interface TrendCurveProps {
   color: string;
   width?: number;
   height?: number;
+  /** Total SVG height — fill extends to this. Defaults to height. */
+  fillHeight?: number;
   /** Controls when animation plays — mirrors ScoreRing pattern */
   isActive?: boolean;
 }
@@ -27,8 +29,10 @@ export function TrendCurve({
   color,
   width = 343,
   height = 160,
+  fillHeight,
   isActive = true,
 }: TrendCurveProps) {
+  const totalHeight = fillHeight ?? height;
   const pathRef = useRef<SVGPathElement>(null);
   const hasAnimated = useRef(false);
   const prevDataKey = useRef("");
@@ -117,7 +121,7 @@ export function TrendCurve({
   }));
 
   const smoothPath = buildSmoothPath(points);
-  const fillPath = `${smoothPath} L ${width} ${height} L 0 ${height} Z`;
+  const fillPath = `${smoothPath} L ${width} ${totalHeight} L 0 ${totalHeight} Z`;
   const gradientId = `trend-fill-${color.replace(/[^a-zA-Z0-9]/g, "")}`;
 
   // Inactive cards that haven't animated: hide curve (animates on first activation)
@@ -129,14 +133,14 @@ export function TrendCurve({
   return (
     <svg
       width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
+      height={totalHeight}
+      viewBox={`0 0 ${width} ${totalHeight}`}
       className="block"
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.15} />
-          <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+          <stop offset="0%" stopColor={color} stopOpacity={0.10} />
+          <stop offset="100%" stopColor={color} stopOpacity={0.01} />
         </linearGradient>
       </defs>
 

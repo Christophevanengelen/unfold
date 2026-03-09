@@ -38,7 +38,7 @@ interface DomainPageProps {
  */
 
 /** Fixed distance from card bottom to trend curve bottom edge */
-const TREND_BOTTOM_OFFSET = 210;
+const TREND_BOTTOM_OFFSET = 190;
 
 export function DomainPage({
   domain,
@@ -148,13 +148,14 @@ export function DomainPage({
       {/* === TREND CURVE — absolutely positioned, NEVER moves === */}
       <div
         className="pointer-events-none absolute inset-x-0"
-        style={{ bottom: TREND_BOTTOM_OFFSET, height: TREND_HEIGHT, zIndex: 1 }}
+        style={{ bottom: 0, height: TREND_BOTTOM_OFFSET + TREND_HEIGHT, zIndex: 1 }}
       >
         <TrendCurve
           data={trendData}
           color={config.color}
           width={cardWidth}
           height={TREND_HEIGHT}
+          fillHeight={TREND_BOTTOM_OFFSET + TREND_HEIGHT}
           isActive={isActive}
         />
       </div>
