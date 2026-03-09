@@ -20,21 +20,14 @@ export function StructuredInsightCard({
   color,
 }: StructuredInsightCardProps) {
   return (
-    <div className="relative shrink-0 px-4 pb-3" style={{ marginTop: -16 }}>
-      {/* Glow gradient — hints at the hidden trend line underneath */}
+    <div className="relative shrink-0 px-4 pb-3" style={{ marginTop: -36 }}>
+      {/* Frosted card — semi-transparent top lets the trend line show through blurred */}
       <div
-        className="pointer-events-none absolute inset-x-4 top-0 h-6 rounded-t-xl"
+        className="relative overflow-hidden rounded-xl px-4 py-3.5"
         style={{
-          background: `linear-gradient(to bottom, color-mix(in srgb, ${color} 15%, transparent), transparent)`,
-          filter: "blur(6px)",
-        }}
-      />
-
-      <div
-        className="relative rounded-xl px-4 py-3.5"
-        style={{
-          background: `color-mix(in srgb, ${color} 6%, var(--bg-secondary))`,
+          background: `linear-gradient(to bottom, color-mix(in srgb, ${color} 10%, rgba(34, 28, 63, 0.25)) 0%, color-mix(in srgb, ${color} 5%, rgba(34, 28, 63, 0.5)) 50%, color-mix(in srgb, ${color} 3%, rgba(34, 28, 63, 0.7)) 100%)`,
           backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
         }}
       >
         {/* Headline — primary read */}
