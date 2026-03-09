@@ -44,9 +44,10 @@ export function DomainDetailSheet({
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — extends beyond content area to cover status bar + BottomNav */}
           <motion.div
-            className="absolute inset-0 z-40 bg-black/40"
+            className="absolute inset-x-0 z-40 bg-black/40"
+            style={{ top: -100, bottom: -56 }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -54,14 +55,14 @@ export function DomainDetailSheet({
             onClick={onClose}
           />
 
-          {/* Sheet */}
+          {/* Sheet — extends below to cover BottomNav area */}
           <motion.div
-            className="absolute inset-x-0 bottom-0 z-50 rounded-t-3xl bg-bg-primary px-6 pb-8 pt-4"
+            className="absolute inset-x-0 z-50 rounded-t-3xl bg-bg-primary px-6 pt-4"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            style={{ boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
+            style={{ bottom: -56, paddingBottom: 24, boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
           >
             {/* Handle */}
             <div className="mx-auto mb-5 h-1 w-8 rounded-full bg-brand-5" />

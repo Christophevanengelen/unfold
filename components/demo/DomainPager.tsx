@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { TimeControl, type TimeView } from "./TimeControl";
 import { PageDots } from "./PageDots";
 import { OverallPage } from "./OverallPage";
@@ -59,6 +59,11 @@ export function DomainPager() {
   const [activePage, setActivePage] = useState(0);
   const [timeView, setTimeView] = useState<TimeView>("today");
   const [detailDomain, setDetailDomain] = useState<DomainKey | null>(null);
+  const lastDomainRef = useRef<DomainKey>("love");
+
+  // Track last opened domain so we can still render during exit animation
+  if (detailDomain) lastDomainRef.current = detailDomain;
+  const lastDomain = lastDomainRef.current;
 
   // Measure the WRAPPER (not the scroll container) to avoid circular dependency
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -244,22 +249,20 @@ export function DomainPager() {
         />
       </div>
 
-      {/* Domain detail sheet */}
-      {detailDomain && (
-        <DomainDetailSheet
-          open={!!detailDomain}
-          onClose={() => setDetailDomain(null)}
-          domain={detailDomain}
-          detail={mockDomainDetails[timeView][detailDomain]}
-          score={data.scores[detailDomain].value}
-          trend={data.scores[detailDomain].trend}
-          color={domainConfig[detailDomain].color}
-          onPremiumTap={() => {
-            setDetailDomain(null);
-            openPremium();
-          }}
-        />
-      )}
+      {/* Domain detail sheet — always mounted so AnimatePresence can play exit */}
+      <DomainDetailSheet
+        open={!!detailDomain}
+        onClose={() => setDetailDomain(null)}
+        domain={detailDomain ?? lastDomain}
+        detail={mockDomainDetails[timeView][detailDomain ?? lastDomain]}
+        score={data.scores[detailDomain ?? lastDomain].value}
+        trend={data.scores[detailDomain ?? lastDomain].trend}
+        color={domainConfig[detailDomain ?? lastDomain].color}
+        onPremiumTap={() => {
+          setDetailDomain(null);
+          openPremium();
+        }}
+      />
     </div>
   );
 }
