@@ -25,7 +25,14 @@ interface OverallPageProps {
 /**
  * Cover page (Page 0) — overall momentum score.
  * Unix aesthetic: thin strokes, large thin numbers, no glows.
+ *
+ * Layout: TrendCurve is absolutely positioned at a fixed offset from the
+ * card bottom. It NEVER moves when switching time views.
  */
+
+/** Fixed distance from card bottom to trend curve bottom edge */
+const TREND_BOTTOM_OFFSET = 100;
+
 export function OverallPage({
   isActive,
   data,
@@ -36,7 +43,7 @@ export function OverallPage({
   cardWidth,
 }: OverallPageProps) {
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
       {/* === HERO SECTION === */}
       <div className="flex flex-col items-center pt-6">
         {/* Score ring + BIG number */}
@@ -97,8 +104,19 @@ export function OverallPage({
         </div>
       </div>
 
-      {/* === TREND CURVE === */}
-      <div className="mt-auto">
+      {/* Spacer — absorbs remaining vertical space */}
+      <div className="flex-1" />
+
+      {/* === BOTTOM CONTENT — insight card, always at card bottom === */}
+      <div className="relative shrink-0" style={{ zIndex: 2 }}>
+        <StructuredInsightCard insight={structuredInsight} color="var(--accent-purple)" />
+      </div>
+
+      {/* === TREND CURVE — absolutely positioned, NEVER moves === */}
+      <div
+        className="pointer-events-none absolute inset-x-0"
+        style={{ bottom: TREND_BOTTOM_OFFSET, height: TREND_HEIGHT, zIndex: 1 }}
+      >
         <TrendCurve
           data={trendData}
           color="var(--accent-purple)"
@@ -107,9 +125,6 @@ export function OverallPage({
           isActive={isActive}
         />
       </div>
-
-      {/* === STRUCTURED INSIGHT === */}
-      <StructuredInsightCard insight={structuredInsight} color="var(--accent-purple)" />
     </div>
   );
 }

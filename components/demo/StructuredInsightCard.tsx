@@ -11,8 +11,8 @@ interface StructuredInsightCardProps {
  * Structured 4-line mini-report — replaces narrative paragraphs.
  * Main read is the 2-second headline, rest is supporting detail.
  *
- * Layout: slight negative margin overlaps the bottom of the trend area.
- * A frosted glow gradient at the top hints at the hidden trend line.
+ * Layout: trend curve is absolutely positioned behind this card.
+ * Glass effect (semi-transparent bg + backdrop-filter) lets the trend show through.
  * Text is NEVER truncated.
  */
 export function StructuredInsightCard({
@@ -20,7 +20,7 @@ export function StructuredInsightCard({
   color,
 }: StructuredInsightCardProps) {
   return (
-    <div className="relative shrink-0 px-4 pb-3" style={{ marginTop: -36 }}>
+    <div className="relative shrink-0 px-4 pb-3">
       {/* Frosted card — semi-transparent top lets the trend line show through blurred */}
       <div
         className="relative overflow-hidden rounded-xl px-4 py-3.5"
