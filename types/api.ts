@@ -1,0 +1,107 @@
+/**
+ * UNFOLD API CONTRACTS
+ * ====================
+ * These TypeScript interfaces define the expected API response shapes.
+ * Marie Ange: each interface maps to an API endpoint your backend needs to provide.
+ */
+
+// ─── Momentum Scores ───────────────────────────────────────
+// GET /api/momentum/daily?date=YYYY-MM-DD
+export interface DailyMomentum {
+  date: string; // ISO date
+  scores: {
+    love: MomentumScore;
+    health: MomentumScore;
+    work: MomentumScore;
+  };
+  overall: number; // 0-100 composite score
+  insight: string; // Daily insight text (localized)
+}
+
+export interface MomentumScore {
+  value: number; // 0-100
+  trend: "rising" | "stable" | "declining";
+  peakHour?: number; // 0-23, optimal hour for this axis
+  description: string; // Short description (localized)
+}
+
+// ─── Trend Data ─────────────────────────────────────────────
+// GET /api/momentum/trend?from=YYYY-MM-DD&to=YYYY-MM-DD
+export interface MomentumTrend {
+  period: {
+    from: string;
+    to: string;
+  };
+  dataPoints: TrendPoint[];
+}
+
+export interface TrendPoint {
+  date: string;
+  love: number;
+  health: number;
+  work: number;
+  overall: number;
+}
+
+// ─── Compatibility ──────────────────────────────────────────
+// POST /api/compatibility/check { inviteCode: string }
+export interface CompatibilityResult {
+  score: number; // 0-100
+  partnerName: string;
+  synergies: {
+    axis: "love" | "health" | "work";
+    strength: "strong" | "moderate" | "developing";
+    description: string;
+  }[];
+  sharedPeaks: string[]; // ISO dates of aligned peak moments
+}
+
+// ─── Premium: Future Windows ────────────────────────────────
+// GET /api/premium/forecast?days=7
+export interface ForecastWindow {
+  date: string;
+  momentum: number; // 0-100 predicted overall
+  isPeak: boolean;
+  peakAxes: ("love" | "health" | "work")[];
+  recommendation: string; // Localized action suggestion
+}
+
+// ─── Premium: Monthly Momentum Map ──────────────────────────
+// GET /api/premium/monthly-map?month=YYYY-MM
+export interface MonthlyMap {
+  month: string; // YYYY-MM
+  days: {
+    date: string;
+    overall: number;
+    isPeak: boolean;
+    isLow: boolean;
+  }[];
+  summary: {
+    peakDays: number;
+    averageMomentum: number;
+    bestAxis: "love" | "health" | "work";
+    trend: "ascending" | "stable" | "descending";
+  };
+}
+
+// ─── Premium: Peak Alerts ───────────────────────────────────
+// GET /api/premium/alerts
+export interface PeakAlert {
+  id: string;
+  date: string;
+  time: string; // HH:mm
+  axis: "love" | "health" | "work";
+  intensity: "moderate" | "strong" | "exceptional";
+  message: string; // Localized alert message
+}
+
+// ─── User Profile ───────────────────────────────────────────
+// GET /api/user/profile
+export interface UserProfile {
+  id: string;
+  name: string;
+  inviteCode: string;
+  plan: "free" | "premium";
+  locale: string;
+  createdAt: string;
+}
