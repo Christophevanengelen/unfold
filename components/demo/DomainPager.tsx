@@ -86,11 +86,6 @@ export function DomainPager() {
   // Side padding so first/last card can center
   const sidePadding = PEEK;
 
-  // Close detail sheet when time view changes
-  useEffect(() => {
-    setDetailDomain(null);
-  }, [timeView]);
-
   // Derive data from current time view
   const data = dataMap[timeView];
   const deltas = getDeltas(timeView);
@@ -196,7 +191,7 @@ export function DomainPager() {
   return (
     <div className="flex h-full flex-col">
       {/* Time control — top (z-30 above scroll container bleed) */}
-      <div className="relative shrink-0 px-5 pt-1 pb-2" style={{ zIndex: 30 }}>
+      <div className="relative shrink-0 px-5 pt-1 pb-2" style={{ zIndex: 45 }}>
         <TimeControl value={timeView} onChange={setTimeView} />
       </div>
 

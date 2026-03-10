@@ -1,14 +1,13 @@
 "use client";
 
-import { motion, AnimatePresence } from "motion/react";
-import { useCallback, useRef } from "react";
+import { motion, AnimatePresence, type PanInfo } from "motion/react";
+import { useCallback } from "react";
 import type { DomainDetail } from "@/types/api";
 import type { DomainKey } from "@/lib/domain-config";
 import { InfoCircle } from "flowbite-react-icons/outline";
 import { Lightbulb } from "flowbite-react-icons/outline";
 import { ExclamationCircle } from "flowbite-react-icons/outline";
 import { ChartLineUp } from "flowbite-react-icons/outline";
-import { formatDelta, getDeltaColor } from "@/lib/animations";
 
 interface DomainDetailSheetProps {
   open: boolean;
@@ -46,21 +45,10 @@ export function DomainDetailSheet({
   caution,
   onPremiumTap,
 }: DomainDetailSheetProps) {
-  /** Swipe down to dismiss — detect quick downward swipe via touch events */
-  const touchStart = useRef<{ y: number; t: number } | null>(null);
-
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStart.current = { y: e.touches[0].clientY, t: Date.now() };
-  }, []);
-
-  const onTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      if (!touchStart.current) return;
-      const dy = e.changedTouches[0].clientY - touchStart.current.y;
-      const dt = Date.now() - touchStart.current.t;
-      touchStart.current = null;
-      // Close on downward swipe: >60px distance OR fast flick (>40px in <300ms)
-      if (dy > 60 || (dy > 40 && dt < 300)) {
+  /** Swipe down to dismiss — onPanEnd detects gesture without moving the sheet */
+  const handlePanEnd = useCallback(
+    (_: unknown, info: PanInfo) => {
+      if (info.offset.y > 60 || info.velocity.y > 300) {
         onClose();
       }
     },
@@ -88,9 +76,8 @@ export function DomainDetailSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            onTouchStart={onTouchStart}
-            onTouchEnd={onTouchEnd}
-            style={{ bottom: -56, paddingBottom: 24, boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
+            onPanEnd={handlePanEnd}
+            style={{ bottom: -56, paddingBottom: 24, boxShadow: "0 -4px 24px rgba(0,0,0,0.12)", touchAction: "pan-x" }}
           >
             {/* Handle */}
             <div className="mx-auto mb-5 h-1 w-8 rounded-full bg-brand-5" />
@@ -100,13 +87,7 @@ export function DomainDetailSheet({
               className="mb-4 font-display text-base font-semibold"
               style={{ color, letterSpacing: -0.3 }}
             >
-              {detail.scoreTitle}{" "}
-              <span style={{ color: "var(--text-body-subtle)", fontWeight: 400 }}>
-                &middot; {score}
-              </span>{" "}
-              <span className={`text-sm font-semibold ${getDeltaColor(delta)}`}>
-                {formatDelta(delta)}
-              </span>
+              {detail.scoreTitle}
             </p>
 
             {/* Detail rows */}
@@ -150,18 +131,6 @@ export function DomainDetailSheet({
               </p>
             )}
 
-            {/* Premium teaser link */}
-            <button
-              type="button"
-              className="mt-6 w-full rounded-2xl py-3 text-sm font-medium transition-transform active:scale-[0.98]"
-              style={{
-                background: `color-mix(in srgb, var(--accent-purple) 12%, var(--bg-secondary))`,
-                color: "var(--accent-purple)",
-              }}
-              onClick={onPremiumTap}
-            >
-              {detail.premiumTeaser}
-            </button>
 
           </motion.div>
         </>
