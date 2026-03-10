@@ -83,9 +83,8 @@ function ForecastTimeline() {
             <span
               className="text-[9px] font-medium"
               style={{
-                color: day.isPeak
-                  ? "var(--text-heading)"
-                  : "var(--text-body-subtle)",
+                color: "var(--accent-purple)",
+                opacity: day.isPeak ? 0.7 : 0.5,
               }}
             >
               {days[i]}
@@ -115,7 +114,8 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
       <motion.button
         type="button"
         onClick={onBack}
-        className="mt-4 self-start text-xs font-medium text-text-body-subtle"
+        className="mt-4 self-start text-xs font-medium"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         <svg
@@ -148,7 +148,8 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
           className="mb-4 text-center text-[10px] font-medium uppercase"
           style={{
             letterSpacing: "0.15em",
-            color: "var(--text-body-subtle)",
+            color: "var(--accent-purple)",
+            opacity: 0.5,
           }}
         >
           7-day forecast
@@ -159,14 +160,17 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
       {/* Headline */}
       <motion.div className="mt-6 text-center" variants={fadeInUp}>
         <h1
-          className="font-display text-2xl font-bold text-text-heading"
-          style={{ letterSpacing: -0.5 }}
+          className="font-display text-2xl font-bold"
+          style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
         >
           See your best moments
           <br />
           before they arrive.
         </h1>
-        <p className="mt-3 text-sm leading-relaxed text-text-body">
+        <p
+          className="mt-3 text-sm leading-relaxed"
+          style={{ color: "var(--accent-purple)", opacity: 0.7 }}
+        >
           Unlock future peaks, stronger windows ahead, and alerts when
           your rhythm starts moving in your favor.
         </p>
@@ -174,7 +178,8 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
 
       {/* Support */}
       <motion.p
-        className="mt-2 text-center text-xs text-text-body-subtle"
+        className="mt-2 text-center text-xs"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         Not more noise. More timing clarity.
@@ -196,7 +201,10 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
                 style={{ color: "var(--accent-purple)" }}
               />
             </div>
-            <span className="text-sm font-medium text-text-heading">
+            <span
+              className="text-sm font-medium"
+              style={{ color: "var(--accent-purple)" }}
+            >
               {text}
             </span>
           </div>

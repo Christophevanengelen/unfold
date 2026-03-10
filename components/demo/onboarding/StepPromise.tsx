@@ -60,8 +60,8 @@ export function StepPromise({ onNext }: StepPromiseProps) {
       >
         {/* Headline */}
         <motion.h1
-          className="font-display text-[28px] font-bold leading-tight text-text-heading"
-          style={{ letterSpacing: -0.5 }}
+          className="font-display text-[28px] font-bold leading-tight"
+          style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
           variants={fadeInUp}
         >
           Know when life moves
@@ -71,7 +71,8 @@ export function StepPromise({ onNext }: StepPromiseProps) {
 
         {/* Body */}
         <motion.p
-          className="mt-3 max-w-[260px] text-sm leading-relaxed text-text-body"
+          className="mt-3 max-w-[260px] text-sm leading-relaxed"
+          style={{ color: "var(--accent-purple)", opacity: 0.7 }}
           variants={fadeInUp}
         >
           A daily read of your personal rhythm across Love, Health, and Work.
@@ -79,7 +80,8 @@ export function StepPromise({ onNext }: StepPromiseProps) {
 
         {/* Support line */}
         <motion.p
-          className="mt-1.5 text-xs text-text-body-subtle"
+          className="mt-1.5 text-xs"
+          style={{ color: "var(--accent-purple)", opacity: 0.5 }}
           variants={fadeInUp}
         >
           Clear today. Better timing ahead.

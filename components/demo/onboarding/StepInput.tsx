@@ -79,7 +79,8 @@ export function StepInput({
       <motion.button
         type="button"
         onClick={onBack}
-        className="mt-4 self-start text-xs font-medium text-text-body-subtle"
+        className="mt-4 self-start text-xs font-medium"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         <svg
@@ -100,14 +101,15 @@ export function StepInput({
 
       {/* Headline */}
       <motion.h1
-        className="mt-5 font-display text-2xl font-bold text-text-heading"
-        style={{ letterSpacing: -0.5 }}
+        className="mt-5 font-display text-2xl font-bold"
+        style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
         variants={fadeInUp}
       >
         Configure your signal
       </motion.h1>
       <motion.p
-        className="mt-1.5 text-sm text-text-body"
+        className="mt-1.5 text-sm"
+        style={{ color: "var(--accent-purple)", opacity: 0.7 }}
         variants={fadeInUp}
       >
         Enter the details needed to prepare your personal timing profile.
@@ -129,7 +131,8 @@ export function StepInput({
                 style={{
                   fontSize: 10,
                   letterSpacing: "0.12em",
-                  color: "var(--text-body-subtle)",
+                  color: "var(--accent-purple)",
+                  opacity: 0.5,
                 }}
               >
                 {field.label}
@@ -139,13 +142,14 @@ export function StepInput({
                 value={formData[field.key]}
                 onChange={(e) => handleChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
-                className="mt-1 w-full bg-transparent text-base font-medium text-text-heading outline-none placeholder:text-brand-5"
+                className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
+                style={{ color: "var(--accent-purple)" }}
               />
             </label>
             {"helper" in field && field.helper && (
               <p
                 className="mt-1"
-                style={{ fontSize: 10, color: "var(--text-body-subtle)" }}
+                style={{ fontSize: 10, color: "var(--accent-purple)", opacity: 0.5 }}
               >
                 {field.helper}
               </p>
@@ -156,7 +160,8 @@ export function StepInput({
 
       {/* Reassurance */}
       <motion.p
-        className="mt-4 text-center text-xs text-text-body-subtle"
+        className="mt-4 text-center text-xs"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         Your details are only used to prepare your personal rhythm.

@@ -271,6 +271,12 @@ export function DomainPager() {
           setDetailDomain(null);
           openPremium();
         }}
+        onSwipeDay={(dir) => {
+          const order: TimeView[] = ["yesterday", "today", "tomorrow"];
+          const idx = order.indexOf(timeView);
+          const next = dir === "next" ? idx + 1 : idx - 1;
+          if (next >= 0 && next < order.length) setTimeView(order[next]);
+        }}
       />
     </div>
   );

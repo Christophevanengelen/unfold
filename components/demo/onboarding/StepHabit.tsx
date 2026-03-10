@@ -41,7 +41,8 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
       <motion.button
         type="button"
         onClick={onBack}
-        className="mt-4 self-start text-xs font-medium text-text-body-subtle"
+        className="mt-4 self-start text-xs font-medium"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         <svg
@@ -63,8 +64,8 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
       {/* Headline */}
       <motion.div className="mt-6 text-center" variants={fadeInUp}>
         <h1
-          className="font-display text-2xl font-bold text-text-heading"
-          style={{ letterSpacing: -0.5 }}
+          className="font-display text-2xl font-bold"
+          style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
         >
           Your daily signal,
           <br />
@@ -93,7 +94,7 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
               fontSize: 64,
               fontWeight: 300,
               letterSpacing: -3,
-              color: "var(--text-heading)",
+              color: "var(--accent-purple)",
             }}
           >
             <AnimatedNumber
@@ -111,7 +112,8 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
           style={{
             fontSize: 10,
             letterSpacing: "0.2em",
-            color: "var(--text-body-subtle)",
+            color: "var(--accent-purple)",
+            opacity: 0.5,
           }}
         >
           Momentum
@@ -134,7 +136,8 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
 
         {/* Insight line */}
         <motion.p
-          className="mt-5 max-w-[260px] text-center text-[11px] leading-relaxed text-text-body-subtle"
+          className="mt-5 max-w-[260px] text-center text-[11px] leading-relaxed"
+          style={{ color: "var(--accent-purple)", opacity: 0.5 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.5 }}
@@ -145,7 +148,8 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
 
       {/* Body text */}
       <motion.p
-        className="mt-6 text-center text-sm leading-relaxed text-text-body"
+        className="mt-6 text-center text-sm leading-relaxed"
+        style={{ color: "var(--accent-purple)", opacity: 0.7 }}
         variants={fadeInUp}
       >
         See what&apos;s strongest today, when to use it, and what opens next.
@@ -153,7 +157,8 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
 
       {/* Support */}
       <motion.p
-        className="mt-2 text-center text-xs text-text-body-subtle"
+        className="mt-2 text-center text-xs"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         Built for Yesterday, Today, and Tomorrow.

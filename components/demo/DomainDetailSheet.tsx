@@ -15,11 +15,12 @@ interface DomainDetailSheetProps {
   domain: DomainKey;
   detail: DomainDetail;
   score: number;
-  delta: number;
+  delta?: number;
   trend: "rising" | "stable" | "declining";
   color: string;
   caution?: string;
   onPremiumTap: () => void;
+  onSwipeDay?: (direction: "prev" | "next") => void;
 }
 
 const rows = [
@@ -44,15 +45,23 @@ export function DomainDetailSheet({
   color,
   caution,
   onPremiumTap,
+  onSwipeDay,
 }: DomainDetailSheetProps) {
-  /** Swipe down to dismiss — onPanEnd detects gesture without moving the sheet */
+  /** Swipe down to dismiss + left/right to change day */
   const handlePanEnd = useCallback(
     (_: unknown, info: PanInfo) => {
-      if (info.offset.y > 60 || info.velocity.y > 300) {
+      const { offset, velocity } = info;
+      // Vertical swipe down → dismiss
+      if (offset.y > 60 || velocity.y > 300) {
         onClose();
+        return;
+      }
+      // Horizontal swipe → change day
+      if (onSwipeDay && (Math.abs(offset.x) > 60 || Math.abs(velocity.x) > 300)) {
+        onSwipeDay(offset.x < 0 ? "next" : "prev");
       }
     },
-    [onClose],
+    [onClose, onSwipeDay],
   );
 
   return (
@@ -77,7 +86,7 @@ export function DomainDetailSheet({
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onPanEnd={handlePanEnd}
-            style={{ bottom: -56, paddingBottom: 24, boxShadow: "0 -4px 24px rgba(0,0,0,0.12)", touchAction: "pan-x" }}
+            style={{ bottom: -56, paddingBottom: 24, boxShadow: "0 -4px 24px rgba(0,0,0,0.12)", touchAction: "none" }}
           >
             {/* Handle */}
             <div className="mx-auto mb-5 h-1 w-8 rounded-full bg-brand-5" />

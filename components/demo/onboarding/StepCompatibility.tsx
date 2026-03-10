@@ -107,7 +107,8 @@ export function StepCompatibility({
       <motion.button
         type="button"
         onClick={onBack}
-        className="mt-4 self-start text-xs font-medium text-text-body-subtle"
+        className="mt-4 self-start text-xs font-medium"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         <svg
@@ -142,14 +143,17 @@ export function StepCompatibility({
       {/* Headline */}
       <motion.div className="mt-6 text-center" variants={fadeInUp}>
         <h1
-          className="font-display text-2xl font-bold leading-tight text-text-heading"
-          style={{ letterSpacing: -0.5 }}
+          className="font-display text-2xl font-bold leading-tight"
+          style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
         >
           See what flows
           <br />
           between you.
         </h1>
-        <p className="mt-3 text-sm leading-relaxed text-text-body">
+        <p
+          className="mt-3 text-sm leading-relaxed"
+          style={{ color: "var(--accent-purple)", opacity: 0.7 }}
+        >
           Explore compatibility to understand where connection feels
           natural — and where timing gets more complex.
         </p>
@@ -157,7 +161,8 @@ export function StepCompatibility({
 
       {/* Support */}
       <motion.p
-        className="mt-2 text-center text-xs text-text-body-subtle"
+        className="mt-2 text-center text-xs"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         Personal, useful, and worth sharing.

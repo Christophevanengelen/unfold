@@ -103,8 +103,8 @@ export function StepPreparing() {
 
       {/* Headline */}
       <motion.h1
-        className="mb-2 font-display text-xl font-bold text-text-heading"
-        style={{ letterSpacing: -0.3 }}
+        className="mb-2 font-display text-xl font-bold"
+        style={{ color: "var(--accent-purple)", letterSpacing: -0.3 }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -117,7 +117,8 @@ export function StepPreparing() {
       {/* Body */}
       {!allDone && (
         <motion.p
-          className="mb-6 max-w-[240px] text-xs leading-relaxed text-text-body-subtle"
+          className="mb-6 max-w-[240px] text-xs leading-relaxed"
+          style={{ color: "var(--accent-purple)", opacity: 0.5 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
@@ -179,9 +180,8 @@ export function StepPreparing() {
                   <span
                     className="text-sm"
                     style={{
-                      color: completed.includes(i)
-                        ? "var(--text-body)"
-                        : "var(--text-body-subtle)",
+                      color: "var(--accent-purple)",
+                      opacity: completed.includes(i) ? 0.7 : 0.5,
                     }}
                   >
                     {text}

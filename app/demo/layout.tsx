@@ -44,7 +44,7 @@ export default function DemoLayout({
         {/* Status bar — hidden on onboarding/invite flows */}
         {!hideNav && (
           <div className="flex items-center justify-between px-6 pt-3 pb-2">
-            <span className="text-xs font-medium text-text-body-subtle">
+            <span className="text-xs font-medium" style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
               9:41
             </span>
             <UnfoldLogo size={22} />

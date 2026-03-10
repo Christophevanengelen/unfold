@@ -63,7 +63,8 @@ export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
       <motion.button
         type="button"
         onClick={onBack}
-        className="mt-4 self-start text-xs font-medium text-text-body-subtle"
+        className="mt-4 self-start text-xs font-medium"
+        style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
         <svg
@@ -106,8 +107,8 @@ export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
 
         {/* Headline */}
         <motion.h1
-          className="font-display text-2xl font-bold text-text-heading"
-          style={{ letterSpacing: -0.5 }}
+          className="font-display text-2xl font-bold"
+          style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
           variants={fadeInUp}
         >
           Now let&apos;s configure
@@ -117,7 +118,8 @@ export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
 
         {/* Body */}
         <motion.p
-          className="mt-3 max-w-[240px] text-sm leading-relaxed text-text-body"
+          className="mt-3 max-w-[240px] text-sm leading-relaxed"
+          style={{ color: "var(--accent-purple)", opacity: 0.7 }}
           variants={fadeInUp}
         >
           We need your birth details to prepare your personal rhythm.
@@ -125,7 +127,8 @@ export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
 
         {/* Support */}
         <motion.p
-          className="mt-2 text-xs text-text-body-subtle"
+          className="mt-2 text-xs"
+          style={{ color: "var(--accent-purple)", opacity: 0.5 }}
           variants={fadeInUp}
         >
           This only takes a moment.
