@@ -217,6 +217,78 @@ function GlassCard({
 }
 
 // ═══════════════════════════════════════════════════════════════
+// EMBEDDED HERO MOCKUP
+// Hero section — static on Today, no auto-cycling
+// ═══════════════════════════════════════════════════════════════
+
+export function EmbeddedHeroMockup() {
+  const { ref, inView } = useInView(0.1);
+
+  // Measure card container for cardWidth
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardWidth, setCardWidth] = useState(0);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setCardWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Static on Today — instant comprehension
+  const data = mockToday;
+  const deltas = getDeltas("today");
+
+  return (
+    <PremiumTeaserContext.Provider value={() => {}}>
+      <LayoutGroup id="landing-hero">
+        <div ref={ref} className="flex h-full w-full flex-col">
+          <PhoneFrame>
+            <StatusBar />
+
+            {/* TimeControl — static on Today */}
+            <div className="shrink-0 px-5 pt-1 pb-2">
+              <TimeControl value="today" onChange={() => {}} />
+            </div>
+
+            {/* Card container */}
+            <div ref={cardRef} className="relative mx-4 flex-1">
+              {cardWidth > 0 && (
+                <GlassCard cardWidth={cardWidth}>
+                  <OverallPage
+                    isActive={inView}
+                    data={data}
+                    deltas={deltas}
+                    label={data.label ?? ""}
+                    structuredInsight={
+                      mockStructuredInsights.today.overall
+                    }
+                    trendData={overallTrendForView.today}
+                    cardWidth={cardWidth}
+                  />
+                </GlassCard>
+              )}
+            </div>
+
+            {/* PageDots — decorative */}
+            <div className="shrink-0">
+              <PageDots total={4} active={0} />
+            </div>
+
+            <BottomNav />
+          </PhoneFrame>
+        </div>
+      </LayoutGroup>
+    </PremiumTeaserContext.Provider>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // EMBEDDED OVERALL MOCKUP
 // DailyScores section — auto-cycles Yesterday → Today → Tomorrow
 // ═══════════════════════════════════════════════════════════════

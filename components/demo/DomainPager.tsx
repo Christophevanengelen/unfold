@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { TimeControl, type TimeView } from "./TimeControl";
-import { PageDots } from "./PageDots";
 import { OverallPage } from "./OverallPage";
 import { DomainPage } from "./DomainPage";
 import { usePremiumTeaser } from "./PremiumTeaserContext";
-
+import { PageDots } from "./PageDots";
 import { DomainDetailSheet } from "./DomainDetailSheet";
 import { DOMAINS, domainConfig, type DomainKey } from "@/lib/domain-config";
 import {
@@ -21,9 +20,9 @@ import {
 
 /** Carousel configuration */
 const TOTAL_PAGES = 4;
-const GAP = 12;
+const GAP = 4;
 /** How many px of adjacent cards are visible on each side */
-const PEEK = 44;
+const PEEK = 40;
 /** Extra space above/below scroll container so card shadows aren't clipped */
 const SHADOW_BLEED = 40;
 
@@ -105,7 +104,10 @@ export function DomainPager() {
   };
   const trendData = trend7D;
 
-  /** Detect which card is centered on scroll */
+  // Continuous scroll progress — fractional page index (e.g. 0.5 = halfway between page 0 and 1)
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  /** Detect which card is centered on scroll + track continuous progress */
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el || wrapperWidth === 0) return;
@@ -113,11 +115,18 @@ export function DomainPager() {
     const scrollLeft = el.scrollLeft;
     const viewportCenter = scrollLeft + wrapperWidth / 2;
 
+    // Continuous fractional page index
+    const pageUnit = cardWidth + GAP;
+    const fractionalPage = pageUnit > 0
+      ? (viewportCenter - sidePadding - cardWidth / 2) / pageUnit
+      : 0;
+    setScrollProgress(fractionalPage);
+
     let closestIndex = 0;
     let closestDist = Infinity;
 
     for (let i = 0; i < TOTAL_PAGES; i++) {
-      const cardCenter = sidePadding + i * (cardWidth + GAP) + cardWidth / 2;
+      const cardCenter = sidePadding + i * pageUnit + cardWidth / 2;
       const dist = Math.abs(viewportCenter - cardCenter);
       if (dist < closestDist) {
         closestDist = dist;
@@ -149,6 +158,9 @@ export function DomainPager() {
     setDetailDomain(domain);
   }, []);
 
+  // Map timeView to 7-day week index (yesterday=2, today=3, tomorrow=4)
+  const activeDayIndex = timeView === "yesterday" ? 2 : timeView === "today" ? 3 : 4;
+
   // Page content array
   const pages = [
     <OverallPage
@@ -160,6 +172,7 @@ export function DomainPager() {
       structuredInsight={mockStructuredInsights[timeView].overall}
       trendData={trendData.overall}
       cardWidth={cardWidth}
+      activeDayIndex={activeDayIndex}
     />,
     ...DOMAINS.map((domain, i) => (
       <DomainPage
@@ -175,6 +188,7 @@ export function DomainPager() {
         trendData={trendData[domain]}
         cardWidth={cardWidth}
         onDetailTap={() => handleDetailTap(domain)}
+        activeDayIndex={activeDayIndex}
       />
     )),
   ];
@@ -209,8 +223,16 @@ export function DomainPager() {
           }}
         >
           {pages.map((page, i) => {
-            const dist = Math.abs(i - activePage);
-            const isCurrent = dist === 0;
+            // Continuous distance from center (0 = centered, 1 = one page away)
+            const dist = Math.abs(i - scrollProgress);
+            const t = Math.min(dist, 1.5); // clamp
+
+            // Fluid interpolation — scale, translateY for depth (no opacity fade)
+            const scale = 1 - t * 0.08; // 1.0 → 0.92
+            const translateY = t * 8; // 0 → 8px (sink down)
+            const shadowBlur = Math.max(0, 40 - t * 32); // 40 → 8
+            const shadowAlpha = Math.max(0.06, 0.5 - t * 0.44);
+
             return (
               <div
                 key={i}
@@ -219,18 +241,12 @@ export function DomainPager() {
                   width: cardWidth,
                   minWidth: cardWidth,
                   scrollSnapAlign: "center",
-                  background: "color-mix(in srgb, var(--card-bg) 70%, transparent)",
-                  backdropFilter: "blur(16px)",
-                  WebkitBackdropFilter: "blur(16px)",
-                  border: "1px solid var(--card-border)",
-                  boxShadow: isCurrent
-                    ? "var(--card-shadow)"
-                    : "0 2px 8px rgba(0,0,0,0.06)",
-                  transform: isCurrent ? "scale(1)" : "scale(0.98)",
-                  opacity: isCurrent ? 1 : 0.7,
-                  zIndex: isCurrent ? 2 : 1,
-                  transition:
-                    "transform 0.35s ease, box-shadow 0.35s ease, opacity 0.35s ease",
+                  background: "var(--card-bg)",
+                  border: "none",
+                  boxShadow: `0 8px ${shadowBlur}px rgba(20, 15, 45, ${shadowAlpha})`,
+                  transform: `scale(${scale}) translateY(${translateY}px)`,
+                  zIndex: dist < 0.5 ? 2 : 1,
+                  willChange: "transform, opacity",
                 }}
               >
                 {page}
@@ -240,13 +256,9 @@ export function DomainPager() {
         </div>
       </div>
 
-      {/* Page dots — bottom (z-30 above scroll container bleed) */}
+      {/* Card page dots */}
       <div className="relative shrink-0" style={{ zIndex: 30 }}>
-        <PageDots
-          total={TOTAL_PAGES}
-          active={activePage}
-          onDotTap={scrollToPage}
-        />
+        <PageDots total={TOTAL_PAGES} active={activePage} onDotTap={scrollToPage} />
       </div>
 
       {/* Domain detail sheet — always mounted so AnimatePresence can play exit */}
@@ -256,8 +268,10 @@ export function DomainPager() {
         domain={detailDomain ?? lastDomain}
         detail={mockDomainDetails[timeView][detailDomain ?? lastDomain]}
         score={data.scores[detailDomain ?? lastDomain].value}
+        delta={deltas[detailDomain ?? lastDomain]}
         trend={data.scores[detailDomain ?? lastDomain].trend}
         color={domainConfig[detailDomain ?? lastDomain].color}
+        caution={mockStructuredInsights[timeView][detailDomain ?? lastDomain]?.caution}
         onPremiumTap={() => {
           setDetailDomain(null);
           openPremium();

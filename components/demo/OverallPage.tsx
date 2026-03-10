@@ -3,14 +3,9 @@
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { ScoreRing } from "./ScoreRing";
 import { SatelliteScores } from "./SatelliteScores";
-import { TrendCurve } from "./TrendCurve";
-
 import { StructuredInsightCard } from "./StructuredInsightCard";
-import { formatDelta, getDeltaColor } from "@/lib/animations";
+import { Rocket } from "flowbite-react-icons/solid";
 import type { DailyMomentum, StructuredInsight } from "@/types/api";
-
-/** Consistent trend curve height across all pages */
-const TREND_HEIGHT = 150;
 
 interface OverallPageProps {
   isActive: boolean;
@@ -20,6 +15,7 @@ interface OverallPageProps {
   structuredInsight: StructuredInsight;
   trendData: number[];
   cardWidth: number;
+  activeDayIndex?: number;
 }
 
 /**
@@ -30,9 +26,6 @@ interface OverallPageProps {
  * card bottom. It NEVER moves when switching time views.
  */
 
-/** Fixed distance from card bottom to trend curve bottom edge */
-const TREND_BOTTOM_OFFSET = 140;
-
 export function OverallPage({
   isActive,
   data,
@@ -41,59 +34,69 @@ export function OverallPage({
   structuredInsight,
   trendData,
   cardWidth,
+  activeDayIndex,
 }: OverallPageProps) {
   return (
     <div className="relative flex h-full flex-col">
       {/* === HERO SECTION === */}
-      <div className="flex flex-col items-center pt-6">
-        {/* Score ring + BIG number */}
-        <ScoreRing
-          score={data.overall}
-          color="var(--accent-purple)"
-          size={160}
-          isActive={isActive}
-          delay={0.3}
-          delta={deltas.overall}
+      <div className="flex flex-col items-center pt-5">
+        {/* Momentum icon + label — top, like domain cards */}
+        <div style={{ color: "var(--accent-purple)" }}>
+          <Rocket className="h-5 w-5" style={{ strokeWidth: 1.5 }} />
+        </div>
+        <p
+          className="mt-1.5 font-medium uppercase"
+          style={{
+            fontSize: 10,
+            letterSpacing: "0.2em",
+            color: "var(--accent-purple)",
+          }}
         >
-          <span
-            className="font-display leading-none"
-            style={{
-              fontSize: 80,
-              fontWeight: 300,
-              letterSpacing: -4,
-              color: "var(--accent-purple)",
-            }}
-          >
-            <AnimatedNumber value={data.overall} duration={1.8} delay={0.3} isActive={isActive} />
-          </span>
-        </ScoreRing>
+          Momentum
+        </p>
 
-        {/* Label — fixed min-height prevents layout shift across time views */}
-        <div className="mt-3 flex min-h-[44px] flex-col items-center justify-center">
-          <div className="flex items-center gap-2">
-            <p
-              className="font-medium uppercase"
+        {/* Score ring + BIG number */}
+        <div className="mt-4">
+          <ScoreRing
+            score={data.overall}
+            color="var(--accent-purple)"
+            size={160}
+            isActive={isActive}
+            delay={0.3}
+          >
+            <span
+              className="font-display leading-none"
               style={{
-                fontSize: 10,
-                letterSpacing: "0.2em",
-                color: "var(--text-body-subtle)",
+                fontSize: 80,
+                fontWeight: 300,
+                letterSpacing: -4,
+                color: "var(--accent-purple)",
               }}
             >
-              Momentum
-            </p>
-            <span className={`text-sm font-semibold ${getDeltaColor(deltas.overall)}`}>
-              {formatDelta(deltas.overall)}
+              <AnimatedNumber value={data.overall} duration={1.8} delay={0.3} isActive={isActive} />
             </span>
-          </div>
+          </ScoreRing>
+        </div>
+
+        {/* Label — fixed min-height prevents layout shift across time views */}
+        <div className="mt-4 flex min-h-[44px] flex-col items-center justify-center">
           {label && (
-            <p style={{ fontSize: 12, color: "var(--text-body)", marginTop: 2 }}>
+            <p style={{ fontSize: 12, color: "var(--text-body-subtle)", marginTop: 2 }}>
               {label}
             </p>
           )}
         </div>
 
-        {/* Satellite scores — now includes delta display */}
-        <div className="mt-6">
+      </div>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Satellite scores — absolutely positioned at fixed vertical center so
+          they NEVER shift when switching days (content changes above/below) */}
+      <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center"
+           style={{ top: "52%" }}>
+        <div className="pointer-events-auto">
           <SatelliteScores
             love={data.scores.love.value}
             health={data.scores.health.value}
@@ -104,43 +107,11 @@ export function OverallPage({
         </div>
       </div>
 
-      {/* Spacer — absorbs remaining vertical space */}
-      <div className="flex-1" />
-
       {/* === BOTTOM CONTENT — insight card, always at card bottom === */}
-      <div className="relative shrink-0" style={{ zIndex: 2 }}>
+      <div className="relative shrink-0 pb-5" style={{ zIndex: 2 }}>
         <StructuredInsightCard insight={structuredInsight} color="var(--accent-purple)" />
       </div>
 
-      {/* === TREND CURVE — absolutely positioned, NEVER moves === */}
-      <div
-        className="pointer-events-none absolute inset-x-0"
-        style={{ bottom: 0, height: TREND_BOTTOM_OFFSET + TREND_HEIGHT, zIndex: 1 }}
-      >
-        {/* Centered pill label on top of trend line */}
-        <div className="pointer-events-none absolute inset-x-0 z-10 flex -translate-y-1/2 justify-center" style={{ top: TREND_HEIGHT * 0.75 }}>
-          <span
-            className="rounded-full px-2.5 py-0.5 font-medium uppercase"
-            style={{
-              fontSize: 8,
-              letterSpacing: "0.12em",
-              color: "var(--text-body-subtle)",
-              background: "color-mix(in srgb, var(--accent-purple) 8%, color-mix(in srgb, var(--bg-secondary) 65%, transparent))",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            Weekly trend
-          </span>
-        </div>
-        <TrendCurve
-          data={trendData}
-          color="var(--accent-purple)"
-          width={cardWidth}
-          height={TREND_HEIGHT}
-          fillHeight={TREND_BOTTOM_OFFSET + TREND_HEIGHT}
-          isActive={isActive}
-        />
-      </div>
     </div>
   );
 }

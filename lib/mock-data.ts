@@ -61,12 +61,12 @@ export const mockTomorrow: DailyMomentum = {
 export const mockTrend: MomentumTrend = {
   period: { from: "2026-03-03", to: "2026-03-09" },
   dataPoints: [
-    { date: "2026-03-03", love: 65, health: 70, work: 75, overall: 70 },
-    { date: "2026-03-04", love: 68, health: 72, work: 71, overall: 70 },
-    { date: "2026-03-05", love: 74, health: 68, work: 78, overall: 73 },
-    { date: "2026-03-06", love: 71, health: 80, work: 69, overall: 73 },
-    { date: "2026-03-07", love: 69, health: 83, work: 65, overall: 72 },
-    { date: "2026-03-08", love: 72, health: 85, work: 61, overall: 73 },
+    { date: "2026-03-03", love: 68, health: 72, work: 74, overall: 71 },
+    { date: "2026-03-04", love: 62, health: 68, work: 70, overall: 67 },
+    { date: "2026-03-05", love: 70, health: 65, work: 68, overall: 68 },
+    { date: "2026-03-06", love: 82, health: 78, work: 85, overall: 82 },
+    { date: "2026-03-07", love: 75, health: 80, work: 72, overall: 76 },
+    { date: "2026-03-08", love: 64, health: 70, work: 62, overall: 65 },
     { date: "2026-03-09", love: 78, health: 69, work: 82, overall: 76 },
   ],
 };

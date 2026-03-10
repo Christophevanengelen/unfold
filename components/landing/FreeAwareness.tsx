@@ -9,9 +9,9 @@ interface FreeAwarenessProps {
 
 export function FreeAwareness({ t }: FreeAwarenessProps) {
   const axes = [
-    { icon: Heart, color: "var(--accent-pink)", twColor: "text-accent-pink", label: t("free.love", "Love"), desc: t("free.love.desc", "Relational momentum and emotional clarity") },
-    { icon: CheckCircle, color: "var(--accent-green)", twColor: "text-accent-green", label: t("free.health", "Health"), desc: t("free.health.desc", "Physical vitality and energy rhythms") },
-    { icon: Briefcase, color: "var(--accent-blue)", twColor: "text-accent-blue", label: t("free.work", "Work"), desc: t("free.work.desc", "Creative focus and professional timing") },
+    { icon: Heart, color: "var(--accent-pink)", twColor: "text-accent-pink", label: t("free.love.title", "Love"), desc: t("free.love.desc", "Your relational momentum. Connections, openness, emotional clarity.") },
+    { icon: CheckCircle, color: "var(--accent-green)", twColor: "text-accent-green", label: t("free.health.title", "Health"), desc: t("free.health.desc", "Your physical rhythm. Energy, vitality, peak performance.") },
+    { icon: Briefcase, color: "var(--accent-blue)", twColor: "text-accent-blue", label: t("free.work.title", "Work"), desc: t("free.work.desc", "Your creative clarity. Focus, decisions, professional timing.") },
   ];
 
   return (
@@ -20,18 +20,18 @@ export function FreeAwareness({ t }: FreeAwarenessProps) {
         {/* Header text — one cohesive block */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
-            {t("free.eyebrow", "Free forever")}
+            {t("free.eyebrow", "Always free")}
           </p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("free.title", "Daily momentum awareness")}
+            {t("free.title", "Your free daily momentum score")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("free.subtitle", "Every day, understand your rhythms across three axes. No guesswork. No noise. Just clarity.")}
+            {t("free.subtitle", "Free forever: your daily momentum across Love, Health, and Work.")}
           </p>
         </ScrollReveal>
 
         {/* Cards — stagger in after header */}
-        <ScrollRevealGroup className="mt-16 grid gap-8 md:grid-cols-3" stagger={0.15}>
+        <ScrollRevealGroup className="mt-12 grid gap-8 md:grid-cols-3" stagger={0.15}>
           {axes.map((axis) => (
             <ScrollRevealItem key={axis.label} variant="fadeUp">
               <div className="p-8 text-center">

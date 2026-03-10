@@ -190,8 +190,8 @@
   --glow-work: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #3E63DD 12%, transparent) 0%, transparent 70%);
   --glow-overall: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #7C6BBF 12%, transparent) 0%, transparent 70%);
 
-  /* Card chrome — 3D carousel cards (semi-transparent for frosted glass) */
-  --card-bg: color-mix(in srgb, var(--bg-secondary) 65%, transparent);
+  /* Card chrome — solid card surface */
+  --card-bg: var(--bg-secondary);
   --card-border: color-mix(in srgb, var(--border-muted) 60%, transparent);
   --card-shadow: 0 8px 40px color-mix(in srgb, var(--brand-12) 15%, transparent);
 
@@ -290,16 +290,16 @@
   --glow-work: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #5B7FEE 15%, transparent) 0%, transparent 70%);
   --glow-overall: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, #9585CC 15%, transparent) 0%, transparent 70%);
 
-  /* Card chrome — 3D carousel cards */
-  --card-bg: color-mix(in srgb, var(--bg-secondary) 60%, var(--bg-primary));
+  /* Card chrome — solid card surface, darker than bg-secondary for depth */
+  --card-bg: #15112B;
   --card-border: color-mix(in srgb, var(--border-light) 30%, transparent);
   --card-shadow: 0 8px 40px rgba(20, 15, 45, 0.5);
 
-  /* App background gradient — ambient mesh glow */
-  --gradient-top: rgba(149, 133, 204, 0.40);
-  --gradient-left: rgba(242, 95, 160, 0.18);
-  --gradient-right: rgba(91, 127, 238, 0.18);
-  --gradient-bottom: rgba(149, 133, 204, 0.22);
+  /* App background gradient — subtle ambient depth */
+  --gradient-top: rgba(124, 107, 191, 0.12);
+  --gradient-left: rgba(124, 107, 191, 0.05);
+  --gradient-right: rgba(124, 107, 191, 0.05);
+  --gradient-bottom: rgba(124, 107, 191, 0.08);
 
 }
 
@@ -392,12 +392,10 @@ h1, h2, h3, h4, h5, h6 {
    Landing Page — Premium Utilities
    ============================================== */
 
-/* Glass card — frosted translucent surface (app demo context) */
+/* Solid card surface (app demo context) */
 .glass-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  backdrop-filter: blur(16px) saturate(1.6);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
   border-radius: 1.5rem;
 }
 

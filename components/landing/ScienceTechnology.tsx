@@ -6,9 +6,9 @@ interface ScienceTechnologyProps {
 
 export function ScienceTechnology({ t }: ScienceTechnologyProps) {
   const items = [
-    { title: t("science.pattern.title", "Pattern recognition"), desc: t("science.pattern.desc", "Advanced algorithms identify recurring rhythms in your daily momentum data."), color: "#9585CC" },
-    { title: t("science.personal.title", "Personal calibration"), desc: t("science.personal.desc", "Your signals are uniquely yours. The engine learns and adapts to your patterns."), color: "#5B7FEE" },
-    { title: t("science.privacy.title", "Privacy-first"), desc: t("science.privacy.desc", "Your data belongs to you. Encrypted. Private. Never shared."), color: "#3CB179" },
+    { title: t("science.pattern.title", "High-precision data"), desc: t("science.pattern.desc", "Built on JPL/NASA ephemerides and real-time planetary calculations."), color: "#9585CC" },
+    { title: t("science.personal.title", "Personal models"), desc: t("science.personal.desc", "Proprietary AI models adapt to your rhythm over time."), color: "#5B7FEE" },
+    { title: t("science.privacy.title", "Private by design"), desc: t("science.privacy.desc", "Your personal data stays personal."), color: "#3CB179" },
   ];
 
   return (
@@ -20,10 +20,10 @@ export function ScienceTechnology({ t }: ScienceTechnologyProps) {
             {t("science.eyebrow", "Built on signal, not noise")}
           </p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("science.title", "The technology behind your timing")}
+            {t("science.title", "Powered by precision, not prediction.")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("science.subtitle", "Unfold combines behavioral science with advanced pattern recognition to surface your personal momentum signals.")}
+            {t("science.subtitle", "Built on JPL/NASA ephemerides, real-time planetary calculations, and proprietary AI models.")}
           </p>
         </ScrollReveal>
 

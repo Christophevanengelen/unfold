@@ -13,7 +13,7 @@ export function Pricing({ t }: PricingProps) {
         {/* Header text — one cohesive block */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("pricing.title", "Start free. Unlock more.")}
+            {t("pricing.title", "Free forever. Premium when you're ready.")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
             {t("pricing.subtitle", "Your daily momentum signal is always free. Premium unlocks the full picture.")}
@@ -24,7 +24,7 @@ export function Pricing({ t }: PricingProps) {
           labels={{
             monthly: t("pricing.toggle.monthly", "Monthly"),
             yearly: t("pricing.toggle.yearly", "Yearly"),
-            save: t("pricing.toggle.save", "Save 17%"),
+            save: t("pricing.toggle.save", "Save 39%"),
           }}
           freeCard={
             <div className="landing-glass p-8">
@@ -54,7 +54,7 @@ export function Pricing({ t }: PricingProps) {
           }
           premiumMonthly={
             <p className="font-display text-4xl font-bold text-white">
-              $2.99
+              $4
               <span className="text-base font-normal text-brand-10">
                 {t("pricing.premium.period", "/month")}
               </span>
@@ -63,13 +63,10 @@ export function Pricing({ t }: PricingProps) {
           premiumYearly={
             <div>
               <p className="font-display text-4xl font-bold text-white">
-                $29.90
+                $29
                 <span className="text-base font-normal text-brand-10">
                   {t("pricing.premium.period.year", "/year")}
                 </span>
-              </p>
-              <p className="mt-1 text-sm text-brand-10">
-                {t("pricing.premium.permonth", "$2.49/month, billed annually")}
               </p>
             </div>
           }
@@ -90,7 +87,7 @@ export function Pricing({ t }: PricingProps) {
                 </span>
               </div>
               <p className="mt-2 text-brand-10">
-                {t("pricing.premium.desc", "See further. Move smarter.")}
+                {t("pricing.premium.desc", "Your future, mapped.")}
               </p>
             </>
           }
@@ -112,6 +109,15 @@ export function Pricing({ t }: PricingProps) {
             </ul>
           }
         />
+
+        {/* Subscription justification */}
+        <ScrollReveal variant="fadeUp" className="mt-8 flex justify-center">
+          <div className="landing-glass max-w-xl rounded-2xl px-6 py-3">
+            <p className="text-sm text-brand-10 text-center">
+              {t("pricing.justification", "Premium is designed as an evolving subscription because your future momentum updates over time.")}
+            </p>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

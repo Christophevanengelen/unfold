@@ -10,7 +10,7 @@ import { domainConfig, type DomainKey } from "@/lib/domain-config";
 import type { StructuredInsight } from "@/types/api";
 
 /** Consistent trend curve height across all pages */
-const TREND_HEIGHT = 150;
+const TREND_HEIGHT = 80;
 
 interface DomainPageProps {
   domain: DomainKey;
@@ -24,6 +24,7 @@ interface DomainPageProps {
   trendData: number[];
   cardWidth: number;
   onDetailTap: () => void;
+  activeDayIndex?: number;
 }
 
 /**
@@ -37,8 +38,8 @@ interface DomainPageProps {
  * glass effect reveals the trend behind it. Hero fills remaining space.
  */
 
-/** Fixed distance from card bottom to trend curve bottom edge */
-const TREND_BOTTOM_OFFSET = 190;
+/** Fixed vertical center position for trend curve (% from card top) — same on ALL cards */
+const TREND_CENTER_PCT = 60;
 
 export function DomainPage({
   domain,
@@ -52,6 +53,7 @@ export function DomainPage({
   trendData,
   cardWidth,
   onDetailTap,
+  activeDayIndex,
 }: DomainPageProps) {
   const config = domainConfig[domain];
   const peakLabel = `${peakHour > 12 ? peakHour - 12 : peakHour}${peakHour >= 12 ? "pm" : "am"}`;
@@ -76,10 +78,10 @@ export function DomainPage({
         </p>
 
         {/* Score ring + BIG number */}
-        <div className="mt-2">
+        <div className="mt-4">
           <ScoreRing
             score={score}
-            color={config.color}
+            color="var(--accent-purple)"
             size={160}
             isActive={isActive}
             delay={0.3}
@@ -91,7 +93,7 @@ export function DomainPage({
                 fontSize: 80,
                 fontWeight: 300,
                 letterSpacing: -4,
-                color: config.color,
+                color: "var(--accent-purple)",
               }}
             >
               <AnimatedNumber value={score} duration={1.8} delay={0.3} isActive={isActive} />
@@ -100,11 +102,11 @@ export function DomainPage({
         </div>
 
         {/* Trend + delta + description — fixed min-height prevents layout shift */}
-        <div className="mt-2 flex min-h-[44px] flex-col items-center justify-center">
+        <div className="mt-4 flex min-h-[44px] flex-col items-center justify-center">
           <div className="flex items-center gap-2">
             <span
               className="text-sm font-medium capitalize"
-              style={{ color: "var(--text-body-subtle)" }}
+              style={{ color: "var(--accent-purple)", opacity: 0.7 }}
             >
               {trend}
             </span>
@@ -115,7 +117,7 @@ export function DomainPage({
 
           <p
             className="mt-1 text-xs"
-            style={{ color: "var(--text-body-subtle)" }}
+            style={{ color: "var(--accent-purple)", opacity: 0.5 }}
           >
             Peak at {peakLabel} &middot; {description}
           </p>
@@ -129,34 +131,40 @@ export function DomainPage({
       <div className="relative shrink-0" style={{ zIndex: 2 }}>
         <StructuredInsightCard insight={structuredInsight} color={config.color} />
 
-        {/* See details button */}
-        <div className="px-4 pb-4">
+        {/* Explore button */}
+        <div className="mt-2 px-4 pb-4">
           <button
             type="button"
             onClick={onDetailTap}
-            className="w-full rounded-xl py-2.5 text-xs font-medium transition-transform active:scale-[0.98]"
+            className="w-full rounded-2xl py-3 text-xs font-medium transition-transform active:scale-[0.98]"
             style={{
-              background: `color-mix(in srgb, ${config.color} 8%, var(--bg-secondary))`,
-              color: config.color,
+              background: `color-mix(in srgb, var(--accent-purple) 12%, var(--bg-secondary))`,
+              color: "var(--accent-purple)",
             }}
           >
-            See details
+            Explore
           </button>
         </div>
       </div>
 
-      {/* === TREND CURVE — absolutely positioned, NEVER moves === */}
+      {/* === TREND CURVE — absolutely positioned, centered in gap, same on ALL cards === */}
       <div
-        className="pointer-events-none absolute inset-x-0"
-        style={{ bottom: 0, height: TREND_BOTTOM_OFFSET + TREND_HEIGHT, zIndex: 1 }}
+        className="pointer-events-none absolute inset-x-0 overflow-visible"
+        style={{
+          top: `${TREND_CENTER_PCT}%`,
+          transform: "translateY(-50%)",
+          height: TREND_HEIGHT,
+          zIndex: 1,
+        }}
       >
         <TrendCurve
           data={trendData}
           color={config.color}
           width={cardWidth}
           height={TREND_HEIGHT}
-          fillHeight={TREND_BOTTOM_OFFSET + TREND_HEIGHT}
+          fillHeight={TREND_HEIGHT + 300}
           isActive={isActive}
+          activeDayIndex={activeDayIndex}
         />
       </div>
     </div>

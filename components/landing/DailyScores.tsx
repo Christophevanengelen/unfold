@@ -12,16 +12,26 @@ export function DailyScores({ t }: DailyScoresProps) {
         {/* Header text — one cohesive block */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("scores.title", "Yesterday. Today. Tomorrow.")}
+            {t("daily.title", "Yesterday. Today. Tomorrow.")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("scores.subtitle", "See where your momentum was, where it is, and where it's heading. Three days of clarity at a glance.")}
+            {t("daily.subtitle", "Understand what happened. See where you stand. Know what's coming.")}
           </p>
+          {/* Three moment descriptions — light inline row */}
+          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-brand-10/60">
+            <span>{t("daily.yesterday", "Understand what happened")}</span>
+            <span aria-hidden="true">·</span>
+            <span>{t("daily.today", "See where you stand right now")}</span>
+            <span aria-hidden="true">·</span>
+            <span>{t("daily.tomorrow", "Know what's coming next")}</span>
+          </div>
         </ScrollReveal>
 
         {/* Phone mockup — appears after header as you scroll */}
         <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.1}>
           <div
+            role="img"
+            aria-label="Unfold app showing today's overall momentum score with Love, Health, and Work breakdown"
             className="relative h-[812px] w-[375px] overflow-hidden"
             style={{
               borderRadius: "2.25rem",

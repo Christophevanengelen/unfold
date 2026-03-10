@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { uniformRounded } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
@@ -9,13 +10,16 @@ export const metadata: Metadata = {
   icons: { icon: "/logo/logo-dark.svg" },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const h = await headers();
+  const lang = h.get("x-locale") || "en";
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={lang} suppressHydrationWarning>
       <body className={`${uniformRounded.variable} ${uniformRounded.className} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>

@@ -11,12 +11,15 @@ interface TrendCurveProps {
   fillHeight?: number;
   /** Controls when animation plays — mirrors ScoreRing pattern */
   isActive?: boolean;
+  /** Active day index in the 7-day week (2=yesterday, 3=today, 4=tomorrow).
+   *  Dots: hide day 0 & 6, subtle for day 1 & 5, glow on active day. */
+  activeDayIndex?: number;
 }
 
 /**
- * Edge-to-edge smooth trend curve with animated draw-on effect.
- * Zero padding — curve spans full card width, clipped by card's overflow-hidden.
- * Uses Catmull-Rom spline interpolation for smooth, no-overshoot curves.
+ * Edge-to-edge smooth trend curve with animated draw-on effect and edge fade.
+ * Organic flowing shape with gradient stroke and glowing dots at inflection points.
+ * Uses Catmull-Rom spline interpolation for smooth, natural curves.
  *
  * Animation behavior (same contract as ScoreRing):
  * - First activation: draw line left→right (1.6s quintic), then fade in fill
@@ -31,6 +34,7 @@ export function TrendCurve({
   height = 160,
   fillHeight,
   isActive = true,
+  activeDayIndex,
 }: TrendCurveProps) {
   const totalHeight = fillHeight ?? height;
   const pathRef = useRef<SVGPathElement>(null);
@@ -85,16 +89,13 @@ export function TrendCurve({
     if (!isActive) return;
 
     if (!hasAnimated.current) {
-      // First activation: draw animation
       hasAnimated.current = true;
       prevDataKey.current = dataKey;
       animateDraw();
     } else if (prevDataKey.current !== dataKey) {
-      // Data changed (day switch): re-draw
       prevDataKey.current = dataKey;
       animateDraw();
     }
-    // Revisit same data: drawProgress & fillOpacity already at final state
   }, [isActive, dataKey, animateDraw]);
 
   // Cleanup on unmount
@@ -108,7 +109,7 @@ export function TrendCurve({
   // Early return AFTER all hooks
   if (data.length < 2) return null;
 
-  const padY = 16;
+  const padY = 12;
   const chartHeight = height - padY * 2;
 
   const min = Math.min(...data);
@@ -121,12 +122,11 @@ export function TrendCurve({
   }));
 
   const smoothPath = buildSmoothPath(points);
-  const fillPath = `${smoothPath} L ${width} ${totalHeight} L 0 ${totalHeight} Z`;
-  const gradientId = `trend-fill-${color.replace(/[^a-zA-Z0-9]/g, "")}`;
+  const colorSafe = color.replace(/[^a-zA-Z0-9]/g, "");
+  const glowFilterId = `trend-glow-${colorSafe}`;
 
-  // Inactive cards that haven't animated: hide curve (animates on first activation)
+  // Inactive cards that haven't animated: hide curve
   const effectiveProgress = !hasAnimated.current && !isActive ? 0 : drawProgress;
-  // Gradient fill follows the line — starts at 25% draw, reaches full at 100%
   const effectiveFill = Math.max(0, (effectiveProgress - 0.25) / 0.75);
   const dashOffset = pathLength > 0 ? pathLength * (1 - effectiveProgress) : 0;
 
@@ -138,44 +138,110 @@ export function TrendCurve({
       className="block"
     >
       <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.10} />
-          <stop offset="100%" stopColor={color} stopOpacity={0.01} />
+        {/* Gradient fill under the curve */}
+        <linearGradient id={`${colorSafe}-fill`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.04} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
         </linearGradient>
+        {/* Horizontal edge fade — progressive transparency at left & right */}
+        <linearGradient id={`${colorSafe}-edge-fade`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity={0} />
+          <stop offset="30%" stopColor="white" stopOpacity={1} />
+          <stop offset="70%" stopColor="white" stopOpacity={1} />
+          <stop offset="100%" stopColor="white" stopOpacity={0} />
+        </linearGradient>
+        <mask id={`${colorSafe}-edge-mask`}>
+          <rect width={width} height={totalHeight} fill={`url(#${colorSafe}-edge-fade)`} />
+        </mask>
+        {/* Glow filter for active dot */}
+        <filter id={glowFilterId} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+        </filter>
       </defs>
 
-      {/* Gradient fill — fades in after line draws */}
-      <path
-        d={fillPath}
-        fill={`url(#${gradientId})`}
-        style={{ opacity: effectiveFill }}
-      />
+      {/* Edge fade group — progressive transparency at card edges */}
+      <g mask={`url(#${colorSafe}-edge-mask)`}>
+        {/* Gradient fill under curve — fades in after line draws */}
+      {smoothPath && (
+        <path
+          d={`${smoothPath} L ${points[points.length - 1].x} ${totalHeight} L ${points[0].x} ${totalHeight} Z`}
+          fill={`url(#${colorSafe}-fill)`}
+          style={{ opacity: effectiveFill }}
+        />
+      )}
 
-      {/* Smooth curve line — animated draw */}
+      {/* Smooth curve line — solid color stroke, animated draw */}
       <path
         ref={pathRef}
         d={smoothPath}
         fill="none"
         stroke={color}
-        strokeWidth={1.5}
+        strokeOpacity={0.5}
+        strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={pathLength > 0 ? pathLength : undefined}
         strokeDashoffset={pathLength > 0 ? dashOffset : undefined}
         style={{ opacity: effectiveProgress > 0 ? 1 : 0 }}
       />
+
+      {/* Week dots — 7 days, hide first & last, glow on active day */}
+      {points.map((pt, i) => {
+        // Hide day 0 and day 6 (first & last of week)
+        if (i === 0 || i === 6) return null;
+
+        const isActiveDot = activeDayIndex !== undefined && i === activeDayIndex;
+        const isEdge = i === 1 || i === 5;
+
+        if (isActiveDot) {
+          // Glowing active day dot — prominent
+          return (
+            <g key={`dot-${i}`} style={{ opacity: effectiveFill }}>
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={8}
+                fill={color}
+                opacity={0.25}
+                filter={`url(#${glowFilterId})`}
+              />
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={4}
+                fill="white"
+                opacity={0.95}
+              />
+            </g>
+          );
+        }
+
+        // Visible dots for other days
+        return (
+          <circle
+            key={`dot-${i}`}
+            cx={pt.x}
+            cy={pt.y}
+            r={3}
+            fill={color}
+            opacity={effectiveFill * (isEdge ? 0.35 : 0.55)}
+          />
+        );
+      })}
+
+      </g>
     </svg>
   );
 }
 
 /**
- * Build a silky smooth SVG path using Catmull-Rom spline interpolation.
+ * Build a smooth SVG path using Catmull-Rom spline interpolation.
  * Tension 0 = maximum smoothness (round curves), 1 = straight lines.
- * Default 0.12 gives gentle, flowing curves that feel natural.
+ * 0.15 gives organic, flowing curves matching the design reference.
  */
 function buildSmoothPath(
   points: { x: number; y: number }[],
-  tension = 0.12,
+  tension = 0.05,
 ): string {
   const n = points.length;
   if (n < 2) return "";

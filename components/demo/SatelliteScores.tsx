@@ -34,7 +34,7 @@ export function SatelliteScores({ love, health, work, deltas, isActive }: Satell
             {/* Score number — thin weight */}
             <span
               className="font-display text-xl"
-              style={{ color: config.color, fontWeight: 300 }}
+              style={{ color: "var(--accent-purple)", fontWeight: 300 }}
             >
               <AnimatedNumber value={values[key]} duration={1.4} delay={0.7} isActive={isActive} />
             </span>

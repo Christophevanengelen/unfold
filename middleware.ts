@@ -23,7 +23,12 @@ export function middleware(request: NextRequest) {
   );
 
   if (pathnameLocale) {
-    return NextResponse.next();
+    // Pass locale to root layout via request header (for dynamic <html lang>)
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-locale", pathnameLocale);
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
   }
 
   // Detect preferred locale from Accept-Language header

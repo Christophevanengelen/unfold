@@ -12,16 +12,26 @@ export function DesignedForClarity({ t }: DesignedForClarityProps) {
         {/* Header text — one cohesive block */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("clarity.title", "Designed for clarity")}
+            {t("clarity.title", "Designed for daily clarity")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("clarity.subtitle", "No clutter. No noise. Every screen is designed to give you exactly what you need — nothing more, nothing less.")}
+            {t("clarity.subtitle", "Every screen delivers exactly what you need. Nothing more.")}
           </p>
+          {/* 3 UX principles */}
+          <div className="mt-6 flex items-center justify-center gap-6 text-sm font-medium text-logo-lavender/70">
+            <span>{t("clarity.p1", "Read in 3 seconds")}</span>
+            <span aria-hidden="true" className="text-brand-10/30">|</span>
+            <span>{t("clarity.p2", "One screen, one answer")}</span>
+            <span aria-hidden="true" className="text-brand-10/30">|</span>
+            <span>{t("clarity.p3", "Premium, not noisy")}</span>
+          </div>
         </ScrollReveal>
 
         {/* Phone mockup — appears after header as you scroll */}
         <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.1}>
           <div
+            role="img"
+            aria-label="Unfold app showing a detailed domain view with daily clarity score and insights"
             className="relative h-[812px] w-[375px] overflow-hidden"
             style={{
               borderRadius: "2.25rem",

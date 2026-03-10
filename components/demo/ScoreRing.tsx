@@ -35,7 +35,8 @@ export function ScoreRing({
 }: ScoreRingProps) {
   const [progress, setProgress] = useState(0);
   const hasAnimated = useRef(false);
-  const prevScore = useRef(score);
+  const prevTarget = useRef<number | null>(null);
+  const progressRef = useRef(0);
   const rafRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -46,23 +47,24 @@ export function ScoreRing({
   const absDelta = Math.abs(delta ?? 0);
   const deltaColor = delta && delta > 0 ? "var(--accent-green)" : "var(--danger)";
 
-  // Single unified animation:
-  // For +delta: domain arc draws 0→(score-delta), then green arc continues (score-delta)→score
-  // For -delta: domain arc draws 0→score, red zone sits static beyond fill
+  // Unified animation — both positive and negative deltas use the same flow:
+  // progress drives EVERYTHING. Delta arc grows naturally as progress passes the split point.
+  //
+  // +delta (e.g. Love +6, score=78): splitPoint=72, target=78
+  //   domain: 0→72, green: 72→78
+  // -delta (e.g. Health -16, score=69): splitPoint=69, target=85
+  //   domain: 0→69, red: 69→85
   const splitPoint = hasDelta && delta! > 0 ? score - delta! : score;
   const domainProgress = Math.min(progress, splitPoint);
   const domainOffset = circumference * (1 - Math.min(domainProgress / 100, 1));
 
-  // Delta arc picks up exactly where domain arc stops
+  // Delta arc picks up exactly where domain arc stops — same logic for both signs
   let deltaLen = 0;
   let deltaOffset = 0;
-  if (hasDelta && delta! > 0) {
+  if (hasDelta) {
     const visible = Math.max(0, progress - splitPoint);
     deltaLen = (visible / 100) * circumference;
     deltaOffset = -(splitPoint / 100) * circumference;
-  } else if (hasDelta && delta! < 0) {
-    deltaLen = (absDelta / 100) * circumference;
-    deltaOffset = -(score / 100) * circumference;
   }
 
   /** Animate progress from `from` to `to` with smooth quintic ease-out */
@@ -93,21 +95,27 @@ export function ScoreRing({
     [],
   );
 
+  // Keep ref in sync so we can read current visual position without triggering effects
+  progressRef.current = progress;
+
+  // Animation target: for negative delta, extend past score to draw the red zone
+  const target = hasDelta && delta! < 0 ? score + absDelta : score;
+
   useEffect(() => {
     if (!isActive) return; // Don't reset progress when inactive!
 
     if (!hasAnimated.current) {
-      // First activation: animate from 0 → score
-      animateFromTo(0, score, delay);
+      // First activation: animate from 0 → target
+      animateFromTo(0, target, delay);
       hasAnimated.current = true;
-      prevScore.current = score;
-    } else if (prevScore.current !== score) {
-      // Score changed (e.g. day switch): animate old → new
-      animateFromTo(prevScore.current, score, 0.05);
-      prevScore.current = score;
+      prevTarget.current = target;
+    } else if (prevTarget.current !== target) {
+      // Target changed (day switch): animate from current visual position → new target
+      animateFromTo(progressRef.current, target, 0.05);
+      prevTarget.current = target;
     }
-    // Revisit with same score: do nothing — ring stays filled
-  }, [score, isActive, delay, animateFromTo]);
+    // Revisit with same target: do nothing — ring stays filled
+  }, [target, isActive, delay, animateFromTo]);
 
   // Cleanup on unmount
   useEffect(() => {

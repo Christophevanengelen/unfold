@@ -23,7 +23,7 @@ export default function DemoLayout({
   const isHome = pathname === "/demo";
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#150F2E" }}>
+    <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }}>
       {/* Mobile frame */}
       <div
         className="relative flex h-[812px] w-[375px] flex-col overflow-hidden rounded-[2.5rem] border border-brand-6/40 bg-bg-primary"
@@ -31,17 +31,13 @@ export default function DemoLayout({
           transform: "translateZ(0)",
         }}
       >
-        {/* Gradient background layer — ambient mesh glow */}
+        {/* Subtle ambient depth — monochrome purple only */}
         <div
           className="pointer-events-none absolute inset-0"
           aria-hidden="true"
           style={{
-            background: [
-              "radial-gradient(ellipse 140% 45% at 50% -5%, var(--gradient-top) 0%, transparent 65%)",
-              "radial-gradient(circle 300px at 15% 75%, var(--gradient-left) 0%, transparent 70%)",
-              "radial-gradient(circle 250px at 90% 90%, var(--gradient-right) 0%, transparent 70%)",
-              "radial-gradient(ellipse 100% 35% at 50% 105%, var(--gradient-bottom) 0%, transparent 60%)",
-            ].join(", "),
+            background:
+              "radial-gradient(ellipse 120% 40% at 50% 0%, rgba(124, 107, 191, 0.10) 0%, transparent 60%)",
           }}
         />
 

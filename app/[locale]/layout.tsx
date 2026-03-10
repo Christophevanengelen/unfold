@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { isValidLocale, getDirection } from "@/i18n/config";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { StructuredData } from "@/components/seo/StructuredData";
 
 export default async function LocaleLayout({
   children,
@@ -18,6 +19,7 @@ export default async function LocaleLayout({
 
   return (
     <div dir={getDirection(locale)} className="flex min-h-screen flex-col bg-[#150F2E]">
+      <StructuredData />
       <Header locale={locale} />
       <main className="flex-1">{children}</main>
       <Footer locale={locale} />

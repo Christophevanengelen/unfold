@@ -12,10 +12,10 @@ export function FinalCTA({ t }: FinalCTAProps) {
         {/* All CTA content — one cohesive block */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("cta.title", "Your momentum is waiting")}
+            {t("cta.title", "Download Unfold")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("cta.subtitle", "Download Unfold and discover the rhythms that move your life forward.")}
+            {t("cta.subtitle", "Your personal timing app for Love, Health, and Work. Free on iOS and Android.")}
           </p>
           <div className="mt-10">
             <AppStoreBadges />

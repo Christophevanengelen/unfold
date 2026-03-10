@@ -15,10 +15,10 @@ export function Compatibility({ t }: CompatibilityProps) {
             {t("compat.eyebrow", "Better together")}
           </p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("compat.title", "Compare your rhythms")}
+            {t("compat.title", "See what happens between you")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("compat.subtitle", "Share your invite code. Discover how your momentum aligns with someone who matters. Find your shared peak moments.")}
+            {t("compat.subtitle", "Share your code. Discover your compatibility across Love, Health, and Work.")}
           </p>
         </ScrollReveal>
 
@@ -27,13 +27,13 @@ export function Compatibility({ t }: CompatibilityProps) {
           <div className="landing-glass p-12 text-center">
             <Image
               src="/illustrations/compare.svg"
-              alt=""
+              alt="Unfold compatibility screen comparing daily rhythms between two people across Love, Health, and Work"
               width={280}
               height={280}
               className="mx-auto"
             />
-            <p className="mt-6 font-display text-xl font-semibold text-white">
-              {t("compat.cta", "Invite someone. Compare your signals.")}
+            <p className="mt-6 font-display text-sm font-medium uppercase tracking-wider text-brand-10/60">
+              {t("compat.process", "Share your code → Connect → Compare")}
             </p>
           </div>
         </ScrollReveal>
