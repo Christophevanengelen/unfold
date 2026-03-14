@@ -1,11 +1,11 @@
+import Link from "next/link";
+
 export function AppStoreBadges() {
   return (
     <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
       {/* App Store badge */}
-      <a
-        href="https://apps.apple.com/app/unfold-personal-timing/id0000000000"
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        href="/demo"
         className="group flex h-[52px] w-[168px] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-4 text-white backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
         aria-label="Download Unfold on the App Store"
       >
@@ -22,13 +22,11 @@ export function AppStoreBadges() {
           <span className="block text-[10px] font-normal tracking-wide opacity-70">Download on the</span>
           <span className="block text-[15px] font-semibold tracking-tight">App Store</span>
         </div>
-      </a>
+      </Link>
 
       {/* Google Play badge */}
-      <a
-        href="https://play.google.com/store/apps/details?id=app.unfold.momentum"
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        href="/demo"
         className="group flex h-[52px] w-[168px] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-4 text-white backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
         aria-label="Get Unfold on Google Play"
       >
@@ -45,7 +43,7 @@ export function AppStoreBadges() {
           <span className="block text-[10px] font-normal tracking-wide opacity-70">GET IT ON</span>
           <span className="block text-[15px] font-semibold tracking-tight">Google Play</span>
         </div>
-      </a>
+      </Link>
     </div>
   );
 }
