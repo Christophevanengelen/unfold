@@ -89,34 +89,6 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
               <div className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(255,255,255,0.2))" }} />
             </div>
 
-            {/* Future blur overlay (TOP) — dissolves on reveal */}
-            <motion.div
-              className="absolute left-0 right-0 z-10"
-              style={{
-                top: 0,
-                height: NOW_Y - 10,
-                background: "linear-gradient(to top, transparent 0%, color-mix(in srgb, var(--bg-primary) 70%, transparent) 20%, color-mix(in srgb, var(--bg-primary) 90%, transparent) 60%)",
-                backdropFilter: "blur(3px)",
-              }}
-              animate={{ opacity: revealed ? 0 : 1 }}
-              transition={{ duration: 1.0, ease: "easeOut" }}
-            />
-
-            {/* "Unlock" label on blur */}
-            {!revealed && (
-              <motion.div
-                className="absolute left-0 right-0 z-20 flex flex-col items-center"
-                style={{ top: 60 }}
-                animate={{ opacity: started ? 1 : 0 }}
-                transition={{ delay: 1.0 }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30 mb-2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <span className="text-xs font-semibold text-white/40">Premium</span>
-              </motion.div>
-            )}
 
             {/* Boudins */}
             {BOUDINS.map((b, i) => {
@@ -131,12 +103,14 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
                   style={{ top: b.y, left, width: b.w, height: b.h }}
                   initial={{ opacity: 0, scale: 0.7 }}
                   animate={started ? {
-                    opacity: isFuture ? (revealed ? b.opacity : 0.15) : (b.isCurrent ? 1 : b.opacity),
-                    scale: 1,
+                    opacity: isFuture ? (revealed ? b.opacity : 0.08) : (b.isCurrent ? 1 : b.opacity),
+                    scale: isFuture && revealed ? [0.7, 1.1, 1] : 1,
+                    y: isFuture && revealed ? [10, 0] : 0,
                   } : {}}
                   transition={{
-                    delay: isFuture && revealed ? 0.3 + (i - 6) * 0.15 : 0.1 + i * 0.06,
-                    duration: 0.4,
+                    delay: isFuture && revealed ? 0.2 + (5 - i) * 0.12 : 0.1 + i * 0.06,
+                    duration: isFuture && revealed ? 0.5 : 0.4,
+                    ease: "easeOut",
                   }}
                 >
                   <div
