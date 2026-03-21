@@ -105,14 +105,14 @@ export function StepInput({
         style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
         variants={fadeInUp}
       >
-        Configure your signal
+        Your timing is unique.
       </motion.h1>
       <motion.p
         className="mt-1.5 text-sm"
         style={{ color: "var(--accent-purple)", opacity: 0.7 }}
         variants={fadeInUp}
       >
-        Enter the details needed to prepare your personal timing profile.
+        Born at a different moment, different signal. Enter yours.
       </motion.p>
 
       {/* Form fields */}
