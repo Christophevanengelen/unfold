@@ -534,7 +534,10 @@ function FocusView({
 
   // Month labels — same as overview
   const monthLabels = useMemo(() => {
-    const labels: { month: string; year: number; y: number; isJan: boolean }[] = [];
+    const now = new Date();
+    const nowMonth = now.getMonth();
+    const nowYear = now.getFullYear();
+    const labels: { month: string; year: number; y: number; isJan: boolean; isCurrent: boolean }[] = [];
     const cursor = new Date(timelineStartDate);
     while (cursor <= timelineEndDate) {
       const y = dateToY(cursor);
@@ -543,15 +546,18 @@ function FocusView({
         year: cursor.getFullYear(),
         y,
         isJan: cursor.getMonth() === 0,
+        isCurrent: cursor.getMonth() === nowMonth && cursor.getFullYear() === nowYear,
       });
       cursor.setMonth(cursor.getMonth() + 1);
     }
     return labels;
   }, []);
 
-  // Snap points: capsule centers + NOW line
+  // Snap points: capsule tops (where first planet sits) + NOW line.
+  // When jumping, the target lands just below the fixed age bar.
+  const PLANET_OFFSET = 0; // align capsule top with the age bar
   const snapPoints = useMemo(() => {
-    const points = focusPositions.map((fp) => fp.topY + fp.h / 2);
+    const points = focusPositions.map((fp) => fp.topY + PLANET_OFFSET);
     points.push(nowY);
     return [...new Set(points)].sort((a, b) => a - b);
   }, [focusPositions, nowY]);
@@ -560,15 +566,68 @@ function FocusView({
   useEffect(() => {
     if (!scrollRef.current) return;
     const viewportH = scrollRef.current.clientHeight || 700;
-    scrollRef.current.scrollTop = Math.max(0, nowY - viewportH * 0.5);
+    scrollRef.current.scrollTop = Math.max(0, nowY - viewportH * 0.50);
   }, [nowY]);
 
-  // Stepper scroll: snap to nearest zone of interest after scroll ends
+  // Capsule navigation — stateless. Each press finds the nearest capsule
+  // to the bar, then scrolls to the next one in the requested direction.
   const isSnapping = useRef(false);
+  const isJumping = useRef(false);
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const rafId = useRef(0);
+
+  const jumpToCapsule = useCallback((direction: "past" | "future") => {
+    const el = scrollRef.current;
+    if (!el || isJumping.current || focusPositions.length === 0) return;
+
+    const barInScroll = el.scrollTop + el.clientHeight * 0.52;
+    const sorted = [...focusPositions].sort((a, b) => a.topY - b.topY);
+
+    // Find closest capsule to bar
+    let closestIdx = 0;
+    let closestDist = Infinity;
+    for (let i = 0; i < sorted.length; i++) {
+      const dist = Math.abs(sorted[i].topY - barInScroll);
+      if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+    }
+
+    // Next capsule — past = higher Y (further down), future = lower Y (further up)
+    const nextIdx = direction === "past"
+      ? Math.min(closestIdx + 1, sorted.length - 1)
+      : Math.max(closestIdx - 1, 0);
+    if (nextIdx === closestIdx) return;
+
+    const targetScroll = Math.max(0, sorted[nextIdx].topY - el.clientHeight * 0.52);
+    const start = el.scrollTop;
+    const delta = targetScroll - start;
+    if (Math.abs(delta) < 2) return;
+
+    // Lock + cancel any pending animation
+    isJumping.current = true;
+    cancelAnimationFrame(rafId.current);
+
+    const startTime = performance.now();
+    const duration = 350; // fixed duration for consistency
+    // Cubic ease-out: fast start, smooth deceleration, precise stop
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const animate = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      el.scrollTop = start + delta * ease(progress);
+      if (progress < 1) {
+        rafId.current = requestAnimationFrame(animate);
+      } else {
+        // Ensure we land exactly on target
+        el.scrollTop = targetScroll;
+        setTimeout(() => { isJumping.current = false; }, 100);
+      }
+    };
+    rafId.current = requestAnimationFrame(animate);
+  }, [focusPositions]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    let snapTimer: ReturnType<typeof setTimeout>;
 
     const onScroll = () => {
       const centerY = el.scrollTop + el.clientHeight / 2;
@@ -578,41 +637,11 @@ function FocusView({
       onAgeChange(age);
       const distFromNow = Math.abs(centerY - nowY);
       setIsAwayFromNow(distFromNow > el.clientHeight * 0.8);
-
-      // Debounce snap — wait for scroll to settle
-      if (!isSnapping.current) {
-        clearTimeout(snapTimer);
-        snapTimer = setTimeout(() => {
-          const viewCenter = el.scrollTop + el.clientHeight / 2;
-          // Find nearest snap point
-          let nearest = snapPoints[0];
-          let minDist = Math.abs(viewCenter - nearest);
-          for (const sp of snapPoints) {
-            const dist = Math.abs(viewCenter - sp);
-            if (dist < minDist) {
-              minDist = dist;
-              nearest = sp;
-            }
-          }
-          // Only snap if we're not already close enough
-          if (minDist > 20) {
-            isSnapping.current = true;
-            el.scrollTo({
-              top: Math.max(0, nearest - el.clientHeight / 2),
-              behavior: "smooth",
-            });
-            setTimeout(() => { isSnapping.current = false; }, 500);
-          }
-        }, 150);
-      }
     };
-    onScroll(); // initial
+    onScroll();
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      clearTimeout(snapTimer);
-    };
-  }, [onAgeChange, nowY, snapPoints]);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [onAgeChange, nowY]);
 
   return (
     <div className="relative flex h-full flex-col">
@@ -621,18 +650,20 @@ function FocusView({
         <div className="relative" style={{ height: getTotalHeight() }}>
 
           {/* Month labels on the left */}
-          {monthLabels.map(({ month, year, y, isJan }) => (
+          {monthLabels.map(({ month, year, y, isJan, isCurrent }) => (
             <div key={`${year}-${month}`} className="absolute" style={{ top: y, left: 4 }}>
               <div
                 className="absolute"
                 style={{
                   top: 0,
                   left: 24,
-                  width: isJan ? 12 : 6,
-                  height: 1,
-                  background: isJan
-                    ? "color-mix(in srgb, var(--brand-6) 40%, transparent)"
-                    : "color-mix(in srgb, var(--brand-5) 15%, transparent)",
+                  width: isCurrent ? 16 : isJan ? 12 : 6,
+                  height: isCurrent ? 1.5 : 1,
+                  background: isCurrent
+                    ? "rgba(255,255,255,0.5)"
+                    : isJan
+                      ? "color-mix(in srgb, var(--brand-6) 40%, transparent)"
+                      : "color-mix(in srgb, var(--brand-5) 15%, transparent)",
                 }}
               />
               <span
@@ -641,9 +672,9 @@ function FocusView({
                   left: 0,
                   width: 22,
                   textAlign: "right",
-                  color: isJan ? "var(--text-body-subtle)" : "var(--text-disabled)",
-                  fontWeight: isJan ? 600 : 400,
-                  fontSize: isJan ? 8 : 7,
+                  color: isCurrent ? "rgba(255,255,255,0.8)" : isJan ? "var(--text-body-subtle)" : "var(--text-disabled)",
+                  fontWeight: isCurrent ? 600 : isJan ? 600 : 400,
+                  fontSize: isCurrent ? 8 : isJan ? 8 : 7,
                 }}
               >
                 {isJan ? year : month}
@@ -669,41 +700,6 @@ function FocusView({
               />
             );
           })()}
-
-          {/* NOW marker */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="absolute z-10"
-            style={{
-              top: nowY,
-              left: labelMargin + 8,
-              right: 20,
-            }}
-          >
-            <div
-              style={{
-                height: 1,
-                background: "var(--accent-purple)",
-                boxShadow: "0 0 12px var(--accent-purple)",
-              }}
-            />
-            <div
-              className="absolute -top-1 left-0 h-2.5 w-2.5 rounded-full"
-              style={{
-                background: "var(--accent-purple)",
-                boxShadow: "0 0 10px var(--accent-purple)",
-                animation: "dot-breathe 2s ease-in-out infinite",
-              }}
-            />
-            <div
-              className="absolute -top-3 right-0 text-[9px] font-bold uppercase tracking-[0.2em]"
-              style={{ color: "var(--accent-purple)" }}
-            >
-              Now
-            </div>
-          </motion.div>
 
           {/* Capsules — same tierOccurrence as Overview */}
           {focusPositions.map(({ capsule, topY: adjTopY, h }, i) => {
@@ -790,23 +786,48 @@ function FocusView({
         </div>
       </div>
 
-      {/* Floating "Now" pill — appears when scrolled away */}
-      <AnimatePresence>
-        {isAwayFromNow && (
-          <motion.button
-            type="button"
-            onClick={scrollToNow}
-            initial={{ opacity: 0, y: 10, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 flex items-center justify-center rounded-full px-2.5 py-1"
-            style={PILL_STYLE}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="text-[9px] font-semibold uppercase tracking-wider">Now</span>
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {/* Navigation: jump between capsules (past ▼ / now ● / future ▲) */}
+      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 flex items-center gap-2">
+        {/* Past (down in timeline = older) */}
+        <motion.button
+          type="button"
+          onClick={() => jumpToCapsule("past")}
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={PILL_STYLE}
+          whileTap={{ scale: 0.9 }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </motion.button>
+
+        {/* Now */}
+        <AnimatePresence>
+          {isAwayFromNow && (
+            <motion.button
+              type="button"
+              onClick={scrollToNow}
+              initial={{ opacity: 0, scale: 0.8, width: 0 }}
+              animate={{ opacity: 1, scale: 1, width: "auto" }}
+              exit={{ opacity: 0, scale: 0.8, width: 0 }}
+              className="flex items-center justify-center rounded-full px-3 py-1 overflow-hidden"
+              style={PILL_STYLE}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="text-[9px] font-semibold uppercase tracking-wider whitespace-nowrap">Now</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* Future (up in timeline = newer) */}
+        <motion.button
+          type="button"
+          onClick={() => jumpToCapsule("future")}
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={PILL_STYLE}
+          whileTap={{ scale: 0.9 }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </motion.button>
+      </div>
     </div>
   );
 }
@@ -844,7 +865,7 @@ function OverviewView({
   useEffect(() => {
     if (!scrollRef.current) return;
     const viewportH = scrollRef.current.clientHeight || 700;
-    scrollRef.current.scrollTop = Math.max(0, nowY - viewportH * 0.5);
+    scrollRef.current.scrollTop = Math.max(0, nowY - viewportH * 0.50);
   }, [nowY]);
 
   // Pre-compute capsule positions with collision resolution
@@ -926,7 +947,10 @@ function OverviewView({
 
   // Generate month labels for the full timeline
   const monthLabels = useMemo(() => {
-    const labels: { month: string; year: number; y: number; isJan: boolean }[] = [];
+    const now = new Date();
+    const nowMonth = now.getMonth();
+    const nowYear = now.getFullYear();
+    const labels: { month: string; year: number; y: number; isJan: boolean; isCurrent: boolean }[] = [];
     const cursor = new Date(timelineStartDate);
     while (cursor <= timelineEndDate) {
       const y = dateToY(cursor);
@@ -935,15 +959,17 @@ function OverviewView({
         year: cursor.getFullYear(),
         y,
         isJan: cursor.getMonth() === 0,
+        isCurrent: cursor.getMonth() === nowMonth && cursor.getFullYear() === nowYear,
       });
       cursor.setMonth(cursor.getMonth() + 1);
     }
     return labels;
   }, []);
 
-  // Snap points: capsule centers + NOW (deduplicate nearby points)
+  // Snap points: capsule tops (first planet position) + NOW
+  const PLANET_OFFSET = 0;
   const snapPoints = useMemo(() => {
-    const points = overviewPositions.map((op) => op.topY + op.h / 2);
+    const points = overviewPositions.map((op) => op.topY + PLANET_OFFSET);
     points.push(nowY);
     const sorted = [...new Set(points)].sort((a, b) => a - b);
     // Merge points within 40px of each other (capsules at same time across lanes)
@@ -959,12 +985,59 @@ function OverviewView({
     return merged;
   }, [overviewPositions, nowY]);
 
-  // Stepper scroll: snap to nearest zone of interest after scroll ends
+  // Capsule navigation — stateless, same approach as FocusView.
   const isSnapping = useRef(false);
+  const isJumping = useRef(false);
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const rafId = useRef(0);
+
+  const jumpToCapsule = useCallback((direction: "past" | "future") => {
+    const el = scrollRef.current;
+    if (!el || isJumping.current || overviewPositions.length === 0) return;
+
+    const barInScroll = el.scrollTop + el.clientHeight * 0.52;
+    const sorted = [...overviewPositions].sort((a, b) => a.topY - b.topY);
+
+    let closestIdx = 0;
+    let closestDist = Infinity;
+    for (let i = 0; i < sorted.length; i++) {
+      const dist = Math.abs(sorted[i].topY - barInScroll);
+      if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+    }
+
+    const nextIdx = direction === "past"
+      ? Math.min(closestIdx + 1, sorted.length - 1)
+      : Math.max(closestIdx - 1, 0);
+    if (nextIdx === closestIdx) return;
+
+    const targetScroll = Math.max(0, sorted[nextIdx].topY - el.clientHeight * 0.52);
+    const start = el.scrollTop;
+    const delta = targetScroll - start;
+    if (Math.abs(delta) < 2) return;
+
+    isJumping.current = true;
+    cancelAnimationFrame(rafId.current);
+
+    const startTime = performance.now();
+    const duration = 350;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const animate = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      el.scrollTop = start + delta * ease(progress);
+      if (progress < 1) {
+        rafId.current = requestAnimationFrame(animate);
+      } else {
+        el.scrollTop = targetScroll;
+        setTimeout(() => { isJumping.current = false; }, 100);
+      }
+    };
+    rafId.current = requestAnimationFrame(animate);
+  }, [overviewPositions]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    let snapTimer: ReturnType<typeof setTimeout>;
 
     const onScroll = () => {
       const centerY = el.scrollTop + el.clientHeight / 2;
@@ -974,38 +1047,11 @@ function OverviewView({
       onAgeChange(age);
       const distFromNow = Math.abs(centerY - nowY);
       setIsAwayFromNow(distFromNow > el.clientHeight * 0.8);
-
-      if (!isSnapping.current) {
-        clearTimeout(snapTimer);
-        snapTimer = setTimeout(() => {
-          const viewCenter = el.scrollTop + el.clientHeight / 2;
-          let nearest = snapPoints[0];
-          let minDist = Math.abs(viewCenter - nearest);
-          for (const sp of snapPoints) {
-            const dist = Math.abs(viewCenter - sp);
-            if (dist < minDist) {
-              minDist = dist;
-              nearest = sp;
-            }
-          }
-          if (minDist > 20) {
-            isSnapping.current = true;
-            el.scrollTo({
-              top: Math.max(0, nearest - el.clientHeight / 2),
-              behavior: "smooth",
-            });
-            setTimeout(() => { isSnapping.current = false; }, 500);
-          }
-        }, 150);
-      }
     };
     onScroll();
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      clearTimeout(snapTimer);
-    };
-  }, [onAgeChange, nowY, snapPoints]);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [onAgeChange, nowY]);
 
   return (
     <div className="relative flex h-full flex-col">
@@ -1014,7 +1060,7 @@ function OverviewView({
         <div className="relative" style={{ height: getTotalHeight() }}>
 
           {/* Month labels on the left */}
-          {monthLabels.map(({ month, year, y, isJan }) => (
+          {monthLabels.map(({ month, year, y, isJan, isCurrent }) => (
             <div key={`${year}-${month}`} className="absolute" style={{ top: y, left: 4 }}>
               {/* Tick mark */}
               <div
@@ -1022,11 +1068,13 @@ function OverviewView({
                 style={{
                   top: 0,
                   left: 24,
-                  width: isJan ? 12 : 6,
-                  height: 1,
-                  background: isJan
-                    ? "color-mix(in srgb, var(--brand-6) 40%, transparent)"
-                    : "color-mix(in srgb, var(--brand-5) 15%, transparent)",
+                  width: isCurrent ? 16 : isJan ? 12 : 6,
+                  height: isCurrent ? 1.5 : 1,
+                  background: isCurrent
+                    ? "rgba(255,255,255,0.5)"
+                    : isJan
+                      ? "color-mix(in srgb, var(--brand-6) 40%, transparent)"
+                      : "color-mix(in srgb, var(--brand-5) 15%, transparent)",
                 }}
               />
               {/* Month name — show year instead of "Jan" */}
@@ -1036,7 +1084,7 @@ function OverviewView({
                   left: 0,
                   width: 22,
                   textAlign: "right",
-                  color: isJan ? "var(--text-body-subtle)" : "var(--text-disabled)",
+                  color: isCurrent ? "rgba(255,255,255,0.8)" : isJan ? "var(--text-body-subtle)" : "var(--text-disabled)",
                   fontWeight: isJan ? 600 : 400,
                   fontSize: isJan ? 8 : 7,
                 }}
@@ -1045,41 +1093,6 @@ function OverviewView({
               </span>
             </div>
           ))}
-
-          {/* NOW marker */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="absolute z-10"
-            style={{
-              top: nowY,
-              left: adjustedOffsetX - 8,
-              right: containerWidth - adjustedOffsetX - totalLanesWidth - 8,
-            }}
-          >
-            <div
-              style={{
-                height: 1,
-                background: "var(--accent-purple)",
-                boxShadow: "0 0 12px var(--accent-purple)",
-              }}
-            />
-            <div
-              className="absolute -top-1 left-0 h-2.5 w-2.5 rounded-full"
-              style={{
-                background: "var(--accent-purple)",
-                boxShadow: "0 0 10px var(--accent-purple)",
-                animation: "dot-breathe 2s ease-in-out infinite",
-              }}
-            />
-            <div
-              className="absolute -top-3 right-0 text-[9px] font-bold uppercase tracking-[0.2em]"
-              style={{ color: "var(--accent-purple)" }}
-            >
-              Now
-            </div>
-          </motion.div>
 
           {/* Capsules — content anchored at bottom, height = duration */}
           {overviewPositions.map(({ capsule, topY: adjTopY, h: capsuleH, w, laneX, idx: i }) => {
@@ -1167,23 +1180,45 @@ function OverviewView({
         </div>
       </div>
 
-      {/* Floating "Now" pill — appears when scrolled away */}
-      <AnimatePresence>
-        {isAwayFromNow && (
-          <motion.button
-            type="button"
-            onClick={scrollToNow}
-            initial={{ opacity: 0, y: 10, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 flex items-center justify-center rounded-full px-2.5 py-1"
-            style={PILL_STYLE}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="text-[9px] font-semibold uppercase tracking-wider">Now</span>
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {/* Navigation: jump between capsules */}
+      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 flex items-center gap-2">
+        <motion.button
+          type="button"
+          onClick={() => jumpToCapsule("past")}
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={PILL_STYLE}
+          whileTap={{ scale: 0.9 }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </motion.button>
+
+        <AnimatePresence>
+          {isAwayFromNow && (
+            <motion.button
+              type="button"
+              onClick={scrollToNow}
+              initial={{ opacity: 0, scale: 0.8, width: 0 }}
+              animate={{ opacity: 1, scale: 1, width: "auto" }}
+              exit={{ opacity: 0, scale: 0.8, width: 0 }}
+              className="flex items-center justify-center rounded-full px-3 py-1 overflow-hidden"
+              style={PILL_STYLE}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="text-[9px] font-semibold uppercase tracking-wider whitespace-nowrap">Now</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        <motion.button
+          type="button"
+          onClick={() => jumpToCapsule("future")}
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={PILL_STYLE}
+          whileTap={{ scale: 0.9 }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </motion.button>
+      </div>
     </div>
   );
 }
@@ -1372,13 +1407,8 @@ export function MomentumTimelineV2() {
     <div className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
       {/* ── Unified header bar ── */}
       <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 pt-2 pb-1">
-        {/* Left — age */}
-        <span
-          className="text-xl font-semibold tabular-nums"
-          style={{ color: "var(--text-heading)", minWidth: 36 }}
-        >
-          {viewMode !== "list" ? visibleAge : ""}
-        </span>
+        {/* Left — spacer (age moved to NOW bar) */}
+        <div style={{ minWidth: 36 }} />
 
         {/* Center — 3-way toggle */}
         <div
@@ -1450,6 +1480,50 @@ export function MomentumTimelineV2() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Fixed age indicator — minimal, premium.
+          A thin line across the screen with the age on the right.
+          Quiet when browsing past/future. Glows when aligned with today. */}
+      {viewMode !== "list" && (() => {
+        const isToday = visibleAge === currentAge;
+        return (
+        <div
+          className="pointer-events-none absolute left-0 right-0 z-20"
+          style={{ top: "calc(50% + 20px)" }}
+        >
+          {/* Thin horizontal line — full width, subtle */}
+          <div
+            style={{
+              height: 1,
+              marginLeft: 56,
+              marginRight: 12,
+              background: isToday
+                ? "linear-gradient(90deg, rgba(124,107,191,0.1), rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent)"
+                : "linear-gradient(90deg, rgba(124,107,191,0.08), rgba(124,107,191,0.25) 30%, rgba(124,107,191,0.25) 70%, transparent)",
+              transition: "all 0.5s ease-out",
+            }}
+          />
+          {/* Age — positioned right, vertically centered on the line */}
+          <div
+            className="absolute right-3 flex items-baseline gap-1"
+            style={{ top: -9 }}
+          >
+            <span
+              className="font-display tabular-nums leading-none"
+              style={{
+                color: isToday ? "rgba(255,255,255,0.9)" : "rgba(124,107,191,0.5)",
+                fontSize: 18,
+                fontWeight: 300,
+                letterSpacing: "-0.02em",
+                transition: "color 0.5s ease-out",
+              }}
+            >
+              {visibleAge}
+            </span>
+          </div>
+        </div>
+        );
+      })()}
 
       {/* Detail sheet */}
       <AnimatePresence>
