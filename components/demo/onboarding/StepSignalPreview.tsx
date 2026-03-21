@@ -164,11 +164,11 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                 key={i}
                 className="absolute"
                 style={{ top: s.y, left, width: s.w, height: s.h }}
-                // Current: highlighted. Future: visible. Past: faded.
+                // Future: 100%. Present: highlighted + glow. Past: 50%.
                 animate={
                   isLast
-                    ? { scale: [1, 1, 1.2], opacity: [0.7, 0.7, 1] }
-                    : { scale: 1, opacity: isPast ? 0.3 : 0.7 }
+                    ? { scale: [1, 1, 1.2], opacity: [0.8, 0.8, 1] }
+                    : { scale: 1, opacity: isPast ? 0.5 : 1 }
                 }
                 transition={
                   isLast
