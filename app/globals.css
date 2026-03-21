@@ -411,6 +411,21 @@ h1, h2, h3, h4, h5, h6 {
     0 4px 24px color-mix(in srgb, #150F2E 30%, transparent);
 }
 
+/* Planet pill shimmer glow animation */
+@keyframes planet-shimmer {
+  0%, 100% { box-shadow: 0 0 0 0 var(--shimmer-color, transparent); }
+  50% { box-shadow: 0 0 8px 2px color-mix(in srgb, var(--shimmer-color, transparent) 30%, transparent); }
+}
+.planet-pill-shimmer {
+  animation: planet-shimmer 2.5s ease-in-out infinite;
+  animation-delay: calc(var(--shimmer-index, 0) * 200ms);
+}
+
+/* Phone frame parallax depth */
+.phone-parallax {
+  will-change: transform;
+}
+
 /* Landing page — full dark immersive background */
 .landing-immersive {
   background: #150F2E;

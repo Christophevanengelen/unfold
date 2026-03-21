@@ -6,11 +6,11 @@ interface PremiumMomentumProps {
 
 /** Mini timeline capsule for the teaser visualization */
 const TEASER_CAPSULES = [
-  { tier: "toc", label: "TOC", planets: ["Mercury"], w: 36, opacity: 0.4 },
-  { tier: "toctoc", label: "TOCTOC", planets: ["Venus", "Mars"], w: 48, opacity: 0.6 },
-  { tier: "toctoctoc", label: "TOCTOCTOC", planets: ["Jupiter", "Sun", "Mercury", "Moon"], w: 64, opacity: 1 },
-  { tier: "toctoc", label: "TOCTOC", planets: ["Saturn", "Venus"], w: 48, opacity: 0.6 },
-  { tier: "toc", label: "TOC", planets: ["Mars"], w: 36, opacity: 0.4 },
+  { tier: "toc", label: "TOC", planets: [{ key: "mercury", color: "#4BBFAF" }], w: 36, opacity: 0.4 },
+  { tier: "toctoc", label: "TOCTOC", planets: [{ key: "venus", color: "#D87EA0" }, { key: "mars", color: "#D06050" }], w: 48, opacity: 0.6 },
+  { tier: "toctoctoc", label: "TOCTOCTOC", planets: [{ key: "jupiter", color: "#5B7FC2" }, { key: "sun", color: "#E5A940" }, { key: "mercury", color: "#4BBFAF" }, { key: "moon", color: "#B0B8C8" }], w: 64, opacity: 1 },
+  { tier: "toctoc", label: "TOCTOC", planets: [{ key: "saturn", color: "#C49B50" }, { key: "venus", color: "#D87EA0" }], w: 48, opacity: 0.6 },
+  { tier: "toc", label: "TOC", planets: [{ key: "mars", color: "#D06050" }], w: 36, opacity: 0.4 },
 ];
 
 export function PremiumMomentum({ t }: PremiumMomentumProps) {
@@ -92,13 +92,13 @@ export function PremiumMomentum({ t }: PremiumMomentumProps) {
                         border: "1px solid color-mix(in srgb, #9585CC 30%, transparent)",
                       }}
                     />
-                    {/* Planet dots */}
+                    {/* Planet dots — real colors */}
                     <div className="flex gap-0.5">
                       {cap.planets.map((p, j) => (
                         <div
                           key={j}
-                          className="h-1 w-1 rounded-full"
-                          style={{ background: "#9585CC" }}
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ background: p.color, boxShadow: `0 0 4px ${p.color}` }}
                         />
                       ))}
                     </div>
