@@ -46,7 +46,7 @@ const SCROLL_EASE: [number, number, number, number] = [0.12, 0.8, 0.15, 1];
 // A boudin at position `by` crosses center when scrollOffset + by = 0
 // → scrollOffset = -by → progress = (SCROLL_DISTANCE - (-by)) / SCROLL_DISTANCE
 function getCrossTime(boudinY: number): number {
-  const progress = (SCROLL_DISTANCE + boudinY) / SCROLL_DISTANCE;
+  const progress = (SCROLL_DISTANCE - boudinY) / SCROLL_DISTANCE;
   // Apply approximate ease timing (linear approximation of the cubic-bezier)
   return Math.max(0, Math.min(1, progress)) * SCROLL_DURATION;
 }
@@ -142,7 +142,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
         <motion.div
           className="absolute left-0 right-0"
           style={{ top: "50%" }}
-          initial={{ y: SCROLL_DISTANCE }}
+          initial={{ y: -SCROLL_DISTANCE }}
           animate={{ y: 0 }}
           transition={{ duration: SCROLL_DURATION, ease: SCROLL_EASE }}
         >
