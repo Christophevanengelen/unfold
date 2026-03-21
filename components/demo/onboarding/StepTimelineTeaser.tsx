@@ -79,8 +79,23 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         </h1>
       </motion.div>
 
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center overflow-visible">
         <div className="relative" style={{ width: CENTER * 2, height: CENTER * 2 }}>
+
+          {/* Your zone halo */}
+          <motion.div
+            className="absolute rounded-full"
+            style={{
+              width: 280,
+              height: 280,
+              left: CENTER - 140,
+              top: CENTER - 140,
+              background: "conic-gradient(from 260deg, transparent 0deg, rgba(124,107,191,0.06) 20deg, rgba(124,107,191,0.12) 50deg, rgba(124,107,191,0.06) 80deg, transparent 100deg)",
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: SETTLE_DELAY, duration: 0.6 }}
+          />
 
           {/* Orbit rings */}
           {PLANETS.filter(p => p.orbit > 0).map(p => (
@@ -208,9 +223,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         animate={{ opacity: 1 }}
         transition={{ delay: SETTLE_DELAY + 0.5 }}
       >
-        Three planets are crossing your zone right now.
+        Right now, three planets are active.
         <br />
-        They shape what you feel.
+        Which ones are in your zone?
       </motion.p>
 
       <motion.div
@@ -224,7 +239,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
           onClick={onNext}
           className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
         >
-          Make it personal
+          Find out
         </button>
       </motion.div>
     </motion.div>
