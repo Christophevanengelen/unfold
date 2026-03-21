@@ -70,7 +70,7 @@ export default function DemoLayout({
             className={`flex-1 ${
               isFullBleed
                 ? "relative z-10 overflow-hidden"
-                : "overflow-y-auto overflow-x-hidden px-5 py-3"
+                : "overflow-y-auto overflow-x-hidden px-5 py-3 scrollbar-none"
             }`}
           >
             {children}
