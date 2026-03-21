@@ -29,18 +29,18 @@ interface PlanetOrbit {
 }
 
 const PLANETS: PlanetOrbit[] = [
-  { key: "sun",     orbit: 0,   size: 14, fromAngle: 0,   toAngle: 0,   isActive: true,  rotations: 0 },
-  { key: "moon",    orbit: 24,  size: 6,  fromAngle: 90,  toAngle: 150, isActive: false, rotations: 3 },
-  { key: "mercury", orbit: 38,  size: 5,  fromAngle: 200, toAngle: 45,  isActive: false, rotations: 2 },
-  { key: "venus",   orbit: 52,  size: 6,  fromAngle: 320, toAngle: 180, isActive: false, rotations: 2 },
-  { key: "mars",    orbit: 66,  size: 6,  fromAngle: 130, toAngle: 120, isActive: false, rotations: 1 },
-  { key: "jupiter", orbit: 82,  size: 9,  fromAngle: 60,  toAngle: 300, isActive: true,  rotations: 1 },
-  { key: "saturn",  orbit: 98,  size: 8,  fromAngle: 180, toAngle: 325, isActive: true,  rotations: 1 },
-  { key: "uranus",  orbit: 112, size: 6,  fromAngle: 270, toAngle: 200, isActive: false, rotations: 1 },
-  { key: "neptune", orbit: 126, size: 6,  fromAngle: 10,  toAngle: 285, isActive: true,  rotations: 1 },
+  { key: "sun",     orbit: 0,   size: 18, fromAngle: 0,   toAngle: 0,   isActive: true,  rotations: 0 },
+  { key: "moon",    orbit: 22,  size: 5,  fromAngle: 90,  toAngle: 150, isActive: false, rotations: 3 },
+  { key: "mercury", orbit: 34,  size: 4,  fromAngle: 200, toAngle: 45,  isActive: false, rotations: 2 },
+  { key: "venus",   orbit: 46,  size: 5,  fromAngle: 320, toAngle: 180, isActive: false, rotations: 2 },
+  { key: "mars",    orbit: 58,  size: 5,  fromAngle: 130, toAngle: 120, isActive: false, rotations: 1 },
+  { key: "jupiter", orbit: 72,  size: 8,  fromAngle: 60,  toAngle: 300, isActive: true,  rotations: 1 },
+  { key: "saturn",  orbit: 86,  size: 7,  fromAngle: 180, toAngle: 325, isActive: true,  rotations: 1 },
+  { key: "uranus",  orbit: 98,  size: 5,  fromAngle: 270, toAngle: 200, isActive: false, rotations: 1 },
+  { key: "neptune", orbit: 110, size: 5,  fromAngle: 10,  toAngle: 310, isActive: true,  rotations: 1 },
 ];
 
-const CENTER = 148;
+const CENTER = 130;
 // Total animation: 0.5s delay + 2s orbit + 0.5s settle
 const ORBIT_DURATION = 2;
 const SETTLE_DELAY = ORBIT_DURATION + 0.5;
@@ -79,17 +79,17 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         </h1>
       </motion.div>
 
-      <div className="flex-1 flex items-center justify-center overflow-visible">
+      <div className="flex-1 flex items-center justify-center overflow-hidden">
         <div className="relative" style={{ width: CENTER * 2, height: CENTER * 2 }}>
 
           {/* Your zone halo */}
           <motion.div
             className="absolute rounded-full"
             style={{
-              width: 280,
-              height: 280,
-              left: CENTER - 140,
-              top: CENTER - 140,
+              width: 240,
+              height: 240,
+              left: CENTER - 120,
+              top: CENTER - 120,
               background: "conic-gradient(from 260deg, transparent 0deg, rgba(124,107,191,0.06) 20deg, rgba(124,107,191,0.12) 50deg, rgba(124,107,191,0.06) 80deg, transparent 100deg)",
             }}
             initial={{ opacity: 0 }}
@@ -132,7 +132,11 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                   transition={{ delay: 0.3, duration: 0.4 }}
                 >
                   <div className="rounded-full"
-                    style={{ width: p.size, height: p.size, backgroundColor: config.color, boxShadow: `0 0 20px ${config.color}50` }} />
+                    style={{
+                      width: p.size, height: p.size,
+                      backgroundColor: config.color,
+                      boxShadow: `0 0 30px ${config.color}70, 0 0 60px ${config.color}30`,
+                    }} />
                 </motion.div>
               );
             }
