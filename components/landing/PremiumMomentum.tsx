@@ -103,7 +103,7 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
                   style={{ top: b.y, left, width: b.w, height: b.h }}
                   initial={{ opacity: 0, scale: 0.7 }}
                   animate={started ? {
-                    opacity: isFuture ? (revealed ? b.opacity : 0.08) : (b.isCurrent ? 1 : b.opacity),
+                    opacity: isFuture ? (revealed ? 1 : 0.08) : (b.isCurrent ? 1 : b.opacity),
                     scale: isFuture && revealed ? [0.7, 1.1, 1] : 1,
                     y: isFuture && revealed ? [10, 0] : 0,
                   } : {}}
