@@ -122,7 +122,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
               top: CENTER - 8,
               zIndex: 20,
               backgroundColor: planetConfig.sun.color,
-              boxShadow: `0 0 30px ${planetConfig.sun.color}70, 0 0 60px ${planetConfig.sun.color}30`,
+              boxShadow: `0 0 20px ${planetConfig.sun.color}90, 0 0 40px ${planetConfig.sun.color}60, 0 0 80px ${planetConfig.sun.color}30`,
             }}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
