@@ -26,7 +26,7 @@ const BOUDINS = [
   { y: -150, w: 16, h: 20,  color: "#50C4D6", opacity: 0.25, dots: 1, year: 2032 },
   { y: -100, w: 26, h: 40,  color: "#6BA89A", opacity: 0.35, dots: 3, year: 2029 },
   // NOW
-  { y: -20,  w: 38, h: 64,  color: "#B07CC2", opacity: 1,    dots: 4, year: 2026, isCurrent: true },
+  { y: -35,  w: 38, h: 64,  color: "#B07CC2", opacity: 1,    dots: 4, year: 2026, isCurrent: true },
   // Past (below NOW)
   { y: 60,   w: 28, h: 44,  color: "#6BA89A", opacity: 0.7,  dots: 3, year: 2020 },
   { y: 120,  w: 24, h: 36,  color: "#D89EA0", opacity: 0.6,  dots: 2, year: 2016 },
@@ -137,7 +137,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
           className="absolute left-0 right-0"
           style={{ top: "50%" }}
           initial={{ y: -SCROLL_DISTANCE }}
-          animate={{ y: -52 }}
+          animate={{ y: -44 }}
           transition={{ duration: SCROLL_DURATION, ease: SCROLL_EASE }}
         >
           {BOUDINS.map((s, i) => {
