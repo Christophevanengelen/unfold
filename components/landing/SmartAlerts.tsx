@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { MiniStatusBar } from "@/components/ui/MiniStatusBar";
+import { BottomNav } from "@/components/ui/BottomNav";
 import type { TranslationMap } from "@/lib/i18n";
 
 function t(translations: TranslationMap, key: string, fallback?: string): string {
@@ -17,8 +19,8 @@ interface SmartAlertsProps {
 const DEMO_NOTIFICATIONS = [
   {
     id: "peak",
-    title: "TOCTOCTOC forming",
-    body: "An exceptional momentum window opens tomorrow. 3 planets align — your strongest signal this month.",
+    title: "Peak signal forming",
+    body: "An exceptional momentum window opens tomorrow. 3 planets align \u2014 your strongest signal this month.",
     time: "8:02 AM",
     accent: "var(--accent-purple)",
     planets: [
@@ -30,7 +32,7 @@ const DEMO_NOTIFICATIONS = [
   {
     id: "compat",
     title: "Compatibility peak detected",
-    body: "Your signal syncs 91% with someone today. Shared Jupiter × Venus transit — rare alignment.",
+    body: "Your signal syncs 91% with someone today. Shared Jupiter \u00d7 Venus transit \u2014 rare alignment.",
     time: "Yesterday",
     accent: "#D87EA0",
     planets: [
@@ -41,7 +43,7 @@ const DEMO_NOTIFICATIONS = [
   {
     id: "shift",
     title: "Momentum shift ahead",
-    body: "Saturn enters your signal Thursday. Intensity drops to TOC — plan lighter commitments.",
+    body: "Saturn enters your signal Thursday. Intensity drops to Subtle \u2014 plan lighter commitments.",
     time: "2 days ago",
     accent: "#C49B50",
     planets: [
@@ -49,22 +51,6 @@ const DEMO_NOTIFICATIONS = [
     ],
   },
 ];
-
-// ─── Decorative phone status bar ─────────────────────────────
-function MiniStatusBar() {
-  return (
-    <div className="flex items-center justify-between px-5 pt-2.5 pb-1.5">
-      <span className="text-[10px] font-medium" style={{ color: "var(--text-body-subtle)" }}>
-        9:41
-      </span>
-      <div className="flex gap-1">
-        <div className="h-[3px] w-[3px] rounded-full" style={{ background: "var(--text-body-subtle)" }} />
-        <div className="h-[3px] w-[3px] rounded-full" style={{ background: "var(--text-body-subtle)" }} />
-        <div className="h-[3px] w-[3px] rounded-full" style={{ background: "var(--text-body-subtle)" }} />
-      </div>
-    </div>
-  );
-}
 
 // ─── Single notification card ────────────────────────────────
 function NotificationCard({
@@ -207,78 +193,82 @@ export function SmartAlerts({ translations }: SmartAlertsProps) {
 
         {/* Phone mockup */}
         <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.1}>
-          <div
-            ref={sectionRef}
-            className="phone-parallax relative overflow-hidden"
-            style={{
-              width: 320,
-              height: 594,
-              borderRadius: "2.25rem",
-              boxShadow: "0 8px 60px rgba(20, 15, 45, 0.6), 0 2px 20px rgba(20, 15, 45, 0.35)",
-              background: "var(--bg-primary)",
-            }}
-            role="img"
-            aria-label="Unfold app showing smart notification cards for momentum peaks and shifts"
-          >
-            {/* Gradient mesh */}
+          <div className="phone-glow-wrap">
             <div
-              className="pointer-events-none absolute inset-0"
-              aria-hidden="true"
+              ref={sectionRef}
+              className="phone-parallax relative overflow-hidden"
               style={{
-                background: [
-                  "radial-gradient(ellipse 140% 45% at 50% -5%, var(--gradient-top) 0%, transparent 65%)",
-                  "radial-gradient(circle 250px at 90% 90%, var(--gradient-right) 0%, transparent 70%)",
-                ].join(", "),
+                width: 375,
+                height: 812,
+                borderRadius: "2.5rem",
+                border: "1px solid color-mix(in srgb, var(--brand-6) 40%, transparent)",
+                background: "var(--bg-primary)",
               }}
-            />
+              role="img"
+              aria-label="Unfold app showing smart notification cards for momentum peaks and shifts"
+            >
+              {/* Gradient mesh */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                aria-hidden="true"
+                style={{
+                  background: [
+                    "radial-gradient(ellipse 140% 45% at 50% -5%, var(--gradient-top) 0%, transparent 65%)",
+                    "radial-gradient(circle 250px at 90% 90%, var(--gradient-right) 0%, transparent 70%)",
+                  ].join(", "),
+                }}
+              />
 
-            <div className="relative z-10 flex h-full flex-col">
-              <MiniStatusBar />
+              <div className="relative z-10 flex h-full flex-col">
+                <MiniStatusBar />
 
-              {/* Notification header */}
-              <div className="px-5 pt-3 pb-2">
-                <p
-                  className="text-[10px] font-semibold uppercase tracking-[0.2em]"
-                  style={{ color: "color-mix(in srgb, var(--accent-purple) 70%, transparent)" }}
-                >
-                  Alerts
-                </p>
-              </div>
-
-              {/* Notification cards */}
-              <div className="flex flex-1 flex-col gap-2.5 px-4 pb-6">
-                <AnimatePresence>
-                  {DEMO_NOTIFICATIONS.map((notif, i) => (
-                    <NotificationCard
-                      key={notif.id}
-                      notification={notif}
-                      index={i}
-                      isActive={i === activeIdx}
-                    />
-                  ))}
-                </AnimatePresence>
-
-                {/* Quiet status message */}
-                <motion.div
-                  className="mt-auto flex flex-col items-center gap-1.5 pt-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                >
-                  <div
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{
-                      background: "var(--accent-purple)",
-                      boxShadow: "0 0 6px var(--accent-purple)",
-                    }}
-                  />
+                {/* Notification header */}
+                <div className="px-5 pt-3 pb-2">
                   <p
-                    className="text-[9px]"
-                    style={{ color: "var(--text-body-subtle)", opacity: 0.5 }}
+                    className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+                    style={{ color: "color-mix(in srgb, var(--accent-purple) 70%, transparent)" }}
                   >
-                    Watching your signal quietly
+                    Alerts
                   </p>
-                </motion.div>
+                </div>
+
+                {/* Notification cards */}
+                <div className="flex flex-1 flex-col gap-2.5 px-4 pb-2">
+                  <AnimatePresence>
+                    {DEMO_NOTIFICATIONS.map((notif, i) => (
+                      <NotificationCard
+                        key={notif.id}
+                        notification={notif}
+                        index={i}
+                        isActive={i === activeIdx}
+                      />
+                    ))}
+                  </AnimatePresence>
+
+                  {/* Quiet status message */}
+                  <motion.div
+                    className="mt-auto flex flex-col items-center gap-1.5 pt-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1 }}
+                  >
+                    <div
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{
+                        background: "var(--accent-purple)",
+                        boxShadow: "0 0 6px var(--accent-purple)",
+                      }}
+                    />
+                    <p
+                      className="text-[9px]"
+                      style={{ color: "var(--text-body-subtle)", opacity: 0.5 }}
+                    >
+                      Watching your signal quietly
+                    </p>
+                  </motion.div>
+                </div>
+
+                <BottomNav active="home" />
               </div>
             </div>
           </div>

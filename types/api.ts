@@ -143,8 +143,8 @@ export interface TimelinePhase {
   startDate: string; // ISO date
   endDate?: string; // null = ongoing
   durationWeeks: number;
-  intensity: number; // 0-100 — tier: <70 TOC, 70-84 TOCTOC, 85+ TOCTOCTOC
-  planets: PlanetaryTransit[]; // 1-5 active transits shaping this phase (TOCTOCTOC min 2)
+  intensity: number; // 0-100 — tier: <70 Subtle, 70-84 Clear, 85+ Peak
+  planets: PlanetaryTransit[]; // 1-5 active transits shaping this phase (Peak min 2)
   status: "past" | "current" | "future";
   guidance?: string; // premium-only
   keyInsight?: string;

@@ -54,13 +54,13 @@ export function generateSignalFromDate(dateString: string): GeneratedSignal {
   let tierLabel: string;
   if (intensity >= 85) {
     tier = "toctoctoc";
-    tierLabel = "TOCTOCTOC";
+    tierLabel = "PEAK";
   } else if (intensity >= 70) {
     tier = "toctoc";
-    tierLabel = "TOCTOC";
+    tierLabel = "CLEAR";
   } else {
     tier = "toc";
-    tierLabel = "TOC";
+    tierLabel = "SUBTLE";
   }
 
   // Planets: 2–4, shuffled deterministically

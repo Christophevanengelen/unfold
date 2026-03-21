@@ -272,7 +272,7 @@ function DetailSheet({ capsule, onClose }: { capsule: CapsuleData; onClose: () =
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  const tierLabel = capsule.tier === "toctoctoc" ? "TOCTOCTOC" : capsule.tier === "toctoc" ? "TOCTOC" : "TOC";
+  const tierLabel = capsule.tier === "toctoctoc" ? "PEAK" : capsule.tier === "toctoc" ? "CLEAR" : "SUBTLE";
   const startLabel = `${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
   const endLabel = capsule.isCurrent
     ? "Now"
@@ -402,7 +402,7 @@ function DetailSheet({ capsule, onClose }: { capsule: CapsuleData; onClose: () =
 }
 
 // ─── Focus View ─────────────────────────────────────────────
-// Shows all capsules of the same tier (TOC/TOCTOC/TOCTOCTOC) as the current
+// Shows all capsules of the same tier (Subtle/Clear/Peak) as the current
 // momentum, connected by a thread. Uses the same date-based Y axis as overview
 // with month/year labels on the left so the user stays oriented.
 
@@ -1203,7 +1203,7 @@ function ListView({
         {sorted.map((capsule, i) => {
           const phase = capsule.phases[0];
           if (!phase) return null;
-          const tierLabel = capsule.tier === "toctoctoc" ? "TOCTOCTOC" : capsule.tier === "toctoc" ? "TOCTOC" : "TOC";
+          const tierLabel = capsule.tier === "toctoctoc" ? "PEAK" : capsule.tier === "toctoc" ? "CLEAR" : "SUBTLE";
           const startLabel = `${MONTH_NAMES[capsule.startDate.getMonth()]} '${String(capsule.startDate.getFullYear()).slice(2)}`;
           const endLabel = capsule.isCurrent
             ? "now"

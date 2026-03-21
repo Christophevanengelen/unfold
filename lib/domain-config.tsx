@@ -23,7 +23,7 @@ interface DomainMeta {
 
 // ─── Planetary Influences ────────────────────────────────────
 // Each momentum phase is shaped by 1-5 planetary transits.
-// TOCTOCTOC phases always have at least 2 active transits.
+// Peak phases always have at least 2 active transits.
 // Colors are distinct, premium-muted, designed for small dots.
 
 export type PlanetKey =

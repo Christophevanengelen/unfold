@@ -48,9 +48,9 @@ export function getTierWidth(tier: Tier): number {
 }
 
 export function getTierLabel(tier: Tier): string {
-  if (tier === "toctoctoc") return "TOCTOCTOC";
-  if (tier === "toctoc") return "TOCTOC";
-  return "TOC";
+  if (tier === "toctoctoc") return "PEAK";
+  if (tier === "toctoc") return "CLEAR";
+  return "SUBTLE";
 }
 
 function parseDate(s: string): Date {

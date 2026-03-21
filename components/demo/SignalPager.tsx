@@ -205,7 +205,7 @@ export function SignalPager() {
                   </span>
                   <div>
                     <span className="text-[10px] font-semibold uppercase tracking-[0.15em]" style={{ color: "var(--accent-purple)" }}>
-                      {selectedCapsule.tier === "toctoctoc" ? "TOCTOCTOC" : selectedCapsule.tier === "toctoc" ? "TOCTOC" : "TOC"}
+                      {selectedCapsule.tier === "toctoctoc" ? "PEAK" : selectedCapsule.tier === "toctoc" ? "CLEAR" : "SUBTLE"}
                     </span>
                     <p className="text-[10px] tabular-nums" style={{ color: "var(--text-body-subtle)" }}>
                       {MONTH_NAMES[selectedCapsule.startDate.getMonth()]} {selectedCapsule.startDate.getFullYear()} — {selectedCapsule.isCurrent ? "Now" : `${MONTH_NAMES[selectedCapsule.endDate.getMonth()]} ${selectedCapsule.endDate.getFullYear()}`}

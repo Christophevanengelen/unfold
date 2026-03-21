@@ -2,6 +2,10 @@
 
 import { motion } from "motion/react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { MiniStatusBar } from "@/components/ui/MiniStatusBar";
+import { BottomNav } from "@/components/ui/BottomNav";
+import { ViewToggle } from "@/components/ui/ViewToggle";
+import { MonthLabel } from "@/components/ui/MonthLabel";
 import type { TranslationMap } from "@/lib/i18n";
 
 // ─── Local translation helper ────────────────────────────────
@@ -23,62 +27,46 @@ interface TimelineEntry {
 const TIMELINE_ENTRIES: TimelineEntry[] = [
   {
     title: "Creative Surge",
-    date: "Nov '25 — Jan '26",
+    date: "Nov '25 \u2014 Jan '26",
     intensity: 78,
-    tier: "TOCTOC",
+    tier: "CLEAR",
     planets: [{ color: "#4BBFAF" }, { color: "#8B5CF6" }],
     status: "past",
   },
   {
     title: "Vitality Surge",
-    date: "Jan — Mar '26",
+    date: "Jan \u2014 Mar '26",
     intensity: 85,
-    tier: "TOCTOCTOC",
+    tier: "PEAK",
     planets: [{ color: "#E5A940" }, { color: "#D06050" }],
     status: "past",
   },
   {
     title: "Strategic Positioning",
-    date: "Jul '24 — now",
+    date: "Jul '24 \u2014 now",
     intensity: 89,
-    tier: "TOCTOCTOC",
+    tier: "PEAK",
     planets: [{ color: "#5B7FC2" }, { color: "#E5A940" }, { color: "#4BBFAF" }],
     status: "current",
     highlight: true,
   },
   {
     title: "Connection Catalyst",
-    date: "Apr — Jun '26",
+    date: "Apr \u2014 Jun '26",
     intensity: 88,
-    tier: "TOCTOCTOC",
+    tier: "PEAK",
     planets: [{ color: "#D87EA0" }, { color: "#5B7FC2" }],
     status: "future",
   },
   {
     title: "Acceleration Phase",
-    date: "May — Jul '26",
+    date: "May \u2014 Jul '26",
     intensity: 94,
-    tier: "TOCTOCTOC",
+    tier: "PEAK",
     planets: [{ color: "#E5A940" }, { color: "#5B7FC2" }, { color: "#4BBFAF" }, { color: "#D06050" }],
     status: "future",
   },
 ];
-
-// ─── Decorative phone status bar ─────────────────────────────
-function MiniStatusBar() {
-  return (
-    <div className="flex items-center justify-between px-5 pt-2.5 pb-1.5">
-      <span className="text-[10px] font-medium" style={{ color: "var(--text-body-subtle)" }}>
-        9:41
-      </span>
-      <div className="flex gap-1">
-        <div className="h-[3px] w-[3px] rounded-full" style={{ background: "var(--text-body-subtle)" }} />
-        <div className="h-[3px] w-[3px] rounded-full" style={{ background: "var(--text-body-subtle)" }} />
-        <div className="h-[3px] w-[3px] rounded-full" style={{ background: "var(--text-body-subtle)" }} />
-      </div>
-    </div>
-  );
-}
 
 // ─── Single timeline entry row ───────────────────────────────
 function TimelineRow({ entry, index }: { entry: TimelineEntry; index: number }) {
@@ -205,69 +193,78 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
 
         {/* Phone mockup */}
         <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.1}>
-          <div
-            className="relative overflow-hidden"
-            style={{
-              width: 320,
-              height: 594,
-              borderRadius: "2.25rem",
-              boxShadow: "0 8px 60px rgba(20, 15, 45, 0.6), 0 2px 20px rgba(20, 15, 45, 0.35)",
-              background: "var(--bg-primary)",
-            }}
-            role="img"
-            aria-label="Unfold app showing a vertical momentum timeline from past phases through the current period into future phases"
-          >
-            {/* Gradient mesh */}
+          <div className="phone-glow-wrap">
             <div
-              className="pointer-events-none absolute inset-0"
-              aria-hidden="true"
+              className="relative overflow-hidden"
               style={{
-                background: [
-                  "radial-gradient(ellipse 140% 45% at 50% -5%, var(--gradient-top) 0%, transparent 65%)",
-                  "radial-gradient(circle 250px at 90% 90%, var(--gradient-right) 0%, transparent 70%)",
-                ].join(", "),
+                width: 375,
+                height: 812,
+                borderRadius: "2.5rem",
+                border: "1px solid color-mix(in srgb, var(--brand-6) 40%, transparent)",
+                background: "var(--bg-primary)",
               }}
-            />
+              role="img"
+              aria-label="Unfold app showing a vertical momentum timeline from past phases through the current period into future phases"
+            >
+              {/* Gradient mesh */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                aria-hidden="true"
+                style={{
+                  background: [
+                    "radial-gradient(ellipse 140% 45% at 50% -5%, var(--gradient-top) 0%, transparent 65%)",
+                    "radial-gradient(circle 250px at 90% 90%, var(--gradient-right) 0%, transparent 70%)",
+                  ].join(", "),
+                }}
+              />
 
-            <div className="relative z-10 flex h-full flex-col">
-              <MiniStatusBar />
+              <div className="relative z-10 flex h-full flex-col">
+                <MiniStatusBar />
 
-              {/* Timeline header inside phone */}
-              <div className="px-5 pt-3 pb-2">
-                <p
-                  className="text-[10px] font-semibold uppercase tracking-[0.2em]"
-                  style={{ color: "color-mix(in srgb, var(--accent-purple) 70%, transparent)" }}
-                >
-                  YOUR TIMELINE
-                </p>
-              </div>
+                {/* View toggle */}
+                <div className="flex justify-center px-5 pt-1 pb-2">
+                  <ViewToggle />
+                </div>
 
-              {/* Vertical timeline */}
-              <div className="relative flex-1 overflow-hidden px-5 pb-6">
-                {/* Spine line */}
-                <div
-                  className="absolute top-0 bottom-0"
-                  aria-hidden="true"
-                  style={{
-                    left: "calc(1.25rem + 6px)",
-                    width: 1,
-                    background: "linear-gradient(to bottom, transparent, color-mix(in srgb, var(--accent-purple) 35%, transparent) 10%, color-mix(in srgb, var(--accent-purple) 35%, transparent) 85%, transparent)",
-                  }}
-                />
+                {/* Timeline header inside phone */}
+                <div className="px-5 pt-3 pb-2">
+                  <p
+                    className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+                    style={{ color: "color-mix(in srgb, var(--accent-purple) 70%, transparent)" }}
+                  >
+                    YOUR TIMELINE
+                  </p>
+                </div>
 
-                {/* Entries */}
-                {TIMELINE_ENTRIES.map((entry, i) => (
-                  <TimelineRow key={entry.title} entry={entry} index={i} />
-                ))}
+                {/* Vertical timeline */}
+                <div className="relative flex-1 overflow-hidden px-5 pb-6">
+                  {/* Spine line */}
+                  <div
+                    className="absolute top-0 bottom-0"
+                    aria-hidden="true"
+                    style={{
+                      left: "calc(1.25rem + 6px)",
+                      width: 1,
+                      background: "linear-gradient(to bottom, transparent, color-mix(in srgb, var(--accent-purple) 35%, transparent) 10%, color-mix(in srgb, var(--accent-purple) 35%, transparent) 85%, transparent)",
+                    }}
+                  />
 
-                {/* Fade at bottom to imply continuation */}
-                <div
-                  className="pointer-events-none absolute right-0 bottom-0 left-0 h-16"
-                  aria-hidden="true"
-                  style={{
-                    background: "linear-gradient(to top, var(--bg-primary), transparent)",
-                  }}
-                />
+                  {/* Entries */}
+                  {TIMELINE_ENTRIES.map((entry, i) => (
+                    <TimelineRow key={entry.title} entry={entry} index={i} />
+                  ))}
+
+                  {/* Fade at bottom to imply continuation */}
+                  <div
+                    className="pointer-events-none absolute right-0 bottom-0 left-0 h-16"
+                    aria-hidden="true"
+                    style={{
+                      background: "linear-gradient(to top, var(--bg-primary), transparent)",
+                    }}
+                  />
+                </div>
+
+                <BottomNav active="timeline" />
               </div>
             </div>
           </div>
