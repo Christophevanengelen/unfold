@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/demo/BottomNav";
 import { ProfileDrawer } from "@/components/demo/ProfileDrawer";
 import { PremiumTeaser } from "@/components/demo/PremiumTeaser";
 import { PremiumTeaserContext } from "@/components/demo/PremiumTeaserContext";
+import { MomentumProvider } from "@/lib/momentum-store";
 
 export default function DemoLayout({
   children,
@@ -26,6 +27,7 @@ export default function DemoLayout({
   const isFullBleed = isHome || isTimeline;
 
   return (
+    <MomentumProvider>
     <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }}>
       {/* Mobile frame */}
       <div
@@ -99,5 +101,6 @@ export default function DemoLayout({
         <span aria-hidden="true">&rarr;</span>
       </a>
     </div>
+    </MomentumProvider>
   );
 }

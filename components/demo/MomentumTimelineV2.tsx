@@ -4,12 +4,9 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { domainConfig, planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
 import {
-  mockTimeline,
   type MomentumPhase,
-  USER_BIRTH_DATE,
-  getCurrentAge,
-  getAgeAtDate,
 } from "@/lib/mock-timeline";
+import { useMomentum } from "@/lib/momentum-store";
 import { X } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────
@@ -64,31 +61,38 @@ const PILL_STYLE: React.CSSProperties = {
 };
 
 // ─── Date helpers ───────────────────────────────────────────
-const birthDate = new Date(USER_BIRTH_DATE + "T00:00:00");
+// These are now computed inside the component from the hook's birthDateStr.
+// Module-level placeholders used by helper functions — overwritten in the component.
+let birthDate = new Date("1986-05-14T00:00:00");
+let timelineStartDate = new Date(birthDate);
+let timelineEndDate = new Date(birthDate);
+timelineEndDate.setFullYear(timelineEndDate.getFullYear() + 100);
 
-// The timeline spans from birth to birth+100 years
-const timelineStartDate = new Date(birthDate); // age 0
-const timelineEndDate = new Date(birthDate);
-timelineEndDate.setFullYear(timelineEndDate.getFullYear() + 100); // age 100
+function initDates(birthStr: string) {
+  birthDate = new Date(birthStr + "T00:00:00");
+  timelineStartDate = new Date(birthDate);
+  timelineEndDate = new Date(birthDate);
+  timelineEndDate.setFullYear(timelineEndDate.getFullYear() + 100);
+}
 
 /** Months between two dates (fractional) */
 function monthsBetween(a: Date, b: Date): number {
   return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()) + (b.getDate() - a.getDate()) / 30;
 }
 
-const TOTAL_MONTHS = monthsBetween(timelineStartDate, timelineEndDate);
-const TOTAL_HEIGHT = TIMELINE_PAD * 2 + TOTAL_MONTHS * PX_PER_MONTH;
+function getTotalMonths() { return monthsBetween(timelineStartDate, timelineEndDate) || 1200; }
+function getTotalHeight() { return TIMELINE_PAD * 2 + getTotalMonths() * PX_PER_MONTH; }
 
 /** Convert a date to Y position. Future (end date) = top, past (birth) = bottom */
 function dateToY(d: Date): number {
   const months = monthsBetween(timelineStartDate, d);
   // Invert: high date = top (small Y), old date = bottom (large Y)
-  return TIMELINE_PAD + (TOTAL_MONTHS - months) * PX_PER_MONTH;
+  return TIMELINE_PAD + (getTotalMonths() - months) * PX_PER_MONTH;
 }
 
 /** Convert Y position back to a Date (for scroll-based year display) */
 function yToDate(y: number): Date {
-  const months = TOTAL_MONTHS - (y - TIMELINE_PAD) / PX_PER_MONTH;
+  const months = getTotalMonths() - (y - TIMELINE_PAD) / PX_PER_MONTH;
   const result = new Date(timelineStartDate);
   result.setMonth(result.getMonth() + Math.round(months));
   return result;
@@ -190,31 +194,48 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
     });
   }
 
-  // Assign occurrence numbers per tier — sort by endDate so visual order matches
-  // (past capsules finished first = lower numbers, current = now, future = higher)
+  // Assign occurrence numbers for TOCTOCTOC only, by planet signature.
+  // A number shows only if the same planet combo repeats across the lifetime.
   capsules.sort((a, b) => a.endDate.getTime() - b.endDate.getTime());
-  const tierCounter: Record<string, number> = {};
-  const tierTotals: Record<string, number> = {};
-  for (const c of capsules) tierTotals[c.tier] = (tierTotals[c.tier] || 0) + 1;
+  const pSig = (c: CapsuleData) => [...c.planets].sort().join("+");
+  const sigTotals: Record<string, number> = {};
   for (const c of capsules) {
-    tierCounter[c.tier] = (tierCounter[c.tier] || 0) + 1;
-    c.tierOccurrence = tierCounter[c.tier];
-    c.tierTotal = tierTotals[c.tier];
+    if (c.tier !== "toctoctoc") continue;
+    const sig = pSig(c);
+    sigTotals[sig] = (sigTotals[sig] || 0) + 1;
+  }
+  const sigCounter: Record<string, number> = {};
+  for (const c of capsules) {
+    if (c.tier !== "toctoctoc") {
+      c.tierOccurrence = 0;
+      c.tierTotal = 0;
+      continue;
+    }
+    const sig = pSig(c);
+    const total = sigTotals[sig];
+    if (total <= 1) {
+      c.tierOccurrence = 0;
+      c.tierTotal = 0;
+    } else {
+      sigCounter[sig] = (sigCounter[sig] || 0) + 1;
+      c.tierOccurrence = sigCounter[sig];
+      c.tierTotal = total;
+    }
   }
 
   return capsules;
 }
 
-function buildCurrentCapsule(): CapsuleData | null {
-  const currentPhases = mockTimeline.filter((p) => p.status === "current");
+function buildCurrentCapsule(timelineData: MomentumPhase[]): CapsuleData | null {
+  const currentPhases = timelineData.filter((p) => p.status === "current");
   if (currentPhases.length === 0) return null;
 
   // Count occurrences per domain across the full timeline (up to and including current)
-  const sorted = [...mockTimeline]
+  const sorted = [...timelineData]
     .filter((p) => p.status !== "future")
     .sort((a, b) => parseDate(a.startDate).getTime() - parseDate(b.startDate).getTime());
   const domainCounts: Record<string, number> = {};
-  for (const p of mockTimeline) domainCounts[p.domain] = (domainCounts[p.domain] || 0) + 1;
+  for (const p of timelineData) domainCounts[p.domain] = (domainCounts[p.domain] || 0) + 1;
   const domainCounter: Record<string, number> = {};
   for (const p of sorted) {
     domainCounter[p.domain] = (domainCounter[p.domain] || 0) + 1;
@@ -236,7 +257,7 @@ function buildCurrentCapsule(): CapsuleData | null {
   }
 
   // Compute tier occurrence using buildCapsules (same source of truth)
-  const allCaps = buildCapsules(mockTimeline);
+  const allCaps = buildCapsules(timelineData);
   const sameTier = allCaps.filter((c) => c.tier === tier);
   const currentInAll = allCaps.find((c) => c.isCurrent);
   const currentTierOcc = currentInAll?.tierOccurrence ?? sameTier.length;
@@ -298,14 +319,16 @@ function DetailSheet({ capsule, onClose }: { capsule: CapsuleData; onClose: () =
       </div>
 
       <div className="overflow-y-auto px-5 pb-8" style={{ maxHeight: "calc(65vh - 20px)" }}>
-        {/* Header — occurrence number + tier + date range */}
+        {/* Header — occurrence number (TOCTOCTOC only) + tier + date range */}
         <div className="flex items-center gap-3 pt-2">
+          {capsule.tier === "toctoctoc" && capsule.tierOccurrence > 0 && (
           <span
             className="text-2xl font-bold tabular-nums"
             style={{ color: "var(--text-heading)" }}
           >
             {capsule.tierOccurrence}
           </span>
+          )}
           <div>
             <span
               className="text-[10px] font-semibold uppercase tracking-[0.15em]"
@@ -595,7 +618,7 @@ function FocusView({
     <div className="relative flex h-full flex-col">
       {/* Scrollable timeline */}
       <div ref={scrollRef} className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="relative" style={{ height: TOTAL_HEIGHT }}>
+        <div className="relative" style={{ height: getTotalHeight() }}>
 
           {/* Month labels on the left */}
           {monthLabels.map(({ month, year, y, isJan }) => (
@@ -727,7 +750,8 @@ function FocusView({
                 className="absolute bottom-0 left-0 right-0 flex flex-col items-center"
                 style={{ paddingBottom: capPad - 4, gap: dotGap }}
               >
-                {/* Number — always shown, sequential within Focus view */}
+                {/* Number — only shown for TOCTOCTOC (Peak) capsules */}
+                {capsule.tier === "toctoctoc" && capsule.tierOccurrence > 0 && (
                 <span
                   className="font-semibold tabular-nums leading-none"
                   style={{
@@ -741,6 +765,7 @@ function FocusView({
                 >
                   {capsule.tierOccurrence}
                 </span>
+                )}
                 {/* Planet dots — same planets for all occurrences (same momentum pattern) */}
                 {currentCapsule.planets.map((planet, pi) => {
                   const pc = planetConfig[planet];
@@ -986,7 +1011,7 @@ function OverviewView({
     <div className="relative flex h-full flex-col">
       {/* Scrollable timeline */}
       <div ref={scrollRef} className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="relative" style={{ height: TOTAL_HEIGHT }}>
+        <div className="relative" style={{ height: getTotalHeight() }}>
 
           {/* Month labels on the left */}
           {monthLabels.map(({ month, year, y, isJan }) => (
@@ -1104,6 +1129,7 @@ function OverviewView({
                 className="absolute bottom-0 left-0 right-0 flex flex-col items-center"
                 style={{ paddingBottom: oCapPad - 2, gap: oDotGap }}
               >
+                {capsule.tier === "toctoctoc" && capsule.tierOccurrence > 0 && (
                 <span
                   className="font-semibold tabular-nums leading-none"
                   style={{
@@ -1117,6 +1143,7 @@ function OverviewView({
                 >
                   {capsule.tierOccurrence}
                 </span>
+                )}
                 {capsule.planets.map((planet) => {
                   const pc = planetConfig[planet];
                   const dc = capsule.isFuture ? "rgba(255, 255, 255, 0.6)" : pc.color;
@@ -1311,12 +1338,26 @@ function ListView({
 
 // ─── Main Component ─────────────────────────────────────────
 export function MomentumTimelineV2() {
+  const { timelinePhases, birthDateStr } = useMomentum();
   const [viewMode, setViewMode] = useState<ViewMode>("focus");
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleData | null>(null);
-  const [visibleAge, setVisibleAge] = useState(getCurrentAge());
 
-  const currentCapsule = useMemo(() => buildCurrentCapsule(), []);
-  const allCapsules = useMemo(() => buildCapsules(mockTimeline), []);
+  // Initialize date helpers from birth data
+  useMemo(() => initDates(birthDateStr), [birthDateStr]);
+
+  const currentAge = useMemo(() => {
+    const bd = new Date(birthDateStr + "T00:00:00");
+    const now = new Date();
+    let age = now.getFullYear() - bd.getFullYear();
+    const m = now.getMonth() - bd.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) age--;
+    return age;
+  }, [birthDateStr]);
+
+  const [visibleAge, setVisibleAge] = useState(currentAge);
+
+  const currentCapsule = useMemo(() => buildCurrentCapsule(timelinePhases), [timelinePhases]);
+  const allCapsules = useMemo(() => buildCapsules(timelinePhases), [timelinePhases]);
 
   const handleTapCapsule = useCallback((capsule: CapsuleData) => {
     if (capsule.isFuture) return;

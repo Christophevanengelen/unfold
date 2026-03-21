@@ -142,27 +142,54 @@ export function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
     });
   }
 
-  // Assign occurrence numbers per tier — sort by endDate
+  // Assign occurrence numbers for TOCTOCTOC capsules only.
+  // A TOCTOCTOC gets a number only if the same "planet signature" repeats
+  // across the lifetime. The signature = sorted planet list.
+  // TOC and TOCTOC capsules get tierOccurrence=0, tierTotal=0 (not shown).
   capsules.sort((a, b) => a.endDate.getTime() - b.endDate.getTime());
-  const tierCounter: Record<string, number> = {};
-  const tierTotals: Record<string, number> = {};
-  for (const c of capsules) tierTotals[c.tier] = (tierTotals[c.tier] || 0) + 1;
+
+  // Build planet signature for each TOCTOCTOC capsule
+  const planetSig = (c: CapsuleData) => [...c.planets].sort().join("+");
+
+  // Count how many times each signature appears among TOCTOCTOC
+  const sigTotals: Record<string, number> = {};
   for (const c of capsules) {
-    tierCounter[c.tier] = (tierCounter[c.tier] || 0) + 1;
-    c.tierOccurrence = tierCounter[c.tier];
-    c.tierTotal = tierTotals[c.tier];
+    if (c.tier !== "toctoctoc") continue;
+    const sig = planetSig(c);
+    sigTotals[sig] = (sigTotals[sig] || 0) + 1;
+  }
+
+  // Assign occurrence numbers only for signatures that repeat (total > 1)
+  const sigCounter: Record<string, number> = {};
+  for (const c of capsules) {
+    if (c.tier !== "toctoctoc") {
+      c.tierOccurrence = 0;
+      c.tierTotal = 0;
+      continue;
+    }
+    const sig = planetSig(c);
+    const total = sigTotals[sig];
+    if (total <= 1) {
+      // Unique TOCTOCTOC — no number needed
+      c.tierOccurrence = 0;
+      c.tierTotal = 0;
+    } else {
+      sigCounter[sig] = (sigCounter[sig] || 0) + 1;
+      c.tierOccurrence = sigCounter[sig];
+      c.tierTotal = total;
+    }
   }
 
   return capsules;
 }
 
 // ─── Convenience: get the 3 capsules for the home screen ────
-export function getHomeCapsules(): {
+export function getHomeCapsules(phases?: MomentumPhase[]): {
   past: CapsuleData | null;
   current: CapsuleData | null;
   future: CapsuleData | null;
 } {
-  const all = buildCapsules(mockTimeline);
+  const all = buildCapsules(phases || mockTimeline);
   const current = all.find((c) => c.isCurrent) ?? null;
 
   // Last completed capsule (same tier as current for continuity)

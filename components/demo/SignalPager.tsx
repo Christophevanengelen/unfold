@@ -7,6 +7,7 @@ import { PageDots } from "./PageDots";
 import { CapsuleCard } from "./CapsuleCard";
 import { getHomeCapsules, type CapsuleData } from "@/lib/capsules";
 import { planetConfig } from "@/lib/domain-config";
+import { useMomentum } from "@/lib/momentum-store";
 
 /** Carousel configuration */
 const TOTAL_PAGES = 3;
@@ -22,7 +23,8 @@ const SHADOW_BLEED = 40;
  */
 export function SignalPager() {
   const [activePage, setActivePage] = useState(1); // Start on Present
-  const { past, current, future } = useMemo(() => getHomeCapsules(), []);
+  const { phases } = useMomentum();
+  const { past, current, future } = useMemo(() => getHomeCapsules(phases), [phases]);
 
   // Detail sheet state
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleData | null>(null);

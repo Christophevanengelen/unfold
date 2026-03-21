@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
 import { scaleIn } from "@/lib/animations";
 import { CheckCircle } from "flowbite-react-icons/solid";
+import { useMomentum } from "@/lib/momentum-store";
+import { saveBirthData, resolveCity, type BirthData } from "@/lib/birth-data";
+import type { OnboardingFormData } from "./StepInput";
 
 const statusLines = [
   "Reading your planetary signals",
@@ -14,35 +17,69 @@ const statusLines = [
 
 /**
  * Screen 5 — Preparing Your Signal.
- * Total sequence under 3.5s. No artificial delay. Explicit CTA when done.
+ * Calls the real Momentum Engine API with the user's birth data.
+ * Status lines track real progress. Explicit CTA when done.
  */
-export function StepPreparing() {
+export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   const router = useRouter();
+  const { loadSignals, state } = useMomentum();
   const [completed, setCompleted] = useState<number[]>([]);
   const [visible, setVisible] = useState<number[]>([0]);
+  const [error, setError] = useState<string | null>(null);
   const allDone = completed.length === statusLines.length;
+  const didStart = useRef(false);
 
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    if (didStart.current) return;
+    didStart.current = true;
 
-    statusLines.forEach((_, i) => {
-      // Show step
-      timers.push(
+    async function run() {
+      // Step 1: Reading signals (show immediately)
+      setVisible([0]);
+
+      // Build birth data from form or use demo defaults
+      const coords = resolveCity(formData?.placeOfBirth || "Brussels");
+      const birthData: BirthData = {
+        nickname: formData?.nickname || "You",
+        birthDate: formData?.dob || "1990-01-15",
+        birthTime: formData?.timeOfBirth || "12:00",
+        latitude: coords.lat,
+        longitude: coords.lng,
+        timezone: coords.tz,
+        placeOfBirth: formData?.placeOfBirth || "Brussels",
+      };
+
+      // Save birth data to localStorage
+      saveBirthData(birthData);
+
+      try {
+        // Step 1 complete + show step 2
         setTimeout(() => {
-          setVisible((v) => [...v, i]);
-        }, i * 1000)
-      );
+          setCompleted((c) => [...c, 0]);
+          setVisible((v) => [...v, 1]);
+        }, 800);
 
-      // Mark complete (~1s per step)
-      timers.push(
+        // Call the real API
+        await loadSignals(birthData);
+
+        // Step 2 complete + show step 3
+        setCompleted((c) => [...c, 1]);
+        setVisible((v) => [...v, 2]);
+
+        // Step 3 complete (brief delay for animation)
         setTimeout(() => {
-          setCompleted((c) => [...c, i]);
-        }, (i + 1) * 1000)
-      );
-    });
+          setCompleted((c) => [...c, 2]);
+        }, 600);
+      } catch {
+        setError("Connection issue — using sample data instead.");
+        // Complete all steps so CTA appears (mock data fallback)
+        setCompleted([0, 1, 2]);
+        setVisible([0, 1, 2]);
+      }
+    }
 
-    return () => timers.forEach(clearTimeout);
-  }, []);
+    run();
+  }, [formData, loadSignals]);
 
   return (
     <div className="flex h-full flex-col items-center justify-center text-center">
@@ -191,6 +228,18 @@ export function StepPreparing() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Error banner (subtle) */}
+      {error && allDone && (
+        <motion.p
+          className="mt-4 max-w-[240px] text-center text-[11px]"
+          style={{ color: "var(--accent-purple)", opacity: 0.5 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          {error}
+        </motion.p>
+      )}
 
       {/* Explicit CTA — appears only when done */}
       <AnimatePresence>

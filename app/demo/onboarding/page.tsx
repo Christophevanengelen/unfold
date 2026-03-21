@@ -98,7 +98,7 @@ export default function OnboardingPage() {
           />
         );
       case 4:
-        return <StepPreparing />;
+        return <StepPreparing formData={formData} />;
       default:
         return null;
     }
