@@ -3,31 +3,123 @@
 import { useParams } from "next/navigation";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { ArrowLeft, Share2, Sparkles } from "lucide-react";
-import { mockCompatibilityResults, mockConnections } from "@/lib/mock-data";
-import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
-import { fadeInUp, staggerContainer, numberEntrance, arcDraw } from "@/lib/animations";
+import { ArrowLeft } from "lucide-react";
+import { mockConnections } from "@/lib/mock-data";
+import { planetConfig, type PlanetKey } from "@/lib/domain-config";
 
-const strengthColors: Record<string, string> = {
-  strong: "var(--accent-green)",
-  moderate: "var(--accent-orange)",
-  developing: "var(--accent-blue)",
+// Timing windows — shared momentum periods between two people
+interface TimingWindow {
+  title: string;
+  dateRange: string;
+  daysLeft: number;
+  status: "active" | "upcoming";
+  tier: "SUBTLE" | "CLEAR" | "PEAK";
+  tierColor: string;
+  you: { description: string; planet: PlanetKey };
+  them: { description: string; planet: PlanetKey };
+  insight: string;
+}
+
+const MOCK_WINDOWS: Record<string, TimingWindow[]> = {
+  conn_jordan: [
+    {
+      title: "Relationship deepening",
+      dateRange: "Mar 8 \u2014 Apr 15, 2026",
+      daysLeft: 25,
+      status: "active",
+      tier: "PEAK",
+      tierColor: "#D89EA0",
+      you: { description: "Jupiter activates your partnership house", planet: "jupiter" },
+      them: { description: "Venus enters their commitment zone", planet: "venus" },
+      insight: "Have the conversation you've been postponing. Both charts say: now.",
+    },
+    {
+      title: "Financial planning",
+      dateRange: "Jun 1 \u2014 Jul 12",
+      daysLeft: 72,
+      status: "upcoming",
+      tier: "CLEAR",
+      tierColor: "#6BA89A",
+      you: { description: "Saturn structures your resources", planet: "saturn" },
+      them: { description: "Jupiter expands their shared assets", planet: "jupiter" },
+      insight: "Align on money, investments, or shared projects. Timing supports practical decisions.",
+    },
+    {
+      title: "Reconnection wave",
+      dateRange: "Sep 15 \u2014 Oct 28",
+      daysLeft: 178,
+      status: "upcoming",
+      tier: "PEAK",
+      tierColor: "#D89EA0",
+      you: { description: "Venus returns to your love sector", planet: "venus" },
+      them: { description: "Moon activates their emotional core", planet: "moon" },
+      insight: "Plan a trip or meaningful experience together. This window is rare.",
+    },
+  ],
+  conn_sam: [
+    {
+      title: "Energy alignment",
+      dateRange: "Apr 20 \u2014 May 30",
+      daysLeft: 30,
+      status: "active",
+      tier: "CLEAR",
+      tierColor: "#6BA89A",
+      you: { description: "Mars boosts your vitality", planet: "mars" },
+      them: { description: "Sun energizes their daily rhythm", planet: "sun" },
+      insight: "Great window for outdoor activities or starting a fitness goal together.",
+    },
+    {
+      title: "Social expansion",
+      dateRange: "Oct 5 \u2014 Nov 10",
+      daysLeft: 198,
+      status: "upcoming",
+      tier: "CLEAR",
+      tierColor: "#9585CC",
+      you: { description: "Jupiter opens your network zone", planet: "jupiter" },
+      them: { description: "Mercury sharpens their communication", planet: "mercury" },
+      insight: "Host something. Your combined energy draws the right people in.",
+    },
+  ],
+  conn_maya: [
+    {
+      title: "Professional momentum",
+      dateRange: "Apr 1 \u2014 May 15",
+      daysLeft: 11,
+      status: "active",
+      tier: "PEAK",
+      tierColor: "#B07CC2",
+      you: { description: "Sun highlights your career house", planet: "sun" },
+      them: { description: "Saturn reinforces their authority", planet: "saturn" },
+      insight: "Schedule the important meeting. Both charts support high-stakes moves.",
+    },
+    {
+      title: "Creative brainstorm",
+      dateRange: "Aug 10 \u2014 Sep 5",
+      daysLeft: 142,
+      status: "upcoming",
+      tier: "CLEAR",
+      tierColor: "#50C4D6",
+      you: { description: "Mercury sharpens your ideas", planet: "mercury" },
+      them: { description: "Uranus sparks their innovation", planet: "uranus" },
+      insight: "Book a brainstorm session. Ideas will flow faster than usual.",
+    },
+  ],
 };
 
-const axisColors: Record<string, string> = {
-  love: "var(--accent-pink)",
-  health: "var(--accent-green)",
-  work: "var(--accent-blue)",
+const relationshipColors: Record<string, string> = {
+  partner: "#D89EA0",
+  friend: "#50C4D6",
+  family: "#6BA89A",
+  colleague: "#9585CC",
 };
 
 export default function ConnectionDetailPage() {
   const params = useParams();
   const connectionId = params.connectionId as string;
-
-  const result = mockCompatibilityResults[connectionId];
   const connection = mockConnections.find((c) => c.id === connectionId);
+  const windows = MOCK_WINDOWS[connectionId];
 
-  if (!result || !connection) {
+  if (!connection || !windows) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-sm text-text-body-subtle">Connection not found</p>
@@ -35,208 +127,108 @@ export default function ConnectionDetailPage() {
     );
   }
 
-  const { score, synergies, whatMakesYouWork, bestDaysTogether } = result;
-
-  // Arc geometry
-  const size = 140;
-  const strokeWidth = 3;
-  const radius = (size - strokeWidth) / 2;
-  const center = size / 2;
-  const startAngle = 135;
-  const endAngle = 45;
-  const startRad = (startAngle * Math.PI) / 180;
-  const endRad = (endAngle * Math.PI) / 180;
-  const startX = center + radius * Math.cos(startRad);
-  const startY = center + radius * Math.sin(startRad);
-  const endX = center + radius * Math.cos(endRad);
-  const endY = center + radius * Math.sin(endRad);
-  const fillRatio = Math.min(score / 100, 1);
+  const relColor = relationshipColors[connection.relationship] ?? "#9585CC";
+  const activeCount = windows.filter(w => w.status === "active").length;
+  const totalCount = windows.length;
 
   return (
-    <motion.div variants={staggerContainer} initial="hidden" animate="visible">
-      {/* Header with back button */}
-      <motion.div className="mb-4 flex items-center gap-3" variants={fadeInUp}>
-        <Link
-          href="/demo/compatibility"
-          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors"
-          style={{ background: "var(--bg-secondary)" }}
-          aria-label="Back to connections"
-        >
-          <ArrowLeft size={16} strokeWidth={1.5} style={{ color: "var(--text-body-subtle)" }} />
+    <div className="flex h-full flex-col overflow-y-auto scrollbar-none px-4 py-2">
+      {/* Header */}
+      <div className="flex items-center gap-3 pb-4">
+        <Link href="/demo/compatibility" className="text-text-body-subtle">
+          <ArrowLeft size={18} />
         </Link>
         <div>
-          <p className="text-sm text-text-body-subtle">
-            Alex & {connection.name}
+          <p className="text-sm font-semibold text-text-heading">Alex & {connection.name}</p>
+          <p className="text-[10px] text-text-body-subtle">
+            {totalCount} timing window{totalCount > 1 ? "s" : ""} active or upcoming
           </p>
-          {(connection.todayAlignment ?? 0) > 0 && (
-            <p className="text-[10px] text-text-body-subtle">
-              {connection.todayAlignment}% aligned today
-            </p>
-          )}
         </div>
-      </motion.div>
+      </div>
 
-      {/* Today alignment card */}
-      <motion.div
-        className="mb-4 rounded-2xl px-4 py-3"
-        style={{
-          background: "linear-gradient(135deg, color-mix(in srgb, var(--accent-pink) 8%, var(--bg-secondary)), var(--bg-secondary))",
-        }}
-        variants={fadeInUp}
-      >
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-body-subtle">
-          Today together
-        </p>
-        <p className="mt-1 text-[13px] text-text-body">
-          {connection.todayInsight}
-        </p>
-      </motion.div>
+      {/* Timing windows */}
+      <div className="space-y-4">
+        {windows.map((w, i) => {
+          const youPlanet = planetConfig[w.you.planet];
+          const themPlanet = planetConfig[w.them.planet];
+          const isActive = w.status === "active";
 
-      {/* Hero compatibility score */}
-      <motion.div
-        className="flex flex-col items-center py-2"
-        variants={numberEntrance}
-        initial="hidden"
-        animate="visible"
-      >
-        <div className="relative" style={{ width: size, height: size }}>
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute inset-0">
-            <path
-              d={`M ${startX} ${startY} A ${radius} ${radius} 0 1 1 ${endX} ${endY}`}
-              fill="none"
-              stroke="var(--border-muted)"
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-              opacity={0.5}
-            />
-          </svg>
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute inset-0">
-            <motion.path
-              d={`M ${startX} ${startY} A ${radius} ${radius} 0 1 1 ${endX} ${endY}`}
-              fill="none"
-              stroke="var(--accent-pink)"
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-              variants={arcDraw}
-              initial="hidden"
-              animate="visible"
-              style={{ pathLength: fillRatio }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span
-              className="font-display font-bold leading-none"
-              style={{ fontSize: 72, letterSpacing: -2, color: "var(--text-heading)" }}
+          return (
+            <motion.div
+              key={w.title}
+              className="rounded-2xl overflow-hidden"
+              style={{
+                background: "color-mix(in srgb, var(--accent-purple) 5%, transparent)",
+                border: `1px solid color-mix(in srgb, ${w.tierColor} ${isActive ? "25" : "12"}%, transparent)`,
+              }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 + i * 0.12 }}
             >
-              <AnimatedNumber value={score} duration={0.8} delay={0.2} />
-            </span>
-          </div>
-        </div>
-        <p
-          className="mt-1 font-medium uppercase"
-          style={{ fontSize: 11, letterSpacing: "0.15em", color: "var(--text-body-subtle)" }}
-        >
-          Compatibility
-        </p>
-      </motion.div>
+              {/* Status bar */}
+              <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: isActive ? w.tierColor : "var(--text-body-subtle)", opacity: isActive ? 1 : 0.4 }} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isActive ? w.tierColor : "var(--text-body-subtle)" }}>
+                    {isActive ? "Active now" : "Coming up"}
+                  </span>
+                </div>
+                <span className="text-[10px] text-text-body-subtle">
+                  {w.daysLeft} days {isActive ? "left" : ""}
+                </span>
+              </div>
 
-      {/* Synergy breakdown */}
-      <motion.div className="mt-4 space-y-2" variants={staggerContainer}>
-        <motion.p
-          className="font-semibold uppercase"
-          style={{ fontSize: 10, letterSpacing: "0.15em", color: "var(--text-body-subtle)" }}
-          variants={fadeInUp}
-        >
-          Synergies
-        </motion.p>
-        {synergies.map((s: { axis: string; score: number; strength: string; description: string }) => (
-          <motion.div
-            key={s.axis}
-            className="flex items-center gap-3 rounded-2xl px-4 py-3"
-            style={{ background: "var(--bg-secondary)" }}
-            variants={fadeInUp}
-          >
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: axisColors[s.axis] }} />
-            <div className="flex-1">
-              <span className="text-[13px] font-semibold capitalize text-text-heading">{s.axis}</span>
-              <p className="mt-0.5 text-xs text-text-body-subtle">{s.description}</p>
-            </div>
-            <span className="text-xs font-semibold capitalize" style={{ color: strengthColors[s.strength] }}>
-              {s.strength}
-            </span>
-          </motion.div>
-        ))}
-      </motion.div>
+              <div className="px-4 pb-4">
+                {/* Title + date */}
+                <h3 className="text-base font-bold text-text-heading mt-1">{w.title}</h3>
+                <p className="text-[11px] text-text-body-subtle mt-0.5">{w.dateRange}</p>
 
-      {/* What makes you work */}
-      {whatMakesYouWork && (
-        <motion.div className="mt-6" variants={fadeInUp}>
-          <p className="mb-2 font-semibold uppercase" style={{ fontSize: 10, letterSpacing: "0.15em", color: "var(--text-body-subtle)" }}>
-            What makes you work
-          </p>
-          <div
-            className="rounded-2xl px-5 py-4"
-            style={{
-              background: "linear-gradient(135deg, color-mix(in srgb, var(--accent-pink) 6%, var(--bg-secondary)), var(--bg-secondary))",
-              borderLeft: "3px solid var(--accent-pink)",
-            }}
-          >
-            <div className="mb-2 flex items-center gap-1.5">
-              <Sparkles size={12} strokeWidth={1.5} style={{ color: "var(--accent-pink)" }} />
-              <span className="text-[10px] font-semibold uppercase" style={{ letterSpacing: "0.1em", color: "var(--accent-pink)" }}>
-                Insight
-              </span>
-            </div>
-            <p className="text-[13px] leading-relaxed text-text-body">{whatMakesYouWork}</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Best days together */}
-      {bestDaysTogether && bestDaysTogether.length > 0 && (
-        <motion.div className="mt-6" variants={fadeInUp}>
-          <p className="mb-2 font-semibold uppercase" style={{ fontSize: 10, letterSpacing: "0.15em", color: "var(--text-body-subtle)" }}>
-            Best days together
-          </p>
-          <div className="space-y-2">
-            {bestDaysTogether.map((day: { date: string; alex: number; partner: number; context?: string }, i: number) => {
-              const d = new Date(day.date);
-              return (
-                <motion.div
-                  key={day.date}
-                  className="flex items-center gap-3 rounded-2xl px-4 py-3"
-                  style={{ background: "color-mix(in srgb, var(--accent-pink) 6%, var(--bg-secondary))" }}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + i * 0.08 }}
-                >
-                  <div className="flex shrink-0 flex-col items-center rounded-xl px-3 py-2" style={{ background: "color-mix(in srgb, var(--accent-pink) 12%, transparent)" }}>
-                    <span className="text-[10px] font-medium uppercase" style={{ color: "var(--text-body-subtle)" }}>
-                      {d.toLocaleDateString("en", { month: "short" })}
-                    </span>
-                    <span className="font-display text-lg font-bold" style={{ color: "var(--accent-pink)" }}>
-                      {d.toLocaleDateString("en", { day: "numeric" })}
+                {/* You + Them */}
+                <div className="mt-3 space-y-2">
+                  <div className="rounded-xl px-3.5 py-2.5" style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-accent-purple mb-1">You</p>
+                    <p className="text-xs text-text-body">{w.you.description}</p>
+                    <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                      style={{ background: `color-mix(in srgb, ${youPlanet.color} 15%, transparent)`, color: youPlanet.color }}>
+                      <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: youPlanet.color }} />
+                      {youPlanet.label}
                     </span>
                   </div>
-                  <p className="flex-1 text-xs leading-relaxed text-text-body">{day.context}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
 
-      {/* Share button */}
-      <motion.div className="mt-6" variants={fadeInUp}>
-        <Link
-          href="/demo/invite/share"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border py-3.5 text-sm font-semibold transition-transform active:scale-[0.98]"
-          style={{ borderColor: "var(--accent-pink)", color: "var(--accent-pink)" }}
-        >
-          <Share2 size={16} strokeWidth={1.5} />
-          Share with {connection.name}
-        </Link>
-      </motion.div>
-    </motion.div>
+                  <div className="rounded-xl px-3.5 py-2.5" style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: relColor }}>Them</p>
+                    <p className="text-xs text-text-body">{w.them.description}</p>
+                    <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                      style={{ background: `color-mix(in srgb, ${themPlanet.color} 15%, transparent)`, color: themPlanet.color }}>
+                      <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: themPlanet.color }} />
+                      {themPlanet.label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Insight */}
+                <div className="mt-3 rounded-xl px-3.5 py-2.5"
+                  style={{ background: `color-mix(in srgb, ${w.tierColor} 6%, transparent)` }}>
+                  <p className="text-xs text-text-body leading-relaxed">{w.insight}</p>
+                </div>
+              </div>
+
+              {/* Tier badge */}
+              {isActive && (
+                <div className="flex items-center justify-end px-4 pb-3">
+                  <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider" style={{ color: w.tierColor }}>
+                    <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: w.tierColor }} />
+                    {w.tier}
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Bottom spacer */}
+      <div className="h-4" />
+    </div>
   );
 }
