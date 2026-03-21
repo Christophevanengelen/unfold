@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
-import { ScrollReveal, ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import type { TranslationMap } from "@/lib/i18n";
 
 interface PremiumMomentumProps {
@@ -13,15 +13,13 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
   return translations[key] ?? fallback ?? key;
 }
 
-// ─── Timeline bar data (7 days) ──────────────────────────────
-const DAYS = [
-  { label: "Mon", value: 62, visible: true },
-  { label: "Tue", value: 78, visible: true },
-  { label: "Wed", value: 85, visible: true, isPeak: true },
-  { label: "Thu", value: 71, visible: true },
-  { label: "Fri", value: 91, visible: false, isPeak: true },
-  { label: "Sat", value: 68, visible: false },
-  { label: "Sun", value: 88, visible: false, isPeak: true },
+// Future momentum periods — what premium reveals
+const FUTURE_BOUDINS = [
+  { month: "Apr", domain: "Recovery",  w: 22, h: 34, color: "#6BA89A", dots: 2, visible: true },
+  { month: "May", domain: "Connection", w: 32, h: 52, color: "#B07CC2", dots: 3, visible: true, isPeak: true },
+  { month: "Jul", domain: "Acceleration", w: 36, h: 60, color: "#9585CC", dots: 4, visible: false, isPeak: true },
+  { month: "Sep", domain: "Deepening", w: 24, h: 38, color: "#D89EA0", dots: 2, visible: false },
+  { month: "Nov", domain: "Consolidation", w: 20, h: 30, color: "#C4A86B", dots: 1, visible: false },
 ];
 
 export function PremiumMomentum({ translations }: PremiumMomentumProps) {
@@ -30,7 +28,6 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
   const [started, setStarted] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  // Start animation when scrolled into view
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
@@ -42,170 +39,131 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
     return () => observer.disconnect();
   }, [started]);
 
-  // Auto-reveal after 4 seconds
+  // Auto-reveal after 4s
   useEffect(() => {
     if (!started) return;
-    const timer = setTimeout(() => setRevealed(true), 4000);
+    const timer = setTimeout(() => setRevealed(true), 3500);
     return () => clearTimeout(timer);
   }, [started]);
 
-  const features = [
-    {
-      title: tr("premium.timeline.title", "Your full momentum timeline"),
-      desc: tr("premium.timeline.desc", "See every momentum period from birth to now \u2014 and what\u2019s forming ahead."),
-    },
-    {
-      title: tr("premium.peaks.title", "Spot your peak windows"),
-      desc: tr("premium.peaks.desc", "Know when intensity builds. Plan your week around your strongest rhythms."),
-    },
-    {
-      title: tr("premium.alerts.title", "Get alerts before key moments"),
-      desc: tr("premium.alerts.desc", "Real-time notifications when exceptional momentum windows open."),
-    },
-    {
-      title: tr("premium.compat.title", "Compare signals with someone"),
-      desc: tr("premium.compat.desc", "Deep compatibility analysis. Shared peak discovery. Timing synergy reports."),
-    },
-  ];
-
   return (
     <section className="relative overflow-hidden py-24 md:py-32">
-      <div ref={sectionRef} className="relative z-10 mx-auto max-w-7xl px-6">
-        {/* Header */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6">
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
-            {tr("premium.eyebrow", "Premium")}
+            {tr("premium.v2.eyebrow", "Premium")}
           </p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {tr("premium.title", "Your signal today is strong")}
+            {tr("premium.v2.title", "See what is forming ahead.")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {tr("premium.subtitle", "But what about the next 7 days?")}
+            {tr("premium.v2.subtitle", "Free shows you today. Premium reveals the next 5 momentum windows coming your way.")}
           </p>
         </ScrollReveal>
 
-        {/* Cliffhanger timeline — bars that blur after "today" */}
-        <ScrollReveal variant="scaleIn" className="mt-12 flex justify-center">
+        <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.15}>
           <div
-            className="landing-glass w-full max-w-2xl overflow-hidden p-8"
-            style={{
-              borderColor: "color-mix(in srgb, var(--accent-purple) 30%, transparent)",
-              borderWidth: 1,
-            }}
+            ref={sectionRef}
+            className="landing-glass w-full max-w-xl overflow-hidden p-6 md:p-10"
           >
-            <p className="mb-6 text-[11px] font-medium uppercase tracking-wider text-brand-10/50">
-              {tr("premium.chart_label", "Your next 7 days")}
-            </p>
-
-            {/* Bar chart with blur transition */}
-            <div className="flex items-end justify-between gap-3" style={{ height: 140 }}>
-              {DAYS.map((day, i) => {
-                const barH = Math.max(24, (day.value / 100) * 130);
-                const isBlurred = !day.visible && !revealed;
-                const isPeak = day.isPeak;
-
+            {/* Future boudins as cards */}
+            <div className="space-y-3">
+              {FUTURE_BOUDINS.map((b, i) => {
+                const isLocked = !b.visible && !revealed;
                 return (
-                  <div key={i} className="flex flex-1 flex-col items-center gap-2">
-                    {/* Value label */}
-                    <motion.span
-                      className="text-xs font-semibold tabular-nums"
+                  <motion.div
+                    key={b.month}
+                    className="flex items-center gap-4 rounded-2xl px-4 py-3 relative overflow-hidden"
+                    style={{
+                      background: "color-mix(in srgb, var(--accent-purple) 5%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--accent-purple) 10%, transparent)",
+                    }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={started ? { opacity: 1, x: 0 } : {}}
+                    transition={{ delay: 0.2 + i * 0.1, duration: 0.3 }}
+                  >
+                    {/* Mini boudin */}
+                    <div
+                      className="flex-shrink-0 flex items-center justify-center"
                       style={{
-                        color: isPeak ? "var(--accent-purple)" : "var(--text-body-subtle)",
-                        filter: isBlurred ? "blur(6px)" : "none",
-                        transition: "filter 0.8s ease",
+                        width: b.w * 0.7,
+                        height: b.h * 0.7,
+                        borderRadius: (b.w * 0.7) / 2,
+                        background: isLocked
+                          ? "color-mix(in srgb, var(--accent-purple) 10%, transparent)"
+                          : `linear-gradient(135deg, color-mix(in srgb, ${b.color} 60%, transparent), color-mix(in srgb, ${b.color} 25%, transparent))`,
+                        border: isLocked
+                          ? "1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)"
+                          : `1px solid color-mix(in srgb, ${b.color} 35%, transparent)`,
                       }}
                     >
-                      {day.value}
-                    </motion.span>
+                      {!isLocked && (
+                        <div className="flex flex-col items-center gap-[2px]">
+                          {Array.from({ length: Math.min(b.dots, 3) }).map((_, j) => (
+                            <div key={j} className="rounded-full" style={{ width: 3, height: 3, backgroundColor: "white", opacity: 0.7 }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Bar */}
-                    <motion.div
-                      className="w-full rounded-lg"
-                      initial={{ height: 0 }}
-                      animate={started ? { height: barH } : {}}
-                      transition={{ delay: 0.3 + i * 0.1, type: "spring", stiffness: 150, damping: 20 }}
-                      style={{
-                        background: isPeak
-                          ? "linear-gradient(to top, var(--accent-purple), color-mix(in srgb, var(--accent-purple) 60%, white))"
-                          : "color-mix(in srgb, var(--brand-6) 30%, transparent)",
-                        boxShadow: isPeak ? "0 0 16px color-mix(in srgb, var(--accent-purple) 30%, transparent)" : "none",
-                        filter: isBlurred ? "blur(8px)" : "none",
-                        transition: "filter 0.8s ease",
-                      }}
-                    />
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{b.month}</span>
+                        {b.isPeak && !isLocked && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>Peak</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-brand-10/50">
+                        {isLocked ? "Unlock with premium" : b.domain}
+                      </p>
+                    </div>
 
-                    {/* Day label */}
-                    <span
-                      className="text-[10px] font-medium uppercase tracking-wider"
-                      style={{
-                        color: day.visible || revealed ? "var(--text-body-subtle)" : "var(--text-disabled)",
-                      }}
-                    >
-                      {day.label}
-                    </span>
-
-                    {/* Peak dot */}
-                    {isPeak && (
+                    {/* Lock overlay for hidden items */}
+                    {isLocked && (
                       <motion.div
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{
-                          background: "var(--accent-purple)",
-                          boxShadow: "0 0 6px var(--accent-purple)",
-                          filter: isBlurred ? "blur(4px)" : "none",
-                          transition: "filter 0.8s ease",
-                        }}
-                      />
+                        className="absolute inset-0 flex items-center justify-end pr-4 backdrop-blur-[2px]"
+                        style={{ background: "color-mix(in srgb, var(--bg-primary) 60%, transparent)" }}
+                        animate={revealed ? { opacity: 0 } : { opacity: 1 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand-10/30">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                      </motion.div>
                     )}
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
 
-            {/* Blur overlay + CTA (visible before reveal) */}
-            {!revealed && (
-              <motion.div
-                className="mt-6 text-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.5 }}
-              >
+            {/* Reveal CTA or result */}
+            <motion.div
+              className="mt-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={started ? { opacity: 1 } : {}}
+              transition={{ delay: 1.0 }}
+            >
+              {!revealed ? (
                 <button
                   onClick={() => setRevealed(true)}
-                  className="rounded-xl px-8 py-3 text-sm font-semibold text-white transition-all hover:brightness-110"
+                  className="rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-all"
                   style={{
                     background: "var(--accent-purple)",
-                    boxShadow: "0 0 24px color-mix(in srgb, var(--accent-purple) 25%, transparent)",
+                    boxShadow: "0 0 20px color-mix(in srgb, var(--accent-purple) 30%, transparent)",
                   }}
                 >
-                  {tr("premium.reveal_cta", "Reveal your full week")}
+                  Reveal all windows
                 </button>
-              </motion.div>
-            )}
-
-            {/* Post-reveal message */}
-            {revealed && (
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6 text-center text-sm text-brand-10/60"
-              >
-                {tr("premium.reveal_msg", "Premium shows your peaks before they arrive. Every day. Every week.")}
-              </motion.p>
-            )}
+              ) : (
+                <p className="text-sm text-brand-10/50">
+                  5 momentum windows. 2 peaks ahead. Your timing, mapped.
+                </p>
+              )}
+            </motion.div>
           </div>
         </ScrollReveal>
-
-        {/* Feature cards */}
-        <ScrollRevealGroup className="mt-16 grid gap-6 md:grid-cols-2" stagger={0.12}>
-          {features.map((f) => (
-            <ScrollRevealItem key={f.title} variant="fadeUp">
-              <div className="landing-glass p-8">
-                <h3 className="font-display text-xl font-semibold text-white">{f.title}</h3>
-                <p className="mt-3 text-brand-10">{f.desc}</p>
-              </div>
-            </ScrollRevealItem>
-          ))}
-        </ScrollRevealGroup>
       </div>
     </section>
   );
