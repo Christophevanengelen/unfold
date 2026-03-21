@@ -1,122 +1,201 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { motion } from "motion/react";
 import { ScrollReveal, ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
+import type { TranslationMap } from "@/lib/i18n";
 
 interface PremiumMomentumProps {
-  t: (key: string, fallback?: string) => string;
+  translations: TranslationMap;
 }
 
-/** Mini timeline capsule for the teaser visualization */
-const TEASER_CAPSULES = [
-  { tier: "toc", label: "TOC", planets: [{ key: "mercury", color: "#4BBFAF" }], w: 36, opacity: 0.4 },
-  { tier: "toctoc", label: "TOCTOC", planets: [{ key: "venus", color: "#D87EA0" }, { key: "mars", color: "#D06050" }], w: 48, opacity: 0.6 },
-  { tier: "toctoctoc", label: "TOCTOCTOC", planets: [{ key: "jupiter", color: "#5B7FC2" }, { key: "sun", color: "#E5A940" }, { key: "mercury", color: "#4BBFAF" }, { key: "moon", color: "#B0B8C8" }], w: 64, opacity: 1 },
-  { tier: "toctoc", label: "TOCTOC", planets: [{ key: "saturn", color: "#C49B50" }, { key: "venus", color: "#D87EA0" }], w: 48, opacity: 0.6 },
-  { tier: "toc", label: "TOC", planets: [{ key: "mars", color: "#D06050" }], w: 36, opacity: 0.4 },
+function t(translations: TranslationMap, key: string, fallback?: string): string {
+  return translations[key] ?? fallback ?? key;
+}
+
+// ─── Timeline bar data (7 days) ──────────────────────────────
+const DAYS = [
+  { label: "Mon", value: 62, visible: true },
+  { label: "Tue", value: 78, visible: true },
+  { label: "Wed", value: 85, visible: true, isPeak: true },
+  { label: "Thu", value: 71, visible: true },
+  { label: "Fri", value: 91, visible: false, isPeak: true },
+  { label: "Sat", value: 68, visible: false },
+  { label: "Sun", value: 88, visible: false, isPeak: true },
 ];
 
-export function PremiumMomentum({ t }: PremiumMomentumProps) {
+export function PremiumMomentum({ translations }: PremiumMomentumProps) {
+  const tr = (key: string, fallback?: string) => t(translations, key, fallback);
+  const [revealed, setRevealed] = useState(false);
+  const [started, setStarted] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Start animation when scrolled into view
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && !started) setStarted(true); },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [started]);
+
+  // Auto-reveal after 4 seconds
+  useEffect(() => {
+    if (!started) return;
+    const timer = setTimeout(() => setRevealed(true), 4000);
+    return () => clearTimeout(timer);
+  }, [started]);
+
   const features = [
     {
-      title: t("premium.timeline.title", "Your full momentum timeline"),
-      desc: t("premium.timeline.desc", "See every momentum period from birth to now — and what's forming ahead. Planets tell the story."),
+      title: tr("premium.timeline.title", "Your full momentum timeline"),
+      desc: tr("premium.timeline.desc", "See every momentum period from birth to now \u2014 and what\u2019s forming ahead."),
     },
     {
-      title: t("premium.peaks.title", "Spot your peak windows"),
-      desc: t("premium.peaks.desc", "Know when TOCTOCTOC intensity builds. Plan around your strongest rhythms."),
+      title: tr("premium.peaks.title", "Spot your peak windows"),
+      desc: tr("premium.peaks.desc", "Know when intensity builds. Plan your week around your strongest rhythms."),
     },
     {
-      title: t("premium.alerts.title", "Get alerts before key moments"),
-      desc: t("premium.alerts.desc", "Real-time notifications when exceptional momentum windows open."),
+      title: tr("premium.alerts.title", "Get alerts before key moments"),
+      desc: tr("premium.alerts.desc", "Real-time notifications when exceptional momentum windows open."),
     },
     {
-      title: t("premium.compat.title", "Compare signals with someone"),
-      desc: t("premium.compat.desc", "Deep compatibility analysis. Shared peak discovery. Timing synergy reports."),
+      title: tr("premium.compat.title", "Compare signals with someone"),
+      desc: tr("premium.compat.desc", "Deep compatibility analysis. Shared peak discovery. Timing synergy reports."),
     },
   ];
 
   return (
     <section className="relative overflow-hidden py-24 md:py-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-6">
-        {/* Editorial transition */}
-        <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
-          <p className="mb-8 text-sm italic text-brand-10/60">
-            {t("premium.transition", "Free reads your signal. Premium reveals the full timeline.")}
-          </p>
-        </ScrollReveal>
-
-        {/* Header text — one cohesive block */}
+      <div ref={sectionRef} className="relative z-10 mx-auto max-w-7xl px-6">
+        {/* Header */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
-            {t("premium.eyebrow", "Premium")}
+            {tr("premium.eyebrow", "Premium")}
           </p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("premium.title", "Your momentum story, complete")}
+            {tr("premium.title", "Your signal today is strong")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("premium.subtitle", "Every period. Every planet. Every signal that shaped your rhythm.")}
+            {tr("premium.subtitle", "But what about the next 7 days?")}
           </p>
         </ScrollReveal>
 
-        {/* Timeline teaser visualization */}
+        {/* Cliffhanger timeline — bars that blur after "today" */}
         <ScrollReveal variant="scaleIn" className="mt-12 flex justify-center">
           <div
-            className="landing-glass w-full max-w-lg overflow-hidden"
+            className="landing-glass w-full max-w-2xl overflow-hidden p-8"
             style={{
-              borderColor: "color-mix(in srgb, #9585CC 30%, transparent)",
+              borderColor: "color-mix(in srgb, var(--accent-purple) 30%, transparent)",
               borderWidth: 1,
             }}
           >
-            <div className="p-6 pb-5">
-              <p className="mb-5 text-[11px] font-medium uppercase tracking-wider text-brand-10/50">
-                Your timeline
-              </p>
-              {/* Mini capsules with connecting spine */}
-              <div className="relative flex items-center justify-center gap-3 py-4">
-                {/* Spine line */}
-                <div
-                  className="absolute left-8 right-8 top-1/2 h-px"
-                  style={{ background: "color-mix(in srgb, #9585CC 25%, transparent)" }}
-                />
-                {TEASER_CAPSULES.map((cap, i) => (
-                  <div
-                    key={i}
-                    className="relative flex flex-col items-center gap-1.5"
-                    style={{ opacity: cap.opacity }}
-                  >
-                    {/* Capsule body */}
-                    <div
-                      className="rounded-full"
+            <p className="mb-6 text-[11px] font-medium uppercase tracking-wider text-brand-10/50">
+              {tr("premium.chart_label", "Your next 7 days")}
+            </p>
+
+            {/* Bar chart with blur transition */}
+            <div className="flex items-end justify-between gap-3" style={{ height: 140 }}>
+              {DAYS.map((day, i) => {
+                const barH = Math.max(24, (day.value / 100) * 130);
+                const isBlurred = !day.visible && !revealed;
+                const isPeak = day.isPeak;
+
+                return (
+                  <div key={i} className="flex flex-1 flex-col items-center gap-2">
+                    {/* Value label */}
+                    <motion.span
+                      className="text-xs font-semibold tabular-nums"
                       style={{
-                        width: cap.w,
-                        height: cap.w,
-                        background: `linear-gradient(135deg, color-mix(in srgb, #9585CC ${cap.opacity * 40}%, transparent), color-mix(in srgb, #9585CC ${cap.opacity * 20}%, transparent))`,
-                        border: "1px solid color-mix(in srgb, #9585CC 30%, transparent)",
+                        color: isPeak ? "var(--accent-purple)" : "var(--text-body-subtle)",
+                        filter: isBlurred ? "blur(6px)" : "none",
+                        transition: "filter 0.8s ease",
+                      }}
+                    >
+                      {day.value}
+                    </motion.span>
+
+                    {/* Bar */}
+                    <motion.div
+                      className="w-full rounded-lg"
+                      initial={{ height: 0 }}
+                      animate={started ? { height: barH } : {}}
+                      transition={{ delay: 0.3 + i * 0.1, type: "spring", stiffness: 150, damping: 20 }}
+                      style={{
+                        background: isPeak
+                          ? "linear-gradient(to top, var(--accent-purple), color-mix(in srgb, var(--accent-purple) 60%, white))"
+                          : "color-mix(in srgb, var(--brand-6) 30%, transparent)",
+                        boxShadow: isPeak ? "0 0 16px color-mix(in srgb, var(--accent-purple) 30%, transparent)" : "none",
+                        filter: isBlurred ? "blur(8px)" : "none",
+                        transition: "filter 0.8s ease",
                       }}
                     />
-                    {/* Planet dots — real colors */}
-                    <div className="flex gap-0.5">
-                      {cap.planets.map((p, j) => (
-                        <div
-                          key={j}
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ background: p.color, boxShadow: `0 0 4px ${p.color}` }}
-                        />
-                      ))}
-                    </div>
-                    {/* Tier label */}
+
+                    {/* Day label */}
                     <span
-                      className="text-[8px] font-medium tracking-wider"
-                      style={{ color: "#9585CC" }}
+                      className="text-[10px] font-medium uppercase tracking-wider"
+                      style={{
+                        color: day.visible || revealed ? "var(--text-body-subtle)" : "var(--text-disabled)",
+                      }}
                     >
-                      {cap.label}
+                      {day.label}
                     </span>
+
+                    {/* Peak dot */}
+                    {isPeak && (
+                      <motion.div
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{
+                          background: "var(--accent-purple)",
+                          boxShadow: "0 0 6px var(--accent-purple)",
+                          filter: isBlurred ? "blur(4px)" : "none",
+                          transition: "filter 0.8s ease",
+                        }}
+                      />
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
+
+            {/* Blur overlay + CTA (visible before reveal) */}
+            {!revealed && (
+              <motion.div
+                className="mt-6 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5 }}
+              >
+                <button
+                  onClick={() => setRevealed(true)}
+                  className="rounded-xl px-8 py-3 text-sm font-semibold text-white transition-all hover:brightness-110"
+                  style={{
+                    background: "var(--accent-purple)",
+                    boxShadow: "0 0 24px color-mix(in srgb, var(--accent-purple) 25%, transparent)",
+                  }}
+                >
+                  {tr("premium.reveal_cta", "Reveal your full week")}
+                </button>
+              </motion.div>
+            )}
+
+            {/* Post-reveal message */}
+            {revealed && (
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 text-center text-sm text-brand-10/60"
+              >
+                {tr("premium.reveal_msg", "Premium shows your peaks before they arrive. Every day. Every week.")}
+              </motion.p>
+            )}
           </div>
         </ScrollReveal>
 
-        {/* Feature cards — stagger in after header */}
+        {/* Feature cards */}
         <ScrollRevealGroup className="mt-16 grid gap-6 md:grid-cols-2" stagger={0.12}>
           {features.map((f) => (
             <ScrollRevealItem key={f.title} variant="fadeUp">

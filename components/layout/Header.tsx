@@ -12,7 +12,7 @@ export function Header({ locale }: HeaderProps) {
     <header className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl" style={{ backgroundColor: "color-mix(in srgb, var(--bg-primary, #1B1535) 60%, transparent)" }}>
       <a
         href="#main"
-        className="absolute left-4 top-2 -translate-y-full rounded-lg bg-accent-purple px-4 py-2 text-sm font-medium text-white transition-transform focus:translate-y-0"
+        className="sr-only rounded-lg bg-accent-purple px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50"
       >
         Skip to content
       </a>

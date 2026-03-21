@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
+import { motion } from "motion/react";
 import { ScrollReveal, ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
 import { Star } from "flowbite-react-icons/solid";
 import type { TranslationMap } from "@/lib/i18n";
@@ -14,21 +16,64 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
 
 const TESTIMONIALS = [
   {
-    quote: "Finally an app that explains timing without the noise. I check my signal every morning.",
+    quote: "I used to overthink every big decision. Now I check my signal first. Last month it told me Tuesday was my peak day for presentations \u2014 I nailed it.",
     name: "Sarah M.",
-    detail: "Using Unfold for 3 months",
+    detail: "Product designer, 3 months",
+    accent: "var(--accent-pink)",
   },
   {
-    quote: "The momentum timeline changed how I plan my week. Seeing when peaks form ahead is invaluable.",
+    quote: "The momentum timeline changed how I plan my week. I schedule important calls on peak days and keep low-signal days for admin. Game changer.",
     name: "David K.",
     detail: "Premium subscriber",
+    accent: "var(--accent-blue)",
   },
   {
-    quote: "Clean, clear, and genuinely useful. This is what personal timing should feel like.",
+    quote: "My partner and I both use it. Seeing when our signals sync helps us pick the best days for big conversations. Surprisingly accurate.",
     name: "Lena R.",
     detail: "Using Unfold for 6 months",
+    accent: "var(--accent-green)",
   },
 ];
+
+// ─── Animated counter ────────────────────────────────────────
+function AnimatedCounter({ target }: { target: number }) {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && !started) setStarted(true); },
+      { threshold: 0.5 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [started]);
+
+  useEffect(() => {
+    if (!started) return;
+    const duration = 1500;
+    const steps = 40;
+    const stepTime = duration / steps;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      // Ease-out curve
+      const progress = 1 - Math.pow(1 - step / steps, 3);
+      setCount(Math.round(target * progress));
+      if (step >= steps) clearInterval(timer);
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [started, target]);
+
+  return (
+    <span ref={ref} className="tabular-nums">
+      {count.toLocaleString()}+
+    </span>
+  );
+}
 
 export function SocialProof({ translations }: SocialProofProps) {
   return (
@@ -36,13 +81,13 @@ export function SocialProof({ translations }: SocialProofProps) {
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         {/* Rating badge */}
         <ScrollReveal variant="fadeUp" className="flex justify-center">
-          <div className="flex items-center gap-2 rounded-full border border-brand-10/10 bg-brand-10/5 px-5 py-2.5">
+          <div className="flex items-center gap-3 rounded-full border border-brand-10/10 bg-brand-10/5 px-6 py-3">
             <div className="flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-4 w-4 text-[#E5A940]" />
+                <Star key={i} className="h-5 w-5 text-[#E5A940]" />
               ))}
             </div>
-            <span className="text-sm font-semibold text-white">4.8</span>
+            <span className="text-base font-bold text-white">4.8</span>
             <span className="text-sm text-brand-10/60">
               {t(translations, "social.rating", "on the App Store")}
             </span>
@@ -61,16 +106,20 @@ export function SocialProof({ translations }: SocialProofProps) {
           {TESTIMONIALS.map((item) => (
             <ScrollRevealItem key={item.name} variant="fadeUp">
               <div className="landing-glass flex h-full flex-col p-8">
+                {/* Accent line at top */}
+                <div
+                  className="mb-6 h-0.5 w-12 rounded-full"
+                  style={{ background: item.accent }}
+                />
                 <p className="flex-1 text-base leading-relaxed text-brand-10">
                   &ldquo;{item.quote}&rdquo;
                 </p>
                 <div className="mt-6 flex items-center gap-3">
-                  {/* Avatar placeholder — initials */}
                   <div
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold"
                     style={{
-                      background: "color-mix(in srgb, var(--accent-purple) 20%, transparent)",
-                      color: "var(--accent-purple)",
+                      background: `color-mix(in srgb, ${item.accent} 20%, transparent)`,
+                      color: item.accent,
                     }}
                   >
                     {item.name.split(" ").map((n) => n[0]).join("")}
@@ -85,11 +134,18 @@ export function SocialProof({ translations }: SocialProofProps) {
           ))}
         </ScrollRevealGroup>
 
-        {/* User counter */}
-        <ScrollReveal variant="fadeUp" className="mt-10 text-center">
-          <p className="text-sm text-brand-10/60">
-            {t(translations, "social.counter", "Join 2,400+ people reading their signal.")}
-          </p>
+        {/* Animated user counter */}
+        <ScrollReveal variant="fadeUp" className="mt-12 text-center">
+          <motion.div
+            className="inline-flex items-center gap-2 rounded-2xl border border-brand-10/8 bg-brand-10/3 px-8 py-4"
+          >
+            <span className="text-2xl font-bold text-white">
+              <AnimatedCounter target={2400} />
+            </span>
+            <span className="text-sm text-brand-10/60">
+              {t(translations, "social.counter_label", "people reading their signal")}
+            </span>
+          </motion.div>
         </ScrollReveal>
       </div>
     </section>
