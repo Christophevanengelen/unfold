@@ -80,9 +80,6 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
             className="relative w-full max-w-xs overflow-hidden"
             style={{ height: STRIP_HEIGHT }}
           >
-            {/* Fade edges */}
-            <div className="absolute inset-0 z-10 pointer-events-none"
-              style={{ background: "linear-gradient(to bottom, var(--bg-primary) 0%, transparent 8%, transparent 90%, var(--bg-primary) 100%)" }} />
 
             {/* NOW line */}
             <div className="absolute left-0 right-0 z-10 flex items-center gap-2" style={{ top: NOW_Y }}>
