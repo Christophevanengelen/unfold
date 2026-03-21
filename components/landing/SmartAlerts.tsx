@@ -20,7 +20,7 @@ const DEMO_NOTIFICATIONS = [
   {
     id: "peak",
     title: "Peak signal forming",
-    body: "An exceptional momentum window opens tomorrow. 3 planets align \u2014 your strongest signal this month.",
+    body: "An exceptional momentum window opens tomorrow. 3 planets align on your chart. Your strongest signal this month.",
     time: "8:02 AM",
     accent: "var(--accent-purple)",
     planets: [
@@ -32,7 +32,7 @@ const DEMO_NOTIFICATIONS = [
   {
     id: "compat",
     title: "Compatibility peak detected",
-    body: "Your signal syncs 91% with someone today. Shared Jupiter \u00d7 Venus transit \u2014 rare alignment.",
+    body: "Your timelines overlap this week. Shared Jupiter and Venus transit. A rare alignment window.",
     time: "Yesterday",
     accent: "#D87EA0",
     planets: [
@@ -43,7 +43,7 @@ const DEMO_NOTIFICATIONS = [
   {
     id: "shift",
     title: "Momentum shift ahead",
-    body: "Saturn enters your signal Thursday. Intensity drops to Subtle \u2014 plan lighter commitments.",
+    body: "Saturn enters your signal Thursday. Intensity drops to Subtle. Plan lighter commitments.",
     time: "2 days ago",
     accent: "#C49B50",
     planets: [

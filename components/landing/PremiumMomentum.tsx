@@ -54,10 +54,10 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
             {tr("premium.v2.eyebrow", "Premium")}
           </p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {tr("premium.v2.title", "See what is forming ahead.")}
+            {tr("premium.v2.title", "See your entire life. Past, present, future.")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {tr("premium.v2.subtitle", "Free shows you today. Premium reveals the next 5 momentum windows coming your way.")}
+            {tr("premium.v2.subtitle", "Free shows you now. Premium maps your entire timeline from birth to decades ahead.")}
           </p>
         </ScrollReveal>
 
@@ -158,7 +158,7 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
                 </button>
               ) : (
                 <p className="text-sm text-brand-10/50">
-                  5 momentum windows. 2 peaks ahead. Your timing, mapped.
+                  Your full timeline. Every peak. Every shift. From birth to decades ahead.
                 </p>
               )}
             </motion.div>
