@@ -1,7 +1,7 @@
 "use client";
 
-import { DomainPager } from "@/components/demo/DomainPager";
+import { SignalPager } from "@/components/demo/SignalPager";
 
 export default function MomentumView() {
-  return <DomainPager />;
+  return <SignalPager />;
 }

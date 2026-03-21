@@ -21,6 +21,9 @@ export default function DemoLayout({
   const HIDDEN_NAV_ROUTES = ["/demo/onboarding", "/demo/invite"];
   const hideNav = HIDDEN_NAV_ROUTES.some((r) => pathname.startsWith(r));
   const isHome = pathname === "/demo";
+  const isTimeline = pathname === "/demo/timeline";
+  // Full-bleed routes manage their own padding and scroll
+  const isFullBleed = isHome || isTimeline;
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }}>
@@ -62,8 +65,8 @@ export default function DemoLayout({
         <PremiumTeaserContext.Provider value={() => setPremiumOpen(true)}>
           <div
             className={`flex-1 ${
-              isHome
-                ? "relative z-10"
+              isFullBleed
+                ? "relative z-10 overflow-hidden"
                 : "overflow-y-auto overflow-x-hidden px-5 py-3"
             }`}
           >

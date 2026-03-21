@@ -21,6 +21,41 @@ interface DomainMeta {
   icon: (opts?: { size?: number }) => React.ReactNode;
 }
 
+// ─── Planetary Influences ────────────────────────────────────
+// Each momentum phase is shaped by 1-5 planetary transits.
+// TOCTOCTOC phases always have at least 2 active transits.
+// Colors are distinct, premium-muted, designed for small dots.
+
+export type PlanetKey =
+  | "sun" | "moon" | "mercury" | "venus" | "mars"
+  | "jupiter" | "saturn" | "uranus" | "neptune"
+  | "solar-eclipse" | "lunar-eclipse";
+
+interface PlanetMeta {
+  label: string;
+  color: string; // hex color for dot rendering
+}
+
+export const planetConfig: Record<PlanetKey, PlanetMeta> = {
+  sun:           { label: "Sun",           color: "#E5A940" }, // warm gold
+  moon:          { label: "Moon",          color: "#B0B8C8" }, // cool silver
+  mercury:       { label: "Mercury",       color: "#4BBFAF" }, // teal
+  venus:         { label: "Venus",         color: "#D87EA0" }, // rose
+  mars:          { label: "Mars",          color: "#D06050" }, // warm coral
+  jupiter:       { label: "Jupiter",       color: "#5B7FC2" }, // deep blue
+  saturn:        { label: "Saturn",        color: "#C49B50" }, // amber ochre
+  uranus:        { label: "Uranus",        color: "#50C4D6" }, // cyan
+  neptune:       { label: "Neptune",       color: "#8B6FBF" }, // lavender indigo
+  "solar-eclipse": { label: "Solar Eclipse", color: "#2A2040" }, // deep void
+  "lunar-eclipse": { label: "Lunar Eclipse", color: "#9E4070" }, // deep magenta
+};
+
+export const PLANET_KEYS: PlanetKey[] = [
+  "sun", "moon", "mercury", "venus", "mars",
+  "jupiter", "saturn", "uranus", "neptune",
+  "solar-eclipse", "lunar-eclipse",
+];
+
 export const domainConfig: Record<DomainKey, DomainMeta> = {
   love: {
     label: "LOVE",

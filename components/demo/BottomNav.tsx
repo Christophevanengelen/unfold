@@ -3,14 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Activity, Heart } from "lucide-react";
+import { Activity, Heart, Clock } from "lucide-react";
 
 const navItems = [
   {
     key: "momentum" as const,
     href: "/demo",
     icon: Activity,
-    label: "Momentum",
+    label: "Today",
+  },
+  {
+    key: "timeline" as const,
+    href: "/demo/timeline",
+    icon: Clock,
+    label: "Timeline",
   },
   {
     key: "match" as const,
@@ -29,7 +35,7 @@ export function BottomNav() {
         const isActive =
           item.key === "momentum"
             ? pathname === "/demo"
-            : pathname.startsWith(item.href);
+            : pathname.startsWith(item.href) && (item.key !== "match" || pathname !== "/demo/timeline");
         const Icon = item.icon;
 
         return (

@@ -11,12 +11,11 @@ interface PageDotsProps {
   onDotTap?: (index: number) => void;
 }
 
-/** Colors for each page dot (overall, love, health, work) */
+/** Colors for each page dot — all purple (signal-based, not domain-based) */
 const dotColors = [
   "var(--accent-purple)",
-  "var(--accent-pink)",
-  "var(--accent-green)",
-  "var(--accent-blue)",
+  "var(--accent-purple)",
+  "var(--accent-purple)",
 ];
 
 /**

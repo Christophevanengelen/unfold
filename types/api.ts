@@ -116,6 +116,35 @@ export interface PeakAlert {
   message: string; // Localized alert message
 }
 
+// ─── Timeline Phases (Momentum History) ─────────────────────
+// GET /api/momentum/timeline
+export interface TimelinePhase {
+  id: string;
+  domain: "love" | "health" | "work";
+  title: string;
+  subtitle: string;
+  description: string;
+  startDate: string; // ISO date
+  endDate?: string; // null = ongoing
+  durationWeeks: number;
+  intensity: number; // 0-100 — tier: <70 TOC, 70-84 TOCTOC, 85+ TOCTOCTOC
+  planets: PlanetaryTransit[]; // 1-5 active transits shaping this phase (TOCTOCTOC min 2)
+  status: "past" | "current" | "future";
+  guidance?: string; // premium-only
+  keyInsight?: string;
+  peakMoment?: string;
+}
+
+export type PlanetKey =
+  | "sun" | "moon" | "mercury" | "venus" | "mars"
+  | "jupiter" | "saturn" | "uranus" | "neptune"
+  | "solar-eclipse" | "lunar-eclipse";
+
+export interface PlanetaryTransit {
+  planet: PlanetKey;
+  influence: number; // 0-100 strength of this transit
+}
+
 // ─── User Profile ───────────────────────────────────────────
 // GET /api/user/profile
 export interface UserProfile {
