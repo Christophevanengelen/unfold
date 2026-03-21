@@ -13,26 +13,23 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
   return translations[key] ?? fallback ?? key;
 }
 
-// Person A boudins (left strip)
+// Same boudin proportions as the Premium "See your entire life" section
 const STRIP_A = [
-  { h: 28, color: "#B07CC2", shared: false },
-  { h: 18, color: "#6BA89A", shared: false },
-  { h: 36, color: "#9585CC", shared: true },
-  { h: 14, color: "#C4A86B", shared: false },
-  { h: 42, color: "#B07CC2", shared: true },
-  { h: 22, color: "#6BA89A", shared: false },
-  { h: 30, color: "#D89EA0", shared: false },
+  { w: 16, h: 24, color: "#8B7FC2", dots: 2, shared: false },
+  { w: 20, h: 34, color: "#6BA89A", dots: 2, shared: false },
+  { w: 24, h: 40, color: "#9585CC", dots: 3, shared: true },
+  { w: 14, h: 18, color: "#C4A86B", dots: 1, shared: false },
+  { w: 28, h: 48, color: "#B07CC2", dots: 3, shared: true },
+  { w: 18, h: 28, color: "#6BA89A", dots: 2, shared: false },
 ];
 
-// Person B boudins (right strip)
 const STRIP_B = [
-  { h: 22, color: "#D89EA0", shared: false },
-  { h: 30, color: "#50C4D6", shared: false },
-  { h: 32, color: "#8B7FC2", shared: true },
-  { h: 18, color: "#6BA89A", shared: false },
-  { h: 38, color: "#D89EA0", shared: true },
-  { h: 16, color: "#C4A86B", shared: false },
-  { h: 26, color: "#50C4D6", shared: false },
+  { w: 18, h: 28, color: "#D89EA0", dots: 2, shared: false },
+  { w: 22, h: 36, color: "#50C4D6", dots: 2, shared: false },
+  { w: 24, h: 38, color: "#8B7FC2", dots: 3, shared: true },
+  { w: 16, h: 22, color: "#6BA89A", dots: 1, shared: false },
+  { w: 26, h: 44, color: "#D89EA0", dots: 3, shared: true },
+  { w: 20, h: 30, color: "#C4A86B", dots: 2, shared: false },
 ];
 
 // Shared peak insights
@@ -86,10 +83,11 @@ export function Compatibility({ translations }: CompatibilityProps) {
               {STRIP_A.map((b, i) => (
                 <motion.div
                   key={`a-${i}`}
+                  className="relative"
                   style={{
-                    width: 22,
+                    width: b.w,
                     height: b.h,
-                    borderRadius: 11,
+                    borderRadius: Math.min(b.w, b.h) / 2,
                     background: `linear-gradient(135deg, color-mix(in srgb, ${b.color} 55%, transparent), color-mix(in srgb, ${b.color} 22%, transparent))`,
                     border: `1px solid color-mix(in srgb, ${b.color} 30%, transparent)`,
                   }}
@@ -100,7 +98,13 @@ export function Compatibility({ translations }: CompatibilityProps) {
                     boxShadow: b.shared ? `0 0 16px color-mix(in srgb, ${b.color} 35%, transparent)` : "none",
                   } : {}}
                   transition={{ delay: 0.2 + i * 0.06, duration: 0.4 }}
-                />
+                >
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px]">
+                    {Array.from({ length: b.dots }).map((_, j) => (
+                      <div key={j} className="rounded-full" style={{ width: 3, height: 3, backgroundColor: "white", opacity: 0.6 }} />
+                    ))}
+                  </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
@@ -146,10 +150,11 @@ export function Compatibility({ translations }: CompatibilityProps) {
               {STRIP_B.map((b, i) => (
                 <motion.div
                   key={`b-${i}`}
+                  className="relative"
                   style={{
-                    width: 22,
+                    width: b.w,
                     height: b.h,
-                    borderRadius: 11,
+                    borderRadius: Math.min(b.w, b.h) / 2,
                     background: `linear-gradient(135deg, color-mix(in srgb, ${b.color} 55%, transparent), color-mix(in srgb, ${b.color} 22%, transparent))`,
                     border: `1px solid color-mix(in srgb, ${b.color} 30%, transparent)`,
                   }}
@@ -160,7 +165,13 @@ export function Compatibility({ translations }: CompatibilityProps) {
                     boxShadow: b.shared ? `0 0 16px color-mix(in srgb, ${b.color} 35%, transparent)` : "none",
                   } : {}}
                   transition={{ delay: 0.2 + i * 0.06, duration: 0.4 }}
-                />
+                >
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px]">
+                    {Array.from({ length: b.dots }).map((_, j) => (
+                      <div key={j} className="rounded-full" style={{ width: 3, height: 3, backgroundColor: "white", opacity: 0.6 }} />
+                    ))}
+                  </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
