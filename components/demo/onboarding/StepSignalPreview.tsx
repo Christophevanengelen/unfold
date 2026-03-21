@@ -118,9 +118,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
       {/* Life strip area */}
       <div className="relative mt-4 flex-1 overflow-hidden">
 
-        {/* Fixed NOW line — always at center */}
+        {/* Fixed NOW line — always at center, above everything */}
         <div
-          className="absolute left-0 right-0 flex items-center gap-2 z-10"
+          className="absolute left-0 right-0 flex items-center gap-2 z-20"
           style={{ top: "50%", transform: "translateY(-50%)" }}
         >
           <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.25))" }} />
@@ -164,22 +164,16 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                 key={i}
                 className="absolute"
                 style={{ top: s.y, left, width: s.w, height: s.h }}
-                // Past: bright at NOW → dim after passing (lost interest)
-                // Future: bright and STAYS bright (premium value)
-                // Current: bright and STAYS
+                // Current: highlighted. Future: visible. Past: faded.
                 animate={
                   isLast
-                    ? { scale: [1, 1, 1.15], opacity: [0.3, 0.3, 1] }
-                    : isPast
-                      ? { scale: [1, 1.2, 1], opacity: [0.3, 1, 0.3] }
-                      : { scale: [1, 1, 1.1], opacity: [0.3, 0.3, 0.9] }
+                    ? { scale: [1, 1, 1.2], opacity: [0.7, 0.7, 1] }
+                    : { scale: 1, opacity: isPast ? 0.3 : 0.7 }
                 }
                 transition={
                   isLast
                     ? { duration: SCROLL_DURATION + 0.5, delay: 0, times: [0, 0.85, 1], ease: "easeOut" }
-                    : isPast
-                      ? { duration: 1.4, delay: Math.max(0.1, crossTime - 0.4), times: [0, 0.35, 1], ease: "easeOut" }
-                      : { duration: SCROLL_DURATION + 0.5, delay: 0, times: [0, 0.85, 1], ease: "easeOut" }
+                    : { duration: 0.3, delay: 0.2 }
                 }
               >
                 <motion.div
@@ -196,14 +190,12 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                   animate={{
                     boxShadow: isLast
                       ? [`0 0 0px transparent`, `0 0 0px transparent`, `0 0 24px color-mix(in srgb, ${s.color} 40%, transparent)`]
-                      : isPast
-                        ? [`0 0 0px transparent`, `0 0 16px color-mix(in srgb, ${s.color} 35%, transparent)`, `0 0 0px transparent`]
-                        : [`0 0 0px transparent`, `0 0 0px transparent`, `0 0 14px color-mix(in srgb, ${s.color} 30%, transparent)`],
+                      : `0 0 0px transparent`,
                   }}
                   transition={{
-                    duration: isLast ? SCROLL_DURATION + 0.5 : isPast ? 1.4 : SCROLL_DURATION + 0.5,
-                    delay: isLast ? 0 : isPast ? Math.max(0.1, crossTime - 0.4) : 0,
-                    times: isLast ? [0, 0.85, 1] : isPast ? [0, 0.35, 1] : [0, 0.85, 1],
+                    duration: isLast ? SCROLL_DURATION + 0.5 : 0.3,
+                    delay: isLast ? 0 : 0.2,
+                    times: isLast ? [0, 0.85, 1] : undefined,
                   }}
                 />
                 {s.dots > 0 && (
