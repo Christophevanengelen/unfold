@@ -18,23 +18,25 @@ interface StepSignalPreviewProps {
  * A year counter on the left counts up from birth to present.
  */
 
-// Boudins positioned relative to NOW (y=0). Negative = past, positive = future.
+// y=0 = NOW. Positive y = PAST (below NOW). Negative y = FUTURE (above NOW).
+// Matches the timeline: past goes down, future goes up.
 const BOUDINS = [
-  { y: -520, w: 14, h: 20,  color: "#8B7FC2", opacity: 0.4, dots: 1, year: 1985 },
-  { y: -450, w: 18, h: 28,  color: "#6BA89A", opacity: 0.4, dots: 1, year: 1990 },
-  { y: -380, w: 16, h: 22,  color: "#9585CC", opacity: 0.4, dots: 1, year: 1995 },
-  { y: -320, w: 22, h: 36,  color: "#C4A86B", opacity: 0.5, dots: 2, year: 1999 },
-  { y: -250, w: 26, h: 44,  color: "#B07CC2", opacity: 0.5, dots: 2, year: 2003 },
-  { y: -190, w: 20, h: 30,  color: "#6BA89A", opacity: 0.5, dots: 2, year: 2007 },
-  { y: -130, w: 30, h: 50,  color: "#9585CC", opacity: 0.6, dots: 3, year: 2011 },
-  { y: -65,  w: 24, h: 36,  color: "#D89EA0", opacity: 0.6, dots: 2, year: 2016 },
-  { y: -10,  w: 28, h: 44,  color: "#6BA89A", opacity: 0.7, dots: 3, year: 2020 },
+  // Future (above NOW)
+  { y: -200, w: 24, h: 36,  color: "#C4A86B", opacity: 0.2,  dots: 2, year: 2036 },
+  { y: -150, w: 16, h: 20,  color: "#50C4D6", opacity: 0.25, dots: 1, year: 2032 },
+  { y: -100, w: 26, h: 40,  color: "#6BA89A", opacity: 0.35, dots: 3, year: 2029 },
   // NOW
-  { y: 55,   w: 38, h: 64,  color: "#B07CC2", opacity: 1,   dots: 4, year: 2026, isCurrent: true },
-  // Future
-  { y: 135,  w: 26, h: 40,  color: "#6BA89A", opacity: 0.35, dots: 3, year: 2029 },
-  { y: 190,  w: 16, h: 20,  color: "#50C4D6", opacity: 0.25, dots: 1, year: 2032 },
-  { y: 226,  w: 24, h: 36,  color: "#C4A86B", opacity: 0.2,  dots: 2, year: 2036 },
+  { y: -20,  w: 38, h: 64,  color: "#B07CC2", opacity: 1,    dots: 4, year: 2026, isCurrent: true },
+  // Past (below NOW, birth = furthest down)
+  { y: 60,   w: 28, h: 44,  color: "#6BA89A", opacity: 0.7,  dots: 3, year: 2020 },
+  { y: 120,  w: 24, h: 36,  color: "#D89EA0", opacity: 0.6,  dots: 2, year: 2016 },
+  { y: 172,  w: 30, h: 50,  color: "#9585CC", opacity: 0.6,  dots: 3, year: 2011 },
+  { y: 238,  w: 20, h: 30,  color: "#6BA89A", opacity: 0.5,  dots: 2, year: 2007 },
+  { y: 284,  w: 26, h: 44,  color: "#B07CC2", opacity: 0.5,  dots: 2, year: 2003 },
+  { y: 344,  w: 22, h: 36,  color: "#C4A86B", opacity: 0.5,  dots: 2, year: 1999 },
+  { y: 396,  w: 16, h: 22,  color: "#9585CC", opacity: 0.4,  dots: 1, year: 1995 },
+  { y: 434,  w: 18, h: 28,  color: "#6BA89A", opacity: 0.4,  dots: 1, year: 1990 },
+  { y: 478,  w: 14, h: 20,  color: "#8B7FC2", opacity: 0.4,  dots: 1, year: 1985 },
 ];
 
 const SCROLL_DISTANCE = 580;
@@ -45,8 +47,13 @@ const SCROLL_EASE: [number, number, number, number] = [0.12, 0.8, 0.15, 1];
 // Scroll goes from y=SCROLL_DISTANCE to y=0 over SCROLL_DURATION
 // A boudin at position `by` crosses center when scrollOffset + by = 0
 // → scrollOffset = -by → progress = (SCROLL_DISTANCE - (-by)) / SCROLL_DISTANCE
+// Boudin crosses NOW when strip offset makes boudinY align with center
+// Strip goes from y=-580 to y=-30. A boudin at y crosses NOW when: -offset + y ≈ 0
+// → offset ≈ y → progress ≈ (SCROLL_DISTANCE - (SCROLL_DISTANCE - 30 - y)) / SCROLL_DISTANCE
 function getCrossTime(boudinY: number): number {
-  const progress = (SCROLL_DISTANCE - boudinY) / SCROLL_DISTANCE;
+  const endY = 30; // strip ends at y=-30
+  const totalTravel = SCROLL_DISTANCE - endY; // 550
+  const progress = (boudinY + SCROLL_DISTANCE) / (totalTravel + SCROLL_DISTANCE);
   // Apply approximate ease timing (linear approximation of the cubic-bezier)
   return Math.max(0, Math.min(1, progress)) * SCROLL_DURATION;
 }
@@ -143,30 +150,37 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
           className="absolute left-0 right-0"
           style={{ top: "50%" }}
           initial={{ y: -SCROLL_DISTANCE }}
-          animate={{ y: 0 }}
+          animate={{ y: -30 }}
           transition={{ duration: SCROLL_DURATION, ease: SCROLL_EASE }}
         >
           {BOUDINS.map((s, i) => {
             const left = `calc(50% - ${s.w / 2}px + ${(i % 2 === 0 ? -1 : 1) * 10}px)`;
             const crossTime = getCrossTime(s.y);
             const isLast = s.isCurrent;
+            const isPast = s.y > 0; // positive y = below NOW = past
 
             return (
               <motion.div
                 key={i}
                 className="absolute"
                 style={{ top: s.y, left, width: s.w, height: s.h }}
-                // Highlight sequence: dim → bright (at cross time) → dim (or stay if current)
-                animate={{
-                  scale: isLast ? [1, 1, 1.15] : [1, 1.15, 1],
-                  opacity: isLast ? [s.opacity * 0.6, s.opacity * 0.6, 1] : [s.opacity, 1, s.opacity],
-                }}
-                transition={{
-                  duration: isLast ? SCROLL_DURATION + 0.5 : 1.2,
-                  delay: isLast ? SCROLL_DURATION - 0.5 : Math.max(0.1, crossTime - 0.3),
-                  times: isLast ? [0, 0.7, 1] : [0, 0.4, 1],
-                  ease: "easeOut",
-                }}
+                // Past: bright at NOW → dim after passing (lost interest)
+                // Future: bright and STAYS bright (premium value)
+                // Current: bright and STAYS
+                animate={
+                  isLast
+                    ? { scale: [1, 1, 1.15], opacity: [0.3, 0.3, 1] }
+                    : isPast
+                      ? { scale: [1, 1.2, 1], opacity: [0.3, 1, 0.3] }
+                      : { scale: [1, 1, 1.1], opacity: [0.3, 0.3, 0.9] }
+                }
+                transition={
+                  isLast
+                    ? { duration: SCROLL_DURATION + 0.5, delay: 0, times: [0, 0.85, 1], ease: "easeOut" }
+                    : isPast
+                      ? { duration: 1.4, delay: Math.max(0.1, crossTime - 0.4), times: [0, 0.35, 1], ease: "easeOut" }
+                      : { duration: SCROLL_DURATION + 0.5, delay: 0, times: [0, 0.85, 1], ease: "easeOut" }
+                }
               >
                 <motion.div
                   className="h-full w-full"
@@ -182,12 +196,14 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                   animate={{
                     boxShadow: isLast
                       ? [`0 0 0px transparent`, `0 0 0px transparent`, `0 0 24px color-mix(in srgb, ${s.color} 40%, transparent)`]
-                      : [`0 0 0px transparent`, `0 0 16px color-mix(in srgb, ${s.color} 30%, transparent)`, `0 0 0px transparent`],
+                      : isPast
+                        ? [`0 0 0px transparent`, `0 0 16px color-mix(in srgb, ${s.color} 35%, transparent)`, `0 0 0px transparent`]
+                        : [`0 0 0px transparent`, `0 0 0px transparent`, `0 0 14px color-mix(in srgb, ${s.color} 30%, transparent)`],
                   }}
                   transition={{
-                    duration: isLast ? SCROLL_DURATION + 0.5 : 1.2,
-                    delay: isLast ? SCROLL_DURATION - 0.5 : Math.max(0.1, crossTime - 0.3),
-                    times: isLast ? [0, 0.7, 1] : [0, 0.4, 1],
+                    duration: isLast ? SCROLL_DURATION + 0.5 : isPast ? 1.4 : SCROLL_DURATION + 0.5,
+                    delay: isLast ? 0 : isPast ? Math.max(0.1, crossTime - 0.4) : 0,
+                    times: isLast ? [0, 0.85, 1] : isPast ? [0, 0.35, 1] : [0, 0.85, 1],
                   }}
                 />
                 {s.dots > 0 && (
