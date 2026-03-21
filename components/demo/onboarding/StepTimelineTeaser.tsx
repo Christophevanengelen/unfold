@@ -223,9 +223,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         animate={{ opacity: 1 }}
         transition={{ delay: SETTLE_DELAY + 0.5 }}
       >
-        Right now, three planets are active.
+        Some are passing through your zone.
         <br />
-        Which ones are in your zone?
+        Which ones? It depends on you.
       </motion.p>
 
       <motion.div
