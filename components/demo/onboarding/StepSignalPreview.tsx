@@ -115,8 +115,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
         </h1>
       </motion.div>
 
-      {/* Life strip area */}
-      <div className="relative mt-4 flex-1 overflow-hidden">
+      {/* Life strip area — fade edges so no boudin gets cut */}
+      <div className="relative mt-4 flex-1 overflow-hidden"
+        style={{ maskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 88%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 88%, transparent 100%)" }}>
 
         {/* Fixed NOW line — always at center, above everything */}
         <div
@@ -208,9 +209,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
       {/* CTA */}
       <motion.div
         className="pt-2 pb-1"
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0.5, y: 0 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: SCROLL_DURATION + 0.3, duration: 0.4 }}
+        transition={{ delay: 0.3, duration: 0.3 }}
       >
         <button
           type="button"

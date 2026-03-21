@@ -228,7 +228,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         className="pt-2 pb-1"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: SETTLE_DELAY + 0.8 }}
+        transition={{ delay: 0.3, duration: 0.3 }}
       >
         <button
           type="button"
