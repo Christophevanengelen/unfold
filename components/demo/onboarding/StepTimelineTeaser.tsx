@@ -29,15 +29,16 @@ interface PlanetOrbit {
 }
 
 const PLANETS: PlanetOrbit[] = [
-  { key: "sun",     orbit: 0,   size: 18, fromAngle: 0,   toAngle: 0,   isActive: true,  rotations: 0 },
-  { key: "moon",    orbit: 22,  size: 5,  fromAngle: 90,  toAngle: 150, isActive: false, rotations: 3 },
-  { key: "mercury", orbit: 34,  size: 4,  fromAngle: 200, toAngle: 45,  isActive: false, rotations: 2 },
-  { key: "venus",   orbit: 46,  size: 5,  fromAngle: 320, toAngle: 180, isActive: false, rotations: 2 },
-  { key: "mars",    orbit: 58,  size: 5,  fromAngle: 130, toAngle: 120, isActive: false, rotations: 1 },
-  { key: "jupiter", orbit: 72,  size: 8,  fromAngle: 60,  toAngle: 300, isActive: true,  rotations: 1 },
-  { key: "saturn",  orbit: 86,  size: 7,  fromAngle: 180, toAngle: 325, isActive: true,  rotations: 1 },
-  { key: "uranus",  orbit: 98,  size: 5,  fromAngle: 270, toAngle: 200, isActive: false, rotations: 1 },
-  { key: "neptune", orbit: 110, size: 5,  fromAngle: 10,  toAngle: 310, isActive: true,  rotations: 1 },
+  // Visible sizes, proportional: Sun > Jupiter > Saturn > Neptune/Uranus > Venus > Mars > Mercury > Moon
+  { key: "sun",     orbit: 0,   size: 16, fromAngle: 0,   toAngle: 0,   isActive: true,  rotations: 0 },
+  { key: "moon",    orbit: 20,  size: 4,  fromAngle: 90,  toAngle: 150, isActive: false, rotations: 3 },
+  { key: "mercury", orbit: 32,  size: 4,  fromAngle: 200, toAngle: 45,  isActive: false, rotations: 2 },
+  { key: "venus",   orbit: 42,  size: 5,  fromAngle: 320, toAngle: 180, isActive: false, rotations: 2 },
+  { key: "mars",    orbit: 54,  size: 5,  fromAngle: 130, toAngle: 120, isActive: false, rotations: 1 },
+  { key: "jupiter", orbit: 70,  size: 9,  fromAngle: 60,  toAngle: 300, isActive: true,  rotations: 1 },
+  { key: "saturn",  orbit: 84,  size: 8,  fromAngle: 180, toAngle: 330, isActive: true,  rotations: 1 },
+  { key: "uranus",  orbit: 96,  size: 5,  fromAngle: 270, toAngle: 200, isActive: false, rotations: 1 },
+  { key: "neptune", orbit: 110, size: 6,  fromAngle: 10,  toAngle: 270, isActive: true,  rotations: 1 },
 ];
 
 const CENTER = 130;
@@ -159,18 +160,18 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                 animate={{ rotate: p.fromAngle + totalAngle }}
                 transition={{ delay: 0.5, duration: ORBIT_DURATION, ease: "easeInOut" }}
               >
-                {/* Planet positioned at 12 o'clock (top center) of the rotating container */}
-                <div className="absolute flex flex-col items-center"
+                {/* Planet at 12 o'clock — dot centered on orbit, label below (absolute) */}
+                <div className="absolute"
                   style={{ left: "50%", top: 0, transform: "translate(-50%, -50%)" }}>
 
                   {/* Counter-rotate the content so labels stay horizontal */}
                   <motion.div
-                    className="flex flex-col items-center"
+                    className="relative"
                     initial={{ rotate: -p.fromAngle }}
                     animate={{ rotate: -(p.fromAngle + totalAngle) }}
                     transition={{ delay: 0.5, duration: ORBIT_DURATION, ease: "easeInOut" }}
                   >
-                    {/* Dot with centered pulse ring */}
+                    {/* Dot — centered on orbit point */}
                     <motion.div
                       className="rounded-full relative flex items-center justify-center"
                       style={{
@@ -178,10 +179,10 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                         height: p.size,
                         backgroundColor: config.color,
                       }}
-                      initial={{ opacity: 0.25 }}
+                      initial={{ opacity: 0.7 }}
                       animate={{
-                        opacity: p.isActive ? 1 : 0.25,
-                        scale: p.isActive ? 1.3 : 1,
+                        opacity: 1,
+                        scale: p.isActive ? 1.2 : 1,
                         boxShadow: p.isActive ? `0 0 ${p.size * 3}px ${config.color}60` : "none",
                       }}
                       transition={{ delay: SETTLE_DELAY, duration: 0.5 }}
@@ -200,11 +201,11 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                         />
                       )}
                     </motion.div>
-                    {/* Label — fades in after settling for active planets */}
+                    {/* Label — absolute below dot, doesn't affect dot position */}
                     {p.isActive && (
                       <motion.span
-                        className="mt-2 text-[9px] font-semibold whitespace-nowrap"
-                        style={{ color: config.color }}
+                        className="absolute left-1/2 text-[9px] font-semibold whitespace-nowrap"
+                        style={{ color: config.color, top: p.size + 6, transform: "translateX(-50%)" }}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 0.9 }}
                         transition={{ delay: SETTLE_DELAY + 0.3, duration: 0.4 }}
