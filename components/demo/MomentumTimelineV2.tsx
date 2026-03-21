@@ -13,7 +13,7 @@ import {
 import { X } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────
-type ViewMode = "focus" | "overview";
+type ViewMode = "focus" | "overview" | "list";
 
 type Tier = "toc" | "toctoc" | "toctoctoc";
 
@@ -265,6 +265,13 @@ function buildCurrentCapsule(): CapsuleData | null {
 
 // ─── Detail Sheet ───────────────────────────────────────────
 function DetailSheet({ capsule, onClose }: { capsule: CapsuleData; onClose: () => void }) {
+  // Dismiss on Escape key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
   const tierLabel = capsule.tier === "toctoctoc" ? "TOCTOCTOC" : capsule.tier === "toctoc" ? "TOCTOC" : "TOC";
   const startLabel = `${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
   const endLabel = capsule.isCurrent
@@ -1154,6 +1161,154 @@ function OverviewView({
   );
 }
 
+// ─── List View ───────────────────────────────────────────────
+// Compact vertical list with spine — scannable, chronological
+function ListView({
+  capsules,
+  onTapCapsule,
+}: {
+  capsules: CapsuleData[];
+  onTapCapsule: (capsule: CapsuleData) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const currentRef = useRef<HTMLButtonElement>(null);
+
+  // Sort chronologically (most recent first for natural reading)
+  const sorted = useMemo(() => {
+    return [...capsules].sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+  }, [capsules]);
+
+  // Auto-scroll to current on mount
+  useEffect(() => {
+    if (currentRef.current) {
+      currentRef.current.scrollIntoView({ block: "center", behavior: "instant" });
+    }
+  }, []);
+
+  return (
+    <div ref={scrollRef} className="no-scrollbar h-full overflow-y-auto px-4 pb-6">
+      {/* Spine + rows */}
+      <div className="relative ml-3">
+        {/* Vertical spine */}
+        <div
+          className="absolute top-0 bottom-0"
+          aria-hidden="true"
+          style={{
+            left: 3,
+            width: 1,
+            background: "linear-gradient(to bottom, transparent, color-mix(in srgb, var(--accent-purple) 30%, transparent) 5%, color-mix(in srgb, var(--accent-purple) 30%, transparent) 95%, transparent)",
+          }}
+        />
+
+        {sorted.map((capsule, i) => {
+          const phase = capsule.phases[0];
+          if (!phase) return null;
+          const tierLabel = capsule.tier === "toctoctoc" ? "TOCTOCTOC" : capsule.tier === "toctoc" ? "TOCTOC" : "TOC";
+          const startLabel = `${MONTH_NAMES[capsule.startDate.getMonth()]} '${String(capsule.startDate.getFullYear()).slice(2)}`;
+          const endLabel = capsule.isCurrent
+            ? "now"
+            : `${MONTH_NAMES[capsule.endDate.getMonth()]} '${String(capsule.endDate.getFullYear()).slice(2)}`;
+          const maxIntensity = Math.max(...capsule.phases.map(p => p.intensity));
+
+          return (
+            <motion.button
+              key={capsule.id}
+              ref={capsule.isCurrent ? currentRef : undefined}
+              type="button"
+              onClick={() => !capsule.isFuture && onTapCapsule(capsule)}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.02, duration: 0.3 }}
+              className="relative flex w-full items-start gap-3 py-2.5 text-left"
+              style={{ opacity: capsule.isFuture ? 0.45 : 1 }}
+            >
+              {/* Dot on spine */}
+              <div className="relative z-10 mt-1.5 flex flex-shrink-0 items-center justify-center" style={{ width: 7 }}>
+                <div
+                  className="rounded-full"
+                  style={{
+                    width: capsule.isCurrent ? 9 : 6,
+                    height: capsule.isCurrent ? 9 : 6,
+                    background: capsule.isCurrent
+                      ? "var(--accent-purple)"
+                      : "color-mix(in srgb, var(--accent-purple) 50%, transparent)",
+                    boxShadow: capsule.isCurrent
+                      ? "0 0 10px rgba(149, 133, 204, 0.6)"
+                      : "none",
+                  }}
+                />
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-[11px] font-semibold leading-tight truncate"
+                    style={{ color: capsule.isCurrent ? "#fff" : "var(--text-heading)" }}
+                  >
+                    {phase.title}
+                  </span>
+                  {capsule.isCurrent && (
+                    <span
+                      className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wider"
+                      style={{
+                        background: "color-mix(in srgb, var(--accent-purple) 30%, transparent)",
+                        color: "#C1A7FF",
+                        border: "1px solid color-mix(in srgb, var(--accent-purple) 40%, transparent)",
+                      }}
+                    >
+                      NOW
+                    </span>
+                  )}
+                </div>
+
+                <span className="mt-0.5 block text-[9px]" style={{ color: "var(--text-disabled)" }}>
+                  {startLabel} — {endLabel}
+                </span>
+
+                {/* Planet dots + tier */}
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {capsule.planets.map((planet) => {
+                      const pc = planetConfig[planet];
+                      return (
+                        <div
+                          key={planet}
+                          className="h-[5px] w-[5px] rounded-full"
+                          style={{
+                            background: capsule.isFuture ? "rgba(255,255,255,0.4)" : pc.color,
+                            boxShadow: capsule.isFuture ? "none" : `0 0 3px ${pc.color}`,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span
+                    className="text-[7px] font-semibold tracking-wider"
+                    style={{ color: "color-mix(in srgb, var(--accent-purple) 60%, transparent)" }}
+                  >
+                    {tierLabel}
+                  </span>
+                </div>
+              </div>
+
+              {/* Intensity */}
+              <div className="flex-shrink-0 pt-0.5">
+                <span
+                  className="text-[13px] font-bold tabular-nums"
+                  style={{ color: capsule.isCurrent ? "#C1A7FF" : "var(--text-body-subtle)" }}
+                >
+                  {maxIntensity}
+                </span>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ─────────────────────────────────────────
 export function MomentumTimelineV2() {
   const [viewMode, setViewMode] = useState<ViewMode>("focus");
@@ -1176,53 +1331,40 @@ export function MomentumTimelineV2() {
     <div className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
       {/* ── Unified header bar ── */}
       <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 pt-2 pb-1">
-        {/* Left — view label */}
-        <motion.span
-          key={viewMode}
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="text-[9px] font-semibold uppercase tracking-[0.15em]"
-          style={{ color: "var(--text-disabled)", minWidth: 60 }}
-        >
-          {viewMode === "focus" ? "Focus" : "Overview"}
-        </motion.span>
-
-        {/* Center — age (absolute center, independent of left/right widths) */}
+        {/* Left — age */}
         <span
-          className="absolute left-1/2 -translate-x-1/2 text-xl font-semibold tabular-nums"
-          style={{ color: "var(--text-heading)" }}
+          className="text-xl font-semibold tabular-nums"
+          style={{ color: "var(--text-heading)", minWidth: 36 }}
         >
-          {visibleAge}
+          {viewMode !== "list" ? visibleAge : ""}
         </span>
 
-        {/* Right — action button */}
-        {viewMode === "focus" ? (
-          <motion.button
-            type="button"
-            onClick={() => setViewMode("overview")}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex h-7 w-7 items-center justify-center rounded-full"
-            style={PILL_STYLE}
-            whileTap={{ scale: 0.9 }}
-          >
-            <X size={14} />
-          </motion.button>
-        ) : (
-          <motion.button
-            type="button"
-            onClick={() => setViewMode("focus")}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex items-center justify-center rounded-full px-2.5 py-1"
-            style={PILL_STYLE}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="text-[9px] font-semibold uppercase tracking-wider">Focus</span>
-          </motion.button>
-        )}
+        {/* Center — 3-way toggle */}
+        <div
+          className="flex items-center gap-0.5 rounded-full p-0.5"
+          style={{
+            background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)",
+          }}
+        >
+          {(["focus", "overview", "list"] as ViewMode[]).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setViewMode(mode)}
+              className="relative rounded-full px-2.5 py-1 text-[8px] font-semibold uppercase tracking-wider transition-all duration-200"
+              style={{
+                color: viewMode === mode ? "#fff" : "var(--text-disabled)",
+                background: viewMode === mode ? "var(--accent-purple)" : "transparent",
+              }}
+            >
+              {mode === "focus" ? "Focus" : mode === "overview" ? "All" : "List"}
+            </button>
+          ))}
+        </div>
+
+        {/* Right — spacer for balance */}
+        <div style={{ minWidth: 36 }} />
       </div>
 
       <AnimatePresence mode="wait">
@@ -1243,7 +1385,7 @@ export function MomentumTimelineV2() {
               onAgeChange={handleAgeChange}
             />
           </motion.div>
-        ) : (
+        ) : viewMode === "overview" ? (
           <motion.div
             key="overview"
             initial={{ opacity: 0, scale: 1.05 }}
@@ -1253,6 +1395,17 @@ export function MomentumTimelineV2() {
             className="h-full w-full pt-9"
           >
             <OverviewView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="list"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="h-full w-full pt-9"
+          >
+            <ListView capsules={allCapsules} onTapCapsule={handleTapCapsule} />
           </motion.div>
         )}
       </AnimatePresence>

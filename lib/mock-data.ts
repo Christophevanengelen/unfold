@@ -1,4 +1,5 @@
 import type {
+  Connection,
   DailyMomentum,
   MomentumTrend,
   CompatibilityResult,
@@ -71,23 +72,110 @@ export const mockTrend: MomentumTrend = {
   ],
 };
 
-// ─── Compatibility ──────────────────────────────────────────
-export const mockCompatibility: CompatibilityResult = {
-  score: 87,
-  partnerName: "Jordan",
-  synergies: [
-    { axis: "love", strength: "strong", description: "Deep emotional resonance" },
-    { axis: "work", strength: "moderate", description: "Complementary creative rhythms" },
-    { axis: "health", strength: "developing", description: "Growing vitality alignment" },
-  ],
-  sharedPeaks: ["2026-03-12", "2026-03-18", "2026-03-24"],
-  whatMakesYouWork: "You balance each other — when Alex peaks in work, Jordan's love energy creates grounding.",
-  bestDaysTogether: [
-    { date: "2026-03-12", context: "Both peak in love — ideal for deep conversations" },
-    { date: "2026-03-18", context: "Shared work momentum — great for collaboration" },
-    { date: "2026-03-24", context: "Aligned vitality — perfect for an active day together" },
-  ],
+// ─── Connections ────────────────────────────────────────────
+export const mockConnections: Connection[] = [
+  {
+    id: "conn_jordan",
+    name: "Jordan",
+    initial: "J",
+    relationship: "partner",
+    status: "connected",
+    score: 87,
+    todayAlignment: 92,
+    todayInsight: "Both peaking in Work — great day to collaborate",
+    connectedSince: "2026-01-20T00:00:00Z",
+  },
+  {
+    id: "conn_sam",
+    name: "Sam",
+    initial: "S",
+    relationship: "friend",
+    status: "connected",
+    score: 74,
+    todayAlignment: 68,
+    todayInsight: "Your Health rhythms align — go for a run together",
+    connectedSince: "2026-02-05T00:00:00Z",
+  },
+  {
+    id: "conn_maya",
+    name: "Maya",
+    initial: "M",
+    relationship: "colleague",
+    status: "connected",
+    score: 81,
+    todayAlignment: 85,
+    todayInsight: "Strong Work alignment — schedule that key meeting",
+    connectedSince: "2026-02-14T00:00:00Z",
+  },
+  {
+    id: "conn_chris",
+    name: "Chris",
+    initial: "C",
+    relationship: "family",
+    status: "pending",
+    score: 0,
+    todayAlignment: 0,
+    todayInsight: "Invite pending — check in with Chris",
+    connectedSince: "2026-03-15T00:00:00Z",
+  },
+];
+
+// ─── Compatibility Results (per connection) ─────────────────
+export const mockCompatibilityResults: Record<string, CompatibilityResult> = {
+  conn_jordan: {
+    connectionId: "conn_jordan",
+    score: 87,
+    partnerName: "Jordan",
+    synergies: [
+      { axis: "love", strength: "strong", description: "Deep emotional resonance" },
+      { axis: "work", strength: "moderate", description: "Complementary creative rhythms" },
+      { axis: "health", strength: "developing", description: "Growing vitality alignment" },
+    ],
+    sharedPeaks: ["2026-03-12", "2026-03-18", "2026-03-24"],
+    whatMakesYouWork: "You balance each other — when Alex peaks in work, Jordan's love energy creates grounding.",
+    bestDaysTogether: [
+      { date: "2026-03-12", context: "Both peak in love — ideal for deep conversations" },
+      { date: "2026-03-18", context: "Shared work momentum — great for collaboration" },
+      { date: "2026-03-24", context: "Aligned vitality — perfect for an active day together" },
+    ],
+  },
+  conn_sam: {
+    connectionId: "conn_sam",
+    score: 74,
+    partnerName: "Sam",
+    synergies: [
+      { axis: "love", strength: "moderate", description: "Warm emotional support" },
+      { axis: "work", strength: "developing", description: "Different work rhythms" },
+      { axis: "health", strength: "strong", description: "Shared vitality peaks" },
+    ],
+    sharedPeaks: ["2026-03-15", "2026-03-22"],
+    whatMakesYouWork: "Your health rhythms sync naturally — you push each other to stay active.",
+    bestDaysTogether: [
+      { date: "2026-03-15", context: "Shared health peak — perfect for outdoor activity" },
+      { date: "2026-03-22", context: "Both feeling social — ideal for group plans" },
+    ],
+  },
+  conn_maya: {
+    connectionId: "conn_maya",
+    score: 81,
+    partnerName: "Maya",
+    synergies: [
+      { axis: "love", strength: "developing", description: "Building trust over time" },
+      { axis: "work", strength: "strong", description: "Creative powerhouse together" },
+      { axis: "health", strength: "moderate", description: "Balanced energy patterns" },
+    ],
+    sharedPeaks: ["2026-03-11", "2026-03-19", "2026-03-25"],
+    whatMakesYouWork: "Your work signals amplify each other — meetings on aligned days produce breakthrough ideas.",
+    bestDaysTogether: [
+      { date: "2026-03-11", context: "Both in creative flow — brainstorm day" },
+      { date: "2026-03-19", context: "Work peak overlap — tackle the hardest problem" },
+      { date: "2026-03-25", context: "Balanced momentum — good for planning sessions" },
+    ],
+  },
 };
+
+// Legacy alias — components that import mockCompatibility still work
+export const mockCompatibility: CompatibilityResult = mockCompatibilityResults.conn_jordan;
 
 // ─── Premium: 7-Day Forecast ────────────────────────────────
 export const mockForecast: ForecastWindow[] = [

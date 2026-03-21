@@ -3,18 +3,50 @@ import { defaultLocale, localeCodes } from "@/i18n/config";
 
 const PUBLIC_FILE = /\.(.*)$/;
 
+/** Security headers applied to all responses */
+const securityHeaders: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+};
+
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(securityHeaders)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip public files, API routes, admin, demo, and Next.js internals
+  // Admin route protection
+  if (pathname.startsWith("/admin")) {
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (adminPassword) {
+      const authHeader = request.headers.get("authorization");
+      if (!authHeader || !isValidBasicAuth(authHeader, adminPassword)) {
+        return new NextResponse("Authentication required", {
+          status: 401,
+          headers: {
+            "WWW-Authenticate": 'Basic realm="Unfold Admin"',
+            ...securityHeaders,
+          },
+        });
+      }
+    }
+    return applySecurityHeaders(NextResponse.next());
+  }
+
+  // Skip public files, API routes, demo, and Next.js internals
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
-    pathname.startsWith("/admin") ||
     pathname.startsWith("/demo") ||
     PUBLIC_FILE.test(pathname)
   ) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
 
   // Check if pathname already has a valid locale
@@ -23,12 +55,11 @@ export function middleware(request: NextRequest) {
   );
 
   if (pathnameLocale) {
-    // Pass locale to root layout via request header (for dynamic <html lang>)
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-locale", pathnameLocale);
-    return NextResponse.next({
-      request: { headers: requestHeaders },
-    });
+    return applySecurityHeaders(
+      NextResponse.next({ request: { headers: requestHeaders } })
+    );
   }
 
   // Detect preferred locale from Accept-Language header
@@ -41,11 +72,25 @@ export function middleware(request: NextRequest) {
   const locale = preferredLocale || defaultLocale;
 
   // Redirect to locale-prefixed path
-  return NextResponse.redirect(
-    new URL(`/${locale}${pathname === "/" ? "" : pathname}`, request.url)
+  return applySecurityHeaders(
+    NextResponse.redirect(
+      new URL(`/${locale}${pathname === "/" ? "" : pathname}`, request.url)
+    )
   );
 }
 
+function isValidBasicAuth(header: string, password: string): boolean {
+  const [scheme, encoded] = header.split(" ");
+  if (scheme !== "Basic" || !encoded) return false;
+  try {
+    const decoded = atob(encoded);
+    const [, pwd] = decoded.split(":");
+    return pwd === password;
+  } catch {
+    return false;
+  }
+}
+
 export const config = {
-  matcher: ["/((?!_next|api|admin|demo|.*\\..*).*)"],
+  matcher: ["/((?!_next|api|.*\\..*).*)"],
 };

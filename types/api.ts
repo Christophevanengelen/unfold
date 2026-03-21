@@ -62,9 +62,25 @@ export interface TrendPoint {
   overall: number;
 }
 
+// ─── Connections ────────────────────────────────────────────
+// GET /api/connections
+export interface Connection {
+  id: string;
+  name: string;
+  initial: string; // First letter for avatar
+  relationship: "partner" | "friend" | "family" | "colleague";
+  status: "connected" | "pending" | "invited";
+  score: number; // 0-100 compatibility score
+  todayAlignment: number; // 0-100 how aligned today
+  todayInsight: string; // "You're both peaking in Work"
+  connectedSince: string; // ISO date
+}
+
 // ─── Compatibility ──────────────────────────────────────────
 // POST /api/compatibility/check { inviteCode: string }
+// GET /api/compatibility/:connectionId
 export interface CompatibilityResult {
+  connectionId: string;
   score: number; // 0-100
   partnerName: string;
   synergies: {

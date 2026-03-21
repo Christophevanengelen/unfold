@@ -11,18 +11,21 @@ const navItems = [
     href: "/demo",
     icon: Activity,
     label: "Today",
+    badge: 0,
   },
   {
     key: "timeline" as const,
     href: "/demo/timeline",
     icon: Clock,
     label: "Timeline",
+    badge: 0,
   },
   {
     key: "match" as const,
     href: "/demo/compatibility",
     icon: Heart,
     label: "Match",
+    badge: 3, // connected count
   },
 ];
 
@@ -45,13 +48,23 @@ export function BottomNav() {
             className="relative flex flex-col items-center justify-center gap-0.5 px-8 py-2"
             aria-label={item.label}
           >
-            <Icon
-              size={20}
-              strokeWidth={isActive ? 2 : 1.5}
-              className={`transition-all duration-200 ${
-                isActive ? "text-accent-purple" : "text-text-body-subtle"
-              }`}
-            />
+            <div className="relative">
+              <Icon
+                size={20}
+                strokeWidth={isActive ? 2 : 1.5}
+                className={`transition-all duration-200 ${
+                  isActive ? "text-accent-purple" : "text-text-body-subtle"
+                }`}
+              />
+              {item.badge > 0 && (
+                <span
+                  className="absolute -right-1.5 -top-1 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[8px] font-bold text-white"
+                  style={{ backgroundColor: "var(--accent-pink)" }}
+                >
+                  {item.badge}
+                </span>
+              )}
+            </div>
             {isActive && (
               <motion.span
                 layoutId="nav-indicator"

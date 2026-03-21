@@ -12,5 +12,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 1.0,
   }));
 
-  return [...landingPages];
+  // Legal pages for each locale
+  const legalPages = localeCodes.flatMap((locale) => [
+    {
+      url: `${BASE_URL}/${locale}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.3,
+    },
+    {
+      url: `${BASE_URL}/${locale}/terms`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.3,
+    },
+  ]);
+
+  return [...landingPages, ...legalPages];
 }

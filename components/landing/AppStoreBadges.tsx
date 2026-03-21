@@ -1,3 +1,6 @@
+// TODO: Replace placeholder App Store IDs before launch
+// iOS: "id0000000000" → real App Store ID from Marie Ange
+// Android: "app.unfold.momentum" → verify package name with Marie Ange
 export function AppStoreBadges() {
   return (
     <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">

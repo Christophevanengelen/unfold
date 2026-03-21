@@ -1,0 +1,16 @@
+{
+  "name": "Unfold — Personal Timing App",
+  "short_name": "Unfold",
+  "description": "Know when life moves in your favor. Daily momentum for Love, Health & Work.",
+  "start_url": "/en",
+  "display": "standalone",
+  "background_color": "#1B1535",
+  "theme_color": "#7C6BBF",
+  "icons": [
+    {
+      "src": "/logo/icon-mark.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}

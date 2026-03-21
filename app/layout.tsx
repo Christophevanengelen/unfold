@@ -7,7 +7,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Unfold — Know When Life Moves in Your Favor",
   description: "Your personal momentum engine. Understand your daily rhythms across Love, Health, and Work.",
-  icons: { icon: "/logo/logo-dark.svg" },
+  icons: {
+    icon: "/logo/logo-dark.svg",
+    apple: "/logo/icon-mark.svg",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default async function RootLayout({
