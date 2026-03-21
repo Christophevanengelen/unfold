@@ -1,30 +1,35 @@
 import { ScrollReveal, ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
-import { mockForecast } from "@/lib/mock-data";
 
 interface PremiumMomentumProps {
   t: (key: string, fallback?: string) => string;
 }
 
-// Day abbreviations for the forecast
-const DAY_ABBR = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+/** Mini timeline capsule for the teaser visualization */
+const TEASER_CAPSULES = [
+  { tier: "toc", label: "TOC", planets: ["Mercury"], w: 36, opacity: 0.4 },
+  { tier: "toctoc", label: "TOCTOC", planets: ["Venus", "Mars"], w: 48, opacity: 0.6 },
+  { tier: "toctoctoc", label: "TOCTOCTOC", planets: ["Jupiter", "Sun", "Mercury", "Moon"], w: 64, opacity: 1 },
+  { tier: "toctoc", label: "TOCTOC", planets: ["Saturn", "Venus"], w: 48, opacity: 0.6 },
+  { tier: "toc", label: "TOC", planets: ["Mars"], w: 36, opacity: 0.4 },
+];
 
 export function PremiumMomentum({ t }: PremiumMomentumProps) {
   const features = [
     {
-      title: t("premium.forecast.title", "See your next strong days"),
-      desc: t("premium.forecast.desc", "See your upcoming peaks before they arrive. Plan your week around your natural rhythms."),
+      title: t("premium.timeline.title", "Your full momentum timeline"),
+      desc: t("premium.timeline.desc", "See every momentum period from birth to now — and what's forming ahead. Planets tell the story."),
     },
     {
-      title: t("premium.map.title", "Plan around your peak windows"),
-      desc: t("premium.map.desc", "A bird's-eye view of your month. Spot patterns, plan ahead, stay aligned."),
+      title: t("premium.peaks.title", "Spot your peak windows"),
+      desc: t("premium.peaks.desc", "Know when TOCTOCTOC intensity builds. Plan around your strongest rhythms."),
     },
     {
       title: t("premium.alerts.title", "Get alerts before key moments"),
       desc: t("premium.alerts.desc", "Real-time notifications when exceptional momentum windows open."),
     },
     {
-      title: t("premium.compat.title", "Go deeper with advanced compatibility"),
-      desc: t("premium.compat.desc", "Deep relational analysis. Shared peak discovery. Timing synergy reports."),
+      title: t("premium.compat.title", "Compare signals with someone"),
+      desc: t("premium.compat.desc", "Deep compatibility analysis. Shared peak discovery. Timing synergy reports."),
     },
   ];
 
@@ -34,7 +39,7 @@ export function PremiumMomentum({ t }: PremiumMomentumProps) {
         {/* Editorial transition */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <p className="mb-8 text-sm italic text-brand-10/60">
-            {t("premium.transition", "Free helps you read today. Premium helps you see what's next.")}
+            {t("premium.transition", "Free reads your signal. Premium reveals the full timeline.")}
           </p>
         </ScrollReveal>
 
@@ -44,14 +49,14 @@ export function PremiumMomentum({ t }: PremiumMomentumProps) {
             {t("premium.eyebrow", "Premium")}
           </p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("premium.title", "Your future, mapped")}
+            {t("premium.title", "Your momentum story, complete")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("premium.subtitle", "See your strongest windows before they arrive.")}
+            {t("premium.subtitle", "Every period. Every planet. Every signal that shaped your rhythm.")}
           </p>
         </ScrollReveal>
 
-        {/* 7-day forecast visualization — app-native feel */}
+        {/* Timeline teaser visualization */}
         <ScrollReveal variant="scaleIn" className="mt-12 flex justify-center">
           <div
             className="landing-glass w-full max-w-lg overflow-hidden"
@@ -62,60 +67,50 @@ export function PremiumMomentum({ t }: PremiumMomentumProps) {
           >
             <div className="p-6 pb-5">
               <p className="mb-5 text-[11px] font-medium uppercase tracking-wider text-brand-10/50">
-                Next 7 days
+                Your timeline
               </p>
-              <div className="flex items-end gap-2 sm:gap-3" style={{ height: 130 }}>
-                {mockForecast.map((day, i) => {
-                  const barHeight = Math.max(24, (day.momentum / 100) * 110);
-                  const dayDate = new Date(day.date);
-                  const dayAbbr = DAY_ABBR[dayDate.getDay() === 0 ? 6 : dayDate.getDay() - 1];
-
-                  return (
-                    <div key={day.date} className="flex flex-1 flex-col items-center gap-1.5">
-                      {/* Momentum number */}
-                      <span
-                        className="text-[11px] font-semibold"
-                        style={{ color: day.isPeak ? "#9585CC" : "color-mix(in srgb, white 40%, transparent)" }}
-                      >
-                        {day.momentum}
-                      </span>
-
-                      {/* Bar */}
-                      <div
-                        className="w-full rounded-xl"
-                        style={{
-                          height: barHeight,
-                          maxWidth: 36,
-                          background: day.isPeak
-                            ? "linear-gradient(to top, color-mix(in srgb, #9585CC 25%, transparent), color-mix(in srgb, #9585CC 60%, transparent))"
-                            : "color-mix(in srgb, white 6%, transparent)",
-                          ...(day.isPeak
-                            ? { boxShadow: "0 0 16px color-mix(in srgb, #9585CC 25%, transparent)" }
-                            : {}),
-                        }}
-                      />
-
-                      {/* Peak indicator dot */}
-                      {day.isPeak && (
+              {/* Mini capsules with connecting spine */}
+              <div className="relative flex items-center justify-center gap-3 py-4">
+                {/* Spine line */}
+                <div
+                  className="absolute left-8 right-8 top-1/2 h-px"
+                  style={{ background: "color-mix(in srgb, #9585CC 25%, transparent)" }}
+                />
+                {TEASER_CAPSULES.map((cap, i) => (
+                  <div
+                    key={i}
+                    className="relative flex flex-col items-center gap-1.5"
+                    style={{ opacity: cap.opacity }}
+                  >
+                    {/* Capsule body */}
+                    <div
+                      className="rounded-full"
+                      style={{
+                        width: cap.w,
+                        height: cap.w,
+                        background: `linear-gradient(135deg, color-mix(in srgb, #9585CC ${cap.opacity * 40}%, transparent), color-mix(in srgb, #9585CC ${cap.opacity * 20}%, transparent))`,
+                        border: "1px solid color-mix(in srgb, #9585CC 30%, transparent)",
+                      }}
+                    />
+                    {/* Planet dots */}
+                    <div className="flex gap-0.5">
+                      {cap.planets.map((p, j) => (
                         <div
+                          key={j}
                           className="h-1 w-1 rounded-full"
                           style={{ background: "#9585CC" }}
                         />
-                      )}
-
-                      {/* Day abbreviation */}
-                      <span
-                        className="text-[10px]"
-                        style={{
-                          color: day.isPeak ? "#9585CC" : "color-mix(in srgb, white 30%, transparent)",
-                          fontWeight: day.isPeak ? 500 : 400,
-                        }}
-                      >
-                        {dayAbbr}
-                      </span>
+                      ))}
                     </div>
-                  );
-                })}
+                    {/* Tier label */}
+                    <span
+                      className="text-[8px] font-medium tracking-wider"
+                      style={{ color: "#9585CC" }}
+                    >
+                      {cap.label}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

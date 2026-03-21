@@ -73,7 +73,7 @@ export function StepInput({
       initial="hidden"
       animate="visible"
     >
-      <OnboardingProgress current={5} />
+      <OnboardingProgress current={3} />
 
       {/* Back */}
       <motion.button

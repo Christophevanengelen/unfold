@@ -18,7 +18,7 @@ export function Compatibility({ t }: CompatibilityProps) {
             {t("compat.title", "See what happens between you")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("compat.subtitle", "Share your code. Discover your compatibility across Love, Health, and Work.")}
+            {t("compat.subtitle", "Share your code. Compare planetary signals. Discover your shared momentum peaks.")}
           </p>
         </ScrollReveal>
 
@@ -27,13 +27,13 @@ export function Compatibility({ t }: CompatibilityProps) {
           <div className="landing-glass p-12 text-center">
             <Image
               src="/illustrations/compare.svg"
-              alt="Unfold compatibility screen comparing daily rhythms between two people across Love, Health, and Work"
+              alt="Unfold compatibility screen comparing momentum signals between two people"
               width={280}
               height={280}
               className="mx-auto"
             />
             <p className="mt-6 font-display text-sm font-medium uppercase tracking-wider text-brand-10/60">
-              {t("compat.process", "Share your code → Connect → Compare")}
+              {t("compat.process", "Share your code → Compare signals → Discover peaks")}
             </p>
           </div>
         </ScrollReveal>

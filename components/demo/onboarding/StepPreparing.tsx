@@ -7,13 +7,13 @@ import { scaleIn } from "@/lib/animations";
 import { CheckCircle } from "flowbite-react-icons/solid";
 
 const statusLines = [
-  "Reading your core timing",
-  "Mapping your daily momentum",
-  "Preparing your first signal",
+  "Reading your planetary signals",
+  "Building your momentum timeline",
+  "Preparing your first capsule",
 ];
 
 /**
- * Screen 7 — Preparing Your Rhythm.
+ * Screen 5 — Preparing Your Signal.
  * Total sequence under 3.5s. No artificial delay. Explicit CTA when done.
  */
 export function StepPreparing() {
@@ -110,8 +110,8 @@ export function StepPreparing() {
         transition={{ delay: 0.1 }}
       >
         {allDone
-          ? "Your first reading is ready."
-          : "Preparing your personal rhythm"}
+          ? "Your signal is ready."
+          : "Preparing your personal signal"}
       </motion.h1>
 
       {/* Body */}
@@ -123,8 +123,8 @@ export function StepPreparing() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          We&apos;re configuring your timing profile and generating your
-          first momentum signals.
+          We&apos;re reading your planetary signals and building your
+          momentum timeline.
         </motion.p>
       )}
 

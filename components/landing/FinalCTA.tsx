@@ -15,7 +15,7 @@ export function FinalCTA({ t }: FinalCTAProps) {
             {t("cta.title", "Download Unfold")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("cta.subtitle", "Your personal timing app for Love, Health, and Work. Free on iOS and Android.")}
+            {t("cta.subtitle", "Your personal signal, decoded. See your momentum — past, present, and next. Free on iOS and Android.")}
           </p>
           <div className="mt-10">
             <AppStoreBadges />

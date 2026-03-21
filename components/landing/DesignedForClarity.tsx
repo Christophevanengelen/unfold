@@ -31,7 +31,7 @@ export function DesignedForClarity({ t }: DesignedForClarityProps) {
         <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.1}>
           <div
             role="img"
-            aria-label="Unfold app showing a detailed domain view with daily clarity score and insights"
+            aria-label="Unfold app showing a detailed signal view with planet keywords and momentum insights"
             className="relative h-[812px] w-[375px] overflow-hidden"
             style={{
               borderRadius: "2.25rem",

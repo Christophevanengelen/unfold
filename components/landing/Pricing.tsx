@@ -16,7 +16,7 @@ export function Pricing({ t }: PricingProps) {
             {t("pricing.title", "Free forever. Premium when you're ready.")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("pricing.subtitle", "Your daily momentum signal is always free. Premium unlocks the full picture.")}
+            {t("pricing.subtitle", "Your current signal is always free. Premium unlocks your full momentum timeline.")}
           </p>
         </ScrollReveal>
 
@@ -32,16 +32,16 @@ export function Pricing({ t }: PricingProps) {
                 {t("pricing.free.name", "Free")}
               </h3>
               <p className="mt-2 text-brand-10">
-                {t("pricing.free.desc", "Your daily momentum signal, always.")}
+                {t("pricing.free.desc", "Your current momentum signal, always.")}
               </p>
               <p className="mt-6 font-display text-4xl font-bold text-white">
                 {t("pricing.free.price", "$0")}
               </p>
               <ul className="mt-8 space-y-3 text-sm text-brand-11">
                 {[
-                  t("pricing.free.f1", "Today's momentum score"),
-                  t("pricing.free.f2", "Love, Health & Work breakdown"),
-                  t("pricing.free.f3", "Yesterday's review"),
+                  t("pricing.free.f1", "Current momentum signal"),
+                  t("pricing.free.f2", "Planet keywords & intensity"),
+                  t("pricing.free.f3", "Past signal review"),
                   t("pricing.free.f4", "Basic compatibility"),
                 ].map((f) => (
                   <li key={f} className="flex items-start gap-3">
@@ -87,7 +87,7 @@ export function Pricing({ t }: PricingProps) {
                 </span>
               </div>
               <p className="mt-2 text-brand-10">
-                {t("pricing.premium.desc", "Your future, mapped.")}
+                {t("pricing.premium.desc", "Your full timeline, revealed.")}
               </p>
             </>
           }
@@ -95,10 +95,10 @@ export function Pricing({ t }: PricingProps) {
             <ul className="mt-8 space-y-3 text-sm text-brand-11">
               {[
                 t("pricing.premium.f1", "Everything in Free"),
-                t("pricing.premium.f2", "Tomorrow's forecast"),
-                t("pricing.premium.f3", "Future momentum windows"),
-                t("pricing.premium.f4", "Monthly momentum map"),
-                t("pricing.premium.f5", "Peak alerts"),
+                t("pricing.premium.f2", "Full momentum timeline"),
+                t("pricing.premium.f3", "Future signal preview"),
+                t("pricing.premium.f4", "Peak window alerts"),
+                t("pricing.premium.f5", "Planetary transit details"),
                 t("pricing.premium.f6", "Advanced compatibility"),
               ].map((f) => (
                 <li key={f} className="flex items-start gap-3">
@@ -114,7 +114,7 @@ export function Pricing({ t }: PricingProps) {
         <ScrollReveal variant="fadeUp" className="mt-8 flex justify-center">
           <div className="landing-glass max-w-xl rounded-2xl px-6 py-3">
             <p className="text-sm text-brand-10 text-center">
-              {t("pricing.justification", "Premium is designed as an evolving subscription because your future momentum updates over time.")}
+              {t("pricing.justification", "Premium evolves with you — your timeline updates as new planetary signals shape your rhythm.")}
             </p>
           </div>
         </ScrollReveal>

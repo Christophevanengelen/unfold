@@ -13,7 +13,7 @@ interface OnboardingProgressProps {
  */
 export function OnboardingProgress({
   current,
-  total = 7,
+  total = 5,
 }: OnboardingProgressProps) {
   return (
     <div className="flex justify-center gap-1.5">

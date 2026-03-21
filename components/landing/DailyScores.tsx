@@ -12,18 +12,18 @@ export function DailyScores({ t }: DailyScoresProps) {
         {/* Header text — one cohesive block */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("daily.title", "Yesterday. Today. Tomorrow.")}
+            {t("daily.title", "Past. Present. Next.")}
           </h2>
           <p className="mt-6 text-lg text-brand-10">
-            {t("daily.subtitle", "Understand what happened. See where you stand. Know what's coming.")}
+            {t("daily.subtitle", "Each momentum period has its own signature — a unique combination of planetary signals and intensity.")}
           </p>
-          {/* Three moment descriptions — light inline row */}
+          {/* Three signal descriptions */}
           <div className="mt-4 flex items-center justify-center gap-2 text-sm text-brand-10/60">
-            <span>{t("daily.yesterday", "Understand what happened")}</span>
-            <span aria-hidden="true">·</span>
-            <span>{t("daily.today", "See where you stand right now")}</span>
-            <span aria-hidden="true">·</span>
-            <span>{t("daily.tomorrow", "Know what's coming next")}</span>
+            <span>{t("daily.past", "Understand what shaped you")}</span>
+            <span aria-hidden="true">&middot;</span>
+            <span>{t("daily.present", "Read your current signal")}</span>
+            <span aria-hidden="true">&middot;</span>
+            <span>{t("daily.next", "See what rhythm is forming")}</span>
           </div>
         </ScrollReveal>
 
@@ -31,7 +31,7 @@ export function DailyScores({ t }: DailyScoresProps) {
         <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.1}>
           <div
             role="img"
-            aria-label="Unfold app showing today's overall momentum score with Love, Health, and Work breakdown"
+            aria-label="Unfold app showing your current momentum signal with planet keywords and intensity"
             className="relative h-[812px] w-[375px] overflow-hidden"
             style={{
               borderRadius: "2.25rem",

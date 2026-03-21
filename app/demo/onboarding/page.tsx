@@ -3,15 +3,13 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue } from "motion/react";
 import { StepPromise } from "@/components/demo/onboarding/StepPromise";
-import { StepHabit } from "@/components/demo/onboarding/StepHabit";
-import { StepCompatibility } from "@/components/demo/onboarding/StepCompatibility";
-import { StepPremium } from "@/components/demo/onboarding/StepPremium";
-import { StepPersonalize } from "@/components/demo/onboarding/StepPersonalize";
+import { StepSignalPreview } from "@/components/demo/onboarding/StepSignalPreview";
+import { StepTimelineTeaser } from "@/components/demo/onboarding/StepTimelineTeaser";
 import { StepInput } from "@/components/demo/onboarding/StepInput";
 import type { OnboardingFormData } from "@/components/demo/onboarding/StepInput";
 import { StepPreparing } from "@/components/demo/onboarding/StepPreparing";
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 5;
 const SWIPE_THRESHOLD = 50;
 
 /** Slide animation variants — direction-aware */
@@ -36,14 +34,13 @@ const stepTransition = {
 };
 
 /** Screens where swiping back is disabled */
-const NO_SWIPE_BACK = new Set([0, 6]); // first screen, preparing screen
+const NO_SWIPE_BACK = new Set([0, 4]); // first screen, preparing screen
 /** Screens where swiping forward is disabled (use CTA instead) */
-const NO_SWIPE_FORWARD = new Set([5, 6]); // form input, preparing screen
+const NO_SWIPE_FORWARD = new Set([3, 4]); // form input, preparing screen
 
 /**
- * Onboarding orchestrator — 7-screen single-page flow.
- * Supports swipe gestures + button navigation.
- * Screen 0 renders without entrance animation (instant).
+ * Onboarding orchestrator — 5-screen single-page flow.
+ * 0: Promise  1: Signal Preview  2: Timeline Teaser  3: Birth Input  4: Preparing
  */
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
@@ -75,10 +72,8 @@ export default function OnboardingPage() {
       if (!confident) return;
 
       if (swipe < 0 && !NO_SWIPE_FORWARD.has(step)) {
-        // Swiped left → next
         next();
       } else if (swipe > 0 && !NO_SWIPE_BACK.has(step)) {
-        // Swiped right → back
         back();
       }
     },
@@ -90,14 +85,10 @@ export default function OnboardingPage() {
       case 0:
         return <StepPromise onNext={next} />;
       case 1:
-        return <StepHabit onNext={next} onBack={back} />;
+        return <StepSignalPreview onNext={next} onBack={back} />;
       case 2:
-        return <StepCompatibility onNext={next} onBack={back} />;
+        return <StepTimelineTeaser onNext={next} onBack={back} />;
       case 3:
-        return <StepPremium onNext={next} onBack={back} />;
-      case 4:
-        return <StepPersonalize onNext={next} onBack={back} />;
-      case 5:
         return (
           <StepInput
             formData={formData}
@@ -106,14 +97,13 @@ export default function OnboardingPage() {
             onBack={back}
           />
         );
-      case 6:
+      case 4:
         return <StepPreparing />;
       default:
         return null;
     }
   };
 
-  // Screen 0: no entrance animation (initial=false skips enter variant)
   const isFirstScreen = step === 0;
 
   return (

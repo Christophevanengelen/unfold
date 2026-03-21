@@ -64,9 +64,9 @@ export function StepPromise({ onNext }: StepPromiseProps) {
           style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
           variants={fadeInUp}
         >
-          Know when life moves
+          Your personal signal,
           <br />
-          in your favor.
+          decoded.
         </motion.h1>
 
         {/* Body */}
@@ -75,7 +75,7 @@ export function StepPromise({ onNext }: StepPromiseProps) {
           style={{ color: "var(--accent-purple)", opacity: 0.7 }}
           variants={fadeInUp}
         >
-          A daily read of your personal rhythm across Love, Health, and Work.
+          Every momentum period has a unique planetary signature. See yours — past, present, and next.
         </motion.p>
 
         {/* Support line */}
@@ -84,7 +84,7 @@ export function StepPromise({ onNext }: StepPromiseProps) {
           style={{ color: "var(--accent-purple)", opacity: 0.5 }}
           variants={fadeInUp}
         >
-          Clear today. Better timing ahead.
+          Read your signal. Know your timing.
         </motion.p>
 
         {/* CTA — anchored at bottom of text zone */}

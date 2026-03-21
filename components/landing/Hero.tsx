@@ -16,12 +16,12 @@ export function Hero({ t }: HeroProps) {
             {t("hero.eyebrow", "Personal timing app")}
           </p>
           <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white md:text-6xl lg:text-7xl">
-            {t("hero.title", "Know when life moves in your favor")}
+            {t("hero.title", "Your personal signal, decoded")}
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-brand-10 md:text-xl">
-            {t("hero.subtitle", "Free daily momentum for Yesterday, Today, and Tomorrow.")}
+            {t("hero.subtitle", "Every momentum period has a signature — a unique combination of signals that shape your timing.")}
             <br />
-            {t("hero.subtitle2", "Love, Health, Work — in one clear daily signal.")}
+            {t("hero.subtitle2", "See yours, free.")}
           </p>
           <div className="mt-10">
             <AppStoreBadges />
@@ -36,7 +36,7 @@ export function Hero({ t }: HeroProps) {
           >
             <div
               role="img"
-              aria-label="Unfold app showing today's overall momentum score with Love, Health, and Work breakdown"
+              aria-label="Unfold app showing your current momentum signal with planet keywords"
               className="absolute inset-0 origin-top-left overflow-hidden"
               style={{
                 width: 375,
