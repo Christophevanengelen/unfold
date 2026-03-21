@@ -23,8 +23,9 @@ export default function DemoLayout({
   const hideNav = HIDDEN_NAV_ROUTES.some((r) => pathname.startsWith(r));
   const isHome = pathname === "/demo";
   const isTimeline = pathname === "/demo/timeline";
+  const isMonthly = pathname === "/demo/monthly";
   // Full-bleed routes manage their own padding and scroll
-  const isFullBleed = isHome || isTimeline;
+  const isFullBleed = isHome || isTimeline || isMonthly;
 
   return (
     <MomentumProvider>
