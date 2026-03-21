@@ -2,7 +2,7 @@ import { generateLandingMetadata } from "@/lib/metadata";
 import { getTranslations, t } from "@/lib/i18n";
 import { Hero } from "@/components/landing/Hero";
 import { FreeAwareness } from "@/components/landing/FreeAwareness";
-import { DesignedForClarity } from "@/components/landing/DesignedForClarity";
+import { LifeDomains } from "@/components/landing/LifeDomains";
 import { TimelineShowcase } from "@/components/landing/TimelineShowcase";
 import { SocialProof } from "@/components/landing/SocialProof";
 import { Compatibility } from "@/components/landing/Compatibility";
@@ -44,8 +44,8 @@ export default async function LandingPage({
         {/* transition: free → depth */}
         <NarrativeTransition text={tr("transition.free_to_clarity", "Your signal is free. But your story goes deeper.")} />
 
-        {/* 3. Product proof — see the actual app */}
-        <DesignedForClarity translations={translations} />
+        {/* 3. Depth — 12 life domains */}
+        <LifeDomains translations={translations} />
 
         {/* 4. Revelation — your life has a pattern */}
         <TimelineShowcase translations={translations} />
