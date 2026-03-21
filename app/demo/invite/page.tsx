@@ -40,7 +40,7 @@ export default function InvitePrompt() {
             with {mockCompatibility.partnerName}
           </p>
           <div className="mt-4 flex justify-center gap-4">
-            {mockCompatibility.synergies.map((s) => (
+            {mockCompatibility.synergies.map((s: { axis: string; score: number; strength: string }) => (
               <div key={s.axis} className="text-center">
                 <div className="h-2 w-16 rounded-full bg-brand-4" />
                 <p className="mt-1 text-xs capitalize text-text-body-subtle">{s.axis}</p>

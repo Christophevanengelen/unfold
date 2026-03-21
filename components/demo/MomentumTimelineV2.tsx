@@ -573,7 +573,7 @@ function FocusView({
   // to the bar, then scrolls to the next one in the requested direction.
   const isSnapping = useRef(false);
   const isJumping = useRef(false);
-  const snapTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const rafId = useRef(0);
 
   const jumpToCapsule = useCallback((direction: "past" | "future") => {
@@ -988,7 +988,7 @@ function OverviewView({
   // Capsule navigation — stateless, same approach as FocusView.
   const isSnapping = useRef(false);
   const isJumping = useRef(false);
-  const snapTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const rafId = useRef(0);
 
   const jumpToCapsule = useCallback((direction: "past" | "future") => {

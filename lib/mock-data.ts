@@ -1,451 +1,743 @@
+/**
+ * UNFOLD — Mock data matching the REAL TocToc API responses.
+ *
+ * Every object here mirrors the actual JSON from:
+ *   - toctoc.php (events)
+ *   - toctoc-app.php (sausages + natal context)
+ *   - toctoc-year.php (3-year window)
+ *   - toctoc-timeline.php (lifetime)
+ *
+ * Person: "Alex" — born 1980-10-24 01:41 Brussels
+ */
+
 import type {
-  Connection,
-  DailyMomentum,
-  MomentumTrend,
-  CompatibilityResult,
-  ForecastWindow,
-  MonthlyMap,
-  PeakAlert,
   UserProfile,
-  StructuredInsight,
-  DomainDetail,
+  PersonInfo,
+  TocTocSummary,
+  DecadeTimeline,
+  TransitEvent,
+  StationEvent,
+  EclipseEvent,
+  ZREvent,
+  AnyTocTocEvent,
+  Sausage,
+  NatalContext,
+  HouseColors,
+  MonthEntry,
+  YearSummary,
+  MonthlyEvent,
+  TocTocYearData,
+  TocTocAppData,
+  Connection,
+  NatalPoint,
+  FortuneInfo,
 } from "@/types/api";
 
-// ─── Mock User ──────────────────────────────────────────────
+// ─── User & Person ───────────────────────────────────────
+
 export const mockUser: UserProfile = {
   id: "usr_demo_001",
   name: "Alex",
   inviteCode: "UNFOLD-AX7K",
   plan: "premium",
-  locale: "en",
+  locale: "fr",
   createdAt: "2026-01-15T00:00:00Z",
 };
 
-// ─── Yesterday / Today / Tomorrow ───────────────────────────
-export const mockYesterday: DailyMomentum = {
-  date: "2026-03-08",
-  scores: {
-    love: { value: 72, trend: "stable", peakHour: 19, description: "Steady emotional connections" },
-    health: { value: 85, trend: "rising", peakHour: 7, description: "High physical vitality" },
-    work: { value: 61, trend: "declining", peakHour: 14, description: "Creative blocks easing" },
+export const mockPerson: PersonInfo = {
+  name: "Alex",
+  birthDate: "1980-10-24",
+  birthTime: "01:41",
+  city: "Brussels",
+  timezone: "Europe/Brussels",
+};
+
+// ─── Natal Points ────────────────────────────────────────
+
+export const mockNatalPoints: Record<string, NatalPoint> = {
+  Sun:     { longitude: 210.5, sign: "Scorpio",     degree: 0.5 },
+  Moon:    { longitude: 45.2,  sign: "Taurus",      degree: 15.2 },
+  Mercury: { longitude: 225.8, sign: "Scorpio",     degree: 15.8 },
+  Venus:   { longitude: 188.3, sign: "Libra",       degree: 8.3 },
+  Mars:    { longitude: 275.1, sign: "Capricorn",   degree: 5.1 },
+  Jupiter: { longitude: 156.4, sign: "Virgo",       degree: 6.4 },
+  Saturn:  { longitude: 190.7, sign: "Libra",       degree: 10.7 },
+  ASC:     { longitude: 130.0, sign: "Leo",         degree: 10.0 },
+  MC:      { longitude: 40.0,  sign: "Taurus",      degree: 10.0 },
+};
+
+// ─── Fortune Info ────────────────────────────────────────
+
+export const mockFortuneInfo: FortuneInfo = {
+  sign: "Aquarius",
+  signIndex: 10,
+  isDayChart: false,
+  angularSigns: ["Leo", "Scorpio", "Aquarius", "Taurus"],
+  natalSigns: { Sun: "Scorpio", Moon: "Taurus", ASC: "Leo" },
+};
+
+// ─── Natal Context (whole sign houses) ───────────────────
+
+export const mockNatalContext: NatalContext = {
+  Sun:     { houseLocated: 4,  housesRuled: [1],     topics: ["Foyer", "Identité"] },
+  Moon:    { houseLocated: 10, housesRuled: [12],    topics: ["Carrière", "Intériorité"] },
+  Mercury: { houseLocated: 4,  housesRuled: [2, 11], topics: ["Foyer", "Argent", "Réseau"] },
+  Venus:   { houseLocated: 3,  housesRuled: [3, 10], topics: ["Communication", "Carrière"] },
+  Mars:    { houseLocated: 6,  housesRuled: [4, 9],  topics: ["Quotidien", "Foyer", "Horizon"] },
+  Jupiter: { houseLocated: 2,  housesRuled: [5, 8],  topics: ["Argent", "Créativité", "Transformations"] },
+  Saturn:  { houseLocated: 3,  housesRuled: [6, 7],  topics: ["Communication", "Quotidien", "Couple"] },
+  ASC:     { houseLocated: 1,  housesRuled: [],      topics: ["Identité"] },
+  MC:      { houseLocated: 10, housesRuled: [],      topics: ["Carrière"] },
+};
+
+// ─── House Colors ────────────────────────────────────────
+
+export const mockHouseColors: HouseColors = {
+  "1":  "#EF4444", "2":  "#F97316", "3":  "#EAB308", "4":  "#22C55E",
+  "5":  "#14B8A6", "6":  "#06B6D4", "7":  "#3B82F6", "8":  "#6366F1",
+  "9":  "#8B5CF6", "10": "#A855F7", "11": "#D946EF", "12": "#EC4899",
+};
+
+// ─── Transit Events ──────────────────────────────────────
+
+const transitPlutoSun: TransitEvent = {
+  id: "tt_7", color: "#9B1C1C", groupId: "Pluto_conjunction_Sun",
+  date: "2026-04-01", endDate: "2026-11-20",
+  score: 4, label: "toc toc toc toc", category: "transit",
+  type: "Pluto conjunction natal Sun",
+  isPast: false, age: 45.6, intensityScore: 63000,
+  transitPlanet: "Pluto", natalPoint: "Sun", aspect: "conjunction",
+  parileDate: "2026-06-12",
+  windowStart: "2026-05-13", windowEnd: "2026-07-12",
+  exactDates: ["2026-06-12", "2026-09-03", "2026-11-18"],
+  pattern: "Direct-Retrograde-Direct",
+  bestOrb: 0.04, isReturn: false, isHalfReturn: false,
+  isVipTransit: true, isAList: false,
+};
+
+const transitSaturnMoon: TransitEvent = {
+  id: "tt_12", color: "#6B7280", groupId: "Saturn_square_Moon",
+  date: "2025-08-15", endDate: "2025-09-10",
+  score: 3, label: "toc toc toc", category: "transit",
+  type: "Saturn square natal Moon",
+  isPast: true, age: 44.8, intensityScore: -9100,
+  transitPlanet: "Saturn", natalPoint: "Moon", aspect: "square",
+  parileDate: "2025-08-28",
+  windowStart: "2025-08-21", windowEnd: "2025-09-04",
+  exactDates: ["2025-08-28"],
+  pattern: "Single",
+  bestOrb: 0.8, isReturn: false, isHalfReturn: false,
+  isVipTransit: true, isAList: false,
+};
+
+const transitNeptuneMercury: TransitEvent = {
+  id: "tt_15", color: "#1D4ED8", groupId: "Neptune_opposition_Mercury",
+  date: "2026-01-10", endDate: "2026-03-20",
+  score: 3, label: "toc toc toc", category: "transit",
+  type: "Neptune opposition natal Mercury",
+  isPast: false, age: 45.2, intensityScore: -31500,
+  transitPlanet: "Neptune", natalPoint: "Mercury", aspect: "opposition",
+  parileDate: "2026-02-15",
+  windowStart: "2026-01-25", windowEnd: "2026-03-08",
+  exactDates: ["2026-02-15"],
+  pattern: "Single",
+  bestOrb: 0.3, isReturn: false, isHalfReturn: false,
+  isVipTransit: true, isAList: false,
+};
+
+const transitUranusVenus: TransitEvent = {
+  id: "tt_18", color: "#0E7490", groupId: "Uranus_trine_Venus",
+  date: "2027-03-01", endDate: "2027-04-15",
+  score: 2, label: "toc toc", category: "transit",
+  type: "Uranus trine natal Venus",
+  isPast: false, age: 46.4, intensityScore: 23100,
+  transitPlanet: "Uranus", natalPoint: "Venus", aspect: "trine",
+  parileDate: "2027-03-22",
+  windowStart: "2027-03-08", windowEnd: "2027-04-05",
+  exactDates: ["2027-03-22"],
+  pattern: "Single",
+  bestOrb: 0.6, isReturn: false, isHalfReturn: false,
+  isVipTransit: true, isAList: false,
+};
+
+const transitJupiterMars: TransitEvent = {
+  id: "tt_20", color: "#7E22CE", groupId: "Jupiter_conjunction_Mars",
+  date: "2026-09-01", endDate: "2026-09-20",
+  score: 2, label: "toc toc", category: "transit",
+  type: "Jupiter conjunction natal Mars",
+  isPast: false, age: 45.9, intensityScore: 7350,
+  transitPlanet: "Jupiter", natalPoint: "Mars", aspect: "conjunction",
+  parileDate: "2026-09-10",
+  windowStart: "2026-09-03", windowEnd: "2026-09-17",
+  exactDates: ["2026-09-10"],
+  pattern: "Single",
+  bestOrb: 0.9, isReturn: false, isHalfReturn: false,
+  isVipTransit: true, isAList: false,
+};
+
+const transitSaturnReturn: TransitEvent = {
+  id: "tt_3", color: "#6B7280", groupId: "Saturn_conjunction_Saturn",
+  date: "2009-09-01", endDate: "2010-08-15",
+  score: 3, label: "toc toc toc", category: "transit",
+  type: "Saturn Return (conjunction natal Saturn)",
+  isPast: true, age: 29.0, intensityScore: 7840,
+  transitPlanet: "Saturn", natalPoint: "Saturn", aspect: "conjunction",
+  parileDate: "2009-11-15",
+  windowStart: "2009-11-08", windowEnd: "2009-11-22",
+  exactDates: ["2009-11-15", "2010-03-20", "2010-07-25"],
+  pattern: "Direct-Retrograde-Direct",
+  bestOrb: 0.1, isReturn: true, isHalfReturn: false,
+  isVipTransit: false, isAList: false,
+};
+
+const transitNodeSun: TransitEvent = {
+  id: "tt_25", color: "#D97706", groupId: "NorthNode_conjunction_Sun",
+  date: "2025-04-01", endDate: "2025-05-10",
+  score: 4, label: "toc toc toc toc", category: "transit",
+  type: "North Node conjunction natal Sun",
+  isPast: true, age: 44.5, intensityScore: 29400,
+  transitPlanet: "North Node", natalPoint: "Sun", aspect: "conjunction",
+  parileDate: "2025-04-20",
+  windowStart: "2025-04-06", windowEnd: "2025-05-04",
+  exactDates: ["2025-04-20"],
+  pattern: "Single",
+  bestOrb: 0.5, isReturn: false, isHalfReturn: false,
+  isVipTransit: true, isAList: false,
+};
+
+// ─── Station Events ──────────────────────────────────────
+
+const stationVenusMoon: StationEvent = {
+  id: "tt_23", color: "#DB2777", groupId: "station_Venus_Moon",
+  date: "2026-03-01", endDate: "2026-03-01",
+  score: 2, label: "toc toc", category: "station",
+  type: "Venus SD conjunct natal Moon",
+  isPast: false, age: 45.4, intensityScore: 20,
+  transitPlanet: "Venus", natalPoint: "Moon",
+  stationType: "SD", orb: 0.9, transitLongitude: 15.7,
+};
+
+const stationMarsMercury: StationEvent = {
+  id: "tt_30", color: "#DC2626", groupId: "station_Mars_Mercury",
+  date: "2027-01-15", endDate: "2027-01-15",
+  score: 1, label: "toc", category: "station",
+  type: "Mars SR conjunct natal Mercury",
+  isPast: false, age: 46.2, intensityScore: 10,
+  transitPlanet: "Mars", natalPoint: "Mercury",
+  stationType: "SR", orb: 1.4, transitLongitude: 225.0,
+};
+
+// ─── Eclipse Events ──────────────────────────────────────
+
+const eclipseSolarAries: EclipseEvent = {
+  id: "tt_31", color: "#D97706", groupId: "eclipse_1-7_2024",
+  date: "2025-03-29", endDate: "2025-03-29",
+  score: 1, label: "toc", category: "eclipse",
+  type: "Solar Eclipse conjunct natal Sun",
+  isPast: true, age: 44.4, intensityScore: 156,
+  transitPlanet: "eclipse",
+  eclipseType: "solar", eclipseLongitude: 8.9, eclipseSign: "Aries",
+  eclipseAxis: "1-7", axisColor: "#EAB308",
+  eclipseSeriesId: "eclipse_1-7_2024",
+  eclipseSeriesStart: "2024-04-08", eclipseSeriesEnd: "2025-09-21",
+  lastAxisTouch: "2025-09-21",
+  natalPoint: "Sun", isVipNatal: true, isAngle: false,
+  isVipAspect: true, orb: 3.2,
+};
+
+const eclipseLunarTaurus: EclipseEvent = {
+  id: "tt_33", color: "#D97706", groupId: "eclipse_2-8_2025",
+  date: "2025-09-07", endDate: "2025-09-07",
+  score: 2, label: "toc toc", category: "eclipse",
+  type: "Lunar Eclipse on natal Moon axis",
+  isPast: true, age: 44.9, intensityScore: 120,
+  transitPlanet: "eclipse",
+  eclipseType: "lunar", eclipseLongitude: 44.8, eclipseSign: "Taurus",
+  eclipseAxis: "2-8", axisColor: "#94A3B8",
+  eclipseSeriesId: "eclipse_2-8_2025",
+  eclipseSeriesStart: "2025-03-14", eclipseSeriesEnd: "2027-02-20",
+  lastAxisTouch: "2027-02-20",
+  natalPoint: "Moon", isVipNatal: true, isAngle: false,
+  isVipAspect: true, orb: 0.4,
+};
+
+const eclipseSolarVirgo: EclipseEvent = {
+  id: "tt_35", color: "#D97706", groupId: "eclipse_6-12_2027",
+  date: "2027-02-06", endDate: "2027-02-06",
+  score: 1, label: "toc", category: "eclipse",
+  type: "Solar Eclipse in Virgo",
+  isPast: false, age: 46.3, intensityScore: 60,
+  transitPlanet: "eclipse",
+  eclipseType: "solar", eclipseLongitude: 162.5, eclipseSign: "Virgo",
+  eclipseAxis: "6-12", axisColor: "#9333EA",
+  eclipseSeriesId: "eclipse_6-12_2027",
+  eclipseSeriesStart: "2027-02-06", eclipseSeriesEnd: "2028-08-02",
+  lastAxisTouch: "2028-08-02",
+  natalPoint: "Jupiter", isVipNatal: true, isAngle: false,
+  isVipAspect: false, orb: 6.1,
+};
+
+// ─── ZR Events ───────────────────────────────────────────
+
+const zrFortuneLeo: ZREvent = {
+  id: "tt_5", color: "#059669", groupId: "zr_fortune_Leo_L2",
+  date: "2026-01-14", endDate: "2027-08-22",
+  score: 3, label: "toc toc toc", category: "zr",
+  type: "ZR L2 Peak — Leo (Fortune)",
+  isPast: false, age: 45.2, intensityScore: 60,
+  lotType: "fortune", level: 2, periodSign: "Leo",
+  markers: [], isCulmination: false,
+};
+
+const zrSpiritScorpio: ZREvent = {
+  id: "tt_8", color: "#059669", groupId: "zr_spirit_Scorpio_L2",
+  date: "2024-06-01", endDate: "2025-12-15",
+  score: 3, label: "toc toc toc", category: "zr",
+  type: "ZR L2 Peak — Scorpio (Spirit)",
+  isPast: true, age: 43.6, intensityScore: 60,
+  lotType: "spirit", level: 2, periodSign: "Scorpio",
+  markers: ["Cu"], isCulmination: true,
+};
+
+const zrErosCancer: ZREvent = {
+  id: "tt_10", color: "#059669", groupId: "zr_eros_Cancer_L3",
+  date: "2026-05-01", endDate: "2026-08-15",
+  score: 2, label: "toc toc", category: "zr",
+  type: "ZR L3 Peak — Cancer (Eros)",
+  isPast: false, age: 45.5, intensityScore: 20,
+  lotType: "eros", level: 3, periodSign: "Cancer",
+  markers: [], isCulmination: false,
+};
+
+const zrFortuneMerged: ZREvent = {
+  id: "tt_40", color: "#059669", groupId: "zr_fortune_eros_Aries_L2",
+  date: "2019-03-01", endDate: "2021-07-15",
+  score: 3, label: "toc toc toc", category: "zr",
+  type: "ZR L2 Peak — Aries (Fortune + Eros)",
+  isPast: true, age: 38.4, intensityScore: 60,
+  lotType: ["fortune", "eros"], level: 2, periodSign: "Aries",
+  markers: ["LB"], isCulmination: false,
+};
+
+const zrSpiritGemini: ZREvent = {
+  id: "tt_42", color: "#059669", groupId: "zr_spirit_Gemini_L3",
+  date: "2015-01-01", endDate: "2016-06-30",
+  score: 2, label: "toc toc", category: "zr",
+  type: "ZR L3 Peak — Gemini (Spirit)",
+  isPast: true, age: 34.2, intensityScore: 20,
+  lotType: "spirit", level: 3, periodSign: "Gemini",
+  markers: [], isCulmination: false,
+};
+
+// ─── All Events (chronological) ──────────────────────────
+
+export const mockEvents: AnyTocTocEvent[] = [
+  transitSaturnReturn,   // 2009-2010 (past)
+  zrSpiritGemini,        // 2015-2016 (past)
+  zrFortuneMerged,       // 2019-2021 (past)
+  zrSpiritScorpio,       // 2024-2025 (past)
+  eclipseSolarAries,     // 2025-03 (past)
+  transitNodeSun,        // 2025-04 (past)
+  transitSaturnMoon,     // 2025-08 (past)
+  eclipseLunarTaurus,    // 2025-09 (past)
+  transitNeptuneMercury, // 2026-01 (current area)
+  zrFortuneLeo,          // 2026-01 → 2027-08 (current)
+  stationVenusMoon,      // 2026-03 (now)
+  transitPlutoSun,       // 2026-04 → 2026-11 (upcoming, score 4!)
+  zrErosCancer,          // 2026-05 → 2026-08
+  transitJupiterMars,    // 2026-09
+  stationMarsMercury,    // 2027-01
+  eclipseSolarVirgo,     // 2027-02
+  transitUranusVenus,    // 2027-03
+].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+// ─── Summary ─────────────────────────────────────────────
+
+export const mockSummary: TocTocSummary = {
+  past:   { toc: 3, tocToc: 4, tocTocToc: 5, tocTocTocToc: 1 },
+  future: { toc: 2, tocToc: 3, tocTocToc: 2, tocTocTocToc: 1 },
+  total:  { toc: 5, tocToc: 7, tocTocToc: 7, tocTocTocToc: 2 },
+};
+
+// ─── Decade Timeline ─────────────────────────────────────
+
+export const mockDecades: DecadeTimeline = {
+  "0-10":  { toc: 1, tocToc: 0, tocTocToc: 0, tocTocTocToc: 0 },
+  "10-20": { toc: 2, tocToc: 1, tocTocToc: 1, tocTocTocToc: 0 },
+  "20-30": { toc: 3, tocToc: 3, tocTocToc: 2, tocTocTocToc: 0 },
+  "30-40": { toc: 4, tocToc: 4, tocTocToc: 3, tocTocTocToc: 1 },
+  "40-50": { toc: 5, tocToc: 5, tocTocToc: 4, tocTocTocToc: 2 },
+  "50-60": { toc: 3, tocToc: 2, tocTocToc: 1, tocTocTocToc: 0 },
+  "60-70": { toc: 2, tocToc: 1, tocTocToc: 0, tocTocTocToc: 0 },
+  "70-80": { toc: 1, tocToc: 0, tocTocToc: 0, tocTocTocToc: 0 },
+};
+
+// ─── Helper: make MonthlyEvent from any event ────────────
+
+function toMonthlyEvent(e: AnyTocTocEvent): MonthlyEvent {
+  return {
+    type: e.type,
+    label: e.label,
+    score: e.score,
+    category: e.category,
+    color: e.color,
+    exactDate: e.category === "transit" ? (e as TransitEvent).parileDate : (e.category === "station" ? e.date : null),
+    periodStart: e.category === "zr" ? e.date : null,
+    periodEnd: e.category === "zr" ? e.endDate : null,
+    cyclePassNumber: e.category === "transit" ? 1 : null,
+    cyclePasses: e.category === "transit" ? (e as TransitEvent).exactDates.length : null,
+    pattern: e.category === "transit" ? (e as TransitEvent).pattern : null,
+    eclipseAxis: e.category === "eclipse" ? (e as EclipseEvent).eclipseAxis : null,
+    axisColor: e.category === "eclipse" ? (e as EclipseEvent).axisColor : null,
+    lotType: e.category === "zr" ? (Array.isArray((e as ZREvent).lotType) ? ((e as ZREvent).lotType as string[])[0] : (e as ZREvent).lotType as string) as MonthlyEvent["lotType"] : null,
+    level: e.category === "zr" ? (e as ZREvent).level : null,
+    periodSign: e.category === "zr" ? (e as ZREvent).periodSign : null,
+    markers: e.category === "zr" ? (e as ZREvent).markers : null,
+    isCulmination: e.category === "zr" ? (e as ZREvent).isCulmination : false,
+  };
+}
+
+// ─── Mock toctoc-year.php response ───────────────────────
+
+function buildMockMonths(): MonthEntry[] {
+  const months: MonthEntry[] = [];
+  for (let y = 2025; y <= 2027; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const monthStr = `${y}-${String(m).padStart(2, "0")}`;
+      const monthDate = new Date(y, m - 1, 15);
+      const age = 44 + (monthDate.getTime() - new Date(1980, 9, 24).getTime()) / (365.25 * 24 * 3600 * 1000);
+
+      // Find events active this month
+      const activeEvents = mockEvents.filter(e => {
+        const start = new Date(e.date);
+        const end = new Date(e.endDate);
+        const monthStart = new Date(y, m - 1, 1);
+        const monthEnd = new Date(y, m, 0);
+        return start <= monthEnd && end >= monthStart;
+      });
+
+      const topEvents = activeEvents.map(toMonthlyEvent);
+      const zrScore = activeEvents.filter(e => e.category === "zr").reduce((s, e) => s + e.intensityScore, 0);
+      const transitScore = activeEvents.filter(e => e.category !== "zr").reduce((s, e) => s + e.intensityScore, 0);
+
+      months.push({
+        month: monthStr,
+        year: y,
+        monthNum: m,
+        zrScore,
+        transitScore,
+        totalScore: zrScore + transitScore,
+        age: Math.round(age * 10) / 10,
+        isPast: monthDate < new Date(),
+        isCurrentMonth: monthStr === "2026-03",
+        topEvents,
+      });
+    }
+  }
+  return months;
+}
+
+const mockMonths = buildMockMonths();
+
+// ─── Mock Year Summaries ─────────────────────────────────
+
+function buildYearSummaries(): YearSummary[] {
+  return [2025, 2026, 2027].map(year => {
+    const yearMonths = mockMonths.filter(m => m.year === year);
+    const scores = yearMonths.map(m => m.totalScore);
+    const peakIdx = scores.indexOf(Math.max(...scores));
+    const positive = yearMonths.filter(m => m.totalScore > 0);
+    const negative = yearMonths.filter(m => m.totalScore < 0);
+    return {
+      year,
+      sumScore: scores.reduce((a, b) => a + b, 0),
+      isBusy: scores.some(s => Math.abs(s) > 10000),
+      peakMonthScore: scores[peakIdx] ?? 0,
+      peakMonth: yearMonths[peakIdx]?.month ?? `${year}-01`,
+      avgMonthScore: Math.round(scores.reduce((a, b) => a + b, 0) / 12),
+      positiveMonths: positive.length,
+      negativeMonths: negative.length,
+      age: year - 1980,
+      monthCount: 12,
+      sumPositive: positive.reduce((s, m) => s + m.totalScore, 0),
+      sumNegative: negative.reduce((s, m) => s + m.totalScore, 0),
+      neutralMonths: yearMonths.filter(m => m.totalScore === 0).length,
+    };
+  });
+}
+
+// ─── Current Month ───────────────────────────────────────
+
+const currentMonth = mockMonths.find(m => m.isCurrentMonth) ?? mockMonths[0];
+
+// ─── Peak Upcoming Months ────────────────────────────────
+
+const peakUpcoming = mockMonths
+  .filter(m => !m.isPast && !m.isCurrentMonth && m.totalScore > 0)
+  .sort((a, b) => b.totalScore - a.totalScore)
+  .slice(0, 3);
+
+// ─── Full toctoc-year Response ───────────────────────────
+
+export const mockTocTocYear: TocTocYearData = {
+  person: mockPerson,
+  window: {
+    startDate: "2025-01-01",
+    endDate: "2027-12-31",
+    years: [2025, 2026, 2027],
+    monthCount: 36,
   },
-  overall: 73,
-  insight: "Your health momentum peaked early — mornings were your window.",
-  label: "Health led the day",
+  fortuneInfo: mockFortuneInfo,
+  currentMonth,
+  peakUpcomingMonths: peakUpcoming,
+  years: buildYearSummaries(),
+  months: mockMonths,
+  computeTimeSeconds: 3.2,
 };
 
-export const mockToday: DailyMomentum = {
-  date: "2026-03-09",
-  scores: {
-    love: { value: 78, trend: "rising", peakHour: 20, description: "Strong relational momentum" },
-    health: { value: 69, trend: "stable", peakHour: 10, description: "Balanced energy levels" },
-    work: { value: 82, trend: "rising", peakHour: 11, description: "Peak creative clarity" },
-  },
-  overall: 76,
-  insight: "Your work momentum is rising — late morning is your peak window.",
-  label: "Strong work momentum",
+// ─── Sausages (enriched events from toctoc-app) ─────────
+
+function eventToSausage(e: AnyTocTocEvent): Sausage {
+  const width = e.score >= 4 ? "large" : e.score >= 3 ? "medium" : "thin";
+  const topics: string[] = [];
+
+  if (e.category === "transit" || e.category === "station") {
+    const np = e.category === "transit" ? (e as TransitEvent).natalPoint : (e as StationEvent).natalPoint;
+    const ctx = mockNatalContext[np];
+    if (ctx) topics.push(...ctx.topics);
+  } else if (e.category === "zr") {
+    // ZR topics from house of period sign (simplified for mock)
+    topics.push("Circonstances");
+  } else if (e.category === "eclipse") {
+    const ec = e as EclipseEvent;
+    const [h1, h2] = ec.eclipseAxis.split("-");
+    topics.push(`Axe ${h1}-${h2}`);
+  }
+
+  return {
+    ...e,
+    width,
+    topics,
+    cycle: e.category === "transit" ? {
+      hitNumber: 1,
+      allHits: (e as TransitEvent).exactDates,
+    } : undefined,
+  };
+}
+
+export const mockSausages: Sausage[] = mockEvents.map(eventToSausage);
+
+// ─── Full toctoc-app Response ────────────────────────────
+
+export const mockTocTocApp: TocTocAppData = {
+  person: mockPerson,
+  natalPoints: mockNatalPoints,
+  natalContext: mockNatalContext,
+  houseColors: mockHouseColors,
+  allSausages: mockSausages,
+  months: Object.fromEntries(
+    mockMonths.map(m => [m.month, {
+      sausages: mockSausages.filter(s => {
+        const start = new Date(s.date);
+        const end = new Date(s.endDate);
+        const [y, mo] = m.month.split("-").map(Number);
+        const monthStart = new Date(y, mo - 1, 1);
+        const monthEnd = new Date(y, mo, 0);
+        return start <= monthEnd && end >= monthStart;
+      }),
+      monthScore: m.totalScore,
+      transitScore: m.transitScore,
+      zrScore: m.zrScore,
+    }])
+  ),
+  cycles: Object.fromEntries(
+    mockSausages
+      .filter(s => s.category === "transit")
+      .reduce((acc, s) => {
+        if (!acc.has(s.groupId)) acc.set(s.groupId, []);
+        acc.get(s.groupId)!.push(s);
+        return acc;
+      }, new Map<string, Sausage[]>())
+  ),
+  summary: mockSummary,
+  timeline: { decades: mockDecades },
+  computeTimeSeconds: 45.2,
 };
 
-export const mockTomorrow: DailyMomentum = {
-  date: "2026-03-10",
-  scores: {
-    love: { value: 84, trend: "rising", peakHour: 18, description: "Deepening connections ahead" },
-    health: { value: 71, trend: "stable", peakHour: 8, description: "Steady vitality" },
-    work: { value: 67, trend: "declining", peakHour: 15, description: "Strategic pause recommended" },
-  },
-  overall: 74,
-  insight: "Tomorrow favors love — evening is your strongest relational window.",
-  label: "Love is building",
-};
+// ─── Connections (for compatibility feature) ─────────────
 
-// ─── Trend Data ─────────────────────────────────────────────
-export const mockTrend: MomentumTrend = {
-  period: { from: "2026-03-03", to: "2026-03-09" },
-  dataPoints: [
-    { date: "2026-03-03", love: 68, health: 72, work: 74, overall: 71 },
-    { date: "2026-03-04", love: 62, health: 68, work: 70, overall: 67 },
-    { date: "2026-03-05", love: 70, health: 65, work: 68, overall: 68 },
-    { date: "2026-03-06", love: 82, health: 78, work: 85, overall: 82 },
-    { date: "2026-03-07", love: 75, health: 80, work: 72, overall: 76 },
-    { date: "2026-03-08", love: 64, health: 70, work: 62, overall: 65 },
-    { date: "2026-03-09", love: 78, health: 69, work: 82, overall: 76 },
-  ],
-};
-
-// ─── Connections ────────────────────────────────────────────
 export const mockConnections: Connection[] = [
   {
-    id: "conn_jordan",
-    name: "Jordan",
-    initial: "J",
-    relationship: "partner",
-    status: "connected",
-    score: 87,
-    todayAlignment: 92,
-    todayInsight: "Both peaking in Work — great day to collaborate",
+    id: "conn_jordan", name: "Jordan", initial: "J",
+    relationship: "partner", status: "connected",
     connectedSince: "2026-01-20T00:00:00Z",
+    todayAlignment: 87, todayInsight: "Deep emotional resonance today — great day to connect.", score: 87,
+    birthData: {
+      birthDate: "1982-05-15", birthTime: "14:30",
+      latitude: 48.8566, longitude: 2.3522, timezone: "Europe/Paris",
+    },
   },
   {
-    id: "conn_sam",
-    name: "Sam",
-    initial: "S",
-    relationship: "friend",
-    status: "connected",
-    score: 74,
-    todayAlignment: 68,
-    todayInsight: "Your Health rhythms align — go for a run together",
+    id: "conn_sam", name: "Sam", initial: "S",
+    relationship: "friend", status: "connected",
     connectedSince: "2026-02-05T00:00:00Z",
+    todayAlignment: 74, todayInsight: "Energy patterns complement each other — good for activities.", score: 74,
+    birthData: {
+      birthDate: "1985-11-03", birthTime: "08:15",
+      latitude: 51.5074, longitude: -0.1278, timezone: "Europe/London",
+    },
   },
   {
-    id: "conn_maya",
-    name: "Maya",
-    initial: "M",
-    relationship: "colleague",
-    status: "connected",
-    score: 81,
-    todayAlignment: 85,
-    todayInsight: "Strong Work alignment — schedule that key meeting",
+    id: "conn_maya", name: "Maya", initial: "M",
+    relationship: "colleague", status: "connected",
     connectedSince: "2026-02-14T00:00:00Z",
+    todayAlignment: 81, todayInsight: "Professional alignment is strong today.", score: 81,
   },
   {
-    id: "conn_chris",
-    name: "Chris",
-    initial: "C",
-    relationship: "family",
-    status: "pending",
-    score: 0,
-    todayAlignment: 0,
-    todayInsight: "Invite pending — check in with Chris",
+    id: "conn_chris", name: "Chris", initial: "C",
+    relationship: "family", status: "pending",
     connectedSince: "2026-03-15T00:00:00Z",
+    todayAlignment: 0, todayInsight: "Pending connection.", score: 0,
   },
 ];
 
-// ─── Compatibility Results (per connection) ─────────────────
-export const mockCompatibilityResults: Record<string, CompatibilityResult> = {
+// ─── BACKWARD COMPAT EXPORTS (old pre-TocToc API shapes) ─────
+// TODO: Remove once old components are fully migrated.
+
+import type { DailyMomentum, StructuredInsight, DomainDetail } from "@/types/api";
+
+/** @deprecated Use mockTocTocYear.currentMonth instead */
+export const mockToday: DailyMomentum = {
+  overall: 78,
+  insight: "Strong creative momentum today — ideal for big decisions.",
+  scores: {
+    love:   { value: 82, label: "Love" },
+    health: { value: 71, label: "Health" },
+    work:   { value: 80, label: "Work" },
+  },
+};
+
+/** @deprecated */
+export const mockYesterday: DailyMomentum = {
+  overall: 72,
+  insight: "A quieter day — recovery phase.",
+  scores: {
+    love:   { value: 75, label: "Love" },
+    health: { value: 68, label: "Health" },
+    work:   { value: 73, label: "Work" },
+  },
+};
+
+/** @deprecated */
+export const mockTomorrow: DailyMomentum = {
+  overall: 85,
+  insight: "Peak day incoming — momentum builds.",
+  scores: {
+    love:   { value: 88, label: "Love" },
+    health: { value: 80, label: "Health" },
+    work:   { value: 87, label: "Work" },
+  },
+};
+
+/** @deprecated */
+export const mockDeltas = { overall: 6, love: 7, health: 3, work: 7 };
+
+/** @deprecated */
+export const mockTrend = [65, 70, 72, 78, 85, 80, 77];
+
+/** @deprecated */
+export const mockStructuredInsights: StructuredInsight[] = [
+  { domain: "love",   title: "Heart opening",    body: "Venus trine Moon amplifies emotional connections.", score: 82 },
+  { domain: "health", title: "Recovery phase",    body: "Saturn eases, giving space for physical renewal.",  score: 71 },
+  { domain: "work",   title: "Creative surge",    body: "Jupiter energy fuels bold professional moves.",     score: 80 },
+];
+
+/** @deprecated */
+export const mockDomainDetails: Record<string, DomainDetail> = {
+  love:   { domain: "love",   score: 82, trend: "up",     insights: [mockStructuredInsights[0]] },
+  health: { domain: "health", score: 71, trend: "stable", insights: [mockStructuredInsights[1]] },
+  work:   { domain: "work",   score: 80, trend: "up",     insights: [mockStructuredInsights[2]] },
+};
+
+/** @deprecated */
+export const mockForecast = [
+  { date: "Mon", momentum: 78, isPeak: false },
+  { date: "Tue", momentum: 82, isPeak: false },
+  { date: "Wed", momentum: 91, isPeak: true },
+  { date: "Thu", momentum: 85, isPeak: false },
+  { date: "Fri", momentum: 79, isPeak: false },
+  { date: "Sat", momentum: 88, isPeak: true },
+  { date: "Sun", momentum: 74, isPeak: false },
+];
+
+/** @deprecated Use CompatibilityResult instead */
+export const mockCompatibility = {
+  score: 87,
+  partnerName: "Jordan",
+  synergies: [
+    { axis: "love",   score: 92, strength: "strong" as const },
+    { axis: "health", score: 78, strength: "moderate" as const },
+    { axis: "work",   score: 91, strength: "strong" as const },
+  ],
+};
+
+/** @deprecated Use CompatibilityResult instead */
+export const mockCompatibilityResults: Record<string, {
+  score: number;
+  synergies: { axis: string; score: number; strength: string; description: string }[];
+  weeklySync: { day: string; alex: number; partner: number }[];
+  whatMakesYouWork?: string;
+  bestDaysTogether?: { date: string; alex: number; partner: number; context: string }[];
+}> = {
   conn_jordan: {
-    connectionId: "conn_jordan",
     score: 87,
-    partnerName: "Jordan",
     synergies: [
-      { axis: "love", strength: "strong", description: "Deep emotional resonance" },
-      { axis: "work", strength: "moderate", description: "Complementary creative rhythms" },
-      { axis: "health", strength: "developing", description: "Growing vitality alignment" },
+      { axis: "love",   score: 92, strength: "strong",     description: "Deep emotional resonance — your rhythms align naturally." },
+      { axis: "health", score: 78, strength: "moderate",   description: "Complementary energy patterns with some tension points." },
+      { axis: "work",   score: 91, strength: "strong",     description: "Powerful professional synergy — great for collaborations." },
     ],
-    sharedPeaks: ["2026-03-12", "2026-03-18", "2026-03-24"],
-    whatMakesYouWork: "You balance each other — when Alex peaks in work, Jordan's love energy creates grounding.",
-    bestDaysTogether: [
-      { date: "2026-03-12", context: "Both peak in love — ideal for deep conversations" },
-      { date: "2026-03-18", context: "Shared work momentum — great for collaboration" },
-      { date: "2026-03-24", context: "Aligned vitality — perfect for an active day together" },
+    weeklySync: [
+      { day: "Mon", alex: 72, partner: 68 },
+      { day: "Tue", alex: 78, partner: 82 },
+      { day: "Wed", alex: 85, partner: 80 },
+      { day: "Thu", alex: 80, partner: 85 },
+      { day: "Fri", alex: 76, partner: 79 },
+      { day: "Sat", alex: 88, partner: 90 },
+      { day: "Sun", alex: 70, partner: 65 },
     ],
   },
   conn_sam: {
-    connectionId: "conn_sam",
     score: 74,
-    partnerName: "Sam",
     synergies: [
-      { axis: "love", strength: "moderate", description: "Warm emotional support" },
-      { axis: "work", strength: "developing", description: "Different work rhythms" },
-      { axis: "health", strength: "strong", description: "Shared vitality peaks" },
+      { axis: "love",   score: 68, strength: "developing", description: "Growing connection — needs attention." },
+      { axis: "health", score: 82, strength: "strong",     description: "Great workout partners — similar energy cycles." },
+      { axis: "work",   score: 72, strength: "moderate",   description: "Different approaches but complementary strengths." },
     ],
-    sharedPeaks: ["2026-03-15", "2026-03-22"],
-    whatMakesYouWork: "Your health rhythms sync naturally — you push each other to stay active.",
-    bestDaysTogether: [
-      { date: "2026-03-15", context: "Shared health peak — perfect for outdoor activity" },
-      { date: "2026-03-22", context: "Both feeling social — ideal for group plans" },
+    weeklySync: [
+      { day: "Mon", alex: 72, partner: 75 },
+      { day: "Tue", alex: 78, partner: 70 },
+      { day: "Wed", alex: 85, partner: 82 },
+      { day: "Thu", alex: 80, partner: 78 },
+      { day: "Fri", alex: 76, partner: 80 },
+      { day: "Sat", alex: 88, partner: 72 },
+      { day: "Sun", alex: 70, partner: 76 },
     ],
   },
   conn_maya: {
-    connectionId: "conn_maya",
     score: 81,
-    partnerName: "Maya",
     synergies: [
-      { axis: "love", strength: "developing", description: "Building trust over time" },
-      { axis: "work", strength: "strong", description: "Creative powerhouse together" },
-      { axis: "health", strength: "moderate", description: "Balanced energy patterns" },
+      { axis: "love",   score: 75, strength: "moderate",   description: "Warm connection with good rapport." },
+      { axis: "health", score: 80, strength: "strong",     description: "Motivating presence — energizes each other." },
+      { axis: "work",   score: 88, strength: "strong",     description: "Excellent professional alignment." },
     ],
-    sharedPeaks: ["2026-03-11", "2026-03-19", "2026-03-25"],
-    whatMakesYouWork: "Your work signals amplify each other — meetings on aligned days produce breakthrough ideas.",
-    bestDaysTogether: [
-      { date: "2026-03-11", context: "Both in creative flow — brainstorm day" },
-      { date: "2026-03-19", context: "Work peak overlap — tackle the hardest problem" },
-      { date: "2026-03-25", context: "Balanced momentum — good for planning sessions" },
+    weeklySync: [
+      { day: "Mon", alex: 72, partner: 80 },
+      { day: "Tue", alex: 78, partner: 76 },
+      { day: "Wed", alex: 85, partner: 88 },
+      { day: "Thu", alex: 80, partner: 82 },
+      { day: "Fri", alex: 76, partner: 78 },
+      { day: "Sat", alex: 88, partner: 85 },
+      { day: "Sun", alex: 70, partner: 72 },
     ],
   },
 };
-
-// Legacy alias — components that import mockCompatibility still work
-export const mockCompatibility: CompatibilityResult = mockCompatibilityResults.conn_jordan;
-
-// ─── Premium: 7-Day Forecast ────────────────────────────────
-export const mockForecast: ForecastWindow[] = [
-  { date: "2026-03-10", momentum: 74, isPeak: false, peakAxes: [], recommendation: "Focus on relationships" },
-  { date: "2026-03-11", momentum: 79, isPeak: false, peakAxes: ["work"], recommendation: "Great day for presentations" },
-  { date: "2026-03-12", momentum: 91, isPeak: true, peakAxes: ["love", "work"], recommendation: "Exceptional day — seize the moment" },
-  { date: "2026-03-13", momentum: 72, isPeak: false, peakAxes: [], recommendation: "Recovery and reflection" },
-  { date: "2026-03-14", momentum: 68, isPeak: false, peakAxes: [], recommendation: "Prioritize rest" },
-  { date: "2026-03-15", momentum: 83, isPeak: false, peakAxes: ["health"], recommendation: "Peak energy for exercise" },
-  { date: "2026-03-16", momentum: 88, isPeak: true, peakAxes: ["love"], recommendation: "Ideal for meaningful conversations" },
-];
-
-// ─── Premium: Monthly Map ───────────────────────────────────
-export const mockMonthlyMap: MonthlyMap = {
-  month: "2026-03",
-  days: Array.from({ length: 31 }, (_, i) => ({
-    date: `2026-03-${String(i + 1).padStart(2, "0")}`,
-    overall: Math.round(55 + Math.random() * 40),
-    isPeak: [3, 12, 16, 22, 28].includes(i + 1),
-    isLow: [7, 14, 20].includes(i + 1),
-  })),
-  summary: {
-    peakDays: 5,
-    averageMomentum: 74,
-    bestAxis: "love",
-    trend: "ascending",
-  },
-};
-
-// ─── 30-Day Trend (Premium) ─────────────────────────────────
-export const mockTrend30D: MomentumTrend = {
-  period: { from: "2026-02-08", to: "2026-03-09" },
-  dataPoints: [
-    { date: "2026-02-08", love: 60, health: 65, work: 70, overall: 65 },
-    { date: "2026-02-09", love: 63, health: 68, work: 66, overall: 66 },
-    { date: "2026-02-10", love: 58, health: 72, work: 63, overall: 64 },
-    { date: "2026-02-11", love: 62, health: 70, work: 68, overall: 67 },
-    { date: "2026-02-12", love: 67, health: 66, work: 74, overall: 69 },
-    { date: "2026-02-13", love: 71, health: 64, work: 77, overall: 71 },
-    { date: "2026-02-14", love: 80, health: 62, work: 72, overall: 71 },
-    { date: "2026-02-15", love: 76, health: 67, work: 69, overall: 71 },
-    { date: "2026-02-16", love: 72, health: 71, work: 65, overall: 69 },
-    { date: "2026-02-17", love: 68, health: 74, work: 62, overall: 68 },
-    { date: "2026-02-18", love: 64, health: 78, work: 60, overall: 67 },
-    { date: "2026-02-19", love: 61, health: 80, work: 64, overall: 68 },
-    { date: "2026-02-20", love: 66, health: 76, work: 70, overall: 71 },
-    { date: "2026-02-21", love: 70, health: 73, work: 75, overall: 73 },
-    { date: "2026-02-22", love: 74, health: 69, work: 79, overall: 74 },
-    { date: "2026-02-23", love: 77, health: 65, work: 82, overall: 75 },
-    { date: "2026-02-24", love: 73, health: 68, work: 78, overall: 73 },
-    { date: "2026-02-25", love: 69, health: 72, work: 74, overall: 72 },
-    { date: "2026-02-26", love: 65, health: 76, work: 70, overall: 70 },
-    { date: "2026-02-27", love: 62, health: 79, work: 66, overall: 69 },
-    { date: "2026-02-28", love: 66, health: 82, work: 63, overall: 70 },
-    { date: "2026-03-01", love: 70, health: 78, work: 67, overall: 72 },
-    { date: "2026-03-02", love: 73, health: 74, work: 71, overall: 73 },
-    { date: "2026-03-03", love: 65, health: 70, work: 75, overall: 70 },
-    { date: "2026-03-04", love: 68, health: 72, work: 71, overall: 70 },
-    { date: "2026-03-05", love: 74, health: 68, work: 78, overall: 73 },
-    { date: "2026-03-06", love: 71, health: 80, work: 69, overall: 73 },
-    { date: "2026-03-07", love: 69, health: 83, work: 65, overall: 72 },
-    { date: "2026-03-08", love: 72, health: 85, work: 61, overall: 73 },
-    { date: "2026-03-09", love: 78, health: 69, work: 82, overall: 76 },
-  ],
-};
-
-// ─── Deltas (Today - Yesterday) ─────────────────────────────
-export const mockDeltas = {
-  love: mockToday.scores.love.value - mockYesterday.scores.love.value,     // +6
-  health: mockToday.scores.health.value - mockYesterday.scores.health.value, // -16
-  work: mockToday.scores.work.value - mockYesterday.scores.work.value,     // +21
-  overall: mockToday.overall - mockYesterday.overall,                       // +3
-};
-
-// ─── Enhanced Insights ──────────────────────────────────────
-export const mockInsightsEnhanced = {
-  today: "Work jumped +21 points since yesterday. You're approaching a peak \u2014 protect your 11am focus window. Health dipped, though \u2014 consider a short walk today.",
-  yesterday: "Your health peaked at 85 yesterday morning but dropped today. Sleep quality may be the driver. Love stayed steady \u2014 evening connections were strong.",
-  crossDomain: "When your Work score rises fast (+21), Health often dips the next day. Pacing your energy across both could sustain the momentum longer.",
-};
-
-// ─── Weekly Recap ───────────────────────────────────────────
-export const mockWeeklyRecap = {
-  period: { from: "2026-03-03", to: "2026-03-09" },
-  bestDay: { date: "2026-03-09", overall: 76, highlight: "Work" },
-  worstDay: { date: "2026-03-04", overall: 70, highlight: "Work" },
-  longestStreak: { axis: "health" as const, days: 3, label: "Health above 70" },
-  mostImproved: { axis: "work" as const, delta: 21, label: "Work +21 in one day" },
-  averageMomentum: 73,
-  peakDays: 1,
-};
-
-// ─── Daily Signal ────────────────────────────────────────────
-export const mockSignal = {
-  strongestAxis: "work" as const,
-  peakHour: 11,
-  signalText: "Today favors Work. Peak window: 11am.",
-  actionText: "Block 10-12 for your most important creative task.",
-};
-
-// ─── Structured Insights (4-line mini-reports) ──────────────
-type TimeView = "yesterday" | "today" | "tomorrow";
-type DomainOrOverall = "overall" | "love" | "health" | "work";
-
-export const mockStructuredInsights: Record<TimeView, Record<DomainOrOverall, StructuredInsight>> = {
-  yesterday: {
-    overall: {
-      mainRead: "Yesterday was a health day.",
-      bestWindow: "Your peak hit at 7am.",
-      suggestedMove: "Morning energy drove the day.",
-      caution: "Work stayed lower — creative blocks were present.",
-    },
-    love: {
-      mainRead: "Love held steady yesterday.",
-      bestWindow: "Evening connections were strongest around 7pm.",
-      suggestedMove: "Conversations carried warmth late in the day.",
-      caution: "Morning clarity was lower — timing mattered.",
-    },
-    health: {
-      mainRead: "Health peaked yesterday morning.",
-      bestWindow: "Your strongest window was around 7am.",
-      suggestedMove: "Physical energy was high — morning movement paid off.",
-      caution: "Energy dropped by afternoon.",
-    },
-    work: {
-      mainRead: "Work was quieter yesterday.",
-      bestWindow: "A small window opened around 2pm.",
-      suggestedMove: "Afternoon brought some focus back.",
-      caution: "Creative blocks made deep work difficult.",
-    },
-  },
-  today: {
-    overall: {
-      mainRead: "Today favors Work.",
-      bestWindow: "Peak around 11am.",
-      suggestedMove: "Protect 10-12 for your most important creative task.",
-      caution: "Energy may soften after lunch.",
-    },
-    love: {
-      mainRead: "Love gains momentum tonight.",
-      bestWindow: "Conversations flow better after 8pm.",
-      suggestedMove: "Save meaningful exchanges for the evening.",
-      caution: "Don't force clarity too early in the day.",
-    },
-    health: {
-      mainRead: "Health stays steady today.",
-      bestWindow: "Morning supports balance and reset.",
-      suggestedMove: "Use the morning for movement or recovery.",
-      caution: "Avoid overloading the second half of the day.",
-    },
-    work: {
-      mainRead: "Work is strongest today.",
-      bestWindow: "Peak around 11am.",
-      suggestedMove: "Protect 10-12 for focused, high-value work.",
-      caution: "Energy may soften after lunch — avoid stacking meetings.",
-    },
-  },
-  tomorrow: {
-    overall: {
-      mainRead: "Tomorrow opens for Love.",
-      bestWindow: "Evening is your strongest window.",
-      suggestedMove: "Plan meaningful conversations for after 6pm.",
-      caution: "Work momentum dips — avoid big decisions.",
-    },
-    love: {
-      mainRead: "A strong love window is opening.",
-      bestWindow: "Evening around 6pm builds momentum.",
-      suggestedMove: "Plan a meaningful connection for tomorrow night.",
-      caution: "Morning may feel slower — patience helps.",
-    },
-    health: {
-      mainRead: "Health holds steady tomorrow.",
-      bestWindow: "Morning around 8am supports vitality.",
-      suggestedMove: "Start with gentle movement or a reset routine.",
-      caution: "Avoid pushing too hard in the afternoon.",
-    },
-    work: {
-      mainRead: "Work slows down tomorrow.",
-      bestWindow: "A small window opens around 3pm.",
-      suggestedMove: "Use it for light planning, not heavy execution.",
-      caution: "Creative energy is lower — save big tasks for another day.",
-    },
-  },
-};
-
-// ─── Domain Detail Reports (satellite tap) ──────────────────
-export const mockDomainDetails: Record<TimeView, Record<"love" | "health" | "work", DomainDetail>> = {
-  yesterday: {
-    love: {
-      scoreTitle: "Love held steady yesterday",
-      whatItMeans: "Emotional connections were present but not at their peak.",
-      bestUse: "Evening conversations carried the most warmth.",
-      watchOut: "Morning clarity was lower, making important talks harder.",
-      whenItGetsBetter: "Today brings rising momentum — tonight is stronger.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-    health: {
-      scoreTitle: "Health peaked yesterday",
-      whatItMeans: "Physical vitality was high, especially in the morning.",
-      bestUse: "Early movement and activity had the best returns.",
-      watchOut: "Energy dropped significantly by afternoon.",
-      whenItGetsBetter: "Today is steadier — morning still supports balance.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-    work: {
-      scoreTitle: "Work was quieter yesterday",
-      whatItMeans: "Creative blocks made focused output harder than usual.",
-      bestUse: "A small afternoon window offered some concentration.",
-      watchOut: "Forcing deep work in the morning backfired.",
-      whenItGetsBetter: "Today brings a strong surge — protect your late morning.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-  },
-  today: {
-    love: {
-      scoreTitle: "Love is rising today",
-      whatItMeans: "Relational momentum builds through the day, peaking tonight.",
-      bestUse: "Save meaningful conversations for after 8pm.",
-      watchOut: "Don't force emotional clarity too early — evening is better.",
-      whenItGetsBetter: "Tomorrow evening is even stronger for connection.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-    health: {
-      scoreTitle: "Health stays steady today",
-      whatItMeans: "Energy levels are balanced — not a peak, but reliable.",
-      bestUse: "Use the morning for movement or a reset routine.",
-      watchOut: "Avoid overloading the second half of the day.",
-      whenItGetsBetter: "Tomorrow morning supports another steady window.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-    work: {
-      scoreTitle: "Work is rising today",
-      whatItMeans: "Focus and decision-making are better supported than usual.",
-      bestUse: "Do your most demanding task between 10am and 12pm.",
-      watchOut: "Momentum may soften after lunch — avoid stacking low-value meetings.",
-      whenItGetsBetter: "Your next stronger work window builds again tomorrow afternoon.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-  },
-  tomorrow: {
-    love: {
-      scoreTitle: "Love builds tomorrow",
-      whatItMeans: "Deep connection energy is rising toward the evening.",
-      bestUse: "Plan a meaningful conversation or quality time for after 6pm.",
-      watchOut: "Morning may feel slower for emotional clarity — be patient.",
-      whenItGetsBetter: "This is already one of your stronger windows this week.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-    health: {
-      scoreTitle: "Health holds tomorrow",
-      whatItMeans: "Vitality stays moderate — a reliable baseline for the day.",
-      bestUse: "Start with gentle movement around 8am.",
-      watchOut: "Avoid pushing too hard in the afternoon.",
-      whenItGetsBetter: "A stronger health window builds later this week.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-    work: {
-      scoreTitle: "Work dips tomorrow",
-      whatItMeans: "Creative focus is lower — not ideal for heavy execution.",
-      bestUse: "Use a small 3pm window for light planning or reviews.",
-      watchOut: "Avoid big decisions or high-stakes presentations.",
-      whenItGetsBetter: "Work momentum rebuilds strongly the day after.",
-      premiumTeaser: "Unlock future peaks and timing windows.",
-    },
-  },
-};
-
-// ─── Premium: Peak Alerts ───────────────────────────────────
-export const mockAlerts: PeakAlert[] = [
-  { id: "alert_1", date: "2026-03-12", time: "11:00", axis: "work", intensity: "exceptional", message: "Exceptional creative window approaching" },
-  { id: "alert_2", date: "2026-03-12", time: "19:00", axis: "love", intensity: "strong", message: "Strong relational momentum tonight" },
-  { id: "alert_3", date: "2026-03-16", time: "18:00", axis: "love", intensity: "exceptional", message: "Peak connection window this weekend" },
-];

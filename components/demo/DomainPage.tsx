@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";

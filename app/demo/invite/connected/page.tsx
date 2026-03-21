@@ -136,7 +136,7 @@ export default function InviteConnected() {
         variants={fadeInUp}
       >
         <p className="text-xs font-semibold text-text-heading">Synergy</p>
-        {mockCompatibility.synergies.map((synergy) => (
+        {mockCompatibility.synergies.map((synergy: { axis: string; score: number; strength: string }) => (
           <div key={synergy.axis} className="flex items-center gap-3">
             <span className="w-12 text-xs capitalize text-text-body-subtle">
               {synergy.axis}

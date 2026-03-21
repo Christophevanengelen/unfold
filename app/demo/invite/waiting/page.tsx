@@ -102,7 +102,7 @@ export default function InviteWaiting() {
           </p>
           <p className="mt-1 text-xs text-text-body-subtle">Compatibility</p>
           <div className="mt-3 flex justify-center gap-3">
-            {mockCompatibility.synergies.map((s) => (
+            {mockCompatibility.synergies.map((s: { axis: string; score: number; strength: string }) => (
               <div key={s.axis} className="h-1.5 w-14 rounded-full bg-brand-4" />
             ))}
           </div>

@@ -92,13 +92,12 @@ export default function DemoLayout({
         />
       </div>
 
-      {/* Exit CTA — download the real app */}
+      {/* Exit link — subtle, bottom right */}
       <a
         href="/en#pricing"
-        className="mt-4 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-xs font-medium text-brand-10 backdrop-blur-sm transition-all hover:border-white/20 hover:text-white"
+        className="absolute bottom-2 right-4 text-[10px] text-white/20 hover:text-white/40 transition-colors"
       >
-        <span>Download Unfold</span>
-        <span aria-hidden="true">&rarr;</span>
+        unfold.app
       </a>
     </div>
     </MomentumProvider>

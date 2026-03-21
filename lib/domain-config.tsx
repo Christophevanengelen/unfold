@@ -1,30 +1,119 @@
 /**
- * Centralized domain configuration — single source of truth.
+ * Unfold — 12 Life Domains (Houses) + Planet Config
+ * ==================================================
+ * Maps the real TocToc API house system to user-friendly labels.
+ * No astrology jargon visible to the user — pragmatic domain names only.
  *
- * Every component that needs domain icons, colors, or labels imports from here.
- * Change once → reflected everywhere.
+ * Colors come from the API's houseColors field, but we define defaults
+ * here for mock data and fallback rendering.
  */
 
-export type DomainKey = "love" | "health" | "work";
+import type { EventCategory, TocScore } from "@/types/api";
 
-/** Ordered list of all domains */
-export const DOMAINS: DomainKey[] = ["love", "health", "work"];
+// ─── House (Life Domain) Configuration ───────────────────
 
-interface DomainMeta {
-  /** Display label (uppercase) */
+export type HouseNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+
+export interface HouseMeta {
+  /** User-facing label — NO astrology jargon */
   label: string;
-  /** CSS custom property for the domain color */
+  /** One-line description for tooltips/detail sheets */
+  description: string;
+  /** Default hex color (API overrides with natal-specific colors) */
   color: string;
-  /** Tailwind bg class for colored dots */
-  dotClass: string;
-  /** Domain SVG icon — solid/filled, accepts optional size (default 20) */
-  icon: (opts?: { size?: number }) => React.ReactNode;
+  /** Flowbite icon name (outline) for UI rendering */
+  iconName: string;
 }
 
-// ─── Planetary Influences ────────────────────────────────────
-// Each momentum phase is shaped by 1-5 planetary transits.
-// Peak phases always have at least 2 active transits.
-// Colors are distinct, premium-muted, designed for small dots.
+// Colors: muted premium palette that works on dark purple backgrounds.
+// In production, the API provides natal-specific houseColors per user.
+// These defaults are fallbacks — subtle, distinguishable, never loud.
+export const houseConfig: Record<HouseNumber, HouseMeta> = {
+  1:  { label: "Identité",        description: "Corps, image, manière d'être",               color: "#C2A0D4" /* soft lilac */,     iconName: "user" },
+  2:  { label: "Argent",          description: "Revenus, biens, valeurs",                    color: "#C4A86B" /* warm gold */,      iconName: "cash" },
+  3:  { label: "Communication",   description: "Échanges, déplacements, entourage",          color: "#7BBFAF" /* sage teal */,      iconName: "chat-bubble" },
+  4:  { label: "Foyer",           description: "Logement, famille, racines",                 color: "#6BA89A" /* muted sage */,     iconName: "home" },
+  5:  { label: "Créativité",      description: "Plaisir, enfants, romance",                  color: "#D89EA0" /* dusty rose */,     iconName: "sparkles" },
+  6:  { label: "Quotidien",       description: "Travail du jour, santé, routines",           color: "#8BAFC2" /* steel blue */,     iconName: "clipboard-check" },
+  7:  { label: "Couple",          description: "Partenaires, contrats, engagement",          color: "#B07CC2" /* warm purple */,    iconName: "heart" },
+  8:  { label: "Transformations", description: "Crises, héritage, profondeur",               color: "#8B7FC2" /* muted indigo */,   iconName: "fire" },
+  9:  { label: "Horizon",         description: "Voyages, études, philosophie",               color: "#9585CC" /* accent purple */,  iconName: "globe-alt" },
+  10: { label: "Carrière",        description: "Réputation, statut, vie publique",           color: "#A88BC4" /* lavender */,       iconName: "briefcase" },
+  11: { label: "Réseau",          description: "Amis, communautés, projets",                 color: "#7BA5C2" /* soft blue */,      iconName: "user-group" },
+  12: { label: "Intériorité",     description: "Isolement, secrets, lâcher-prise",           color: "#9E7CA0" /* muted mauve */,    iconName: "eye-slash" },
+};
+
+/** Get house label from number (returns "?" for invalid) */
+export function getHouseLabel(house: number): string {
+  return houseConfig[house as HouseNumber]?.label ?? "?";
+}
+
+/** Get house meta from number */
+export function getHouseMeta(house: number): HouseMeta | null {
+  return houseConfig[house as HouseNumber] ?? null;
+}
+
+/** All house numbers in order */
+export const HOUSE_NUMBERS: HouseNumber[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+// ─── Toc Score Display ───────────────────────────────────
+
+export interface TocScoreMeta {
+  label: string;
+  tocLabel: string;
+  description: string;
+  /** Sausage width in px for timeline rendering */
+  sausageWidth: number;
+}
+
+export const tocScoreConfig: Record<TocScore, TocScoreMeta> = {
+  1: { label: "Notable",      tocLabel: "toc",                     description: "Fast-planet station or basic eclipse",                sausageWidth: 36 },
+  2: { label: "Significatif", tocLabel: "toc toc",                 description: "Saturn/Jupiter transit or ZR L3 peak",               sausageWidth: 48 },
+  3: { label: "Majeur",       tocLabel: "toc toc toc",             description: "Outer planet transit, ZR L2 peak, or Saturn Return", sausageWidth: 64 },
+  4: { label: "Exceptionnel", tocLabel: "toc toc toc toc",         description: "Pluto/Neptune conjunction on VIP natal point",       sausageWidth: 80 },
+};
+
+// ─── Event Category Display ──────────────────────────────
+
+export interface CategoryMeta {
+  label: string;
+  description: string;
+  /** Default color for this category type */
+  color: string;
+}
+
+export const categoryConfig: Record<EventCategory, CategoryMeta> = {
+  transit: {
+    label: "Transit",
+    description: "Planète lente touche un point natal. Semaines à mois.",
+    color: "#8B7FC2",
+  },
+  eclipse: {
+    label: "Éclipse",
+    description: "Reset ou culmination sur un axe de vie. Effet 6 mois.",
+    color: "#C4A86B",
+  },
+  zr: {
+    label: "Pic de vie",
+    description: "Période de Fortune, Esprit ou Éros activée. Mois à années.",
+    color: "#6BA89A",
+  },
+  station: {
+    label: "Station",
+    description: "Planète rapide s'arrête sur un point natal — quelques jours",
+    color: "#9CA3AF",
+  },
+};
+
+// ─── ZR Lot Type Labels ─────────────────────────────────
+
+export const zrLotLabels: Record<string, string> = {
+  fortune: "Circonstances",
+  spirit: "Vocation",
+  eros: "Désir",
+};
+
+// ─── Planet Config (kept from previous, extended) ────────
 
 export type PlanetKey =
   | "sun" | "moon" | "mercury" | "venus" | "mars"
@@ -33,21 +122,23 @@ export type PlanetKey =
 
 interface PlanetMeta {
   label: string;
-  color: string; // hex color for dot rendering
+  color: string;
+  /** Unicode symbol for compact display */
+  symbol: string;
 }
 
 export const planetConfig: Record<PlanetKey, PlanetMeta> = {
-  sun:           { label: "Sun",           color: "#E5A940" }, // warm gold
-  moon:          { label: "Moon",          color: "#B0B8C8" }, // cool silver
-  mercury:       { label: "Mercury",       color: "#4BBFAF" }, // teal
-  venus:         { label: "Venus",         color: "#D87EA0" }, // rose
-  mars:          { label: "Mars",          color: "#D06050" }, // warm coral
-  jupiter:       { label: "Jupiter",       color: "#5B7FC2" }, // deep blue
-  saturn:        { label: "Saturn",        color: "#C49B50" }, // amber ochre
-  uranus:        { label: "Uranus",        color: "#50C4D6" }, // cyan
-  neptune:       { label: "Neptune",       color: "#8B6FBF" }, // lavender indigo
-  "solar-eclipse": { label: "Solar Eclipse", color: "#2A2040" }, // deep void
-  "lunar-eclipse": { label: "Lunar Eclipse", color: "#9E4070" }, // deep magenta
+  sun:             { label: "Soleil",          color: "#E5A940", symbol: "☉" },
+  moon:            { label: "Lune",            color: "#B0B8C8", symbol: "☽" },
+  mercury:         { label: "Mercure",         color: "#4BBFAF", symbol: "☿" },
+  venus:           { label: "Vénus",           color: "#D87EA0", symbol: "♀" },
+  mars:            { label: "Mars",            color: "#D06050", symbol: "♂" },
+  jupiter:         { label: "Jupiter",         color: "#5B7FC2", symbol: "♃" },
+  saturn:          { label: "Saturne",         color: "#C49B50", symbol: "♄" },
+  uranus:          { label: "Uranus",          color: "#50C4D6", symbol: "♅" },
+  neptune:         { label: "Neptune",         color: "#8B6FBF", symbol: "♆" },
+  "solar-eclipse": { label: "Éclipse solaire", color: "#2A2040", symbol: "●" },
+  "lunar-eclipse": { label: "Éclipse lunaire", color: "#9E4070", symbol: "◐" },
 };
 
 export const PLANET_KEYS: PlanetKey[] = [
@@ -56,35 +147,60 @@ export const PLANET_KEYS: PlanetKey[] = [
   "solar-eclipse", "lunar-eclipse",
 ];
 
-export const domainConfig: Record<DomainKey, DomainMeta> = {
-  love: {
-    label: "LOVE",
-    color: "var(--accent-pink)",
-    dotClass: "bg-accent-pink",
-    icon: ({ size = 20 } = {}) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-      </svg>
-    ),
-  },
-  health: {
-    label: "HEALTH",
-    color: "var(--accent-green)",
-    dotClass: "bg-accent-green",
-    icon: ({ size = 20 } = {}) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
-      </svg>
-    ),
-  },
-  work: {
-    label: "WORK",
-    color: "var(--accent-blue)",
-    dotClass: "bg-accent-blue",
-    icon: ({ size = 20 } = {}) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 5h4v2h-4V5z" />
-      </svg>
-    ),
-  },
+// ─── Transit Planet → PlanetKey mapping ──────────────────
+/** Maps API transitPlanet names to our PlanetKey for color/icon lookup */
+export function transitPlanetToKey(transitPlanet: string): PlanetKey | null {
+  const map: Record<string, PlanetKey> = {
+    "Pluto": "neptune",    // no Pluto in PlanetKey, closest visual
+    "Neptune": "neptune",
+    "Uranus": "uranus",
+    "Saturn": "saturn",
+    "Jupiter": "jupiter",
+    "Mars": "mars",
+    "Venus": "venus",
+    "Mercury": "mercury",
+    "North Node": "sun",
+    "South Node": "sun",
+    "eclipse": "solar-eclipse",
+  };
+  return map[transitPlanet] ?? null;
+}
+
+// ─── Helpers ─────────────────────────────────────────────
+
+/** Format a date range as "Mar '26 — Jun '26" */
+export function formatDateRange(startDate: string, endDate: string): string {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+  const s = `${months[start.getMonth()]} '${String(start.getFullYear()).slice(2)}`;
+  const e = `${months[end.getMonth()]} '${String(end.getFullYear()).slice(2)}`;
+  return s === e ? s : `${s} — ${e}`;
+}
+
+/** Calculate duration in weeks between two dates */
+export function durationWeeks(startDate: string, endDate: string): number {
+  const ms = new Date(endDate).getTime() - new Date(startDate).getTime();
+  return Math.round(ms / (7 * 24 * 60 * 60 * 1000));
+}
+
+/** Get the sausage width for a given score */
+export function getSausageWidth(score: TocScore): number {
+  return tocScoreConfig[score]?.sausageWidth ?? 36;
+}
+
+// ─── BACKWARD COMPAT (old 3-domain system) ──────────────
+// TODO: Remove once old components are fully migrated to 12-house system.
+
+/** @deprecated Use HouseNumber instead */
+export type DomainKey = "love" | "health" | "work";
+
+/** @deprecated Use HOUSE_NUMBERS instead */
+export const DOMAINS: DomainKey[] = ["love", "health", "work"];
+
+/** @deprecated Use houseConfig instead */
+export const domainConfig: Record<DomainKey, { label: string; color: string; iconName: string }> = {
+  love:   { label: "Couple",    color: "#EC4899", iconName: "heart" },
+  health: { label: "Quotidien", color: "#22C55E", iconName: "clipboard-check" },
+  work:   { label: "Carrière",  color: "#A855F7", iconName: "briefcase" },
 };

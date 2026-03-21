@@ -26,7 +26,7 @@ function ForecastTimeline() {
 
   return (
     <div className="flex items-end justify-between px-2">
-      {mockForecast.map((day, i) => {
+      {mockForecast.map((day: { date: string; momentum: number; isPeak: boolean }, i: number) => {
         // Map momentum (60-100) to dot size (6-16px)
         const dotSize = 6 + ((day.momentum - 60) / 40) * 10;
 

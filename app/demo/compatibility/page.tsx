@@ -93,7 +93,7 @@ export default function ConnectionsPage() {
         <div className="mt-2 flex items-baseline gap-1">
           <span className="font-display text-2xl font-bold text-text-heading">
             <AnimatedNumber
-              value={Math.round(connected.reduce((sum, c) => sum + c.todayAlignment, 0) / connected.length)}
+              value={Math.round(connected.reduce((sum, c) => sum + (c.todayAlignment ?? 0), 0) / connected.length)}
               duration={0.6}
             />
           </span>
@@ -141,7 +141,7 @@ export default function ConnectionsPage() {
 
               {/* Alignment + score */}
               <div className="flex shrink-0 items-center gap-2">
-                <AlignmentDot value={connection.todayAlignment} />
+                <AlignmentDot value={connection.todayAlignment ?? 0} />
                 <span className="font-display text-lg font-bold text-text-heading">
                   {connection.score}
                 </span>

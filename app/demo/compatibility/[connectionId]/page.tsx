@@ -68,7 +68,7 @@ export default function ConnectionDetailPage() {
           <p className="text-sm text-text-body-subtle">
             Alex & {connection.name}
           </p>
-          {connection.todayAlignment > 0 && (
+          {(connection.todayAlignment ?? 0) > 0 && (
             <p className="text-[10px] text-text-body-subtle">
               {connection.todayAlignment}% aligned today
             </p>
@@ -149,7 +149,7 @@ export default function ConnectionDetailPage() {
         >
           Synergies
         </motion.p>
-        {synergies.map((s) => (
+        {synergies.map((s: { axis: string; score: number; strength: string; description: string }) => (
           <motion.div
             key={s.axis}
             className="flex items-center gap-3 rounded-2xl px-4 py-3"
@@ -199,7 +199,7 @@ export default function ConnectionDetailPage() {
             Best days together
           </p>
           <div className="space-y-2">
-            {bestDaysTogether.map((day, i) => {
+            {bestDaysTogether.map((day: { date: string; alex: number; partner: number; context?: string }, i: number) => {
               const d = new Date(day.date);
               return (
                 <motion.div

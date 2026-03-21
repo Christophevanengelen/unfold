@@ -1,168 +1,313 @@
 /**
- * UNFOLD API CONTRACTS
- * ====================
- * These TypeScript interfaces define the expected API response shapes.
- * Marie Ange: each interface maps to an API endpoint your backend needs to provide.
+ * UNFOLD API CONTRACTS — Real TocToc Momentum Engine
+ * ===================================================
+ * Types match the actual API at https://ai.zebrapad.io/full-suite-spiritual-api
+ *
+ * 4 endpoints:
+ *   POST /toctoc.php          → lifetime event list
+ *   POST /toctoc-app.php      → sausages + natal context + house colors
+ *   POST /toctoc-year.php     → 3-year rolling window (fast: 2-10s)
+ *   POST /toctoc-timeline.php → lifetime monthly chart data
+ *
+ * Marie Ange: these types ARE the API contract. Build against them.
  */
 
-// ─── Momentum Scores ───────────────────────────────────────
-// GET /api/momentum/daily?date=YYYY-MM-DD
-export interface DailyMomentum {
-  date: string; // ISO date
-  scores: {
-    love: MomentumScore;
-    health: MomentumScore;
-    work: MomentumScore;
+// ─── Request ──────────────────────────────────────────────
+export interface TocTocRequest {
+  birthDate: string; // "YYYY-MM-DD"
+  birthTime: string; // "HH:MM"
+  latitude: number;
+  longitude: number;
+  timezone: string; // IANA e.g. "Europe/Brussels"
+  username?: string; // alternative to coords
+  _scanStartDate?: string; // optional: limit scan range
+  _scanEndDate?: string;
+  year?: number; // for toctoc-year: center year
+}
+
+// ─── API Response Wrapper ─────────────────────────────────
+export interface TocTocResponse<T> {
+  success: boolean;
+  data: T;
+  timestamp: string;
+  error?: string;
+}
+
+// ─── Event Categories ─────────────────────────────────────
+export type EventCategory = "transit" | "station" | "eclipse" | "zr";
+
+// ─── Score Levels (the DNA of TocToc) ─────────────────────
+export type TocScore = 1 | 2 | 3 | 4;
+export type TocLabel = "toc" | "toc toc" | "toc toc toc" | "toc toc toc toc";
+
+// ─── Base Event (fields on EVERY event) ───────────────────
+export interface TocTocEvent {
+  id: string; // "tt_42" — unique per request
+  color: string; // hex — use directly for rendering
+  groupId: string; // links related events (e.g. all passes of same transit)
+  date: string; // "YYYY-MM-DD" — start date of event window
+  endDate: string; // end date (= date for one-day events)
+  score: TocScore; // 1-4 intensity
+  label: TocLabel; // "toc toc toc"
+  category: EventCategory;
+  type: string; // "Pluto conjunction natal Sun"
+  isPast: boolean;
+  age: number; // person's age at event date
+  intensityScore: number; // numeric weight for sizing (can be negative for challenging aspects)
+}
+
+// ─── Transit Events ───────────────────────────────────────
+export interface TransitEvent extends TocTocEvent {
+  category: "transit";
+  transitPlanet: TransitPlanet;
+  natalPoint: string; // "Sun", "Moon", "Mars", etc.
+  aspect: Aspect;
+  parileDate: string; // exact date of tightest orb — SHOW THIS as main date
+  windowStart: string;
+  windowEnd: string;
+  exactDates: string[]; // all exact passes (multiple for D/R/D)
+  pattern: string; // "Direct-Retrograde-Direct"
+  bestOrb: number;
+  isReturn: boolean;
+  isHalfReturn: boolean;
+  isVipTransit: boolean; // outer planet → personal planet (most significant)
+  isAList: boolean; // hits ASC or MC
+}
+
+export type TransitPlanet =
+  | "Pluto" | "Neptune" | "Uranus" | "Saturn" | "Jupiter"
+  | "North Node" | "South Node";
+
+export type Aspect = "conjunction" | "square" | "opposition" | "trine";
+
+// ─── Station Events ───────────────────────────────────────
+export interface StationEvent extends TocTocEvent {
+  category: "station";
+  transitPlanet: "Mercury" | "Venus" | "Mars";
+  natalPoint: string;
+  stationType: "SR" | "SD"; // SR = stations direct, SD = stations retrograde
+  orb: number;
+  transitLongitude: number;
+}
+
+// ─── Eclipse Events ───────────────────────────────────────
+export interface EclipseEvent extends TocTocEvent {
+  category: "eclipse";
+  transitPlanet: "eclipse";
+  eclipseType: "solar" | "lunar";
+  eclipseLongitude: number;
+  eclipseSign: string; // "Aries"
+  eclipseAxis: EclipseAxis; // "1-7"
+  axisColor: string; // hex — use directly
+  eclipseSeriesId: string;
+  eclipseSeriesStart: string;
+  eclipseSeriesEnd: string;
+  lastAxisTouch: string;
+  natalPoint: string;
+  isVipNatal: boolean;
+  isAngle: boolean;
+  isVipAspect: boolean; // ★ — orb ≤ 5° to VIP natal planet
+  orb: number;
+}
+
+export type EclipseAxis = "1-7" | "2-8" | "3-9" | "4-10" | "5-11" | "6-12";
+
+// ─── ZR Events (Zodiacal Releasing) ──────────────────────
+export interface ZREvent extends TocTocEvent {
+  category: "zr";
+  lotType: ZRLotType | ZRLotType[]; // can be merged: ["fortune","eros"]
+  level: 2 | 3; // 2 = strongest peak (score 3), 3 = secondary (score 2)
+  periodSign: string; // "Leo"
+  markers: ZRMarker[];
+  isCulmination: boolean;
+}
+
+export type ZRLotType = "fortune" | "spirit" | "eros";
+export type ZRMarker = "LB" | "Cu" | "pre-LB";
+
+// ─── Union type for any event ─────────────────────────────
+export type AnyTocTocEvent = TransitEvent | StationEvent | EclipseEvent | ZREvent;
+
+// ─── Natal Context (from toctoc-app) ─────────────────────
+export interface NatalContext {
+  [planet: string]: {
+    houseLocated: number; // 1-12 (whole sign)
+    housesRuled: number[];
+    topics: string[];
   };
-  overall: number; // 0-100 composite score
-  insight: string; // Daily insight text (localized)
-  label?: string; // Human-readable summary ("Strong work momentum")
 }
 
-export interface MomentumScore {
-  value: number; // 0-100
-  trend: "rising" | "stable" | "declining";
-  peakHour?: number; // 0-23, optimal hour for this axis
-  description: string; // Short description (localized)
-}
+// ─── House Colors (from toctoc-app) ──────────────────────
+export type HouseColors = Record<string, string>; // "1" → "#hex", ..., "12" → "#hex"
 
-// Structured 4-line insight (bottom card on every page)
-export interface StructuredInsight {
-  mainRead: string; // "Today favors Work"
-  bestWindow: string; // "Peak around 11am"
-  suggestedMove: string; // "Protect 10-12 for focused work"
-  caution: string; // "Energy may soften after lunch"
-}
-
-// Detailed report (shown on satellite score tap)
-export interface DomainDetail {
-  scoreTitle: string; // "Work is rising today"
-  whatItMeans: string; // "Focus and decision-making are better supported..."
-  bestUse: string; // "Do your most demanding task between 10am and 12pm"
-  watchOut: string; // "Momentum may soften later..."
-  whenItGetsBetter: string; // "Your next stronger work window builds tomorrow afternoon"
-  premiumTeaser: string; // "Unlock future peaks and timing windows"
-}
-
-// ─── Trend Data ─────────────────────────────────────────────
-// GET /api/momentum/trend?from=YYYY-MM-DD&to=YYYY-MM-DD
-export interface MomentumTrend {
-  period: {
-    from: string;
-    to: string;
+// ─── Sausage (enriched event from toctoc-app) ────────────
+export interface Sausage extends TocTocEvent {
+  width: "thin" | "medium" | "large";
+  topics: string[];
+  // Transit sausages also have cycle info
+  cycle?: {
+    hitNumber: number;
+    allHits: string[]; // dates
   };
-  dataPoints: TrendPoint[];
 }
 
-export interface TrendPoint {
-  date: string;
-  love: number;
-  health: number;
-  work: number;
-  overall: number;
-}
-
-// ─── Connections ────────────────────────────────────────────
-// GET /api/connections
-export interface Connection {
-  id: string;
+// ─── Person Info ─────────────────────────────────────────
+export interface PersonInfo {
   name: string;
-  initial: string; // First letter for avatar
-  relationship: "partner" | "friend" | "family" | "colleague";
-  status: "connected" | "pending" | "invited";
-  score: number; // 0-100 compatibility score
-  todayAlignment: number; // 0-100 how aligned today
-  todayInsight: string; // "You're both peaking in Work"
-  connectedSince: string; // ISO date
+  birthDate: string;
+  birthTime: string;
+  city: string;
+  timezone: string;
 }
 
-// ─── Compatibility ──────────────────────────────────────────
-// POST /api/compatibility/check { inviteCode: string }
-// GET /api/compatibility/:connectionId
-export interface CompatibilityResult {
-  connectionId: string;
-  score: number; // 0-100
-  partnerName: string;
-  synergies: {
-    axis: "love" | "health" | "work";
-    strength: "strong" | "moderate" | "developing";
-    description: string;
-  }[];
-  sharedPeaks: string[]; // ISO dates of aligned peak moments
-  whatMakesYouWork?: string; // Insight about partner dynamics
-  bestDaysTogether?: { date: string; context: string }[]; // Annotated shared peaks
+// ─── Natal Points ────────────────────────────────────────
+export interface NatalPoint {
+  longitude: number;
+  sign: string;
+  degree: number;
 }
 
-// ─── Premium: Future Windows ────────────────────────────────
-// GET /api/premium/forecast?days=7
-export interface ForecastWindow {
-  date: string;
-  momentum: number; // 0-100 predicted overall
-  isPeak: boolean;
-  peakAxes: ("love" | "health" | "work")[];
-  recommendation: string; // Localized action suggestion
+// ─── Summary ─────────────────────────────────────────────
+export interface TocTocSummary {
+  past: ScoreCounts;
+  future: ScoreCounts;
+  total: ScoreCounts;
 }
 
-// ─── Premium: Monthly Momentum Map ──────────────────────────
-// GET /api/premium/monthly-map?month=YYYY-MM
-export interface MonthlyMap {
-  month: string; // YYYY-MM
-  days: {
-    date: string;
-    overall: number;
-    isPeak: boolean;
-    isLow: boolean;
-  }[];
-  summary: {
-    peakDays: number;
-    averageMomentum: number;
-    bestAxis: "love" | "health" | "work";
-    trend: "ascending" | "stable" | "descending";
+export interface ScoreCounts {
+  toc: number;
+  tocToc: number;
+  tocTocToc: number;
+  tocTocTocToc: number;
+}
+
+// ─── Decade Timeline ─────────────────────────────────────
+export type DecadeTimeline = Record<string, ScoreCounts>;
+// "0-10" → { toc: 1, tocToc: 0, ... }
+
+// ─── toctoc.php Response ─────────────────────────────────
+export interface TocTocData {
+  person: PersonInfo;
+  natalPoints: Record<string, NatalPoint>;
+  summary: TocTocSummary;
+  timeline: { decades: DecadeTimeline };
+  events: AnyTocTocEvent[];
+  totalEvents: number;
+  computeTimeSeconds: number;
+}
+
+// ─── toctoc-app.php Response ─────────────────────────────
+export interface TocTocAppData {
+  person: PersonInfo;
+  natalPoints: Record<string, NatalPoint>;
+  natalContext: NatalContext;
+  houseColors: HouseColors;
+  allSausages: Sausage[];
+  months: Record<string, MonthBucket>;
+  cycles: Record<string, Sausage[]>;
+  summary: TocTocSummary;
+  timeline: { decades: DecadeTimeline };
+  computeTimeSeconds: number;
+}
+
+export interface MonthBucket {
+  sausages: Sausage[];
+  monthScore: number;
+  transitScore: number;
+  zrScore: number;
+}
+
+// ─── Monthly Timeline Event (toctoc-timeline + toctoc-year) ─
+export interface MonthlyEvent {
+  type: string;
+  label: string;
+  score: number;
+  category: EventCategory;
+  color: string;
+  exactDate: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  cyclePassNumber: number | null;
+  cyclePasses: number | null;
+  pattern: string | null;
+  eclipseAxis: EclipseAxis | null;
+  axisColor: string | null;
+  lotType: ZRLotType | null;
+  level: number | null;
+  periodSign: string | null;
+  markers: ZRMarker[] | null;
+  isCulmination: boolean;
+}
+
+// ─── Monthly Timeline Entry ──────────────────────────────
+export interface MonthEntry {
+  month: string; // "YYYY-MM"
+  zrScore: number;
+  transitScore: number;
+  totalScore: number;
+  age: number;
+  isPast: boolean;
+  topEvents: MonthlyEvent[];
+  // toctoc-year adds these:
+  year?: number;
+  monthNum?: number;
+  isCurrentMonth?: boolean;
+}
+
+// ─── Yearly Summary ──────────────────────────────────────
+export interface YearSummary {
+  year: number;
+  sumScore: number;
+  isBusy: boolean;
+  peakMonthScore: number;
+  peakMonth: string;
+  avgMonthScore: number;
+  positiveMonths: number;
+  negativeMonths: number;
+  age: number;
+  // toctoc-year extras:
+  monthCount?: number;
+  sumPositive?: number;
+  sumNegative?: number;
+  neutralMonths?: number;
+}
+
+// ─── toctoc-timeline.php Response ────────────────────────
+export interface TocTocTimelineData {
+  person: PersonInfo;
+  natalPoints: Record<string, NatalPoint>;
+  fortuneInfo: FortuneInfo;
+  summary: TocTocSummary;
+  monthlyTimeline: MonthEntry[];
+  yearlyTimeline: YearSummary[];
+}
+
+export interface FortuneInfo {
+  sign: string;
+  signIndex: number;
+  isDayChart: boolean;
+  angularSigns: string[];
+  natalSigns: Record<string, string>;
+}
+
+// ─── toctoc-year.php Response (fast: 2-10s) ──────────────
+export interface TocTocYearData {
+  person: PersonInfo;
+  window: {
+    startDate: string;
+    endDate: string;
+    years: number[];
+    monthCount: number;
   };
+  fortuneInfo: FortuneInfo;
+  currentMonth: MonthEntry;
+  peakUpcomingMonths: MonthEntry[];
+  years: YearSummary[];
+  months: MonthEntry[];
+  computeTimeSeconds: number;
 }
 
-// ─── Premium: Peak Alerts ───────────────────────────────────
-// GET /api/premium/alerts
-export interface PeakAlert {
-  id: string;
-  date: string;
-  time: string; // HH:mm
-  axis: "love" | "health" | "work";
-  intensity: "moderate" | "strong" | "exceptional";
-  message: string; // Localized alert message
-}
-
-// ─── Timeline Phases (Momentum History) ─────────────────────
-// GET /api/momentum/timeline
-export interface TimelinePhase {
-  id: string;
-  domain: "love" | "health" | "work";
-  title: string;
-  subtitle: string;
-  description: string;
-  startDate: string; // ISO date
-  endDate?: string; // null = ongoing
-  durationWeeks: number;
-  intensity: number; // 0-100 — tier: <70 Subtle, 70-84 Clear, 85+ Peak
-  planets: PlanetaryTransit[]; // 1-5 active transits shaping this phase (Peak min 2)
-  status: "past" | "current" | "future";
-  guidance?: string; // premium-only
-  keyInsight?: string;
-  peakMoment?: string;
-}
-
-export type PlanetKey =
-  | "sun" | "moon" | "mercury" | "venus" | "mars"
-  | "jupiter" | "saturn" | "uranus" | "neptune"
-  | "solar-eclipse" | "lunar-eclipse";
-
-export interface PlanetaryTransit {
-  planet: PlanetKey;
-  influence: number; // 0-100 strength of this transit
-}
-
-// ─── User Profile ───────────────────────────────────────────
-// GET /api/user/profile
+// ─── User Profile ────────────────────────────────────────
 export interface UserProfile {
   id: string;
   name: string;
@@ -171,3 +316,97 @@ export interface UserProfile {
   locale: string;
   createdAt: string;
 }
+
+// ─── Connection (for compatibility feature) ──────────────
+export interface Connection {
+  id: string;
+  name: string;
+  initial: string;
+  relationship: "partner" | "friend" | "family" | "colleague";
+  status: "connected" | "pending" | "invited";
+  birthData?: TocTocRequest; // needed for client-side compatibility
+  connectedSince: string;
+  /** @deprecated Compat — old compatibility UI fields */
+  todayAlignment?: number;
+  todayInsight?: string;
+  score?: number;
+}
+
+// ─── Compatibility (computed client-side from 2 timelines) ─
+export interface CompatibilityResult {
+  connectionId: string;
+  partnerName: string;
+  sharedPeakMonths: SharedPeakMonth[];
+  overlapScore: number; // 0-100, computed from shared peaks
+  personAEvents: number;
+  personBEvents: number;
+}
+
+export interface SharedPeakMonth {
+  month: string; // "YYYY-MM"
+  personAScore: number;
+  personBScore: number;
+  combinedScore: number;
+  topEventsA: MonthlyEvent[];
+  topEventsB: MonthlyEvent[];
+}
+
+// ─── BACKWARD COMPAT (old types, pre-TocToc pivot) ──────
+// TODO: Remove once old components are fully migrated.
+
+/** @deprecated Old daily momentum shape — use MonthEntry instead */
+export interface DailyMomentum {
+  overall: number;
+  insight: string;
+  scores: Record<string, { value: number; label: string }>;
+}
+
+/** @deprecated Old structured insight shape — use MonthlyEvent instead */
+export interface StructuredInsight {
+  domain: string;
+  title: string;
+  body: string;
+  score: number;
+}
+
+/** @deprecated Old domain detail shape — use Sausage instead */
+export interface DomainDetail {
+  domain: string;
+  score: number;
+  trend: string;
+  insights: StructuredInsight[];
+}
+
+/** @deprecated Old momentum score shape */
+export interface MomentumScore {
+  overall: number;
+  love: number;
+  health: number;
+  work: number;
+}
+
+// ─── Eclipse Axis Colors (reference) ─────────────────────
+export const ECLIPSE_AXIS_COLORS: Record<EclipseAxis, string> = {
+  "1-7": "#EAB308",  // Yellow (Aries/Libra)
+  "2-8": "#94A3B8",  // Blue-grey (Taurus/Scorpio)
+  "3-9": "#EA580C",  // Orange (Gemini/Sagittarius)
+  "4-10": "#DC2626", // Red (Cancer/Capricorn)
+  "5-11": "#0891B2", // Turquoise (Leo/Aquarius)
+  "6-12": "#9333EA", // Purple (Virgo/Pisces)
+};
+
+// ─── Transit Planet Colors (reference) ───────────────────
+export const TRANSIT_PLANET_COLORS: Record<string, string> = {
+  Pluto: "#9B1C1C",
+  Neptune: "#1D4ED8",
+  Uranus: "#0E7490",
+  Saturn: "#6B7280",
+  Jupiter: "#7E22CE",
+  "North Node": "#D97706",
+  "South Node": "#D97706",
+  eclipse: "#D97706",
+  Mercury: "#9CA3AF",
+  Venus: "#DB2777",
+  Mars: "#DC2626",
+  zr: "#059669",
+};
