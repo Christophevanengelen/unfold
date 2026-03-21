@@ -31,17 +31,17 @@ interface PlanetOrbit {
 const PLANETS: PlanetOrbit[] = [
   // Visible sizes, proportional: Sun > Jupiter > Saturn > Neptune/Uranus > Venus > Mars > Mercury > Moon
   { key: "sun",     orbit: 0,   size: 16, fromAngle: 0,   toAngle: 0,   isActive: true,  rotations: 0 },
-  { key: "moon",    orbit: 20,  size: 4,  fromAngle: 90,  toAngle: 150, isActive: false, rotations: 3 },
-  { key: "mercury", orbit: 32,  size: 4,  fromAngle: 200, toAngle: 45,  isActive: false, rotations: 2 },
-  { key: "venus",   orbit: 42,  size: 5,  fromAngle: 320, toAngle: 180, isActive: false, rotations: 2 },
-  { key: "mars",    orbit: 54,  size: 5,  fromAngle: 130, toAngle: 120, isActive: false, rotations: 1 },
+  { key: "moon",    orbit: 20,  size: 3,  fromAngle: 90,  toAngle: 150, isActive: false, rotations: 3 },
+  { key: "mercury", orbit: 32,  size: 3,  fromAngle: 200, toAngle: 45,  isActive: false, rotations: 2 },
+  { key: "venus",   orbit: 42,  size: 6,  fromAngle: 320, toAngle: 180, isActive: false, rotations: 2 },
+  { key: "mars",    orbit: 54,  size: 4,  fromAngle: 130, toAngle: 120, isActive: false, rotations: 1 },
   { key: "jupiter", orbit: 70,  size: 9,  fromAngle: 60,  toAngle: 300, isActive: true,  rotations: 1 },
   { key: "saturn",  orbit: 84,  size: 8,  fromAngle: 180, toAngle: 330, isActive: true,  rotations: 1 },
-  { key: "uranus",  orbit: 96,  size: 5,  fromAngle: 270, toAngle: 200, isActive: false, rotations: 1 },
+  { key: "uranus",  orbit: 96,  size: 6,  fromAngle: 270, toAngle: 200, isActive: false, rotations: 1 },
   { key: "neptune", orbit: 110, size: 6,  fromAngle: 10,  toAngle: 270, isActive: true,  rotations: 1 },
 ];
 
-const CENTER = 130;
+const CENTER = 125;
 // Total animation: 0.5s delay + 2s orbit + 0.5s settle
 const ORBIT_DURATION = 2;
 const SETTLE_DELAY = ORBIT_DURATION + 0.5;
@@ -80,17 +80,17 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         </h1>
       </motion.div>
 
-      <div className="flex-1 flex items-center justify-center overflow-hidden">
-        <div className="relative" style={{ width: CENTER * 2, height: CENTER * 2 }}>
+      <div className="flex-1 relative overflow-hidden">
+        <div className="absolute" style={{ width: CENTER * 2, height: CENTER * 2, left: "50%", top: "50%", transform: "translate(-50%, -50%) scale(1.2)" }}>
 
           {/* Your zone halo */}
           <motion.div
             className="absolute rounded-full"
             style={{
-              width: 240,
-              height: 240,
-              left: CENTER - 120,
-              top: CENTER - 120,
+              width: CENTER * 2,
+              height: CENTER * 2,
+              left: 0,
+              top: 0,
               background: "conic-gradient(from 260deg, transparent 0deg, rgba(124,107,191,0.06) 20deg, rgba(124,107,191,0.12) 50deg, rgba(124,107,191,0.06) 80deg, transparent 100deg)",
             }}
             initial={{ opacity: 0 }}
@@ -113,34 +113,25 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
             />
           ))}
 
+          {/* Sun — same center as orbit rings, independent layer */}
+          <motion.div
+            className="absolute rounded-full"
+            style={{
+              width: 16, height: 16,
+              left: CENTER - 8,
+              top: CENTER - 8,
+              zIndex: 20,
+              backgroundColor: planetConfig.sun.color,
+              boxShadow: `0 0 30px ${planetConfig.sun.color}70, 0 0 60px ${planetConfig.sun.color}30`,
+            }}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+          />
+
           {/* Planets — orbit then settle */}
-          {PLANETS.map((p, i) => {
+          {PLANETS.filter(p => p.orbit > 0).map((p, i) => {
             const config = planetConfig[p.key];
-            if (p.orbit === 0) {
-              // Sun — static center
-              return (
-                <motion.div
-                  key={p.key}
-                  className="absolute"
-                  style={{
-                    left: CENTER,
-                    top: CENTER,
-                    transform: "translate(-50%, -50%)",
-                    zIndex: 10,
-                  }}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3, duration: 0.4 }}
-                >
-                  <div className="rounded-full"
-                    style={{
-                      width: p.size, height: p.size,
-                      backgroundColor: config.color,
-                      boxShadow: `0 0 30px ${config.color}70, 0 0 60px ${config.color}30`,
-                    }} />
-                </motion.div>
-              );
-            }
 
             // Orbit animation: from fromAngle, rotate N full turns, land on toAngle
             const totalAngle = p.rotations * 360 + (p.toAngle - p.fromAngle);
@@ -158,7 +149,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                 }}
                 initial={{ rotate: p.fromAngle }}
                 animate={{ rotate: p.fromAngle + totalAngle }}
-                transition={{ delay: 0.5, duration: ORBIT_DURATION, ease: "easeInOut" }}
+                transition={{ delay: 0.5, duration: ORBIT_DURATION, ease: [0.2, 0.8, 0.2, 1] }}
               >
                 {/* Planet at 12 o'clock — dot centered on orbit, label below (absolute) */}
                 <div className="absolute"
@@ -169,7 +160,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                     className="relative"
                     initial={{ rotate: -p.fromAngle }}
                     animate={{ rotate: -(p.fromAngle + totalAngle) }}
-                    transition={{ delay: 0.5, duration: ORBIT_DURATION, ease: "easeInOut" }}
+                    transition={{ delay: 0.5, duration: ORBIT_DURATION, ease: [0.2, 0.8, 0.2, 1] }}
                   >
                     {/* Dot — centered on orbit point */}
                     <motion.div
