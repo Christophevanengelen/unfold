@@ -15,23 +15,23 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
 
 // Life timeline boudins — past visible, future locked then revealed
 const BOUDINS = [
-  // Past (visible, faded)
-  { y: 0,   w: 16, h: 24, color: "#8B7FC2", opacity: 0.4 },
-  { y: 30,  w: 20, h: 34, color: "#6BA89A", opacity: 0.4 },
-  { y: 70,  w: 14, h: 18, color: "#C4A86B", opacity: 0.35 },
-  { y: 94,  w: 24, h: 40, color: "#9585CC", opacity: 0.5 },
-  { y: 140, w: 18, h: 28, color: "#D89EA0", opacity: 0.45 },
+  // Future (TOP, locked then revealed)
+  { y: 0,   w: 18, h: 28, color: "#6BA89A", opacity: 0.6, isFuture: true },
+  { y: 34,  w: 24, h: 40, color: "#B07CC2", opacity: 0.7, isFuture: true, isPeak: true },
+  { y: 80,  w: 16, h: 22, color: "#50C4D6", opacity: 0.6, isFuture: true },
+  { y: 108, w: 28, h: 48, color: "#9585CC", opacity: 0.7, isFuture: true, isPeak: true },
+  { y: 162, w: 22, h: 36, color: "#6BA89A", opacity: 0.7, isFuture: true },
   // NOW
-  { y: 178, w: 30, h: 50, color: "#B07CC2", opacity: 1, isCurrent: true },
-  // Future (locked, then revealed)
-  { y: 238, w: 22, h: 36, color: "#6BA89A", opacity: 0.7, isFuture: true },
-  { y: 280, w: 28, h: 48, color: "#9585CC", opacity: 0.7, isFuture: true, isPeak: true },
-  { y: 334, w: 16, h: 22, color: "#50C4D6", opacity: 0.6, isFuture: true },
-  { y: 362, w: 24, h: 40, color: "#B07CC2", opacity: 0.7, isFuture: true, isPeak: true },
-  { y: 408, w: 18, h: 28, color: "#6BA89A", opacity: 0.6, isFuture: true },
+  { y: 210, w: 30, h: 50, color: "#B07CC2", opacity: 1, isCurrent: true },
+  // Past (BOTTOM, visible, faded)
+  { y: 272, w: 18, h: 28, color: "#D89EA0", opacity: 0.45 },
+  { y: 306, w: 24, h: 40, color: "#9585CC", opacity: 0.5 },
+  { y: 352, w: 14, h: 18, color: "#C4A86B", opacity: 0.35 },
+  { y: 376, w: 20, h: 34, color: "#6BA89A", opacity: 0.4 },
+  { y: 416, w: 16, h: 24, color: "#8B7FC2", opacity: 0.4 },
 ];
 
-const NOW_Y = 205;
+const NOW_Y = 240;
 const STRIP_HEIGHT = 450;
 
 export function PremiumMomentum({ translations }: PremiumMomentumProps) {
@@ -89,13 +89,13 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
               <div className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(255,255,255,0.2))" }} />
             </div>
 
-            {/* Future blur overlay — dissolves on reveal */}
+            {/* Future blur overlay (TOP) — dissolves on reveal */}
             <motion.div
               className="absolute left-0 right-0 z-10"
               style={{
-                top: NOW_Y + 20,
-                bottom: 0,
-                background: "linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--bg-primary) 70%, transparent) 20%, color-mix(in srgb, var(--bg-primary) 90%, transparent) 60%)",
+                top: 0,
+                height: NOW_Y - 10,
+                background: "linear-gradient(to top, transparent 0%, color-mix(in srgb, var(--bg-primary) 70%, transparent) 20%, color-mix(in srgb, var(--bg-primary) 90%, transparent) 60%)",
                 backdropFilter: "blur(3px)",
               }}
               animate={{ opacity: revealed ? 0 : 1 }}
@@ -106,7 +106,7 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
             {!revealed && (
               <motion.div
                 className="absolute left-0 right-0 z-20 flex flex-col items-center"
-                style={{ top: NOW_Y + 80 }}
+                style={{ top: 60 }}
                 animate={{ opacity: started ? 1 : 0 }}
                 transition={{ delay: 1.0 }}
               >
