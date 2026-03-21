@@ -13,19 +13,19 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
   return translations[key] ?? fallback ?? key;
 }
 
-// Same colors as Premium section, compact (4 boudins each)
+// Exact same colors as Premium section boudins
 const STRIP_A = [
-  { w: 18, h: 28, color: "#8B7FC2", dots: 2, shared: false },
-  { w: 24, h: 40, color: "#9585CC", dots: 3, shared: true },
-  { w: 28, h: 50, color: "#B07CC2", dots: 3, shared: true },
-  { w: 16, h: 24, color: "#6BA89A", dots: 2, shared: false },
+  { w: 16, h: 24, color: "#6BA89A", dots: 2, shared: false },   // sage
+  { w: 24, h: 40, color: "#9585CC", dots: 3, shared: true },    // purple
+  { w: 28, h: 50, color: "#B07CC2", dots: 4, shared: true },    // warm purple
+  { w: 18, h: 28, color: "#C4A86B", dots: 2, shared: false },   // gold
 ];
 
 const STRIP_B = [
-  { w: 20, h: 30, color: "#6BA89A", dots: 2, shared: false },
-  { w: 24, h: 40, color: "#9585CC", dots: 3, shared: true },
-  { w: 26, h: 48, color: "#B07CC2", dots: 3, shared: true },
-  { w: 18, h: 28, color: "#8B7FC2", dots: 2, shared: false },
+  { w: 18, h: 28, color: "#50C4D6", dots: 2, shared: false },   // teal
+  { w: 24, h: 40, color: "#8B7FC2", dots: 3, shared: true },    // lavender
+  { w: 26, h: 48, color: "#D89EA0", dots: 3, shared: true },    // rose
+  { w: 16, h: 24, color: "#6BA89A", dots: 2, shared: false },   // sage
 ];
 
 // Shared peak insights
