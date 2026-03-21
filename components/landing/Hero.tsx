@@ -30,105 +30,125 @@ const BG_BOUDINS = [
   { x: "75%", y: "85%", w: 14, h: 22, color: "#6BA89A", opacity: 0.07 },
 ];
 
-// ─── Signal Result — Boudin visual ──────────────────────────
+// ─── Signal Result — Rich mini-report ───────────────────────
 function SignalResult({ signal }: { signal: GeneratedSignal }) {
-  // Boudin dimensions based on tier
-  const bw = signal.tier === "toctoctoc" ? 56 : signal.tier === "toctoc" ? 44 : 34;
-  const bh = signal.tier === "toctoctoc" ? 96 : signal.tier === "toctoc" ? 72 : 52;
-  const mainColor = "#B07CC2"; // warm purple, always
+  const mainColor = "#B07CC2";
+  const tierLabel = signal.tier === "toctoctoc" ? "Strong" : signal.tier === "toctoc" ? "Clear" : "Subtle";
+  // Simulated rich data based on signal (deterministic from intensity)
+  const durationWeeks = Math.round(4 + (signal.intensity / 100) * 12);
+  const upcomingCount = 2 + (signal.intensity % 3);
+  const bw = signal.tier === "toctoctoc" ? 48 : signal.tier === "toctoc" ? 38 : 30;
+  const bh = signal.tier === "toctoctoc" ? 80 : signal.tier === "toctoc" ? 60 : 44;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
-      className="mx-auto mt-10 flex flex-col items-center"
+      className="mx-auto mt-10 max-w-md"
     >
-      {/* The boudin */}
-      <motion.div
-        className="relative flex items-center justify-center"
+      <div
+        className="landing-glass relative overflow-hidden rounded-3xl p-6 md:p-8"
         style={{
-          width: bw,
-          height: bh,
-          borderRadius: bw / 2,
-          background: `linear-gradient(135deg, ${mainColor}, color-mix(in srgb, ${mainColor} 60%, transparent))`,
-          border: `1.5px solid ${mainColor}`,
-          boxShadow: `0 0 40px color-mix(in srgb, ${mainColor} 35%, transparent), 0 0 80px color-mix(in srgb, ${mainColor} 15%, transparent)`,
+          border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)",
+          boxShadow: "0 0 40px color-mix(in srgb, var(--accent-purple) 12%, transparent)",
         }}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
       >
-        {/* Planet dots inside boudin — vertical */}
-        <div className="flex flex-col items-center gap-[4px]">
-          {signal.planets.map((key, i) => {
+        {/* Top row: boudin + signal summary */}
+        <div className="flex items-center gap-5">
+          {/* Boudin */}
+          <motion.div
+            className="relative flex-shrink-0 flex items-center justify-center"
+            style={{
+              width: bw,
+              height: bh,
+              borderRadius: bw / 2,
+              background: `linear-gradient(135deg, ${mainColor}, color-mix(in srgb, ${mainColor} 60%, transparent))`,
+              border: `1.5px solid ${mainColor}`,
+              boxShadow: `0 0 30px color-mix(in srgb, ${mainColor} 30%, transparent)`,
+            }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
+          >
+            <div className="flex flex-col items-center gap-[3px]">
+              {signal.planets.map((key) => {
+                const planet = planetConfig[key];
+                return (
+                  <div key={key} className="rounded-full"
+                    style={{ width: 5, height: 5, backgroundColor: planet.color, boxShadow: `0 0 4px ${planet.color}80` }} />
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Signal summary */}
+          <motion.div
+            className="flex-1"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: mainColor }}>
+              Your current signal
+            </p>
+            <p className="mt-1 text-lg font-bold text-white">
+              {tierLabel} intensity
+            </p>
+            <p className="mt-0.5 text-sm text-brand-10/60">
+              ~{durationWeeks} weeks remaining
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Planet pills */}
+        <motion.div
+          className="mt-5 flex flex-wrap gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          {signal.planets.map((key) => {
             const planet = planetConfig[key];
             return (
-              <motion.div
-                key={key}
-                className="rounded-full"
-                style={{
-                  width: 6,
-                  height: 6,
-                  backgroundColor: planet.color,
-                  boxShadow: `0 0 6px ${planet.color}80`,
-                }}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5 + i * 0.1, type: "spring", stiffness: 300 }}
-              />
+              <span key={key} className="rounded-full px-3 py-1 text-xs font-medium"
+                style={{ background: `color-mix(in srgb, ${planet.color} 12%, transparent)`, color: planet.color }}>
+                {planet.label}
+              </span>
             );
           })}
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Tier dots below boudin */}
-      <motion.div
-        className="mt-4 flex items-center gap-1.5"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
-      >
-        {Array.from({ length: signal.tier === "toctoctoc" ? 3 : signal.tier === "toctoc" ? 2 : 1 }).map((_, i) => (
-          <div key={i} className="h-2 w-2 rounded-full" style={{ backgroundColor: mainColor }} />
-        ))}
-      </motion.div>
+        {/* Divider */}
+        <div className="my-5 h-px w-full" style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }} />
 
-      {/* Planet names */}
-      <motion.div
-        className="mt-4 flex flex-wrap justify-center gap-2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-      >
-        {signal.planets.map((key) => {
-          const planet = planetConfig[key];
-          return (
-            <span
-              key={key}
-              className="rounded-full px-3 py-1 text-xs font-medium"
-              style={{
-                background: `color-mix(in srgb, ${planet.color} 15%, transparent)`,
-                color: planet.color,
-              }}
-            >
-              {planet.label}
-            </span>
-          );
-        })}
-      </motion.div>
+        {/* Stats row */}
+        <motion.div
+          className="grid grid-cols-2 gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+        >
+          <div>
+            <p className="text-2xl font-bold text-white">{upcomingCount}</p>
+            <p className="text-xs text-brand-10/50">momentum periods this year</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white">{signal.planets.length}</p>
+            <p className="text-xs text-brand-10/50">planets active right now</p>
+          </div>
+        </motion.div>
 
-      {/* Message */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.0 }}
-        className="mt-5 max-w-xs text-center text-sm text-brand-10/60"
-      >
-        {signal.planets.length} planets are shaping your signal right now.
-        <br />
-        Download the app to see your full timeline.
-      </motion.p>
+        {/* Teaser */}
+        <motion.p
+          className="mt-5 text-sm text-brand-10/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.9 }}
+        >
+          This is just a preview. The app reveals your full timeline, peak windows, and life domains.
+        </motion.p>
+      </div>
     </motion.div>
   );
 }
