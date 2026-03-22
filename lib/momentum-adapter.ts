@@ -194,13 +194,14 @@ export function appDataToPhases(
       return aDate.localeCompare(bDate);
     });
 
-  // Each significant sausage (score >= 2) becomes its own phase.
-  // Score 1 events are too frequent and add noise.
-  // This produces ~100-300 distinct phases for a full lifetime.
-  const groups: RawPhase[] = [];
+  // Group sausages by groupId (same transit cycle = same boudin).
+  // Skip score 1 (too noisy). Each unique groupId becomes one phase.
+  // Sausages without groupId become individual phases.
+  const groupMap = new Map<string, RawPhase>();
+  let soloCount = 0;
 
   for (const s of sorted) {
-    if (s.score < 2) continue; // Skip score 1 (toc) — too noisy
+    if (s.score < 2) continue;
 
     const startDate = s.startDate || s.date || todayStr;
     const endDate = s.endDate || startDate;
@@ -215,23 +216,46 @@ export function appDataToPhases(
       : extractPlanet(label);
     const intensity = scoreToIntensity(s.score, s.cycle?.allHits);
 
-    const planets = new Set([planet]);
-    if (s.natalPoint) planets.add(extractPlanet(`${s.natalPoint} `));
+    const key = s.groupId || `solo_${soloCount++}`;
+    const existing = groupMap.get(key);
 
-    groups.push({
-      startMs,
-      endMs,
-      maxScore: s.score,
-      domains: new Map([[domain, intensity]]),
-      planets,
-      bestLabel: label,
-      bestCategory: s.category,
-      bestAspect: s.aspect,
-      bestLotType: lotType,
-      bestLevel: s.level,
-      sausageCount: 1,
-    });
+    if (existing) {
+      // Merge into existing group (same transit cycle)
+      existing.startMs = Math.min(existing.startMs, startMs);
+      existing.endMs = Math.max(existing.endMs, endMs);
+      existing.maxScore = Math.max(existing.maxScore, s.score);
+      existing.planets.add(planet);
+      if (s.natalPoint) existing.planets.add(extractPlanet(`${s.natalPoint} `));
+      const prev = existing.domains.get(domain) || 0;
+      existing.domains.set(domain, Math.max(prev, intensity));
+      if (s.score >= existing.maxScore) {
+        existing.bestLabel = label;
+        existing.bestCategory = s.category;
+        existing.bestAspect = s.aspect;
+        existing.bestLotType = lotType;
+        existing.bestLevel = s.level;
+      }
+      existing.sausageCount++;
+    } else {
+      const planets = new Set([planet]);
+      if (s.natalPoint) planets.add(extractPlanet(`${s.natalPoint} `));
+      groupMap.set(key, {
+        startMs,
+        endMs,
+        maxScore: s.score,
+        domains: new Map([[domain, intensity]]),
+        planets,
+        bestLabel: label,
+        bestCategory: s.category,
+        bestAspect: s.aspect,
+        bestLotType: lotType,
+        bestLevel: s.level,
+        sausageCount: 1,
+      });
+    }
   }
+
+  const groups = Array.from(groupMap.values());
 
   // Convert groups to MomentumPhase[]
   const phases: MomentumPhase[] = [];
