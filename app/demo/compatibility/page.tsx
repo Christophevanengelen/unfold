@@ -30,6 +30,7 @@ export default function ConnectionsPage() {
 
   return (
     <motion.div
+      className=""
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
@@ -80,7 +81,7 @@ export default function ConnectionsPage() {
       </motion.div>
 
       {/* Divider */}
-      <div className="my-5 h-px" style={{ background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)" }} />
+      <div className="my-5 h-px" style={{ background: "var(--surface-medium)" }} />
 
       {/* Two CTAs: Share your code + Enter a code */}
       <motion.div className="space-y-3" variants={fadeInUp}>
@@ -88,10 +89,10 @@ export default function ConnectionsPage() {
         <Link
           href="/demo/invite/share"
           className="flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-colors"
-          style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}
+          style={{ background: "var(--surface-light)", border: "1px solid var(--border-tint-light)" }}
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-            style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}>
+            style={{ background: "var(--border-tint-light)" }}>
             <Share2 size={16} strokeWidth={1.5} style={{ color: "var(--accent-purple)" }} />
           </div>
           <div className="flex-1">
@@ -108,14 +109,14 @@ export default function ConnectionsPage() {
           <button
             onClick={() => setShowCodeInput(true)}
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-transform active:scale-[0.98]"
-            style={{ border: "1px solid color-mix(in srgb, var(--accent-purple) 20%, transparent)", color: "var(--accent-purple)" }}
+            style={{ border: "1px solid var(--border-tint-medium)", color: "var(--accent-purple)" }}
           >
             Entrer un code reçu
           </button>
         ) : (
           <motion.div
             className="rounded-2xl p-4"
-            style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}
+            style={{ background: "var(--surface-light)", border: "1px solid var(--border-tint-light)" }}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
           >

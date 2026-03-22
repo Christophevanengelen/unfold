@@ -9,6 +9,7 @@ import { PremiumTeaser } from "@/components/demo/PremiumTeaser";
 import { PremiumTeaserContext } from "@/components/demo/PremiumTeaserContext";
 import { MomentumProvider } from "@/lib/momentum-store";
 import { OnboardingGuard } from "@/components/demo/OnboardingGuard";
+import { SAFE_TOP, SAFE_BOTTOM } from "@/lib/layout-constants";
 
 export default function DemoLayout({
   children,
@@ -64,8 +65,13 @@ export default function DemoLayout({
             className={`flex-1 ${
               isFullBleed
                 ? "relative z-10 overflow-hidden"
-                : "overflow-y-auto overflow-x-hidden px-5 py-3 scrollbar-none"
+                : "overflow-y-auto overflow-x-hidden px-5 scrollbar-none"
             }`}
+            style={{
+              "--safe-top": `${SAFE_TOP}px`,
+              "--safe-bottom": `${SAFE_BOTTOM}px`,
+              ...(!isFullBleed ? { paddingTop: `${SAFE_TOP}px`, paddingBottom: `${SAFE_BOTTOM}px` } : {}),
+            } as React.CSSProperties}
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
           </div>
@@ -74,9 +80,9 @@ export default function DemoLayout({
         {/* Status bar — absolute overlay so content scrolls behind */}
         {!hideNav && (
           <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 pt-3 pb-2" style={{
-            background: "color-mix(in srgb, var(--accent-purple) 6%, rgba(27, 21, 53, 0.85))",
-            borderBottom: "1px solid color-mix(in srgb, var(--accent-purple) 12%, transparent)",
-            backdropFilter: "blur(16px)",
+            background: "var(--glass-bg)",
+            borderBottom: "1px solid var(--glass-border)",
+            backdropFilter: `blur(var(--glass-blur))`,
           }}>
             <span className="text-xs font-medium" style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
               9:41

@@ -3,10 +3,8 @@
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { mockConnections } from "@/lib/mock-data";
-import { planetConfig, type PlanetKey } from "@/lib/domain-config";
+import { PageHeader, PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { fetchYearData } from "@/lib/momentum-api";
 import type { BirthData } from "@/lib/birth-data";
@@ -106,33 +104,26 @@ export default function ConnectionDetailPage() {
   const relColor = relationshipColors[connection.relationship] ?? "#9585CC";
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto scrollbar-none px-4 py-2">
-      {/* Header */}
-      <div className="flex items-center gap-3 pb-4">
-        <Link href="/demo/compatibility" className="text-text-body-subtle">
-          <ArrowLeft size={18} />
-        </Link>
-        <div className="flex items-center gap-2.5">
+    <div className="flex flex-col">
+      <PageHeader
+        backHref="/demo/compatibility"
+        title={`Vous & ${connection.name}`}
+        subtitle={
+          loading
+            ? "Comparaison en cours..."
+            : isLive
+              ? `${windows.length} fenêtre${windows.length !== 1 ? "s" : ""} de timing`
+              : "Données insuffisantes"
+        }
+        leadingSlot={
           <div
             className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
             style={{ backgroundColor: relColor }}
           >
             {connection.initial}
           </div>
-          <div>
-            <p className="text-sm font-semibold text-text-heading">
-              Vous & {connection.name}
-            </p>
-            <p className="text-[10px] text-text-body-subtle">
-              {loading
-                ? "Comparaison en cours..."
-                : isLive
-                  ? `${windows.length} fenêtre${windows.length !== 1 ? "s" : ""} de timing`
-                  : "Données insuffisantes"}
-            </p>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Loading state */}
       {loading && (
@@ -150,7 +141,7 @@ export default function ConnectionDetailPage() {
       {!loading && windows.length === 0 && (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
           <div className="h-12 w-12 rounded-full flex items-center justify-center"
-            style={{ background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)" }}>
+            style={{ background: "var(--surface-medium)" }}>
             <span className="text-lg" style={{ color: "var(--accent-purple)" }}>?</span>
           </div>
           <p className="text-sm text-text-body">
@@ -165,8 +156,6 @@ export default function ConnectionDetailPage() {
       {!loading && windows.length > 0 && (
         <div className="space-y-4">
           {windows.map((w, i) => {
-            const youPlanet = planetConfig[w.you.planet];
-            const themPlanet = planetConfig[w.them.planet];
             const isActive = w.status === "active";
 
             return (
@@ -174,7 +163,7 @@ export default function ConnectionDetailPage() {
                 key={`${w.monthKey}-${i}`}
                 className="rounded-2xl overflow-hidden"
                 style={{
-                  background: "color-mix(in srgb, var(--accent-purple) 5%, transparent)",
+                  background: "var(--surface-subtle)",
                   border: `1px solid color-mix(in srgb, ${w.tierColor} ${isActive ? "25" : "12"}%, transparent)`,
                 }}
                 initial={{ opacity: 0, y: 10 }}
@@ -199,16 +188,7 @@ export default function ConnectionDetailPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Tier pill */}
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-                      style={{
-                        background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)`,
-                        color: w.tierColor,
-                      }}
-                    >
-                      {w.tier === "PEAK" ? "Fort" : w.tier === "CLEAR" ? "Clair" : "Subtil"}
-                    </span>
+                    <TierBadge tier={w.tier} color={w.tierColor} />
                     <span className="text-[10px] text-text-body-subtle">
                       {isActive ? `${w.daysLeft}j restants` : w.status === "past" ? "" : `dans ${w.daysLeft}j`}
                     </span>
@@ -231,42 +211,20 @@ export default function ConnectionDetailPage() {
                   <div className="mt-3 space-y-2">
                     <div
                       className="rounded-xl px-3.5 py-2.5"
-                      style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)" }}
+                      style={{ background: "var(--surface-light)" }}
                     >
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-accent-purple mb-1">
-                        Vous
-                      </p>
+                      <EyebrowLabel color="var(--accent-purple)" className="mb-1">Vous</EyebrowLabel>
                       <p className="text-xs text-text-body leading-relaxed">{w.you.description}</p>
-                      <span
-                        className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{
-                          background: `color-mix(in srgb, ${youPlanet.color} 15%, transparent)`,
-                          color: youPlanet.color,
-                        }}
-                      >
-                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: youPlanet.color }} />
-                        {youPlanet.label}
-                      </span>
+                      <PlanetPill planet={w.you.planet} className="mt-1.5" />
                     </div>
 
                     <div
                       className="rounded-xl px-3.5 py-2.5"
-                      style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)" }}
+                      style={{ background: "var(--surface-light)" }}
                     >
-                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: relColor }}>
-                        {connection.name}
-                      </p>
+                      <EyebrowLabel color={relColor} className="mb-1">{connection.name}</EyebrowLabel>
                       <p className="text-xs text-text-body leading-relaxed">{w.them.description}</p>
-                      <span
-                        className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{
-                          background: `color-mix(in srgb, ${themPlanet.color} 15%, transparent)`,
-                          color: themPlanet.color,
-                        }}
-                      >
-                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: themPlanet.color }} />
-                        {themPlanet.label}
-                      </span>
+                      <PlanetPill planet={w.them.planet} className="mt-1.5" />
                     </div>
                   </div>
 

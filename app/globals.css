@@ -96,6 +96,23 @@
   --color-accent-pink: var(--accent-pink);
   --color-accent-orange: var(--accent-orange);
 
+  /* ── Surface Tints (replaces inline color-mix patterns) ── */
+  --surface-subtle:  color-mix(in srgb, var(--accent-purple)  4%, transparent);
+  --surface-light:   color-mix(in srgb, var(--accent-purple)  6%, transparent);
+  --surface-medium:  color-mix(in srgb, var(--accent-purple)  8%, transparent);
+  --surface-strong:  color-mix(in srgb, var(--accent-purple) 12%, transparent);
+
+  /* ── Border Tints ── */
+  --border-tint-subtle:  color-mix(in srgb, var(--accent-purple)  8%, transparent);
+  --border-tint-light:   color-mix(in srgb, var(--accent-purple) 12%, transparent);
+  --border-tint-medium:  color-mix(in srgb, var(--accent-purple) 15%, transparent);
+  --border-tint-strong:  color-mix(in srgb, var(--accent-purple) 25%, transparent);
+
+  /* ── Glass Surface (nav overlays) ── */
+  --glass-bg:     color-mix(in srgb, var(--accent-purple) 6%, rgba(27, 21, 53, 0.85));
+  --glass-border: color-mix(in srgb, var(--accent-purple) 12%, transparent);
+  --glass-blur:   16px;
+
   /* ── Logo (Fixed brand marks) ── */
   --color-logo-lavender: #C1A7FF;
   --color-logo-light: #DACAFF;

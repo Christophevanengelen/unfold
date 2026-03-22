@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import type { TocTocYearData } from "@/types/api";
 import { houseConfig, type HouseNumber } from "@/lib/domain-config";
+import { SAFE_TOP, SAFE_BOTTOM } from "@/lib/layout-constants";
 
 interface MonthlyViewProps {
   data: TocTocYearData;
@@ -43,7 +44,7 @@ export function MonthlyView({ data }: MonthlyViewProps) {
   const primaryHouse = houseConfig[primary.domain];
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto scrollbar-none px-5 py-4">
+    <div className="flex h-full flex-col overflow-y-auto scrollbar-none px-5" style={{ paddingTop: `${SAFE_TOP}px`, paddingBottom: `${SAFE_BOTTOM}px` }}>
 
       {/* Month header */}
       <motion.div
