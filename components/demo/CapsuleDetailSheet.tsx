@@ -95,16 +95,15 @@ export function CapsuleDetailSheet({
   const planetNarrative = getPlanetNarrative(capsule.planets);
   const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment);
 
-  // Date formatting
-  const startLabel = `${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
-  const endLabel = capsule.isCurrent
-    ? "maintenant"
-    : `${MONTH_NAMES[capsule.endDate.getMonth()]} ${capsule.endDate.getFullYear()}`;
+  // Date formatting — exact day/month/year, always show start → end
+  const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
+  const endDateLabel = `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} ${capsule.endDate.getFullYear()}`;
+  const endLabel = capsule.isCurrent ? "maintenant" : endDateLabel;
   const dateLabel = tc.context === "future"
-    ? `Prévu ${startLabel} — ${endLabel}`
+    ? `Prévu ${startLabel} — ${endDateLabel}`
     : tc.context === "current"
-      ? `Depuis ${startLabel}`
-      : `${startLabel} — ${endLabel}`;
+      ? `${startLabel} — ${endDateLabel}`
+      : `${startLabel} — ${endDateLabel}`;
 
   return (
     <motion.div

@@ -1,14 +1,12 @@
 "use client";
 
-/**
- * Monthly View page — Tab 2 in the bottom nav.
- *
- * Shows the toctoc-year data: current month, peak upcoming months,
- * year summaries. Uses the fast endpoint (2-10s).
- */
-
-import { MonthlyView } from "@/components/demo/MonthlyView";
+import dynamic from "next/dynamic";
 import { mockTocTocYear } from "@/lib/mock-data";
+
+const MonthlyView = dynamic(
+  () => import("@/components/demo/MonthlyView").then((m) => m.MonthlyView),
+  { ssr: false }
+);
 
 export default function MonthlyPage() {
   return <MonthlyView data={mockTocTocYear} />;

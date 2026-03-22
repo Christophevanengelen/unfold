@@ -20,14 +20,14 @@ import { getBirthData, getBirthDataSync, saveBirthData, type BirthData } from "@
 import { migrateFromLocalStorage } from "@/lib/storage";
 import { fetchYearData, fetchAppData } from "@/lib/momentum-api";
 import { yearDataToPhases, appDataToPhases } from "@/lib/momentum-adapter";
-import { mockTimeline, type MomentumPhase } from "@/lib/mock-timeline";
+import type { MomentumPhase } from "@/lib/mock-timeline";
 
 // ─── Context shape ──────────────────────────────────────────
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 interface MomentumContextValue {
-  /** Current phases for home capsules (from year data or mock) */
+  /** Current phases for home capsules (from API data) */
   phases: MomentumPhase[];
   /** Full lifetime phases for timeline (from app data, or year data as fallback) */
   timelinePhases: MomentumPhase[];
@@ -35,18 +35,18 @@ interface MomentumContextValue {
   state: LoadState;
   /** Error message if any */
   error: string | null;
-  /** Whether using real API data vs mock fallback */
+  /** Whether using real API data */
   isLive: boolean;
   /** Whether the lifetime data is still loading in background */
   isLoadingLifetime: boolean;
-  /** Current birth data (null if using mock) */
+  /** Current birth data (null if not onboarded yet) */
   birthData: BirthData | null;
   /** Birth date string for timeline coordinate system */
   birthDateStr: string;
+  /** True when no birth data exists — UI should redirect to onboarding */
+  needsOnboarding: boolean;
   /** Trigger a fetch with new or existing birth data */
   loadSignals: (birth?: BirthData) => Promise<void>;
-  /** Switch to mock data (demo mode) */
-  useMockData: () => void;
 }
 
 const MomentumContext = createContext<MomentumContextValue | null>(null);
@@ -54,31 +54,28 @@ const MomentumContext = createContext<MomentumContextValue | null>(null);
 // ─── Provider ───────────────────────────────────────────────
 
 export function MomentumProvider({ children }: { children: ReactNode }) {
-  const [phases, setPhases] = useState<MomentumPhase[]>(mockTimeline);
-  const [timelinePhases, setTimelinePhases] =
-    useState<MomentumPhase[]>(mockTimeline);
+  const [phases, setPhases] = useState<MomentumPhase[]>([]);
+  const [timelinePhases, setTimelinePhases] = useState<MomentumPhase[]>([]);
   const [state, setState] = useState<LoadState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
   const [isLoadingLifetime, setIsLoadingLifetime] = useState(false);
   const [birthData, setBirthData] = useState<BirthData | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  // Default birth date for timeline when using mock
-  const birthDateStr =
-    birthData?.birthDate || "1986-05-14"; // matches mock-timeline default
+  const birthDateStr = birthData?.birthDate || "";
 
   const loadSignals = useCallback(async (birth?: BirthData) => {
     const bd = birth || (await getBirthData()) || getBirthDataSync();
     if (!bd) {
-      // No birth data — use mock
-      setPhases(mockTimeline);
-      setTimelinePhases(mockTimeline);
-      setIsLive(false);
+      // No birth data — signal onboarding needed
+      setNeedsOnboarding(true);
       setState("ready");
       return;
     }
 
     setBirthData(bd);
+    setNeedsOnboarding(false);
     if (birth) await saveBirthData(bd);
     setState("loading");
     setError(null);
@@ -125,21 +122,11 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("[Momentum] API error:", err);
       setError(err instanceof Error ? err.message : "Failed to load signals");
-      // Fallback to mock
-      setPhases(mockTimeline);
-      setTimelinePhases(mockTimeline);
+      setPhases([]);
+      setTimelinePhases([]);
       setIsLive(false);
       setState("error");
     }
-  }, []);
-
-  const useMockData = useCallback(() => {
-    setPhases(mockTimeline);
-    setTimelinePhases(mockTimeline);
-    setIsLive(false);
-    setBirthData(null);
-    setState("ready");
-    setError(null);
   }, []);
 
   // Auto-load on mount: migrate localStorage → IndexedDB, then load
@@ -150,7 +137,9 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
       if (stored) {
         loadSignals(stored);
       } else {
-        setState("ready"); // start with mock, no loading needed
+        // No birth data — needs onboarding
+        setNeedsOnboarding(true);
+        setState("ready");
       }
     })();
   }, [loadSignals]);
@@ -166,8 +155,8 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
         isLoadingLifetime,
         birthData,
         birthDateStr,
+        needsOnboarding,
         loadSignals,
-        useMockData,
       }}
     >
       {children}

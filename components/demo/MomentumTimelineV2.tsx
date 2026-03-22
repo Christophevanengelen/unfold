@@ -2,16 +2,15 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { domainConfig, planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
+import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
 import {
   type MomentumPhase,
 } from "@/lib/mock-timeline";
 import { useMomentum } from "@/lib/momentum-store";
-import { X } from "lucide-react";
 import { CapsuleDetailSheet } from "./CapsuleDetailSheet";
 
 // ─── Types ──────────────────────────────────────────────────
-type ViewMode = "focus" | "overview" | "list";
+type ViewMode = "overview" | "list";
 
 type Tier = "toc" | "toctoc" | "toctoctoc";
 
@@ -20,6 +19,8 @@ interface CapsuleData {
   phases: MomentumPhase[];
   domains: { domain: DomainKey; intensity: number; occurrence: number; totalOccurrences: number }[];
   planets: PlanetKey[]; // 1-5 planetary transits — dot colors come from here
+  /** Topic colors from API — one per dot */
+  topicColors?: string[];
   startDate: Date;
   endDate: Date;
   lane: number;
@@ -72,7 +73,7 @@ const MIN_GAP_MS = 0; // capsules just can't overlap — no extra gap needed
 
 // Tier from raw API score (1-4) — no interpretation, direct from backend
 function getTier(_intensity: number, score?: number): Tier {
-  const s = score ?? 2; // fallback for mock data without score
+  const s = score ?? 1;
   if (s >= 3) return "toctoctoc"; // score 3-4 — major transits (large)
   if (s >= 2) return "toctoc";    // score 2 — clear transits (medium)
   return "toc";                   // score 1 — subtle (thin)
@@ -168,12 +169,12 @@ const PILL_STYLE: React.CSSProperties = {
 // ─── Date helpers ───────────────────────────────────────────
 // These are now computed inside the component from the hook's birthDateStr.
 // Module-level placeholders used by helper functions — overwritten in the component.
-let birthDate = new Date("1986-05-14T00:00:00");
-let timelineStartDate = new Date(birthDate);
-let timelineEndDate = new Date(birthDate);
-timelineEndDate.setFullYear(timelineEndDate.getFullYear() + 120);
+let birthDate = new Date();
+let timelineStartDate = new Date();
+let timelineEndDate = new Date();
 
 function initDates(birthStr: string) {
+  if (!birthStr) return;
   birthDate = new Date(birthStr + "T00:00:00");
   timelineStartDate = new Date(birthDate);
   timelineEndDate = new Date(birthDate);
@@ -210,6 +211,11 @@ function parseDate(s: string): Date {
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+/** Number of dots for a capsule (topics from API, or fallback to planets) */
+function getDotCount(c: CapsuleData): number {
+  return c.topicColors?.length || c.planets.length;
+}
+
 // ─── Build capsule data ─────────────────────────────────────
 function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
   const sorted = [...phases].sort(
@@ -223,29 +229,23 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
 
   const capsules: CapsuleData[] = [];
 
-  // Separate current phases to merge them into a single capsule
-  const currentPhases = sorted.filter((p) => p.status === "current");
-  const nonCurrentPhases = sorted.filter((p) => p.status !== "current");
-
-  // Build non-current capsules individually
-  // Filter out phases that end before birth (pre-natal data from API)
+  // No merge — each sausage = one capsule, even current ones
   const birthMs = birthDate.getTime();
+  const nowMs = Date.now();
 
-  for (const phase of nonCurrentPhases) {
+  for (const phase of sorted) {
     const rawStart = parseDate(phase.startDate);
     const end = phase.endDate
       ? parseDate(phase.endDate)
       : new Date(rawStart.getTime() + phase.durationWeeks * 7 * 24 * 60 * 60 * 1000);
 
-    // Skip phases that end before birth
     if (end.getTime() < birthMs) continue;
-
-    // Clamp start to birth date (no pre-natal capsules)
     const start = rawStart.getTime() < birthMs ? new Date(birthMs) : rawStart;
 
     domainCounter[phase.domain] = (domainCounter[phase.domain] || 0) + 1;
 
     const tier = getTier(phase.intensity, phase.score);
+    const isCurrent = start.getTime() <= nowMs && end.getTime() >= nowMs;
 
     capsules.push({
       id: phase.id,
@@ -257,56 +257,16 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
         totalOccurrences: domainCounts[phase.domain],
       }],
       planets: phase.planets || [phase.domain === "love" ? "venus" : phase.domain === "health" ? "mars" : "mercury"],
+      topicColors: phase.topicColors,
       startDate: start,
       endDate: end,
-      lane: 0, // assigned by assignLanes()
+      lane: 0,
       tier,
-      tierOccurrence: 0, // assigned below
+      tierOccurrence: 0,
       tierTotal: 0,
-      isCurrent: false,
-      isFuture: start.getTime() > Date.now(),
+      isCurrent,
+      isFuture: start.getTime() > nowMs,
       color: phase.color,
-    });
-  }
-
-  // Merge all current phases into one capsule (same as Focus view)
-  if (currentPhases.length > 0) {
-    for (const p of currentPhases) {
-      domainCounter[p.domain] = (domainCounter[p.domain] || 0) + 1;
-    }
-    const starts = currentPhases.map((p) => parseDate(p.startDate));
-    const earliest = new Date(Math.min(...starts.map((d) => d.getTime())));
-    const maxIntensity = Math.max(...currentPhases.map((p) => p.intensity));
-    const maxScore = Math.max(...currentPhases.map((p) => p.score ?? 2));
-    const tier = getTier(maxIntensity, maxScore);
-
-    // Merge planets, deduplicate
-    const mergedPlanets: PlanetKey[] = [];
-    for (const p of currentPhases) {
-      for (const pl of (p.planets || [])) {
-        if (!mergedPlanets.includes(pl)) mergedPlanets.push(pl);
-      }
-    }
-
-    capsules.push({
-      id: "current-group",
-      phases: currentPhases,
-      domains: currentPhases.map((p) => ({
-        domain: p.domain,
-        intensity: p.intensity,
-        occurrence: domainCounter[p.domain] || 1,
-        totalOccurrences: domainCounts[p.domain] || 1,
-      })),
-      planets: mergedPlanets.length > 0 ? mergedPlanets : ["mercury"],
-      startDate: earliest,
-      endDate: new Date(),
-      lane: 0, // assigned by assignLanes()
-      tier,
-      tierOccurrence: 0, // assigned below
-      tierTotal: 0,
-      isCurrent: true,
-      isFuture: false,
-      color: currentPhases[0]?.color,
     });
   }
 
@@ -346,686 +306,6 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
   return capsules;
 }
 
-function buildCurrentCapsule(timelineData: MomentumPhase[]): CapsuleData | null {
-  const currentPhases = timelineData.filter((p) => p.status === "current");
-  if (currentPhases.length === 0) return null;
-
-  // Count occurrences per domain across the full timeline (up to and including current)
-  const sorted = [...timelineData]
-    .filter((p) => p.status !== "future")
-    .sort((a, b) => parseDate(a.startDate).getTime() - parseDate(b.startDate).getTime());
-  const domainCounts: Record<string, number> = {};
-  for (const p of timelineData) domainCounts[p.domain] = (domainCounts[p.domain] || 0) + 1;
-  const domainCounter: Record<string, number> = {};
-  for (const p of sorted) {
-    domainCounter[p.domain] = (domainCounter[p.domain] || 0) + 1;
-  }
-
-  const starts = currentPhases.map((p) => parseDate(p.startDate));
-  const earliest = new Date(Math.min(...starts.map((d) => d.getTime())));
-
-  // Use the highest intensity among current phases for tier
-  const maxIntensity = Math.max(...currentPhases.map((p) => p.intensity));
-  const maxScore = Math.max(...currentPhases.map((p) => p.score ?? 2));
-  const tier = getTier(maxIntensity, maxScore);
-
-  // Merge planets from all current phases, deduplicate
-  const allPlanets: PlanetKey[] = [];
-  for (const p of currentPhases) {
-    for (const pl of (p.planets || [])) {
-      if (!allPlanets.includes(pl)) allPlanets.push(pl);
-    }
-  }
-
-  // Compute tier occurrence using buildCapsules (same source of truth)
-  const allCaps = buildCapsules(timelineData);
-  const sameTier = allCaps.filter((c) => c.tier === tier);
-  const currentInAll = allCaps.find((c) => c.isCurrent);
-  const currentTierOcc = currentInAll?.tierOccurrence ?? sameTier.length;
-  const tierTot = sameTier.length;
-
-  return {
-    id: "current-group",
-    phases: currentPhases,
-    domains: currentPhases.map((p) => ({
-      domain: p.domain,
-      intensity: p.intensity,
-      occurrence: domainCounter[p.domain] || 1,
-      totalOccurrences: domainCounts[p.domain] || 1,
-    })),
-    planets: allPlanets.length > 0 ? allPlanets : ["mercury"],
-    startDate: earliest,
-    endDate: new Date(),
-    lane: currentInAll?.lane ?? 0,
-    tier,
-    tierOccurrence: currentTierOcc,
-    tierTotal: tierTot,
-    isCurrent: true,
-    isFuture: false,
-  };
-}
-
-// ─── Detail Sheet ───────────────────────────────────────────
-function DetailSheet({ capsule, onClose }: { capsule: CapsuleData; onClose: () => void }) {
-  // Dismiss on Escape key
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
-
-  const tierLabel = capsule.tier === "toctoctoc" ? "PEAK" : capsule.tier === "toctoc" ? "CLEAR" : "SUBTLE";
-  const startLabel = `${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
-  const endLabel = capsule.isCurrent
-    ? "Now"
-    : `${MONTH_NAMES[capsule.endDate.getMonth()]} ${capsule.endDate.getFullYear()}`;
-  const phase = capsule.phases[0]; // primary phase for description/insight
-
-  return (
-    <motion.div
-      initial={{ y: "100%" }}
-      animate={{ y: 0 }}
-      exit={{ y: "100%" }}
-      transition={{ type: "spring", stiffness: 300, damping: 35 }}
-      className="absolute inset-x-0 bottom-0 z-50 overflow-hidden"
-      style={{
-        borderRadius: "1.5rem 1.5rem 0 0",
-        background: "var(--bg-secondary)",
-        borderTop: "1px solid var(--border-muted)",
-        maxHeight: "65%",
-      }}
-    >
-      <div className="flex justify-center pt-3 pb-1">
-        <div className="h-1 w-10 rounded-full" style={{ background: "var(--border-base)" }} />
-      </div>
-
-      <div className="overflow-y-auto px-5 pb-8" style={{ maxHeight: "calc(65vh - 20px)" }}>
-        {/* Header — occurrence number (TOCTOCTOC only) + tier + date range */}
-        <div className="flex items-center gap-3 pt-2">
-          {capsule.tier === "toctoctoc" && capsule.tierOccurrence > 0 && (
-          <span
-            className="text-2xl font-bold tabular-nums"
-            style={{ color: "var(--text-heading)" }}
-          >
-            {capsule.tierOccurrence}
-          </span>
-          )}
-          <div>
-            <span
-              className="text-[10px] font-semibold uppercase tracking-[0.15em]"
-              style={{ color: "var(--accent-purple)" }}
-            >
-              {tierLabel}
-            </span>
-            <p className="text-[10px] tabular-nums" style={{ color: "var(--text-body-subtle)" }}>
-              {startLabel} — {endLabel}
-            </p>
-          </div>
-        </div>
-
-        {/* Planet keyword pills — the dots become readable labels */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {capsule.planets.map((planet) => {
-            const pc = planetConfig[planet];
-            return (
-              <motion.div
-                key={planet}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "spring", stiffness: 300 }}
-                className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-                style={{
-                  background: `color-mix(in srgb, ${pc.color} 12%, transparent)`,
-                  border: `1px solid color-mix(in srgb, ${pc.color} 25%, transparent)`,
-                }}
-              >
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{
-                    background: planet === "solar-eclipse"
-                      ? "linear-gradient(135deg, #1a1a1a 45%, #C9A86C 55%)"
-                      : pc.color,
-                    boxShadow: planet === "solar-eclipse"
-                      ? "0 0 6px rgba(201, 168, 108, 0.5)"
-                      : `0 0 6px ${pc.color}`,
-                  }}
-                />
-                <span className="text-[11px] font-medium" style={{ color: pc.color }}>
-                  {pc.label}
-                </span>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Description — the story these keywords tell together */}
-        {phase && (
-          <>
-            <h3 className="mt-5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
-              {phase.title}
-            </h3>
-            <p className="mt-1 text-xs" style={{ color: "var(--text-body-subtle)" }}>
-              {phase.subtitle}
-            </p>
-
-            <p className="mt-4 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
-              {phase.description}
-            </p>
-
-            {phase.keyInsight && (
-              <div
-                className="mt-4 rounded-xl px-3.5 py-3"
-                style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
-              >
-                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                  Key Insight
-                </p>
-                <p className="mt-1.5 text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
-                  {phase.keyInsight}
-                </p>
-              </div>
-            )}
-
-            {phase.guidance && (
-              <div
-                className="mt-3 rounded-xl px-3.5 py-3"
-                style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
-              >
-                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                  Guidance
-                </p>
-                <p className="mt-1.5 text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
-                  {phase.guidance}
-                </p>
-              </div>
-            )}
-
-            {phase.peakMoment && (
-              <p className="mt-4 text-[11px] italic" style={{ color: "var(--text-body-subtle)" }}>
-                {phase.peakMoment}
-              </p>
-            )}
-          </>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Focus View ─────────────────────────────────────────────
-// Shows all capsules of the same tier (Subtle/Clear/Peak) as the current
-// momentum, connected by a thread. Uses the same date-based Y axis as overview
-// with month/year labels on the left so the user stays oriented.
-
-function FocusView({
-  currentCapsule,
-  allCapsules,
-  onClose,
-  onTapCapsule,
-  onAgeChange,
-}: {
-  currentCapsule: CapsuleData;
-  allCapsules: CapsuleData[];
-  onClose: () => void;
-  onTapCapsule: (capsule: CapsuleData) => void;
-  onAgeChange: (age: number) => void;
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const nowY = dateToY(new Date());
-  const [isAwayFromNow, setIsAwayFromNow] = useState(false);
-
-  const scrollToNow = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const viewportH = el.clientHeight || 700;
-    el.scrollTo({ top: Math.max(0, nowY - viewportH * 0.5), behavior: "smooth" });
-  }, [nowY]);
-
-  const capsuleWidth = 72;
-  const labelMargin = 32;
-
-  // Content sizing — number is treated as a dot (same visual weight)
-  const dotCount = currentCapsule.planets.length;
-  const dotSize = 12;
-  const dotGap = 8;
-  const numberSize = 18; // treated like a dot visually
-  const contentH = numberSize + dotGap + dotCount * dotSize + (dotCount - 1) * dotGap;
-  // Padding from capsule edges = half the width (the rounded cap)
-  const capPad = capsuleWidth / 2;
-  const MIN_H = Math.max(capsuleWidth, contentH + capPad * 2);
-  const FOCUS_GAP = 6;
-
-  // All capsules of the same tier — no limit, same numbers as Overview
-  const focusPositions = useMemo(() => {
-    const tierCapsules = allCapsules
-      .filter((c) => c.tier === currentCapsule.tier)
-      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-
-    // Compute positions — current capsule crosses the NOW line
-    const birthY = dateToY(birthDate);
-    const birthMs = birthDate.getTime();
-    const visibleTierCapsules = tierCapsules.filter(c => c.endDate.getTime() >= birthMs);
-    const items = visibleTierCapsules.map((capsule) => {
-      let topY = dateToY(capsule.endDate);
-      const bottomY = Math.min(dateToY(capsule.startDate), birthY);
-      const h = Math.max(MIN_H, bottomY - topY);
-      // Clamp: if minH pushes capsule below birth, shift it up
-      if (topY + h > birthY) topY = birthY - h;
-      // Current capsule: shift up so NOW line cuts through it (~55% from top)
-      if (capsule.isCurrent) topY -= h * 0.55;
-      return { capsule, topY, h };
-    });
-
-    // Resolve overlaps bidirectionally around current capsule:
-    // Past capsules push DOWN, future capsules push UP — never cross NOW
-    const currentIdx = items.findIndex((it) => it.capsule.isCurrent);
-    const currentItem = currentIdx >= 0 ? items[currentIdx] : null;
-
-    if (currentItem) {
-      // Past capsules: below current, push DOWN (increasing topY)
-      const past = items
-        .filter((it) => !it.capsule.isCurrent && !it.capsule.isFuture)
-        .sort((a, b) => a.topY - b.topY);
-      // Ensure first past capsule doesn't overlap current
-      if (past.length > 0) {
-        const curBottom = currentItem.topY + currentItem.h + FOCUS_GAP;
-        if (past[0].topY < curBottom) past[0].topY = curBottom;
-      }
-      for (let j = 1; j < past.length; j++) {
-        const prevBottom = past[j - 1].topY + past[j - 1].h + FOCUS_GAP;
-        if (past[j].topY < prevBottom) past[j].topY = prevBottom;
-      }
-
-      // Future capsules: above current, push UP (decreasing topY)
-      const future = items
-        .filter((it) => it.capsule.isFuture)
-        .sort((a, b) => b.topY - a.topY); // bottom-most first
-      // Ensure last future capsule doesn't overlap current
-      if (future.length > 0) {
-        const curTop = currentItem.topY - FOCUS_GAP;
-        if (future[0].topY + future[0].h > curTop) {
-          future[0].topY = curTop - future[0].h;
-        }
-      }
-      for (let j = 1; j < future.length; j++) {
-        const nextTop = future[j - 1].topY - FOCUS_GAP;
-        if (future[j].topY + future[j].h > nextTop) {
-          future[j].topY = nextTop - future[j].h;
-        }
-      }
-    } else {
-      // Fallback: simple top-down
-      items.sort((a, b) => a.topY - b.topY);
-      for (let j = 1; j < items.length; j++) {
-        const prevBottom = items[j - 1].topY + items[j - 1].h + FOCUS_GAP;
-        if (items[j].topY < prevBottom) items[j].topY = prevBottom;
-      }
-    }
-
-    return items;
-  }, [allCapsules, currentCapsule.tier, MIN_H]);
-
-  // Month labels — same as overview
-  const monthLabels = useMemo(() => {
-    const now = new Date();
-    const nowMonth = now.getMonth();
-    const nowYear = now.getFullYear();
-    const labels: { month: string; year: number; y: number; isJan: boolean; isCurrent: boolean }[] = [];
-    const cursor = new Date(timelineStartDate);
-    while (cursor <= timelineEndDate) {
-      const y = dateToY(cursor);
-      labels.push({
-        month: MONTH_NAMES[cursor.getMonth()],
-        year: cursor.getFullYear(),
-        y,
-        isJan: cursor.getMonth() === 0,
-        isCurrent: cursor.getMonth() === nowMonth && cursor.getFullYear() === nowYear,
-      });
-      cursor.setMonth(cursor.getMonth() + 1);
-    }
-    return labels;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allCapsules]); // recalculate when data (and thus initDates) changes
-
-  // Snap points: capsule tops (where first planet sits) + NOW line.
-  // When jumping, the target lands just below the fixed age bar.
-  const PLANET_OFFSET = 0; // align capsule top with the age bar
-  const snapPoints = useMemo(() => {
-    const points = focusPositions.map((fp) => fp.topY + PLANET_OFFSET);
-    points.push(nowY);
-    return [...new Set(points)].sort((a, b) => a - b);
-  }, [focusPositions, nowY]);
-
-  // Auto-scroll so NOW is centered — instant on mount
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    const viewportH = scrollRef.current.clientHeight || 700;
-    scrollRef.current.scrollTop = Math.max(0, nowY - viewportH * 0.50);
-  }, [nowY]);
-
-  // Capsule navigation — stateless. Each press finds the nearest capsule
-  // to the bar, then scrolls to the next one in the requested direction.
-  const isSnapping = useRef(false);
-  const isJumping = useRef(false);
-  const snapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const rafId = useRef(0);
-
-  const jumpToCapsule = useCallback((direction: "past" | "future") => {
-    const el = scrollRef.current;
-    if (!el || isJumping.current || focusPositions.length === 0) return;
-
-    const barInScroll = el.scrollTop + el.clientHeight * 0.52;
-    const sorted = [...focusPositions].sort((a, b) => a.topY - b.topY);
-
-    // Find closest capsule to bar
-    let closestIdx = 0;
-    let closestDist = Infinity;
-    for (let i = 0; i < sorted.length; i++) {
-      const dist = Math.abs(sorted[i].topY - barInScroll);
-      if (dist < closestDist) { closestDist = dist; closestIdx = i; }
-    }
-
-    // Next capsule — past = higher Y (further down), future = lower Y (further up)
-    const nextIdx = direction === "past"
-      ? Math.min(closestIdx + 1, sorted.length - 1)
-      : Math.max(closestIdx - 1, 0);
-    if (nextIdx === closestIdx) return;
-
-    const targetScroll = Math.max(0, sorted[nextIdx].topY - el.clientHeight * 0.52);
-    const start = el.scrollTop;
-    const delta = targetScroll - start;
-    if (Math.abs(delta) < 2) return;
-
-    // Lock + cancel any pending animation
-    isJumping.current = true;
-    cancelAnimationFrame(rafId.current);
-
-    const startTime = performance.now();
-    const duration = 350; // fixed duration for consistency
-    // Cubic ease-out: fast start, smooth deceleration, precise stop
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-
-    const animate = (now: number) => {
-      const progress = Math.min((now - startTime) / duration, 1);
-      el.scrollTop = start + delta * ease(progress);
-      if (progress < 1) {
-        rafId.current = requestAnimationFrame(animate);
-      } else {
-        // Ensure we land exactly on target
-        el.scrollTop = targetScroll;
-        setTimeout(() => { isJumping.current = false; }, 100);
-      }
-    };
-    rafId.current = requestAnimationFrame(animate);
-  }, [focusPositions]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    let lastAge = -1;
-    let lastAway = false;
-    let rafPending = false;
-
-    const onScroll = () => {
-      if (rafPending) return;
-      rafPending = true;
-      requestAnimationFrame(() => {
-        rafPending = false;
-        const centerY = el.scrollTop + el.clientHeight / 2;
-        const d = yToDate(centerY);
-        const diffMs = d.getTime() - birthDate.getTime();
-        const age = Math.max(0, Math.min(100, Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000))));
-        if (age !== lastAge) { lastAge = age; onAgeChange(age); }
-        const away = Math.abs(centerY - nowY) > el.clientHeight * 0.8;
-        if (away !== lastAway) { lastAway = away; setIsAwayFromNow(away); }
-      });
-    };
-    onScroll();
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [onAgeChange, nowY]);
-
-  return (
-    <div className="relative flex h-full flex-col">
-      {/* Scrollable timeline */}
-      <div ref={scrollRef} className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="relative" style={{ height: getTotalHeight() }}>
-
-          {/* Month labels on the left */}
-          {monthLabels.map(({ month, year, y, isJan, isCurrent }) => (
-            <div key={`${year}-${month}`} className="absolute" style={{ top: y, left: 4 }}>
-              <div
-                className="absolute"
-                style={{
-                  top: 0,
-                  left: 24,
-                  width: isCurrent ? 16 : isJan ? 12 : 6,
-                  height: isCurrent ? 1.5 : 1,
-                  background: isCurrent
-                    ? "rgba(255,255,255,0.5)"
-                    : isJan
-                      ? "color-mix(in srgb, var(--brand-6) 40%, transparent)"
-                      : "color-mix(in srgb, var(--brand-5) 15%, transparent)",
-                }}
-              />
-              <span
-                className="absolute -top-1.5 text-[7px] tabular-nums"
-                style={{
-                  left: 0,
-                  width: 22,
-                  textAlign: "right",
-                  color: isCurrent ? "rgba(255,255,255,0.8)" : isJan ? "var(--text-body-subtle)" : "var(--text-disabled)",
-                  fontWeight: isCurrent ? 600 : isJan ? 600 : 400,
-                  fontSize: isCurrent ? 8 : isJan ? 8 : 7,
-                }}
-              >
-                {isJan ? year : month}
-              </span>
-            </div>
-          ))}
-
-          {/* Connecting thread — spine from topmost to bottommost capsule */}
-          {focusPositions.length > 1 && (() => {
-            const spineTop = Math.min(...focusPositions.map((p) => p.topY));
-            const spineBottom = Math.max(...focusPositions.map((p) => p.topY + p.h));
-            return (
-              <div
-                className="absolute"
-                style={{
-                  left: "50%",
-                  top: spineTop,
-                  width: 1,
-                  height: spineBottom - spineTop,
-                  background:
-                    "linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--brand-5) 20%, transparent) 2%, color-mix(in srgb, var(--brand-5) 20%, transparent) 98%, transparent 100%)",
-                }}
-              />
-            );
-          })()}
-
-          {/* Capsules — same tierOccurrence as Overview */}
-          {focusPositions.map(({ capsule, topY: adjTopY, h }, i) => {
-            const hc = mapHouseColor(capsule.color);
-            return (
-            <motion.button
-              key={capsule.id}
-              type="button"
-              onClick={() => {
-                if (!capsule.isFuture) onTapCapsule(capsule);
-              }}
-              initial={false}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                top: adjTopY,
-                width: capsuleWidth,
-                height: h,
-                borderRadius: capsuleWidth / 2,
-                background: hc
-                  ? capsule.isCurrent
-                    ? `color-mix(in srgb, ${hc} 40%, var(--bg-secondary))`
-                    : `color-mix(in srgb, ${hc} 25%, var(--bg-secondary))`
-                  : capsule.isCurrent
-                    ? "color-mix(in srgb, var(--brand-7) 35%, var(--bg-secondary))"
-                    : "color-mix(in srgb, var(--brand-6) 22%, var(--bg-secondary))",
-                border: hc
-                  ? `1px solid color-mix(in srgb, ${hc} ${capsule.isCurrent ? "50" : "25"}%, transparent)`
-                  : capsule.isCurrent
-                    ? "1px solid color-mix(in srgb, var(--brand-8) 40%, transparent)"
-                    : "1px solid color-mix(in srgb, var(--brand-6) 15%, transparent)",
-                filter: capsule.isFuture ? "blur(2px)" : "none",
-                opacity: capsule.isFuture ? 0.4 : 1,
-                zIndex: capsule.isCurrent ? 5 : 2,
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {capsule.isCurrent && (
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    borderRadius: capsuleWidth / 2,
-                    background:
-                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
-                  }}
-                />
-              )}
-              {/* Content block — anchored at bottom, padded inside rounded cap */}
-              <div
-                className="absolute bottom-0 left-0 right-0 flex flex-col items-center"
-                style={{ paddingBottom: capPad - 4, gap: dotGap }}
-              >
-                {/* Number — only shown for TOCTOCTOC (Peak) capsules */}
-                {capsule.tier === "toctoctoc" && capsule.tierOccurrence > 0 && (
-                <span
-                  className="font-semibold tabular-nums leading-none"
-                  style={{
-                    color: "var(--text-heading)",
-                    fontSize: capsule.isCurrent ? 18 : 14,
-                    height: numberSize,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {capsule.tierOccurrence}
-                </span>
-                )}
-                {/* Planet dots — same planets for all occurrences (same momentum pattern) */}
-                {currentCapsule.planets.map((planet, pi) => {
-                  const pc = planetConfig[planet];
-                  const ds = capsule.isCurrent ? 14 : dotSize;
-                  const dc = capsule.isFuture ? "rgba(255, 255, 255, 0.6)" : pc.color;
-                  const dg = capsule.isFuture ? "0 0 4px rgba(255,255,255,0.15)" : `0 0 8px ${pc.color}`;
-                  return (
-                    <motion.div
-                      key={planet}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2 + i * 0.03 + pi * 0.04, type: "spring", stiffness: 300 }}
-                      className="rounded-full"
-                      style={{ width: ds, height: ds, background: dc, boxShadow: dg }}
-                    />
-                  );
-                })}
-              </div>
-            </motion.button>
-          );
-          })}
-
-          {/* Birth Easter egg — just above the age-0 bar */}
-          <div
-            className="absolute left-0 right-0 flex flex-col items-center"
-            style={{
-              top: getTotalHeight() - BIRTH_EASTER_EGG_PAD + 60,
-            }}
-          >
-            {/* Message — the easter egg */}
-            <p
-              className="max-w-[240px] text-center leading-relaxed"
-              style={{
-                fontSize: 13,
-                color: "color-mix(in srgb, var(--accent-purple) 80%, transparent)",
-                fontWeight: 400,
-              }}
-            >
-              You weren&apos;t even crawling yet.
-              <br />
-              But the planets were already busy.
-            </p>
-
-            {/* Divider line */}
-            <div
-              className="w-10 mt-5 mb-3"
-              style={{
-                height: 1,
-                background: "linear-gradient(90deg, transparent, var(--accent-purple), transparent)",
-                opacity: 0.3,
-              }}
-            />
-
-            {/* Birth date — secondary, quiet */}
-            <p
-              className="font-display tracking-tight"
-              style={{
-                fontSize: 14,
-                fontWeight: 300,
-                color: "color-mix(in srgb, var(--accent-purple) 45%, transparent)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {birthDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation: jump between capsules (past ▼ / now ● / future ▲) — above bottom nav */}
-      <div className="absolute left-1/2 z-40 -translate-x-1/2 flex items-center gap-2" style={{ bottom: 64 }}>
-        {/* Past (down in timeline = older) */}
-        <motion.button
-          type="button"
-          onClick={() => jumpToCapsule("past")}
-          className="flex h-8 w-8 items-center justify-center rounded-full"
-          style={PILL_STYLE}
-          whileTap={{ scale: 0.9 }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </motion.button>
-
-        {/* Now */}
-        <AnimatePresence>
-          {isAwayFromNow && (
-            <motion.button
-              type="button"
-              onClick={scrollToNow}
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="flex h-8 items-center justify-center rounded-full px-3"
-              style={PILL_STYLE}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        {/* Future (up in timeline = newer) */}
-        <motion.button
-          type="button"
-          onClick={() => jumpToCapsule("future")}
-          className="flex h-8 w-8 items-center justify-center rounded-full"
-          style={PILL_STYLE}
-          whileTap={{ scale: 0.9 }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </motion.button>
-      </div>
-    </div>
-  );
-}
 
 // ─── Overview View ──────────────────────────────────────────
 function OverviewView({
@@ -1094,7 +374,7 @@ function OverviewView({
       const bottomY = Math.min(rawBottomY, birthY);
       // 3 visually distinct widths from getTierWidth
       const w = getTierWidth(capsule.tier);
-      const dc = capsule.planets.length;
+      const dc = getDotCount(capsule);
       const ds = capsule.isCurrent ? 11 : 8;
       const dg = 4;
       const dotsH = dc * ds + (dc - 1) * dg;
@@ -1103,8 +383,6 @@ function OverviewView({
       let h = Math.max(minH, bottomY - topY);
       // Clamp: if minH pushes capsule below birth, shift it up
       if (topY + h > birthY) topY = birthY - h;
-      // Current capsule: shift up so NOW line cuts through it (~55% from top)
-      if (capsule.isCurrent) topY -= h * 0.55;
       // Position by accumulating actual widths per lane — uniform gap between capsule edges
       const laneX = adjustedOffsetX + getLaneX(capsule.lane, capsules, LANE_SPACING);
       return { capsule, topY, h, w, laneX, idx: i };
@@ -1372,29 +650,16 @@ function OverviewView({
                 className="absolute bottom-0 left-0 right-0 flex flex-col items-center"
                 style={{ paddingBottom: oCapPad - 2, gap: oDotGap }}
               >
-                {capsule.planets.map((planet) => {
-                  const pc = planetConfig[planet];
-                  const isSolarEclipse = planet === "solar-eclipse";
-                  const dc = capsule.isFuture ? "rgba(255, 255, 255, 0.6)" : pc.color;
+                {(capsule.topicColors?.length ? capsule.topicColors : capsule.planets.map(p => planetConfig[p].color)).map((color, pi) => {
+                  const dc = capsule.isFuture ? "rgba(255, 255, 255, 0.6)" : color;
                   const dg = capsule.isFuture
                     ? "0 0 4px rgba(255,255,255,0.15)"
                     : capsule.isCurrent
-                      ? `0 0 8px ${pc.color}`
-                      : `0 0 4px color-mix(in srgb, ${pc.color} 40%, transparent)`;
-                  return isSolarEclipse && !capsule.isFuture ? (
+                      ? `0 0 8px ${color}`
+                      : `0 0 4px color-mix(in srgb, ${color} 40%, transparent)`;
+                  return (
                     <div
-                      key={planet}
-                      className="rounded-full"
-                      style={{
-                        width: oDotSize,
-                        height: oDotSize,
-                        background: "linear-gradient(135deg, #1a1a1a 45%, #C9A86C 55%)",
-                        boxShadow: "0 0 6px rgba(201, 168, 108, 0.5)",
-                      }}
-                    />
-                  ) : (
-                    <div
-                      key={planet}
+                      key={`dot-${pi}`}
                       className="rounded-full"
                       style={{ width: oDotSize, height: oDotSize, background: dc, boxShadow: dg }}
                     />
@@ -1539,10 +804,10 @@ function ListView({
           const phase = capsule.phases[0];
           if (!phase) return null;
           const tierLabel = capsule.tier === "toctoctoc" ? "PEAK" : capsule.tier === "toctoc" ? "CLEAR" : "SUBTLE";
-          const startLabel = `${MONTH_NAMES[capsule.startDate.getMonth()]} '${String(capsule.startDate.getFullYear()).slice(2)}`;
+          const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} '${String(capsule.startDate.getFullYear()).slice(2)}`;
           const endLabel = capsule.isCurrent
             ? "now"
-            : `${MONTH_NAMES[capsule.endDate.getMonth()]} '${String(capsule.endDate.getFullYear()).slice(2)}`;
+            : `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} '${String(capsule.endDate.getFullYear()).slice(2)}`;
           const maxIntensity = Math.max(...capsule.phases.map(p => p.intensity));
 
           return (
@@ -1604,19 +869,16 @@ function ListView({
                 {/* Planet dots + tier */}
                 <div className="mt-1 flex items-center gap-2">
                   <div className="flex gap-0.5">
-                    {capsule.planets.map((planet) => {
-                      const pc = planetConfig[planet];
-                      return (
-                        <div
-                          key={planet}
-                          className="h-[5px] w-[5px] rounded-full"
-                          style={{
-                            background: capsule.isFuture ? "rgba(255,255,255,0.4)" : pc.color,
-                            boxShadow: capsule.isFuture ? "none" : `0 0 3px ${pc.color}`,
-                          }}
-                        />
-                      );
-                    })}
+                    {(capsule.topicColors?.length ? capsule.topicColors : capsule.planets.map(p => planetConfig[p].color)).map((color, pi) => (
+                      <div
+                        key={`dot-${pi}`}
+                        className="h-[5px] w-[5px] rounded-full"
+                        style={{
+                          background: capsule.isFuture ? "rgba(255,255,255,0.4)" : color,
+                          boxShadow: capsule.isFuture ? "none" : `0 0 3px ${color}`,
+                        }}
+                      />
+                    ))}
                   </div>
                   <span
                     className="text-[7px] font-semibold tracking-wider"
@@ -1647,8 +909,10 @@ function ListView({
 // ─── Main Component ─────────────────────────────────────────
 // Persist view mode preference
 function getSavedViewMode(): ViewMode {
-  if (typeof window === "undefined") return "focus";
-  return (localStorage.getItem("unfold_view_mode") as ViewMode) || "focus";
+  if (typeof window === "undefined") return "overview";
+  const saved = localStorage.getItem("unfold_view_mode");
+  if (saved === "overview" || saved === "list") return saved;
+  return "overview";
 }
 
 export function MomentumTimelineV2() {
@@ -1674,7 +938,6 @@ export function MomentumTimelineV2() {
 
   const [visibleAge, setVisibleAge] = useState(currentAge);
 
-  const currentCapsule = useMemo(() => buildCurrentCapsule(timelinePhases), [timelinePhases]);
   const allCapsules = useMemo(() => buildCapsules(timelinePhases), [timelinePhases]);
 
   // DEBUG: tier distribution — remove after verification
@@ -1697,49 +960,49 @@ export function MomentumTimelineV2() {
 
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
-      {/* ── Unified header bar — same breathing room as bottom nav buttons ── */}
+      {/* ── View toggle — 2-icon switch ── */}
       <div className="absolute left-0 right-0 z-40 flex items-center justify-center px-3" style={{ top: 58 }}>
-        {/* 3-way toggle — centered */}
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}
         >
-          {(["focus", "overview", "list"] as ViewMode[]).map((mode) => (
+          {(["overview", "list"] as ViewMode[]).map((mode) => (
             <button
               key={mode}
               type="button"
               onClick={() => setViewMode(mode)}
-              className="relative rounded-full px-2.5 py-1 text-[8px] font-semibold uppercase tracking-wider transition-all duration-200"
+              className="relative flex items-center justify-center rounded-full p-1.5 transition-all duration-200"
               style={{
                 color: viewMode === mode ? "#fff" : "var(--text-disabled)",
                 background: viewMode === mode ? "var(--accent-purple)" : "transparent",
+                width: 28,
+                height: 28,
               }}
+              aria-label={mode === "overview" ? "Timeline view" : "List view"}
             >
-              {mode === "focus" ? "Focus" : mode === "overview" ? "All" : "List"}
+              {mode === "overview" ? (
+                <svg width="14" height="14" viewBox="0 0 14 14">
+                  <rect x="1" y="1" width="3" height="12" rx="1.5" fill="currentColor" />
+                  <rect x="5.5" y="4" width="3" height="9" rx="1.5" fill="currentColor" />
+                  <rect x="10" y="2" width="3" height="11" rx="1.5" fill="currentColor" />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 14 14">
+                  <rect x="4" y="2" width="9" height="2" rx="1" fill="currentColor" />
+                  <rect x="4" y="6" width="9" height="2" rx="1" fill="currentColor" />
+                  <rect x="4" y="10" width="9" height="2" rx="1" fill="currentColor" />
+                  <circle cx="1.5" cy="3" r="1.5" fill="currentColor" />
+                  <circle cx="1.5" cy="7" r="1.5" fill="currentColor" />
+                  <circle cx="1.5" cy="11" r="1.5" fill="currentColor" />
+                </svg>
+              )}
             </button>
           ))}
         </div>
       </div>
 
       <AnimatePresence mode="wait">
-        {viewMode === "focus" && currentCapsule ? (
-          <motion.div
-            key="focus"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-            className="h-full w-full pt-9"
-          >
-            <FocusView
-              currentCapsule={currentCapsule}
-              allCapsules={allCapsules}
-              onClose={() => setViewMode("overview")}
-              onTapCapsule={handleTapCapsule}
-              onAgeChange={handleAgeChange}
-            />
-          </motion.div>
-        ) : viewMode === "overview" ? (
+        {viewMode === "overview" ? (
           <motion.div
             key="overview"
             initial={{ opacity: 0 }}

@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { BottomNav } from "@/components/demo/BottomNav";
 import { ProfileDrawer } from "@/components/demo/ProfileDrawer";
 import { PremiumTeaser } from "@/components/demo/PremiumTeaser";
 import { PremiumTeaserContext } from "@/components/demo/PremiumTeaserContext";
 import { MomentumProvider } from "@/lib/momentum-store";
+import { OnboardingGuard } from "@/components/demo/OnboardingGuard";
 
 export default function DemoLayout({
   children,
@@ -18,14 +19,24 @@ export default function DemoLayout({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
 
+  // Prevent SSR flash — demo is 100% client-side (API data, IndexedDB, etc.)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Hide bottom nav on onboarding/invite flows
   const HIDDEN_NAV_ROUTES = ["/demo/onboarding", "/demo/invite"];
   const hideNav = HIDDEN_NAV_ROUTES.some((r) => pathname.startsWith(r));
+  const isOnboarding = pathname.startsWith("/demo/onboarding");
   const isHome = pathname === "/demo";
   const isTimeline = pathname === "/demo/timeline";
   const isMonthly = pathname === "/demo/monthly";
   // Full-bleed routes manage their own padding and scroll
   const isFullBleed = isHome || isTimeline || isMonthly;
+
+  // SSR: render only the dark background — no content, no flash
+  if (!mounted) {
+    return <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }} />;
+  }
 
   return (
     <MomentumProvider>
@@ -56,7 +67,7 @@ export default function DemoLayout({
                 : "overflow-y-auto overflow-x-hidden px-5 py-3 scrollbar-none"
             }`}
           >
-            {children}
+            {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
           </div>
         </PremiumTeaserContext.Provider>
 

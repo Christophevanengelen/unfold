@@ -6,7 +6,7 @@
  */
 
 import type { DomainKey, PlanetKey } from "@/lib/domain-config";
-import { mockTimeline, type MomentumPhase } from "@/lib/mock-timeline";
+import type { MomentumPhase } from "@/lib/mock-timeline";
 
 // ─── Types ──────────────────────────────────────────────────
 export type Tier = "toc" | "toctoc" | "toctoctoc";
@@ -184,12 +184,12 @@ export function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
 }
 
 // ─── Convenience: get the 3 capsules for the home screen ────
-export function getHomeCapsules(phases?: MomentumPhase[]): {
+export function getHomeCapsules(phases: MomentumPhase[]): {
   past: CapsuleData | null;
   current: CapsuleData | null;
   future: CapsuleData | null;
 } {
-  const all = buildCapsules(phases || mockTimeline);
+  const all = buildCapsules(phases);
   const current = all.find((c) => c.isCurrent) ?? null;
 
   // Last completed capsule (same tier as current for continuity)

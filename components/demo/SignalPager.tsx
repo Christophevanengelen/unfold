@@ -94,6 +94,9 @@ export function SignalPager() {
     [cardWidth],
   );
 
+  // No data yet — show nothing
+  if (phases.length === 0) return null;
+
   // Build card data
   const cards: { capsule: CapsuleData; mode: "past" | "present" | "future" }[] = [];
   if (past) cards.push({ capsule: past, mode: "past" });
@@ -247,7 +250,7 @@ export function SignalPager() {
                       {selectedCapsule.tier === "toctoctoc" ? "PEAK" : selectedCapsule.tier === "toctoc" ? "CLEAR" : "SUBTLE"}
                     </span>
                     <p className="text-[10px] tabular-nums" style={{ color: "var(--text-body-subtle)" }}>
-                      {MONTH_NAMES[selectedCapsule.startDate.getMonth()]} {selectedCapsule.startDate.getFullYear()} — {selectedCapsule.isCurrent ? "Now" : `${MONTH_NAMES[selectedCapsule.endDate.getMonth()]} ${selectedCapsule.endDate.getFullYear()}`}
+                      {selectedCapsule.startDate.getDate()} {MONTH_NAMES[selectedCapsule.startDate.getMonth()]} {selectedCapsule.startDate.getFullYear()} — {selectedCapsule.isCurrent ? "Now" : `${selectedCapsule.endDate.getDate()} ${MONTH_NAMES[selectedCapsule.endDate.getMonth()]} ${selectedCapsule.endDate.getFullYear()}`}
                     </p>
                   </div>
                 </div>

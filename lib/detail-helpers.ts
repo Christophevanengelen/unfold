@@ -160,14 +160,14 @@ export function getPlanetNarrative(planets: PlanetKey[]): string {
 
 export function formatDuration(startDate: Date, endDate: Date): string {
   const diffMs = endDate.getTime() - startDate.getTime();
-  const weeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
-  if (weeks <= 1) return "~1 semaine";
-  if (weeks < 8) return `${weeks} semaines`;
-  const months = Math.round(weeks / 4.33);
-  if (months <= 1) return "~1 mois";
-  if (months < 24) return `${months} mois`;
-  const years = Math.round(months / 12);
-  return `${years} ans`;
+  const totalDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
+  const months = Math.floor(totalDays / 30);
+  const days = totalDays - months * 30;
+  if (months === 0) return `${totalDays} jours`;
+  if (days === 0) return months === 1 ? "1 mois" : `${months} mois`;
+  return months === 1
+    ? `1 mois ${days} jours`
+    : `${months} mois ${days} jours`;
 }
 
 // ─── Progress ────────────────────────────────────────────

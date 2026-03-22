@@ -23,10 +23,10 @@ interface CapsuleCardProps {
 export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardProps) {
   const tierLabel = getTierLabel(capsule.tier);
   const phase = capsule.phases[0];
-  const startLabel = `${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
+  const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
   const endLabel = capsule.isCurrent
     ? "Now"
-    : `${MONTH_NAMES[capsule.endDate.getMonth()]} ${capsule.endDate.getFullYear()}`;
+    : `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} ${capsule.endDate.getFullYear()}`;
   const maxIntensity = Math.max(...capsule.domains.map((d) => d.intensity));
 
   return (

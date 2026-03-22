@@ -166,6 +166,8 @@ interface RawPhase {
   maxScore: number;
   domains: Map<string, number>;
   planets: Set<string>;
+  /** Topic colors from API — each topic = one dot in the sausage */
+  topicColors: string[];
   bestLabel: string;
   bestCategory: string;
   bestAspect?: string;
@@ -217,8 +219,11 @@ export function appDataToPhases(
     const planets = new Set([planet]);
     if (s.natalPoint) planets.add(extractPlanet(`${s.natalPoint} `));
 
-    // Color from API: use first topic's house color (domain color)
-    const topicColor = s.topics?.[0]?.color;
+    // Topic colors from API — each topic = one dot in the sausage
+    const topicColors = (s.topics || []).map((t: { color: string }) => t.color);
+
+    // Fallback: if no topics, use the sausage color itself
+    const firstTopicColor = topicColors[0] || s.color;
 
     groups.push({
       startMs,
@@ -226,13 +231,14 @@ export function appDataToPhases(
       maxScore: s.score,
       domains: new Map([[domain, intensity]]),
       planets,
+      topicColors,
       bestLabel: label,
       bestCategory: s.category,
       bestAspect: s.aspect,
       bestLotType: lotType,
       bestLevel: s.level,
       sausageCount: 1,
-      color: topicColor || s.color,
+      color: firstTopicColor,
     });
   }
 
@@ -296,6 +302,7 @@ export function appDataToPhases(
       intensity: overallIntensity,
       score: g.maxScore, // raw API score 1-4 — used for tier sizing
       planets: planetList,
+      topicColors: g.topicColors.length > 0 ? g.topicColors : undefined,
       status,
       keyInsight: g.sausageCount >= 3
         ? `${g.sausageCount} overlapping signals — a concentrated period.`
