@@ -195,11 +195,13 @@ export function appDataToPhases(
       return aDate.localeCompare(bDate);
     });
 
-  // Every sausage = its own phase. No grouping, no filtering.
-  // Each event is a real astrological event. The timeline reflects reality.
+  // Show score >= 3 as full boudins (significant events).
+  // Score 1-2 are too frequent for visual display (~1000+).
+  // This gives ~300-400 phases = ~7 per year = readable timeline.
   const groups: RawPhase[] = [];
 
   for (const s of sorted) {
+    if (s.score < 3) continue;
     const startDate = s.startDate || s.date || todayStr;
     const endDate = s.endDate || startDate;
     const startMs = new Date(startDate).getTime();
