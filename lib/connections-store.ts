@@ -1,10 +1,17 @@
 /**
- * Connections Store — persists real connections in localStorage.
+ * Connections Store — dual-write: localStorage (instant) + Supabase (persistent).
  * Each connection = a person with birth data, linked via invite code.
- * No mocks — only real data from invite flow.
  */
 
 import type { BirthData } from "@/lib/birth-data";
+import {
+  addRemoteConnection,
+  updateRemoteRelationship,
+  removeRemoteConnection,
+  getRemoteConnections,
+  persistInviteCode,
+  type SupabaseConnection,
+} from "@/lib/supabase-store";
 
 export type RelationshipType = "partner" | "friend" | "family" | "colleague";
 
@@ -63,6 +70,16 @@ export function addConnection(conn: Omit<RealConnection, "id" | "initial" | "con
 
   all.push(newConn);
   writeAll(all);
+
+  // Dual-write to Supabase (fire-and-forget)
+  addRemoteConnection({
+    name: newConn.name,
+    initial: newConn.initial,
+    relationship: newConn.relationship,
+    birthData: newConn.birthData,
+    inviteCode: newConn.inviteCode,
+  }).catch(() => {});
+
   return newConn;
 }
 
@@ -72,11 +89,19 @@ export function updateRelationship(id: string, relationship: RelationshipType): 
   if (conn) {
     conn.relationship = relationship;
     writeAll(all);
+    // Dual-write
+    updateRemoteRelationship(conn.inviteCode, relationship).catch(() => {});
   }
 }
 
 export function removeConnection(id: string): void {
-  writeAll(readAll().filter((c) => c.id !== id));
+  const all = readAll();
+  const conn = all.find((c) => c.id === id);
+  if (conn) {
+    writeAll(all.filter((c) => c.id !== id));
+    // Dual-write
+    removeRemoteConnection(conn.inviteCode).catch(() => {});
+  }
 }
 
 /**
@@ -101,12 +126,55 @@ export function getMyInviteCode(): string {
     code = generateInviteCode();
     localStorage.setItem(MY_CODE_KEY, code);
   }
+  // Persist to Supabase (fire-and-forget)
+  persistInviteCode(code).catch(() => {});
   return code;
 }
 
 /**
+ * Sync local connections with Supabase (background, non-blocking).
+ * Merges remote connections that don't exist locally.
+ */
+export async function syncConnections(): Promise<void> {
+  try {
+    const local = readAll();
+    const remote = await getRemoteConnections();
+
+    let changed = false;
+    for (const r of remote) {
+      if (!local.some((l) => l.inviteCode === r.invite_code)) {
+        local.push(remoteToLocal(r));
+        changed = true;
+      }
+    }
+    if (changed) writeAll(local);
+  } catch {
+    // Sync failed silently
+  }
+}
+
+function remoteToLocal(r: SupabaseConnection): RealConnection {
+  return {
+    id: `conn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    name: r.name,
+    initial: r.initial ?? r.name.charAt(0).toUpperCase(),
+    relationship: r.relationship as RelationshipType,
+    birthData: {
+      nickname: r.name,
+      birthDate: r.birth_date ?? "",
+      birthTime: r.birth_time ?? "",
+      latitude: r.latitude ?? 0,
+      longitude: r.longitude ?? 0,
+      timezone: r.timezone ?? "Europe/Paris",
+      placeOfBirth: r.place_of_birth ?? "",
+    },
+    connectedSince: r.connected_since,
+    inviteCode: r.invite_code,
+  };
+}
+
+/**
  * Encode birth data into a shareable invite URL.
- * The URL contains everything needed to create a connection.
  */
 export function buildInviteUrl(name: string, birthData: BirthData, code: string): string {
   const params = new URLSearchParams({
@@ -119,7 +187,6 @@ export function buildInviteUrl(name: string, birthData: BirthData, code: string)
     tz: birthData.timezone,
     place: birthData.placeOfBirth || "",
   });
-  // Use current origin for the URL
   const origin = typeof window !== "undefined" ? window.location.origin : "https://unfold.app";
   return `${origin}/demo/invite/join?${params.toString()}`;
 }

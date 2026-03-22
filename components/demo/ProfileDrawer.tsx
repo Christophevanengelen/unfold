@@ -1,9 +1,9 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { mockUser } from "@/lib/mock-data";
 import { User, Sun, Moon } from "flowbite-react-icons/outline";
 import { BottomSheet } from "@/components/demo/primitives";
+import { useMomentum } from "@/lib/momentum-store";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -13,6 +13,9 @@ interface ProfileDrawerProps {
 export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const { birthData } = useMomentum();
+
+  const userName = birthData?.nickname || "You";
 
   return (
     <BottomSheet open={open} onClose={onClose} maxHeight="60%">
@@ -24,10 +27,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-text-heading">
-              {mockUser.name}
+              {userName}
             </p>
             <p className="text-xs text-text-body-subtle capitalize">
-              {mockUser.plan} plan
+              free plan
             </p>
           </div>
         </div>

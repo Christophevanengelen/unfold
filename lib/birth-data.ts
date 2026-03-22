@@ -24,24 +24,35 @@ export async function saveBirthData(data: BirthData): Promise<void> {
   if (typeof window !== "undefined") {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* */ }
   }
+  // Persist to Supabase (fire-and-forget — non-blocking)
+  import("@/lib/supabase-store").then((s) => s.upsertProfile(data)).catch(() => {});
 }
 
 export async function getBirthData(): Promise<BirthData | null> {
-  // Try IndexedDB first
+  // Try IndexedDB first (fast, offline)
   const idbData = await storage.getPersistent<BirthData>(STORAGE_KEY);
   if (idbData) return idbData;
   // Fallback to localStorage (for migration period)
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as BirthData;
-    // Migrate to IndexedDB
-    await storage.setPersistent(STORAGE_KEY, parsed);
-    return parsed;
-  } catch {
-    return null;
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as BirthData;
+      await storage.setPersistent(STORAGE_KEY, parsed);
+      return parsed;
+    } catch { /* */ }
   }
+  // Last resort: recover from Supabase (cross-device)
+  try {
+    const { getProfile } = await import("@/lib/supabase-store");
+    const remote = await getProfile();
+    if (remote) {
+      await storage.setPersistent(STORAGE_KEY, remote);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(remote)); } catch { /* */ }
+      return remote;
+    }
+  } catch { /* */ }
+  return null;
 }
 
 /** Sync getter — for places where async isn't possible (initial render). */
