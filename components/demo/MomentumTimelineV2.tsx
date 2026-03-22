@@ -917,19 +917,6 @@ function getSavedViewMode(): ViewMode {
 
 export function MomentumTimelineV2() {
   const { timelinePhases, birthDateStr, state, isLoadingLifetime } = useMomentum();
-
-  // Show loader while data is loading — never show empty/broken timeline
-  if (state === "loading" || (state === "ready" && isLoadingLifetime && timelinePhases.length === 0)) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-4">
-        <div
-          className="h-6 w-6 animate-spin rounded-full border-2 border-transparent"
-          style={{ borderTopColor: "var(--accent-purple)", borderRightColor: "var(--accent-purple)" }}
-        />
-        <p className="text-xs text-text-body-subtle">Chargement de votre timeline...</p>
-      </div>
-    );
-  }
   const [viewMode, _setViewMode] = useState<ViewMode>(getSavedViewMode);
   const setViewMode = useCallback((mode: ViewMode) => {
     _setViewMode(mode);
@@ -970,6 +957,19 @@ export function MomentumTimelineV2() {
   const handleAgeChange = useCallback((age: number) => {
     setVisibleAge(age);
   }, []);
+
+  // Show loader only while initial data loads (no phases at all yet)
+  if (state === "loading" && timelinePhases.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4">
+        <div
+          className="h-6 w-6 animate-spin rounded-full border-2 border-transparent"
+          style={{ borderTopColor: "var(--accent-purple)", borderRightColor: "var(--accent-purple)" }}
+        />
+        <p className="text-xs text-text-body-subtle">Chargement de votre timeline...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
