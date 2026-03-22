@@ -10,6 +10,7 @@ export type TranslationMap = Record<string, string>;
 export const getTranslations = cache(
   async (locale: string, namespace: string): Promise<TranslationMap> => {
     try {
+      if (!supabase) return {}; // No DB connection (build time or missing env vars)
       // Join Translation → ContentKey → ContentNamespace to filter by namespace name
       const { data, error } = await supabase
         .from("Translation")
