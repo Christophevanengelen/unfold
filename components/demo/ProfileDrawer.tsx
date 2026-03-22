@@ -1,20 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
-import Link from "next/link";
 import { useTheme } from "next-themes";
 import { mockUser } from "@/lib/mock-data";
-import { User, ChevronRight, Sun, Moon } from "lucide-react";
+import { User, Sun, Moon } from "lucide-react";
 
 interface ProfileDrawerProps {
   open: boolean;
   onClose: () => void;
 }
 
-const menuItems = [
-  { href: "/demo/onboarding", label: "Onboarding Flow" },
-  { href: "/demo/invite", label: "Invite Flow" },
-];
 
 export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const { resolvedTheme, setTheme } = useTheme();
@@ -67,31 +62,6 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
 
             {/* Divider */}
             <div className="mb-4 h-px bg-brand-3" />
-
-            {/* Demo flows */}
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-text-body-subtle">
-              Demo Flows
-            </p>
-            <div className="space-y-1">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
-                >
-                  {item.label}
-                  <ChevronRight
-                    size={14}
-                    strokeWidth={2}
-                    className="text-text-body-subtle"
-                  />
-                </Link>
-              ))}
-            </div>
-
-            {/* Divider */}
-            <div className="mt-4 mb-4 h-px bg-brand-3" />
 
             {/* Settings */}
             <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-text-body-subtle">

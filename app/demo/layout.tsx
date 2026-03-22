@@ -30,9 +30,8 @@ export default function DemoLayout({
   const isOnboarding = pathname.startsWith("/demo/onboarding");
   const isHome = pathname === "/demo";
   const isTimeline = pathname === "/demo/timeline";
-  const isMonthly = pathname === "/demo/monthly";
   // Full-bleed routes manage their own padding and scroll
-  const isFullBleed = isHome || isTimeline || isMonthly;
+  const isFullBleed = isHome || isTimeline;
 
   // SSR: render only the dark background — no content, no flash
   if (!mounted) {

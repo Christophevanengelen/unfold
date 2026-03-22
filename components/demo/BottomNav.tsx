@@ -3,26 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Activity, Heart, Clock, Calendar } from "lucide-react";
+import { Heart, Clock } from "lucide-react";
 
 const navItems = [
-  {
-    key: "momentum" as const,
-    href: "/demo",
-    icon: Activity,
-    label: "Today",
-  },
   {
     key: "timeline" as const,
     href: "/demo/timeline",
     icon: Clock,
     label: "Timeline",
-  },
-  {
-    key: "monthly" as const,
-    href: "/demo/monthly",
-    icon: Calendar,
-    label: "Month",
   },
   {
     key: "match" as const,
@@ -39,16 +27,13 @@ export function BottomNav() {
   return (
     <nav className="flex items-center justify-around pb-2" style={{
       height: 56,
-      background: "color-mix(in srgb, var(--accent-purple) 8%, rgba(27, 21, 53, 0.85))",
+      background: "var(--glass-bg)",
       border: "none",
-      borderTop: "1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)",
-      backdropFilter: "blur(16px)",
+      borderTop: "1px solid var(--glass-border)",
+      backdropFilter: "blur(var(--glass-blur))",
     }}>
       {navItems.map((item) => {
-        const isActive =
-          item.key === "momentum"
-            ? pathname === "/demo"
-            : pathname.startsWith(item.href);
+        const isActive = pathname.startsWith(item.href);
         const Icon = item.icon;
 
         return (

@@ -363,7 +363,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
             >
               <button
                 type="button"
-                onClick={() => router.push("/demo")}
+                onClick={() => router.push("/demo/timeline")}
                 className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
               >
                 See my signal
