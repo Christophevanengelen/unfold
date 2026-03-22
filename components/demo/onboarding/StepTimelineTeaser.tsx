@@ -80,6 +80,16 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         </h1>
       </motion.div>
 
+      <motion.p
+        className="mt-2 text-center text-xs leading-relaxed"
+        style={{ color: "var(--accent-purple)", opacity: 0.45 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.45 }}
+        transition={{ delay: 0.4 }}
+      >
+        The domain tells you what. The planets tell you why.
+      </motion.p>
+
       <div className="flex-1 relative overflow-hidden">
         <div className="absolute" style={{ width: CENTER * 2, height: CENTER * 2, left: "50%", top: "50%", transform: "translate(-50%, -50%) scale(1.2)" }}>
 

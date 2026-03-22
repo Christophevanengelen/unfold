@@ -82,7 +82,7 @@ export function LifeDomains({ translations }: LifeDomainsProps) {
         {/* Punchy closer */}
         <ScrollReveal variant="fadeUp" className="mt-12 text-center">
           <p className="text-sm text-brand-10/50">
-            {t(translations, "domains.closer", "What a pro astrologer sees in your chart, made readable in seconds.")}
+            {t(translations, "domains.closer", "The domain tells you what. The planets tell you why.")}
           </p>
         </ScrollReveal>
       </div>
