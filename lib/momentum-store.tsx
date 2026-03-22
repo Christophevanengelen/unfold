@@ -106,8 +106,10 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
           // API response may be nested: .data.data.allSausages or .data.allSausages
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const appData = (appResponse?.data as any)?.data ?? appResponse?.data;
+          console.log("[Momentum] App data loaded:", appData?.allSausages?.length ?? 0, "sausages");
           if (appData?.allSausages?.length) {
             const lifetimePhases = appDataToPhases(appResponse);
+            console.log("[Momentum] Converted to", lifetimePhases.length, "phases");
             if (lifetimePhases.length > 0) {
               setTimelinePhases(lifetimePhases);
             }
