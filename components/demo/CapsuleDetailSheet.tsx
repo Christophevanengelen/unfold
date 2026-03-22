@@ -308,7 +308,13 @@ export function CapsuleDetailSheet({
             <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
               {phase.title}
             </h3>
-            {phase.subtitle && (
+            {/* Show translated API label — the real transit name */}
+            {phase.apiLabel && (
+              <p className="mt-1 text-[11px] font-medium" style={{ color: houseColor, opacity: 0.8 }}>
+                {translateApiLabel(phase.apiLabel)}
+              </p>
+            )}
+            {phase.subtitle && !phase.apiLabel && (
               <p className="mt-1 text-xs" style={{ color: "var(--text-body-subtle)" }}>
                 {phase.subtitle}
               </p>
@@ -472,7 +478,11 @@ export function CapsuleDetailSheet({
                   <DetailRow label="Statut" value="Transit VIP" />
                 )}
                 {phase?.markers && phase.markers.length > 0 && (
-                  <DetailRow label="Marqueurs" value={phase.markers.join(", ")} />
+                  <DetailRow label="Marqueurs" value={phase.markers.map((m: string) =>
+                    m === "LB" ? "Pivot de vie (LB)" :
+                    m === "Cu" ? "Culmination (Cu)" :
+                    m === "pre-LB" ? "Pré-pivot (pre-LB)" : m
+                  ).join(", ")} />
                 )}
                 {phase?.cycle && phase.cycle.totalHits > 1 && (
                   <DetailRow label="Passage" value={`${phase.cycle.hitNumber} / ${phase.cycle.totalHits}`} />
