@@ -1449,9 +1449,19 @@ function ListView({
 }
 
 // ─── Main Component ─────────────────────────────────────────
+// Persist view mode preference
+function getSavedViewMode(): ViewMode {
+  if (typeof window === "undefined") return "focus";
+  return (localStorage.getItem("unfold_view_mode") as ViewMode) || "focus";
+}
+
 export function MomentumTimelineV2() {
   const { timelinePhases, birthDateStr } = useMomentum();
-  const [viewMode, setViewMode] = useState<ViewMode>("focus");
+  const [viewMode, _setViewMode] = useState<ViewMode>(getSavedViewMode);
+  const setViewMode = useCallback((mode: ViewMode) => {
+    _setViewMode(mode);
+    if (typeof window !== "undefined") localStorage.setItem("unfold_view_mode", mode);
+  }, []);
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleData | null>(null);
 
   // Initialize date helpers from birth data

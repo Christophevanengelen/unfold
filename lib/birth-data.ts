@@ -1,7 +1,10 @@
 /**
- * Birth data persistence layer — localStorage-based for the demo.
+ * Birth data persistence layer — IndexedDB-backed via StorageService.
  * Stores user birth info needed for Momentum Engine API calls.
+ * Persistent (no TTL) — birth data doesn't expire.
  */
+
+import { storage } from "./storage";
 
 const STORAGE_KEY = "unfold_birth_data";
 
@@ -15,12 +18,34 @@ export interface BirthData {
   placeOfBirth: string;
 }
 
-export function saveBirthData(data: BirthData): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+export async function saveBirthData(data: BirthData): Promise<void> {
+  await storage.setPersistent(STORAGE_KEY, data);
+  // Also keep in localStorage as fallback (sync access needed in some places)
+  if (typeof window !== "undefined") {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* */ }
+  }
 }
 
-export function getBirthData(): BirthData | null {
+export async function getBirthData(): Promise<BirthData | null> {
+  // Try IndexedDB first
+  const idbData = await storage.getPersistent<BirthData>(STORAGE_KEY);
+  if (idbData) return idbData;
+  // Fallback to localStorage (for migration period)
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as BirthData;
+    // Migrate to IndexedDB
+    await storage.setPersistent(STORAGE_KEY, parsed);
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** Sync getter — for places where async isn't possible (initial render). */
+export function getBirthDataSync(): BirthData | null {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
@@ -31,13 +56,15 @@ export function getBirthData(): BirthData | null {
   }
 }
 
-export function hasBirthData(): boolean {
-  return getBirthData() !== null;
+export async function hasBirthData(): Promise<boolean> {
+  return (await getBirthData()) !== null;
 }
 
-export function clearBirthData(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(STORAGE_KEY);
+export async function clearBirthData(): Promise<void> {
+  await storage.remove(STORAGE_KEY);
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(STORAGE_KEY);
+  }
 }
 
 /** Simple city → coords lookup for the demo. Extend as needed. */

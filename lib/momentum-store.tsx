@@ -16,7 +16,8 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { getBirthData, saveBirthData, type BirthData } from "@/lib/birth-data";
+import { getBirthData, getBirthDataSync, saveBirthData, type BirthData } from "@/lib/birth-data";
+import { migrateFromLocalStorage } from "@/lib/storage";
 import { fetchYearData, fetchAppData } from "@/lib/momentum-api";
 import { yearDataToPhases, appDataToPhases } from "@/lib/momentum-adapter";
 import { mockTimeline, type MomentumPhase } from "@/lib/mock-timeline";
@@ -67,7 +68,7 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     birthData?.birthDate || "1986-05-14"; // matches mock-timeline default
 
   const loadSignals = useCallback(async (birth?: BirthData) => {
-    const bd = birth || getBirthData();
+    const bd = birth || (await getBirthData()) || getBirthDataSync();
     if (!bd) {
       // No birth data — use mock
       setPhases(mockTimeline);
@@ -78,7 +79,7 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     }
 
     setBirthData(bd);
-    if (birth) saveBirthData(bd);
+    if (birth) await saveBirthData(bd);
     setState("loading");
     setError(null);
 
@@ -141,14 +142,17 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     setError(null);
   }, []);
 
-  // Auto-load on mount if birth data exists
+  // Auto-load on mount: migrate localStorage → IndexedDB, then load
   useEffect(() => {
-    const stored = getBirthData();
-    if (stored) {
-      loadSignals(stored);
-    } else {
-      setState("ready"); // start with mock, no loading needed
-    }
+    (async () => {
+      await migrateFromLocalStorage();
+      const stored = await getBirthData();
+      if (stored) {
+        loadSignals(stored);
+      } else {
+        setState("ready"); // start with mock, no loading needed
+      }
+    })();
   }, [loadSignals]);
 
   return (

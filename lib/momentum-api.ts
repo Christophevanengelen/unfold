@@ -1,10 +1,12 @@
 /**
  * Momentum Engine API client.
  * Wraps calls to Marie Ange's toctoc API via our proxy at /api/toctoc.
- * Includes localStorage caching (results are deterministic per birth data).
+ * Uses IndexedDB-backed StorageService for persistent caching.
+ * Results are deterministic per birth data (same input = same output).
  */
 
 import type { BirthData } from "./birth-data";
+import { storage } from "./storage";
 
 // ─── API Response Types ─────────────────────────────────────
 
@@ -146,37 +148,10 @@ export interface TocTocAppResponse {
   };
 }
 
-// ─── Cache ──────────────────────────────────────────────────
-
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+// ─── Cache (IndexedDB-backed) ───────────────────────────────
 
 function birthHash(birth: BirthData): string {
   return `${birth.birthDate}_${birth.birthTime}_${birth.latitude.toFixed(2)}_${birth.longitude.toFixed(2)}`;
-}
-
-function getCached<T>(key: string): T | null {
-  if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(key);
-  if (!raw) return null;
-  try {
-    const { data, ts } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL_MS) {
-      localStorage.removeItem(key);
-      return null;
-    }
-    return data as T;
-  } catch {
-    return null;
-  }
-}
-
-function setCache(key: string, data: unknown): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
-  } catch {
-    // localStorage full — silently skip
-  }
 }
 
 // ─── API Calls ──────────────────────────────────────────────
@@ -206,12 +181,16 @@ export async function fetchYearData(
   birth: BirthData
 ): Promise<TocTocYearResponse> {
   const cacheKey = `unfold_year_${birthHash(birth)}`;
-  const cached = getCached<TocTocYearResponse>(cacheKey);
-  if (cached) return cached;
+  const cached = await storage.getCache<TocTocYearResponse>(cacheKey);
+  if (cached) {
+    console.log("[Momentum] Year data from cache");
+    return cached;
+  }
 
   const data = (await callProxy("toctoc-year", birth)) as TocTocYearResponse;
   if (data?.success || data?.data?.success) {
-    setCache(cacheKey, data);
+    await storage.setCache(cacheKey, data);
+    console.log("[Momentum] Year data fetched & cached");
   }
   return data;
 }
@@ -221,12 +200,16 @@ export async function fetchAppData(
   birth: BirthData
 ): Promise<TocTocAppResponse> {
   const cacheKey = `unfold_app_${birthHash(birth)}`;
-  const cached = getCached<TocTocAppResponse>(cacheKey);
-  if (cached) return cached;
+  const cached = await storage.getCache<TocTocAppResponse>(cacheKey);
+  if (cached) {
+    console.log("[Momentum] App data from cache (lifetime sausages)");
+    return cached;
+  }
 
   const data = (await callProxy("toctoc-app", birth)) as TocTocAppResponse;
   if (data?.success || data?.data?.success) {
-    setCache(cacheKey, data);
+    await storage.setCache(cacheKey, data);
+    console.log("[Momentum] App data fetched & cached");
   }
   return data;
 }
