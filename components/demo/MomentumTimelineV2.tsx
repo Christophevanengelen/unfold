@@ -41,10 +41,15 @@ function getTier(intensity: number): Tier {
   if (intensity >= 70) return "toctoc";
   return "toc";
 }
+// Lane counter for score-2 distribution across lanes 1 and 2
+let toctocLaneToggle = 0;
 function getTierLane(tier: Tier): number {
-  if (tier === "toc") return 0;           // far left (multiple small ones here)
-  if (tier === "toctoc") return 2;        // center-left
-  return 4;                                // far right (rare, big ones)
+  if (tier === "toc") return 0;            // far left — small, frequent
+  if (tier === "toctoc") {                 // alternate lanes 1 and 2
+    toctocLaneToggle++;
+    return (toctocLaneToggle % 2 === 0) ? 1 : 2;
+  }
+  return (tier === "toctoctoc") ? 4 : 3;   // far right — big, rare
 }
 function getTierWidth(tier: Tier): number {
   if (tier === "toc") return 36;
