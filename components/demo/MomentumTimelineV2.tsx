@@ -30,29 +30,63 @@ interface CapsuleData {
   color?: string; // hex from API — domain house color
 }
 
+// ─── House color palette — muted, purple-rooted, premium ────
+// Maps API house hex colors to Unfold-branded equivalents.
+// 12 hues that stay in the mauve/purple family with enough distinction.
+const HOUSE_PALETTE: Record<string, string> = {
+  // API color → Unfold muted equivalent
+  "#EF4444": "#C4727A", // house 1  — dusty rose
+  "#F97316": "#C48A6A", // house 2  — warm mauve
+  "#EAB308": "#B8A472", // house 3  — muted gold
+  "#22C55E": "#7BA88A", // house 4  — sage
+  "#14B8A6": "#6FA3A0", // house 5  — teal muted
+  "#06B6D4": "#7A9EBB", // house 6  — dusty blue
+  "#3B82F6": "#7B8CC4", // house 7  — periwinkle
+  "#6366F1": "#8B80C9", // house 8  — soft indigo
+  "#8B5CF6": "#9B85C4", // house 9  — lavender
+  "#A855F7": "#A07FBD", // house 10 — orchid
+  "#D946EF": "#B07AAF", // house 11 — mauve pink
+  "#EC4899": "#BC7A96", // house 12 — dusty pink
+  // toctoc-app sausage colors (different palette from API)
+  "#F17E7A": "#C4727A", // → dusty rose
+  "#FF9040": "#C48A6A", // → warm mauve
+  "#FED857": "#B8A472", // → muted gold
+  "#AAD681": "#7BA88A", // → sage
+  "#FF7CA4": "#BC7A96", // → dusty pink
+  "#F375CB": "#B07AAF", // → mauve pink
+  "#89A4FF": "#7B8CC4", // → periwinkle
+  "#FFB898": "#C49882", // → warm sand
+  "#9B1C1C": "#8B5060", // → deep burgundy muted
+};
+function mapHouseColor(apiColor?: string): string | undefined {
+  if (!apiColor) return undefined;
+  return HOUSE_PALETTE[apiColor.toUpperCase()] || HOUSE_PALETTE[apiColor] || apiColor;
+}
+
 // ─── Constants ──────────────────────────────────────────────
 let LANE_COUNT = 7;
-const PX_PER_MONTH = 40; // pixels per month — more space for temporal accuracy
+const PX_PER_MONTH = 112; // pixels per month — ~6 months per screen height
 const LANE_SPACING = 6;
 const MIN_GAP_MS = 0; // capsules just can't overlap — no extra gap needed
 
-// Tier thresholds & widths
-function getTier(intensity: number): Tier {
-  if (intensity >= 85) return "toctoctoc";
-  if (intensity >= 70) return "toctoc";
-  return "toc";
+// Tier from raw API score (1-4) — no interpretation, direct from backend
+function getTier(_intensity: number, score?: number): Tier {
+  const s = score ?? 2; // fallback for mock data without score
+  if (s >= 3) return "toctoctoc"; // score 3-4 — major transits (large)
+  if (s >= 2) return "toctoc";    // score 2 — clear transits (medium)
+  return "toc";                   // score 1 — subtle (thin)
 }
 function getTierWidth(tier: Tier): number {
-  if (tier === "toc") return 36;
-  if (tier === "toctoc") return 48;
-  return 64;
+  if (tier === "toc") return 14;       // score 1 — fin
+  if (tier === "toctoc") return 21;    // score 2 — moyen (x1.5)
+  return 28;                           // score 3-4 — large (x2)
 }
 
 // ─── Lane assignment: temporal collision detection ──────────
-// Three passes: TOCTOCTOC first (strongest → left lanes),
+// Three passes: TOCTOCTOC first (strongest → left lanes, most visible),
 // then TOCTOC (medium → middle), then TOC (lightest → right).
 // Within each tier, capsules go on the first free lane (no overlap).
-// Left = lightest (toc), right = strongest (toctoctoc)
+// Left = lightest (toc), right = strongest (toctoctoc, thumb zone)
 const TIER_ORDER: Tier[] = ["toc", "toctoc", "toctoctoc"];
 
 function assignLanesForGroup(
@@ -104,6 +138,22 @@ function assignLanes(capsules: CapsuleData[]): void {
 
   LANE_COUNT = Math.max(1, laneOffset);
 }
+
+/** Compute X position for a lane based on actual tier widths — uniform gap between edges */
+function getLaneX(lane: number, capsules: CapsuleData[], gap: number): number {
+  // Build lane→tier map (each lane has one tier since assignLanes groups by tier)
+  const laneTier = new Map<number, Tier>();
+  for (const c of capsules) {
+    if (!laneTier.has(c.lane)) laneTier.set(c.lane, c.tier);
+  }
+  let x = 0;
+  for (let i = 0; i < lane; i++) {
+    const tier = laneTier.get(i) ?? "toctoc";
+    x += getTierWidth(tier) + gap;
+  }
+  return x;
+}
+
 const TIMELINE_PAD = 80;
 
 // ─── Shared pill button style (design system) ──────────────
@@ -135,7 +185,7 @@ function monthsBetween(a: Date, b: Date): number {
 }
 
 function getTotalMonths() { return monthsBetween(timelineStartDate, timelineEndDate) || 1200; }
-const BIRTH_EASTER_EGG_PAD = 80; // extra space at bottom for the birth message
+const BIRTH_EASTER_EGG_PAD = 280; // padding below birth: easter egg content + breathing room
 function getTotalHeight() { return TIMELINE_PAD * 2 + getTotalMonths() * PX_PER_MONTH + BIRTH_EASTER_EGG_PAD; }
 
 /** Convert a date to Y position. Future (end date) = top, past (birth) = bottom */
@@ -177,15 +227,24 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
   const nonCurrentPhases = sorted.filter((p) => p.status !== "current");
 
   // Build non-current capsules individually
+  // Filter out phases that end before birth (pre-natal data from API)
+  const birthMs = birthDate.getTime();
+
   for (const phase of nonCurrentPhases) {
-    const start = parseDate(phase.startDate);
+    const rawStart = parseDate(phase.startDate);
     const end = phase.endDate
       ? parseDate(phase.endDate)
-      : new Date(start.getTime() + phase.durationWeeks * 7 * 24 * 60 * 60 * 1000);
+      : new Date(rawStart.getTime() + phase.durationWeeks * 7 * 24 * 60 * 60 * 1000);
+
+    // Skip phases that end before birth
+    if (end.getTime() < birthMs) continue;
+
+    // Clamp start to birth date (no pre-natal capsules)
+    const start = rawStart.getTime() < birthMs ? new Date(birthMs) : rawStart;
 
     domainCounter[phase.domain] = (domainCounter[phase.domain] || 0) + 1;
 
-    const tier = getTier(phase.intensity);
+    const tier = getTier(phase.intensity, phase.score);
 
     capsules.push({
       id: phase.id,
@@ -217,7 +276,8 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
     const starts = currentPhases.map((p) => parseDate(p.startDate));
     const earliest = new Date(Math.min(...starts.map((d) => d.getTime())));
     const maxIntensity = Math.max(...currentPhases.map((p) => p.intensity));
-    const tier = getTier(maxIntensity);
+    const maxScore = Math.max(...currentPhases.map((p) => p.score ?? 2));
+    const tier = getTier(maxIntensity, maxScore);
 
     // Merge planets, deduplicate
     const mergedPlanets: PlanetKey[] = [];
@@ -251,6 +311,7 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
 
   // ── Assign lanes by temporal collision detection ──
   assignLanes(capsules);
+
 
   // Assign occurrence numbers for TOCTOCTOC only, by planet signature.
   // A number shows only if the same planet combo repeats across the lifetime.
@@ -304,7 +365,8 @@ function buildCurrentCapsule(timelineData: MomentumPhase[]): CapsuleData | null 
 
   // Use the highest intensity among current phases for tier
   const maxIntensity = Math.max(...currentPhases.map((p) => p.intensity));
-  const tier = getTier(maxIntensity);
+  const maxScore = Math.max(...currentPhases.map((p) => p.score ?? 2));
+  const tier = getTier(maxIntensity, maxScore);
 
   // Merge planets from all current phases, deduplicate
   const allPlanets: PlanetKey[] = [];
@@ -532,10 +594,15 @@ function FocusView({
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
     // Compute positions — current capsule crosses the NOW line
-    const items = tierCapsules.map((capsule) => {
+    const birthY = dateToY(birthDate);
+    const birthMs = birthDate.getTime();
+    const visibleTierCapsules = tierCapsules.filter(c => c.endDate.getTime() >= birthMs);
+    const items = visibleTierCapsules.map((capsule) => {
       let topY = dateToY(capsule.endDate);
-      const bottomY = dateToY(capsule.startDate);
+      const bottomY = Math.min(dateToY(capsule.startDate), birthY);
       const h = Math.max(MIN_H, bottomY - topY);
+      // Clamp: if minH pushes capsule below birth, shift it up
+      if (topY + h > birthY) topY = birthY - h;
       // Current capsule: shift up so NOW line cuts through it (~55% from top)
       if (capsule.isCurrent) topY -= h * 0.55;
       return { capsule, topY, h };
@@ -609,7 +676,8 @@ function FocusView({
       cursor.setMonth(cursor.getMonth() + 1);
     }
     return labels;
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCapsules]); // recalculate when data (and thus initDates) changes
 
   // Snap points: capsule tops (where first planet sits) + NOW line.
   // When jumping, the target lands just below the fixed age bar.
@@ -761,6 +829,7 @@ function FocusView({
 
           {/* Capsules — same tierOccurrence as Overview */}
           {focusPositions.map(({ capsule, topY: adjTopY, h }, i) => {
+            const hc = mapHouseColor(capsule.color);
             return (
             <motion.button
               key={capsule.id}
@@ -768,24 +837,23 @@ function FocusView({
               onClick={() => {
                 if (!capsule.isFuture) onTapCapsule(capsule);
               }}
-              initial={{ opacity: 0, scale: 0.85 }}
+              initial={false}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.05 + i * 0.03, type: "spring", stiffness: 250, damping: 25 }}
               className="absolute left-1/2 -translate-x-1/2"
               style={{
                 top: adjTopY,
                 width: capsuleWidth,
                 height: h,
                 borderRadius: capsuleWidth / 2,
-                background: capsule.color
+                background: hc
                   ? capsule.isCurrent
-                    ? `color-mix(in srgb, ${capsule.color} 40%, var(--bg-secondary))`
-                    : `color-mix(in srgb, ${capsule.color} 25%, var(--bg-secondary))`
+                    ? `color-mix(in srgb, ${hc} 40%, var(--bg-secondary))`
+                    : `color-mix(in srgb, ${hc} 25%, var(--bg-secondary))`
                   : capsule.isCurrent
                     ? "color-mix(in srgb, var(--brand-7) 35%, var(--bg-secondary))"
                     : "color-mix(in srgb, var(--brand-6) 22%, var(--bg-secondary))",
-                border: capsule.color
-                  ? `1px solid color-mix(in srgb, ${capsule.color} ${capsule.isCurrent ? "50" : "25"}%, transparent)`
+                border: hc
+                  ? `1px solid color-mix(in srgb, ${hc} ${capsule.isCurrent ? "50" : "25"}%, transparent)`
                   : capsule.isCurrent
                     ? "1px solid color-mix(in srgb, var(--brand-8) 40%, transparent)"
                     : "1px solid color-mix(in srgb, var(--brand-6) 15%, transparent)",
@@ -801,7 +869,7 @@ function FocusView({
                   style={{
                     borderRadius: capsuleWidth / 2,
                     background:
-                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${capsule.color ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
+                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
                   }}
                 />
               )}
@@ -848,34 +916,49 @@ function FocusView({
           );
           })}
 
-          {/* Birth Easter egg — bottom of the timeline */}
+          {/* Birth Easter egg — just above the age-0 bar */}
           <div
-            className="absolute left-0 right-0 flex flex-col items-center gap-2"
+            className="absolute left-0 right-0 flex flex-col items-center"
             style={{
-              top: getTotalHeight() - TIMELINE_PAD + 20,
+              top: getTotalHeight() - BIRTH_EASTER_EGG_PAD + 60,
             }}
           >
-            <div
-              className="h-[1px] w-16"
-              style={{
-                background: "linear-gradient(90deg, transparent, var(--accent-purple), transparent)",
-              }}
-            />
+            {/* Message — the easter egg */}
             <p
-              className="max-w-[200px] text-center text-[9px] leading-relaxed"
-              style={{ color: "color-mix(in srgb, var(--accent-purple) 50%, transparent)" }}
+              className="max-w-[240px] text-center leading-relaxed"
+              style={{
+                fontSize: 13,
+                color: "color-mix(in srgb, var(--accent-purple) 80%, transparent)",
+                fontWeight: 400,
+              }}
             >
               You weren&apos;t even crawling yet.
               <br />
               But the planets were already busy.
             </p>
+
+            {/* Divider line */}
             <div
-              className="h-1.5 w-1.5 rounded-full"
+              className="w-10 mt-5 mb-3"
               style={{
-                background: "var(--accent-purple)",
+                height: 1,
+                background: "linear-gradient(90deg, transparent, var(--accent-purple), transparent)",
                 opacity: 0.3,
               }}
             />
+
+            {/* Birth date — secondary, quiet */}
+            <p
+              className="font-display tracking-tight"
+              style={{
+                fontSize: 14,
+                fontWeight: 300,
+                color: "color-mix(in srgb, var(--accent-purple) 45%, transparent)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {birthDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </p>
           </div>
         </div>
       </div>
@@ -947,18 +1030,24 @@ function OverviewView({
     el.scrollTo({ top: Math.max(0, nowY - viewportH * 0.5), behavior: "smooth" });
   }, [nowY]);
 
-  // Dynamic lane sizing — adapt to actual number of lanes & container width
+  // Dynamic lane sizing — adapt to actual container width (responsive)
+  const [containerWidth, setContainerWidth] = useState(375);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => setContainerWidth(el.clientWidth || 375);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const labelMargin = 32;
   const rightMargin = 12;
-  const availableWidth = 375 - labelMargin - rightMargin; // phone viewport
-  const maxCapsuleW = getTierWidth("toctoctoc");
-  const idealLaneWidth = maxCapsuleW + LANE_SPACING;
-  // If all lanes fit naturally, use natural width. Otherwise compress.
-  const laneWidth = LANE_COUNT * idealLaneWidth <= availableWidth
-    ? idealLaneWidth
-    : Math.max(12, Math.floor(availableWidth / LANE_COUNT));
-  const totalLanesWidth = LANE_COUNT * laneWidth;
-  const adjustedOffsetX = labelMargin + (availableWidth - totalLanesWidth) / 2;
+  const availableWidth = containerWidth - labelMargin - rightMargin;
+  // Compute total width from actual lane widths (variable per tier)
+  const totalLanesWidth = getLaneX(LANE_COUNT, capsules, LANE_SPACING);
+  const laneWidth = LANE_COUNT > 0 ? totalLanesWidth / LANE_COUNT : 28; // avg for legacy refs
+  const adjustedOffsetX = labelMargin + Math.max(0, (availableWidth - totalLanesWidth) / 2);
 
   // Auto-scroll so NOW is centered — instant on mount
   useEffect(() => {
@@ -968,28 +1057,38 @@ function OverviewView({
   }, [nowY]);
 
   // Pre-compute capsule positions with collision resolution
-  const fitsNaturally = LANE_COUNT * idealLaneWidth <= availableWidth;
-  const wScale = fitsNaturally ? 1 : Math.min(1, (laneWidth - LANE_SPACING) / getTierWidth("toctoctoc"));
+  const fitsNaturally = totalLanesWidth <= availableWidth;
 
   const overviewPositions = useMemo(() => {
     const CAPSULE_GAP = 6;
-    const maxW = fitsNaturally ? getTierWidth("toctoctoc") : Math.max(10, laneWidth - LANE_SPACING);
 
-    const items = capsules.map((capsule, i) => {
+    // Max Y = birth date position (nothing below birth)
+    const birthY = dateToY(birthDate);
+    const birthMs = birthDate.getTime();
+
+    // Filter out capsules that end before birth
+    const visibleCapsules = capsules.filter(c => c.endDate.getTime() >= birthMs);
+
+    const items = visibleCapsules.map((capsule, i) => {
       let topY = dateToY(capsule.endDate);
-      const bottomY = dateToY(capsule.startDate);
-      const w = Math.max(10, Math.round(getTierWidth(capsule.tier) * wScale));
+      // Clamp: capsule can't extend below birth
+      const rawBottomY = dateToY(capsule.startDate);
+      const bottomY = Math.min(rawBottomY, birthY);
+      // 3 visually distinct widths from getTierWidth
+      const w = getTierWidth(capsule.tier);
       const dc = capsule.planets.length;
       const ds = capsule.isCurrent ? 11 : 8;
       const dg = 4;
-      const numH = 14; // always show occurrence number
       const dotsH = dc * ds + (dc - 1) * dg;
       const oCapPad = w / 2;
-      const minH = Math.max(w, numH + dg + dotsH + oCapPad * 2);
-      const h = Math.max(minH, bottomY - topY);
+      const minH = Math.max(w, dotsH + oCapPad * 2);
+      let h = Math.max(minH, bottomY - topY);
+      // Clamp: if minH pushes capsule below birth, shift it up
+      if (topY + h > birthY) topY = birthY - h;
       // Current capsule: shift up so NOW line cuts through it (~55% from top)
       if (capsule.isCurrent) topY -= h * 0.55;
-      const laneX = adjustedOffsetX + capsule.lane * laneWidth + (maxW - w) / 2;
+      // Position by accumulating actual widths per lane — uniform gap between capsule edges
+      const laneX = adjustedOffsetX + getLaneX(capsule.lane, capsules, LANE_SPACING);
       return { capsule, topY, h, w, laneX, idx: i };
     });
 
@@ -1044,7 +1143,8 @@ function OverviewView({
       }
     }
 
-    return items;
+    // Final clamp: remove any capsule pushed entirely below birth by overlap resolver
+    return items.filter(it => it.topY < birthY);
   }, [capsules, adjustedOffsetX, laneWidth]);
 
   // Generate month labels for the full timeline
@@ -1066,7 +1166,8 @@ function OverviewView({
       cursor.setMonth(cursor.getMonth() + 1);
     }
     return labels;
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capsules]); // recalculate when data (and thus initDates) changes
 
   // Snap points: capsule tops (first planet position) + NOW
   const PLANET_OFFSET = 0;
@@ -1164,52 +1265,77 @@ function OverviewView({
           {/* Month labels on the left */}
           {monthLabels.map(({ month, year, y, isJan, isCurrent }) => (
             <div key={`${year}-${month}`} className="absolute" style={{ top: y, left: 4 }}>
-              {/* Tick mark */}
-              <div
-                className="absolute"
-                style={{
-                  top: 0,
-                  left: 24,
-                  width: isCurrent ? 16 : isJan ? 12 : 6,
-                  height: isCurrent ? 1.5 : 1,
-                  background: isCurrent
-                    ? "rgba(255,255,255,0.5)"
-                    : isJan
-                      ? "color-mix(in srgb, var(--brand-6) 40%, transparent)"
-                      : "color-mix(in srgb, var(--brand-5) 15%, transparent)",
-                }}
-              />
-              {/* Month name — show year instead of "Jan" */}
-              <span
-                className="absolute -top-1.5 text-[7px] tabular-nums"
-                style={{
-                  left: 0,
-                  width: 22,
-                  textAlign: "right",
-                  color: isCurrent ? "rgba(255,255,255,0.8)" : isJan ? "var(--text-body-subtle)" : "var(--text-disabled)",
-                  fontWeight: isJan ? 600 : 400,
-                  fontSize: isJan ? 8 : 7,
-                }}
-              >
-                {isJan ? year : month}
-              </span>
+              {/* Current month: pill badge */}
+              {isCurrent ? (
+                <div
+                  className="absolute flex items-center justify-center rounded-full"
+                  style={{
+                    top: -8,
+                    left: -2,
+                    width: 30,
+                    height: 16,
+                    background: "color-mix(in srgb, var(--accent-purple) 18%, transparent)",
+                  }}
+                >
+                  <span
+                    className="tabular-nums uppercase"
+                    style={{
+                      color: "var(--accent-purple)",
+                      fontWeight: 700,
+                      fontSize: 8,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {month}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  {/* Tick mark */}
+                  <div
+                    className="absolute"
+                    style={{
+                      top: 0,
+                      left: 24,
+                      width: isJan ? 12 : 6,
+                      height: 1,
+                      background: isJan
+                        ? "color-mix(in srgb, var(--brand-6) 40%, transparent)"
+                        : "color-mix(in srgb, var(--brand-5) 15%, transparent)",
+                    }}
+                  />
+                  {/* Month name */}
+                  <span
+                    className="absolute -top-1.5 tabular-nums"
+                    style={{
+                      left: 0,
+                      width: 22,
+                      textAlign: "right",
+                      color: isJan ? "var(--text-body-subtle)" : "var(--text-disabled)",
+                      fontWeight: isJan ? 600 : 400,
+                      fontSize: isJan ? 8 : 7,
+                    }}
+                  >
+                    {isJan ? year : month}
+                  </span>
+                </>
+              )}
             </div>
           ))}
 
           {/* Capsules — content anchored at bottom, height = duration */}
           {overviewPositions.map(({ capsule, topY: adjTopY, h: capsuleH, w, laneX, idx: i }) => {
-            const oDotSize = capsule.isCurrent ? 11 : 8;
-            const oDotGap = 4;
-            const oNumSize = 14;
+            const hc = mapHouseColor(capsule.color);
+            const oDotSize = capsule.isCurrent ? 8 : 6;
+            const oDotGap = 3;
             const oCapPad = w / 2;
             return (
             <motion.button
               key={capsule.id}
               type="button"
               onClick={() => onTapCapsule(capsule)}
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={false}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.08 + i * 0.02, type: "spring", stiffness: 250, damping: 25 }}
               className="absolute"
               style={{
                 left: laneX,
@@ -1217,15 +1343,15 @@ function OverviewView({
                 width: w,
                 height: capsuleH,
                 borderRadius: w / 2,
-                background: capsule.color
+                background: hc
                   ? capsule.isCurrent
-                    ? `color-mix(in srgb, ${capsule.color} 40%, var(--bg-secondary))`
-                    : `color-mix(in srgb, ${capsule.color} 25%, var(--bg-secondary))`
+                    ? `color-mix(in srgb, ${hc} 40%, var(--bg-secondary))`
+                    : `color-mix(in srgb, ${hc} 25%, var(--bg-secondary))`
                   : capsule.isCurrent
                     ? "color-mix(in srgb, var(--brand-7) 35%, var(--bg-secondary))"
                     : "color-mix(in srgb, var(--brand-6) 22%, var(--bg-secondary))",
-                border: capsule.color
-                  ? `1px solid color-mix(in srgb, ${capsule.color} ${capsule.isCurrent ? "50" : "25"}%, transparent)`
+                border: hc
+                  ? `1px solid color-mix(in srgb, ${hc} ${capsule.isCurrent ? "50" : "25"}%, transparent)`
                   : capsule.isCurrent
                     ? "1px solid color-mix(in srgb, var(--brand-8) 40%, transparent)"
                     : "1px solid color-mix(in srgb, var(--brand-6) 15%, transparent)",
@@ -1241,7 +1367,7 @@ function OverviewView({
                   style={{
                     borderRadius: w / 2,
                     background:
-                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${capsule.color ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
+                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
                   }}
                 />
               )}
@@ -1250,21 +1376,6 @@ function OverviewView({
                 className="absolute bottom-0 left-0 right-0 flex flex-col items-center"
                 style={{ paddingBottom: oCapPad - 2, gap: oDotGap }}
               >
-                {capsule.tier === "toctoctoc" && capsule.tierOccurrence > 0 && (
-                <span
-                  className="font-semibold tabular-nums leading-none"
-                  style={{
-                    color: "var(--text-heading)",
-                    fontSize: capsule.isCurrent ? 14 : 10,
-                    height: oNumSize,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {capsule.tierOccurrence}
-                </span>
-                )}
                 {capsule.planets.map((planet) => {
                   const pc = planetConfig[planet];
                   const dc = capsule.isFuture ? "rgba(255, 255, 255, 0.6)" : pc.color;
@@ -1286,34 +1397,49 @@ function OverviewView({
             );
           })}
 
-          {/* Birth Easter egg — bottom of the timeline */}
+          {/* Birth Easter egg — just above the age-0 bar */}
           <div
-            className="absolute left-0 right-0 flex flex-col items-center gap-2"
+            className="absolute left-0 right-0 flex flex-col items-center"
             style={{
-              top: getTotalHeight() - TIMELINE_PAD + 20,
+              top: getTotalHeight() - BIRTH_EASTER_EGG_PAD + 60,
             }}
           >
-            <div
-              className="h-[1px] w-16"
-              style={{
-                background: "linear-gradient(90deg, transparent, var(--accent-purple), transparent)",
-              }}
-            />
+            {/* Message — the easter egg */}
             <p
-              className="max-w-[200px] text-center text-[9px] leading-relaxed"
-              style={{ color: "color-mix(in srgb, var(--accent-purple) 50%, transparent)" }}
+              className="max-w-[240px] text-center leading-relaxed"
+              style={{
+                fontSize: 13,
+                color: "color-mix(in srgb, var(--accent-purple) 80%, transparent)",
+                fontWeight: 400,
+              }}
             >
               You weren&apos;t even crawling yet.
               <br />
               But the planets were already busy.
             </p>
+
+            {/* Divider line */}
             <div
-              className="h-1.5 w-1.5 rounded-full"
+              className="w-10 mt-5 mb-3"
               style={{
-                background: "var(--accent-purple)",
+                height: 1,
+                background: "linear-gradient(90deg, transparent, var(--accent-purple), transparent)",
                 opacity: 0.3,
               }}
             />
+
+            {/* Birth date — secondary, quiet */}
+            <p
+              className="font-display tracking-tight"
+              style={{
+                fontSize: 14,
+                fontWeight: 300,
+                color: "color-mix(in srgb, var(--accent-purple) 45%, transparent)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {birthDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </p>
           </div>
         </div>
       </div>
@@ -1542,6 +1668,15 @@ export function MomentumTimelineV2() {
   const currentCapsule = useMemo(() => buildCurrentCapsule(timelinePhases), [timelinePhases]);
   const allCapsules = useMemo(() => buildCapsules(timelinePhases), [timelinePhases]);
 
+  // DEBUG: tier distribution — remove after verification
+  useMemo(() => {
+    const dist = { toc: 0, toctoc: 0, toctoctoc: 0 };
+    allCapsules.forEach(c => dist[c.tier]++);
+    const scores = allCapsules.map(c => c.phases[0]?.score ?? 0);
+    const scoreDist = { s1: scores.filter(s => s === 1).length, s2: scores.filter(s => s === 2).length, s3: scores.filter(s => s === 3).length, s4: scores.filter(s => s >= 4).length };
+    console.log("[TIER DIST]", JSON.stringify(dist), "scores:", JSON.stringify(scoreDist), "total:", allCapsules.length);
+  }, [allCapsules]);
+
   const handleTapCapsule = useCallback((capsule: CapsuleData) => {
     if (capsule.isFuture) return;
     setSelectedCapsule(capsule);
@@ -1639,31 +1774,45 @@ export function MomentumTimelineV2() {
           className="pointer-events-none absolute left-0 right-0 z-20"
           style={{ top: "calc(50% + 20px)" }}
         >
-          {/* Thin horizontal line — full width, subtle */}
+          {/* Thin horizontal line — full width, mauve accent */}
           <div
             style={{
               height: 1,
               marginLeft: 56,
               marginRight: 12,
               background: isToday
-                ? "linear-gradient(90deg, rgba(124,107,191,0.1), rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent)"
-                : "linear-gradient(90deg, rgba(124,107,191,0.08), rgba(124,107,191,0.25) 30%, rgba(124,107,191,0.25) 70%, transparent)",
+                ? "linear-gradient(90deg, color-mix(in srgb, var(--accent-purple) 10%, transparent), color-mix(in srgb, var(--accent-purple) 60%, transparent) 30%, color-mix(in srgb, var(--accent-purple) 60%, transparent) 70%, transparent)"
+                : "linear-gradient(90deg, color-mix(in srgb, var(--accent-purple) 8%, transparent), color-mix(in srgb, var(--accent-purple) 25%, transparent) 30%, color-mix(in srgb, var(--accent-purple) 25%, transparent) 70%, transparent)",
               transition: "all 0.5s ease-out",
             }}
           />
-          {/* Age — positioned right, vertically centered on the line */}
+          {/* Age sticker — floats above capsules */}
           <div
-            className="absolute right-3 flex items-baseline gap-1"
-            style={{ top: -9 }}
+            className="absolute right-2 flex items-center justify-center rounded-full"
+            style={{
+              top: -14,
+              minWidth: 32,
+              height: 28,
+              padding: "0 10px",
+              background: isToday
+                ? "color-mix(in srgb, var(--accent-purple) 25%, rgba(27, 21, 53, 0.95))"
+                : "rgba(27, 21, 53, 0.9)",
+              border: `1px solid ${isToday
+                ? "color-mix(in srgb, var(--accent-purple) 40%, transparent)"
+                : "color-mix(in srgb, var(--accent-purple) 15%, transparent)"}`,
+              backdropFilter: "blur(8px)",
+              transition: "all 0.5s ease-out",
+            }}
           >
             <span
               className="font-display tabular-nums leading-none"
               style={{
-                color: isToday ? "rgba(255,255,255,0.9)" : "rgba(124,107,191,0.5)",
-                fontSize: 18,
-                fontWeight: 300,
+                color: isToday
+                  ? "color-mix(in srgb, var(--accent-purple) 90%, white)"
+                  : "color-mix(in srgb, var(--accent-purple) 60%, white)",
+                fontSize: 14,
+                fontWeight: 500,
                 letterSpacing: "-0.02em",
-                transition: "color 0.5s ease-out",
               }}
             >
               {visibleAge}

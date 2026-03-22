@@ -17,8 +17,9 @@ export interface MomentumPhase {
   startDate: string; // ISO date
   endDate?: string; // null = ongoing or future
   durationWeeks: number;
-  intensity: number; // 0-100 — determines tier: <70 TOC, 70-84 TOCTOC, 85+ TOCTOCTOC
-  planets: PlanetKey[]; // 1-5 planetary transits active during this phase (TOCTOCTOC min 2)
+  intensity: number; // 0-100 — visual intensity
+  score?: number; // 1-4 raw API score — determines tier directly (1=TOC, 2=TOCTOC, 3-4=TOCTOCTOC)
+  planets: PlanetKey[]; // 1-5 planetary transits active during this phase
   status: "past" | "current" | "future";
   guidance?: string; // premium-only
   keyInsight?: string;

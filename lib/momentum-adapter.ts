@@ -136,6 +136,7 @@ export function yearDataToPhases(
       endDate,
       durationWeeks,
       intensity,
+      score: rawMax <= 4 ? rawMax : (rawMax >= 80 ? 4 : rawMax >= 60 ? 3 : rawMax >= 40 ? 2 : 1),
       planets,
       status,
       keyInsight: meta.keyInsight,
@@ -195,12 +196,11 @@ export function appDataToPhases(
       return aDate.localeCompare(bDate);
     });
 
-  // Score >= 2 as boudins. Score 1 skipped (too noisy, 84 events).
-  // Score 2 = small boudins (1027), Score 3-4 = prominent boudins (344+16).
+  // All scores included: 1 = TOC (thin), 2 = TOCTOC (medium), 3-4 = TOCTOCTOC (large)
   const groups: RawPhase[] = [];
 
   for (const s of sorted) {
-    if (s.score < 2) continue;
+    if (s.score < 1) continue;
     const startDate = s.startDate || s.date || todayStr;
     const endDate = s.endDate || startDate;
     const startMs = new Date(startDate).getTime();
@@ -294,6 +294,7 @@ export function appDataToPhases(
       endDate,
       durationWeeks,
       intensity: overallIntensity,
+      score: g.maxScore, // raw API score 1-4 — used for tier sizing
       planets: planetList,
       status,
       keyInsight: g.sausageCount >= 3

@@ -128,17 +128,17 @@ interface PlanetMeta {
 }
 
 export const planetConfig: Record<PlanetKey, PlanetMeta> = {
-  sun:             { label: "Soleil",          color: "#E5A940", symbol: "☉" },
-  moon:            { label: "Lune",            color: "#B0B8C8", symbol: "☽" },
-  mercury:         { label: "Mercure",         color: "#4BBFAF", symbol: "☿" },
-  venus:           { label: "Vénus",           color: "#D87EA0", symbol: "♀" },
-  mars:            { label: "Mars",            color: "#D06050", symbol: "♂" },
-  jupiter:         { label: "Jupiter",         color: "#5B7FC2", symbol: "♃" },
-  saturn:          { label: "Saturne",         color: "#C49B50", symbol: "♄" },
-  uranus:          { label: "Uranus",          color: "#50C4D6", symbol: "♅" },
-  neptune:         { label: "Neptune",         color: "#8B6FBF", symbol: "♆" },
-  "solar-eclipse": { label: "Éclipse solaire", color: "#2A2040", symbol: "●" },
-  "lunar-eclipse": { label: "Éclipse lunaire", color: "#9E4070", symbol: "◐" },
+  sun:             { label: "Soleil",          color: "#C9A86C", symbol: "☉" },  // warm gold — muted
+  moon:            { label: "Lune",            color: "#A8B0C4", symbol: "☽" },  // silver mauve
+  mercury:         { label: "Mercure",         color: "#8AADA6", symbol: "☿" },  // sage teal
+  venus:           { label: "Vénus",           color: "#B88A9E", symbol: "♀" },  // dusty rose
+  mars:            { label: "Mars",            color: "#B87A76", symbol: "♂" },  // muted terracotta
+  jupiter:         { label: "Jupiter",         color: "#8A9ABF", symbol: "♃" },  // soft periwinkle
+  saturn:          { label: "Saturne",         color: "#A89478", symbol: "♄" },  // warm taupe
+  uranus:          { label: "Uranus",          color: "#7AAAB5", symbol: "♅" },  // dusty cyan
+  neptune:         { label: "Neptune",         color: "#9B85C4", symbol: "♆" },  // lavender — on-brand
+  "solar-eclipse": { label: "Éclipse solaire", color: "#3D3055", symbol: "●" },  // deep purple
+  "lunar-eclipse": { label: "Éclipse lunaire", color: "#A07090", symbol: "◐" },  // mauve pink
 };
 
 export const PLANET_KEYS: PlanetKey[] = [
