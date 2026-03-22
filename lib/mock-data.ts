@@ -593,12 +593,6 @@ export const mockConnections: Connection[] = [
     connectedSince: "2026-02-14T00:00:00Z",
     todayAlignment: 81, todayInsight: "Professional alignment is strong today.", score: 81,
   },
-  {
-    id: "conn_chris", name: "Chris", initial: "C",
-    relationship: "family", status: "pending",
-    connectedSince: "2026-03-15T00:00:00Z",
-    todayAlignment: 0, todayInsight: "Pending connection.", score: 0,
-  },
 ];
 
 // ─── BACKWARD COMPAT EXPORTS (old pre-TocToc API shapes) ─────
