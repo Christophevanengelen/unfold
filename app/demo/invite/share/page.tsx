@@ -50,7 +50,7 @@ const shareButtons = [
 export default function InviteShare() {
   const [copied, setCopied] = useState(false);
 
-  const inviteMessage = `Hey Jordan, I started tracking my daily momentum on Unfold. I'd love to see how our days compare. Join me: unfold.app/invite/${mockUser.inviteCode}`;
+  const inviteMessage = `I use Unfold to see my timing signals. Compare our timelines: unfold.app/invite/${mockUser.inviteCode}`;
 
   return (
     <motion.div
@@ -61,7 +61,7 @@ export default function InviteShare() {
     >
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <Link href="/demo/invite" className="flex items-center gap-1 text-sm text-text-body-subtle hover:text-text-body">
+        <Link href="/demo/compatibility" className="flex items-center gap-1 text-sm text-text-body-subtle hover:text-text-body">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
@@ -69,35 +69,41 @@ export default function InviteShare() {
           Back
         </Link>
         <h1 className="mt-4 font-display text-2xl font-bold text-text-heading">
-          Share your invite
+          Share your code
         </h1>
+        <p className="mt-1 text-sm text-text-body-subtle">
+          Send this to anyone you want to compare timelines with.
+        </p>
       </motion.div>
 
-      {/* Message preview card */}
+      {/* Big code display */}
       <motion.div
-        className="mt-6 rounded-2xl border border-border-brand bg-bg-brand-soft p-4"
+        className="mt-8 rounded-2xl py-6 text-center"
+        style={{
+          background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)",
+        }}
         variants={fadeInUp}
       >
-        <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bg-brand">
-            <span className="font-display text-sm font-bold text-text-on-brand">
-              {mockUser.name.charAt(0)}
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-text-brand">{mockUser.name}&apos;s invite</p>
-            <p className="mt-1 text-sm leading-relaxed text-text-body">
-              {inviteMessage}
-            </p>
-          </div>
-        </div>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-body-subtle">Your code</p>
+        <p className="mt-2 font-mono text-2xl font-bold tracking-[0.15em]" style={{ color: "var(--accent-purple)" }}>
+          {mockUser.inviteCode}
+        </p>
+      </motion.div>
+
+      {/* Message preview */}
+      <motion.div
+        className="mt-4 rounded-2xl px-4 py-3"
+        style={{ background: "var(--bg-secondary)" }}
+        variants={fadeInUp}
+      >
+        <p className="text-xs text-text-body-subtle leading-relaxed">
+          {inviteMessage}
+        </p>
       </motion.div>
 
       {/* Share buttons */}
-      <motion.div
-        className="mt-6 grid grid-cols-2 gap-3"
-        variants={fadeInUp}
-      >
+      <motion.div className="mt-5 grid grid-cols-2 gap-3" variants={fadeInUp}>
         {shareButtons.map((btn) => (
           <motion.button
             key={btn.label}
@@ -116,24 +122,14 @@ export default function InviteShare() {
         ))}
       </motion.div>
 
-      {/* Invite code */}
-      <motion.div
-        className="mt-6 text-center"
-        variants={fadeInUp}
-      >
-        <p className="text-xs text-text-body-subtle">Your invite code</p>
-        <p className="mt-1 text-lg font-bold tracking-wider text-text-brand">
-          {mockUser.inviteCode}
-        </p>
-      </motion.div>
-
-      {/* Continue */}
+      {/* Back to connections */}
       <motion.div className="mt-auto pt-6" variants={fadeInUp}>
         <Link
-          href="/demo/invite/waiting"
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform hover:scale-[1.02] active:scale-95"
+          href="/demo/compatibility"
+          className="flex w-full items-center justify-center rounded-full py-3.5 text-sm font-semibold transition-transform active:scale-95"
+          style={{ border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)", color: "var(--accent-purple)" }}
         >
-          Done, invite sent
+          Back to connections
         </Link>
       </motion.div>
     </motion.div>
