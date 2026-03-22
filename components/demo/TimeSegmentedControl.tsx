@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Lock } from "lucide-react";
+import { Lock } from "flowbite-react-icons/outline";
 
 export type TimeView = "yesterday" | "today" | "tomorrow";
 
@@ -42,7 +42,6 @@ export function TimeSegmentedControl({
             {seg.premium && (
               <Lock
                 size={10}
-                strokeWidth={2}
                 className="text-text-body-subtle"
               />
             )}

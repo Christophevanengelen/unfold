@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Heart, Clock } from "lucide-react";
+import { Heart, Clock } from "flowbite-react-icons/outline";
 
 const navItems = [
   {
@@ -46,7 +46,6 @@ export function BottomNav() {
             <div className="relative">
               <Icon
                 size={20}
-                strokeWidth={isActive ? 2 : 1.5}
                 className={`transition-all duration-200 ${
                   isActive ? "text-accent-purple" : "text-text-body-subtle"
                 }`}

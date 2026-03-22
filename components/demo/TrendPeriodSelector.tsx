@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { Lock } from "flowbite-react-icons/outline";
 
 export type Period = "7D" | "30D" | "90D" | "1Y";
 
@@ -54,7 +54,6 @@ export function TrendPeriodSelector({
             {isLocked && (
               <Lock
                 size={8}
-                strokeWidth={2}
                 style={{ color: "var(--text-body-subtle)" }}
               />
             )}

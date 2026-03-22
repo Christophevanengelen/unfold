@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Share2 } from "lucide-react";
+import { ShareNodes, ChevronRight } from "flowbite-react-icons/outline";
 import { getConnections, getMyInviteCode, type RealConnection } from "@/lib/connections-store";
 
 const relationshipColors: Record<string, string> = {
@@ -42,7 +42,7 @@ export default function ConnectionsPage() {
       {/* Header */}
       <div className="mb-1 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-lg font-bold text-text-heading">Connexions</h1>
+          <h1 className="font-display text-2xl font-bold text-text-heading">Connexions</h1>
           <p className="text-xs text-text-body-subtle">
             {connections.length > 0
               ? `${connections.length} connecté${connections.length !== 1 ? "s" : ""}`
@@ -80,10 +80,7 @@ export default function ConnectionsPage() {
                      connection.relationship === "family" ? "Famille" : "Collègue"}
                   </p>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="1.5" className="text-text-body-subtle flex-shrink-0">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
+                <ChevronRight size={16} className="text-text-body-subtle flex-shrink-0" />
               </Link>
             );
           })}
@@ -96,7 +93,7 @@ export default function ConnectionsPage() {
           style={{ background: "var(--surface-subtle)" }}>
           <div className="h-12 w-12 rounded-full flex items-center justify-center"
             style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}>
-            <Share2 size={20} style={{ color: "var(--accent-purple)" }} />
+            <ShareNodes size={20} style={{ color: "var(--accent-purple)" }} />
           </div>
           <p className="text-sm text-text-body">
             Partagez votre code ou entrez celui d&apos;un proche pour comparer vos rythmes.
@@ -116,7 +113,7 @@ export default function ConnectionsPage() {
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
             style={{ background: "var(--border-tint-light)" }}>
-            <Share2 size={16} strokeWidth={1.5} style={{ color: "var(--accent-purple)" }} />
+            <ShareNodes size={16} style={{ color: "var(--accent-purple)" }} />
           </div>
           <div className="flex-1">
             <p className="text-[13px] font-semibold text-text-heading">Partager votre code</p>

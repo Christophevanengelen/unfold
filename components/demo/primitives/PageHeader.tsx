@@ -4,7 +4,7 @@
  */
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "flowbite-react-icons/outline";
 
 interface PageHeaderProps {
   backHref: string;

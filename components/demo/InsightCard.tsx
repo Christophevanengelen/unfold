@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Sparkles } from "lucide-react";
+import { Star } from "flowbite-react-icons/outline";
 import { fadeInUp } from "@/lib/animations";
 
 interface InsightCardProps {
@@ -25,9 +25,8 @@ export function InsightCard({ text }: InsightCardProps) {
       />
 
       <div className="flex gap-2.5 px-5 py-4">
-        <Sparkles
+        <Star
           size={16}
-          strokeWidth={1.5}
           className="mt-0.5 shrink-0 text-accent-purple"
         />
         <div>

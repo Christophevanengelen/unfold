@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { MiniStatusBar } from "@/components/ui/MiniStatusBar";
-import { BottomNav } from "@/components/ui/BottomNav";
+import { MockBottomNav } from "@/components/ui/MockBottomNav";
 import { planetConfig, type PlanetKey } from "@/lib/domain-config";
 import type { TranslationMap } from "@/lib/i18n";
 
@@ -274,7 +274,7 @@ export function DesignedForClarity({ translations }: DesignedForClarityProps) {
 
                 {/* Spacer to push BottomNav down */}
                 <div className="flex-1" />
-                <BottomNav active="home" />
+                <MockBottomNav active="home" />
 
                 {/* Planet detail sheet — opens for any selected planet */}
                 <AnimatePresence mode="wait">

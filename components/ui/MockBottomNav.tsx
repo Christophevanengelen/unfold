@@ -3,7 +3,7 @@
  * 3 tabs: Home, Timeline, Match (with notification badge).
  * Pass `active` to highlight a specific tab.
  */
-export function BottomNav({ active = "timeline" }: { active?: "home" | "timeline" | "match" }) {
+export function MockBottomNav({ active = "timeline" }: { active?: "home" | "timeline" | "match" }) {
   const color = (tab: string) => tab === active ? "var(--accent-purple)" : "var(--text-disabled)";
 
   return (

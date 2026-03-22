@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { MiniStatusBar } from "@/components/ui/MiniStatusBar";
-import { BottomNav } from "@/components/ui/BottomNav";
+import { MockBottomNav } from "@/components/ui/MockBottomNav";
 import { ViewToggle } from "@/components/ui/ViewToggle";
 import { MonthLabel } from "@/components/ui/MonthLabel";
 import type { TranslationMap } from "@/lib/i18n";
@@ -258,7 +258,7 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
                   />
                 </div>
 
-                <BottomNav active="timeline" />
+                <MockBottomNav active="timeline" />
               </div>
             </div>
           </div>

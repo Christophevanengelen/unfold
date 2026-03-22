@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { MiniStatusBar } from "@/components/ui/MiniStatusBar";
-import { BottomNav } from "@/components/ui/BottomNav";
+import { MockBottomNav } from "@/components/ui/MockBottomNav";
 import type { TranslationMap } from "@/lib/i18n";
 
 function t(translations: TranslationMap, key: string, fallback?: string): string {
@@ -262,7 +262,7 @@ export function SmartAlerts({ translations }: SmartAlertsProps) {
                   </motion.div>
                 </div>
 
-                <BottomNav active="home" />
+                <MockBottomNav active="home" />
               </div>
             </div>
           </div>
