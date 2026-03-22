@@ -8,7 +8,7 @@ import { CheckCircle } from "flowbite-react-icons/solid";
 import { useMomentum } from "@/lib/momentum-store";
 import { saveBirthData, resolveCity, type BirthData } from "@/lib/birth-data";
 import type { OnboardingFormData } from "./StepInput";
-import type { MomentumPhase } from "@/lib/mock-timeline";
+import type { MomentumPhase } from "@/types/momentum";
 import { planetConfig } from "@/lib/domain-config";
 
 const statusLines = [

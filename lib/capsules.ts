@@ -6,7 +6,7 @@
  */
 
 import type { DomainKey, PlanetKey } from "@/lib/domain-config";
-import type { MomentumPhase } from "@/lib/mock-timeline";
+import type { MomentumPhase } from "@/types/momentum";
 
 // ─── Types ──────────────────────────────────────────────────
 export type Tier = "toc" | "toctoc" | "toctoctoc";

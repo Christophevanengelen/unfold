@@ -20,7 +20,7 @@ import { getBirthData, getBirthDataSync, saveBirthData, type BirthData } from "@
 import { migrateFromLocalStorage } from "@/lib/storage";
 import { fetchYearData, fetchAppData } from "@/lib/momentum-api";
 import { yearDataToPhases, appDataToPhases } from "@/lib/momentum-adapter";
-import type { MomentumPhase } from "@/lib/mock-timeline";
+import type { MomentumPhase } from "@/types/momentum";
 
 // ─── Context shape ──────────────────────────────────────────
 

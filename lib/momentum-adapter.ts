@@ -6,7 +6,7 @@
  * No visual components change — only the data source changes.
  */
 
-import type { MomentumPhase } from "@/lib/mock-timeline";
+import type { MomentumPhase } from "@/types/momentum";
 import type { ApiEvent, MonthData, TocTocYearResponse, SausageData, TocTocAppResponse } from "@/lib/momentum-api";
 import {
   inferDomain,
