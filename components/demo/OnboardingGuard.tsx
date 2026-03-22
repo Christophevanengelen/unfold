@@ -6,8 +6,7 @@ import { useMomentum } from "@/lib/momentum-store";
 
 /**
  * Redirects to /demo/onboarding if no birth data exists.
- * Wraps all demo pages except the onboarding flow itself.
- * Shows nothing until real data is available — no flash.
+ * Shows a smooth loading skeleton while data loads — no blank flash.
  */
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { needsOnboarding, state, isLive, timelinePhases } = useMomentum();
@@ -19,23 +18,48 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     }
   }, [needsOnboarding, router]);
 
-  // Block render until we have real data loaded
-  // idle = haven't checked birth data yet
-  // loading = API call in progress
-  // needsOnboarding = about to redirect
-  // no phases yet = data not arrived
-  if (state === "idle" || state === "loading" || needsOnboarding) {
-    return null;
+  // Redirect in progress
+  if (needsOnboarding) return null;
+
+  // Data is loading — show smooth skeleton instead of blank
+  if (state === "idle" || state === "loading") {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div
+          className="h-5 w-5 rounded-full border-2 border-transparent animate-spin"
+          style={{
+            borderTopColor: "var(--accent-purple)",
+            borderRightColor: "var(--accent-purple)",
+            opacity: 0.5,
+          }}
+        />
+      </div>
+    );
   }
 
-  // API error — let user retry via onboarding
+  // API error — let user retry
   if (state === "error") {
-    return null; // error state already triggers needsOnboarding or shows error in UI
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-sm text-text-body-subtle">Connexion perdue</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="rounded-full px-4 py-2 text-xs font-medium"
+          style={{ background: "var(--surface-light)", color: "var(--accent-purple)" }}
+        >
+          Réessayer
+        </button>
+      </div>
+    );
   }
 
-  // Data loaded but empty (shouldn't happen with real API, but safety net)
+  // Data loaded but empty
   if (timelinePhases.length === 0) {
-    return null;
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-sm text-text-body-subtle">Aucun signal détecté</p>
+      </div>
+    );
   }
 
   return <>{children}</>;

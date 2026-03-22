@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
 import { scaleIn } from "@/lib/animations";
@@ -29,6 +29,12 @@ const statusLines = [
 export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   const router = useRouter();
   const { loadSignals, state, phases, isLive } = useMomentum();
+
+  // Prefetch timeline chunk + route while user watches the reveal
+  useEffect(() => {
+    import("@/components/demo/MomentumTimelineV2").catch(() => {});
+    router.prefetch("/demo/timeline");
+  }, [router]);
   const [completed, setCompleted] = useState<number[]>([]);
   const [visible, setVisible] = useState<number[]>([0]);
   const [error, setError] = useState<string | null>(null);

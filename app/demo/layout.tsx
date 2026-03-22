@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { BottomNav } from "@/components/demo/BottomNav";
@@ -32,6 +32,19 @@ export default function DemoLayout({
   const isTimeline = pathname === "/demo/timeline";
   // Full-bleed routes manage their own padding and scroll
   const isFullBleed = isHome || isTimeline;
+
+  // Smooth fade transition on route change
+  const [pageReady, setPageReady] = useState(true);
+  const prevPath = useRef(pathname);
+  useEffect(() => {
+    if (prevPath.current !== pathname) {
+      setPageReady(false);
+      prevPath.current = pathname;
+      // Let CSS opacity transition play, then reveal
+      const t = setTimeout(() => setPageReady(true), 20);
+      return () => clearTimeout(t);
+    }
+  }, [pathname]);
 
   // SSR: render only the dark background — no content, no flash
   if (!mounted) {
@@ -70,6 +83,8 @@ export default function DemoLayout({
               "--safe-top": `${SAFE_TOP}px`,
               "--safe-bottom": `${SAFE_BOTTOM}px`,
               ...(!isFullBleed ? { paddingTop: `${SAFE_TOP}px`, paddingBottom: `${SAFE_BOTTOM}px` } : {}),
+              opacity: pageReady ? 1 : 0,
+              transition: "opacity var(--transition-page, 180ms ease-out)",
             } as React.CSSProperties}
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}

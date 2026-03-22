@@ -118,6 +118,9 @@
   --color-logo-light: #DACAFF;
   --color-logo-deep: #40306D;
 
+  /* ── View Transitions ── */
+  --transition-page: 180ms ease-out;
+
   /* ── Animations ── */
   --animate-shimmer: shimmer 1.5s ease-in-out infinite;
 }
