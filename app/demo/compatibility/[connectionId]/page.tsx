@@ -27,7 +27,7 @@ interface TimingWindow {
 
 // ─── Helpers ────────────────────────────────────────────────
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH_NAMES_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
 function eventToPlanet(ev: ApiEvent): PlanetKey {
   const map: Record<string, PlanetKey> = {
@@ -49,19 +49,42 @@ function eventToPlanet(ev: ApiEvent): PlanetKey {
 
 function eventToTitle(ev: ApiEvent): string {
   if (ev.category === "zr") {
-    if (ev.lotType === "fortune") return "Circumstances shift";
-    if (ev.lotType === "spirit") return "Vocation activates";
-    if (ev.lotType === "eros") return "Desire intensifies";
-    return "Life peak";
+    if (ev.lotType === "fortune") return "Vos circonstances bougent";
+    if (ev.lotType === "spirit") return "Votre direction se clarifie";
+    if (ev.lotType === "eros") return "L\u2019attraction s\u2019intensifie";
+    return "Pic d\u2019\u00e9nergie";
   }
-  if (ev.category === "eclipse") return "Eclipse reset";
-  // Transit/station: simplify
-  const type = ev.label ?? "Signal active";
-  return type.length > 40 ? type.slice(0, 37) + "..." : type;
+  if (ev.category === "eclipse") return "Tournant \u00e9motionnel";
+  // Transit/station: translate to French
+  const type = ev.label ?? "Signal actif";
+  const translated = translateTransitLabel(type);
+  return translated.length > 40 ? translated.slice(0, 37) + "..." : translated;
+}
+
+function translateTransitLabel(label: string): string {
+  const planetMap: Record<string, string> = {
+    "Pluto": "Pluton", "Neptune": "Neptune", "Uranus": "Uranus",
+    "Saturn": "Saturne", "Jupiter": "Jupiter", "Mars": "Mars",
+    "Venus": "V\u00e9nus", "Mercury": "Mercure", "Sun": "Soleil", "Moon": "Lune",
+  };
+  const aspectMap: Record<string, string> = {
+    "conjunction": "conjonction", "square": "carr\u00e9",
+    "opposition": "opposition", "trine": "trigone",
+  };
+
+  let result = label;
+  for (const [en, fr] of Object.entries(planetMap)) {
+    result = result.replaceAll(en, fr);
+  }
+  for (const [en, fr] of Object.entries(aspectMap)) {
+    result = result.replaceAll(en, fr);
+  }
+  result = result.replaceAll("natal", "natal");
+  return result;
 }
 
 function eventToInsight(titleA: string, titleB: string): string {
-  return `Both charts are active. Your timing aligns for the next few weeks.`;
+  return `Vos rythmes s\u2019alignent. C\u2019est le bon moment pour agir ensemble.`;
 }
 
 function getTierFromScore(score: number): { tier: "SUBTLE" | "CLEAR" | "PEAK"; color: string } {
@@ -98,8 +121,8 @@ function compareTimelines(
     const planetB = eventToPlanet(topB);
 
     windows.push({
-      title: isActive ? "Momentum alignment" : `${MONTH_NAMES[month - 1]} alignment`,
-      dateRange: `${MONTH_NAMES[month - 1]} ${year}`,
+      title: isActive ? "Alignement de rythmes" : `Alignement ${MONTH_NAMES_FR[month - 1]}`,
+      dateRange: `${MONTH_NAMES_FR[month - 1]} ${year}`,
       daysLeft,
       status: isActive ? "active" : "upcoming",
       tier,
@@ -120,37 +143,37 @@ function compareTimelines(
 
 const FALLBACK_WINDOWS: TimingWindow[] = [
   {
-    title: "Relationship deepening",
-    dateRange: "Mar 8 \u2014 Apr 15, 2026",
+    title: "Rapprochement",
+    dateRange: "8 Mar \u2014 15 Avr 2026",
     daysLeft: 25,
     status: "active",
     tier: "PEAK",
     tierColor: "#D89EA0",
-    you: { description: "Jupiter activates your partnership house", planet: "jupiter" },
-    them: { description: "Venus enters their commitment zone", planet: "venus" },
-    insight: "Have the conversation you've been postponing. Both charts say: now.",
+    you: { description: "Une envie de vous engager plus profond\u00e9ment", planet: "jupiter" },
+    them: { description: "Un besoin de stabilit\u00e9 et d\u2019engagement", planet: "venus" },
+    insight: "C\u2019est le moment d\u2019avoir la conversation que vous repoussez.",
   },
   {
-    title: "Financial planning",
-    dateRange: "Jun 1 \u2014 Jul 12",
+    title: "Organisation financi\u00e8re",
+    dateRange: "1 Jun \u2014 12 Jul",
     daysLeft: 72,
     status: "upcoming",
     tier: "CLEAR",
     tierColor: "#6BA89A",
-    you: { description: "Saturn structures your resources", planet: "saturn" },
-    them: { description: "Jupiter expands their shared assets", planet: "jupiter" },
-    insight: "Align on money, investments, or shared projects.",
+    you: { description: "Un besoin de structurer vos ressources", planet: "saturn" },
+    them: { description: "Une envie d\u2019investir ensemble", planet: "jupiter" },
+    insight: "Alignez-vous sur l\u2019argent, les projets communs ou les investissements.",
   },
   {
-    title: "Reconnection wave",
-    dateRange: "Sep 15 \u2014 Oct 28",
+    title: "Vague de reconnexion",
+    dateRange: "15 Sep \u2014 28 Oct",
     daysLeft: 178,
     status: "upcoming",
     tier: "PEAK",
     tierColor: "#D89EA0",
-    you: { description: "Venus returns to your love sector", planet: "venus" },
-    them: { description: "Moon activates their emotional core", planet: "moon" },
-    insight: "Plan a trip or meaningful experience together. This window is rare.",
+    you: { description: "L\u2019attraction et la douceur reviennent", planet: "venus" },
+    them: { description: "Les \u00e9motions profondes s\u2019ouvrent", planet: "moon" },
+    insight: "Planifiez un moment fort ensemble. Cette fen\u00eatre est rare.",
   },
 ];
 
@@ -225,7 +248,7 @@ export default function ConnectionDetailPage() {
   if (!connection) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-text-body-subtle">Connection not found</p>
+        <p className="text-sm text-text-body-subtle">Connexion introuvable</p>
       </div>
     );
   }
@@ -240,9 +263,9 @@ export default function ConnectionDetailPage() {
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <p className="text-sm font-semibold text-text-heading">Alex & {connection.name}</p>
+          <p className="text-sm font-semibold text-text-heading">Vous & {connection.name}</p>
           <p className="text-[10px] text-text-body-subtle">
-            {loading ? "Comparing timelines..." : `${windows.length} timing window${windows.length !== 1 ? "s" : ""} ${isLive ? "" : "(demo)"}`}
+            {loading ? "Comparaison en cours..." : `${windows.length} fen\u00eatre${windows.length !== 1 ? "s" : ""} de timing ${isLive ? "" : "(d\u00e9mo)"}`}
           </p>
         </div>
       </div>
@@ -284,11 +307,11 @@ export default function ConnectionDetailPage() {
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: isActive ? w.tierColor : "var(--text-body-subtle)", opacity: isActive ? 1 : 0.4 }} />
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isActive ? w.tierColor : "var(--text-body-subtle)" }}>
-                      {isActive ? "Active now" : "Coming up"}
+                      {isActive ? "Actif maintenant" : "\u00c0 venir"}
                     </span>
                   </div>
                   <span className="text-[10px] text-text-body-subtle">
-                    {w.daysLeft} days {isActive ? "left" : ""}
+                    {w.daysLeft} jours{isActive ? " restants" : ""}
                   </span>
                 </div>
 
@@ -296,10 +319,10 @@ export default function ConnectionDetailPage() {
                   <h3 className="text-base font-bold text-text-heading mt-1">{w.title}</h3>
                   <p className="text-[11px] text-text-body-subtle mt-0.5">{w.dateRange}</p>
 
-                  {/* You + Them */}
+                  {/* Vous + Connection name */}
                   <div className="mt-3 space-y-2">
                     <div className="rounded-xl px-3.5 py-2.5" style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)" }}>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-accent-purple mb-1">You</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-accent-purple mb-1">Vous</p>
                       <p className="text-xs text-text-body">{w.you.description}</p>
                       <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium"
                         style={{ background: `color-mix(in srgb, ${youPlanet.color} 15%, transparent)`, color: youPlanet.color }}>
@@ -309,7 +332,7 @@ export default function ConnectionDetailPage() {
                     </div>
 
                     <div className="rounded-xl px-3.5 py-2.5" style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)" }}>
-                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: relColor }}>Them</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: relColor }}>{connection.name}</p>
                       <p className="text-xs text-text-body">{w.them.description}</p>
                       <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium"
                         style={{ background: `color-mix(in srgb, ${themPlanet.color} 15%, transparent)`, color: themPlanet.color }}>

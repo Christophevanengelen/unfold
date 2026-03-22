@@ -37,8 +37,8 @@ export default function ConnectionsPage() {
       {/* Header */}
       <motion.div className="mb-1 flex items-center justify-between" variants={fadeInUp}>
         <div>
-          <h1 className="font-display text-lg font-bold text-text-heading">Connections</h1>
-          <p className="text-xs text-text-body-subtle">{connected.length} connected</p>
+          <h1 className="font-display text-lg font-bold text-text-heading">Connexions</h1>
+          <p className="text-xs text-text-body-subtle">{connected.length} connecté{connected.length !== 1 ? "s" : ""}</p>
         </div>
       </motion.div>
 
@@ -95,8 +95,8 @@ export default function ConnectionsPage() {
             <Share2 size={16} strokeWidth={1.5} style={{ color: "var(--accent-purple)" }} />
           </div>
           <div className="flex-1">
-            <p className="text-[13px] font-semibold text-text-heading">Share your code</p>
-            <p className="text-[11px] text-text-body-subtle">Invite someone to compare timelines</p>
+            <p className="text-[13px] font-semibold text-text-heading">Partager votre code</p>
+            <p className="text-[11px] text-text-body-subtle">Invitez quelqu&apos;un à comparer vos rythmes</p>
           </div>
           <span className="text-xs font-mono font-semibold tracking-wider" style={{ color: "var(--accent-purple)" }}>
             {mockUser.inviteCode}
@@ -110,7 +110,7 @@ export default function ConnectionsPage() {
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-transform active:scale-[0.98]"
             style={{ border: "1px solid color-mix(in srgb, var(--accent-purple) 20%, transparent)", color: "var(--accent-purple)" }}
           >
-            Enter a received code
+            Entrer un code reçu
           </button>
         ) : (
           <motion.div
@@ -120,7 +120,7 @@ export default function ConnectionsPage() {
             animate={{ opacity: 1, y: 0 }}
           >
             <p className="text-[10px] font-semibold uppercase tracking-widest text-text-body-subtle mb-2">
-              Enter their code
+              Entrez leur code
             </p>
             <div className="flex gap-2">
               <input
@@ -137,7 +137,7 @@ export default function ConnectionsPage() {
                 className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all disabled:opacity-30"
                 style={{ background: "var(--accent-purple)" }}
               >
-                Connect
+                Connecter
               </button>
             </div>
           </motion.div>
