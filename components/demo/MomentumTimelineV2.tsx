@@ -32,7 +32,7 @@ interface CapsuleData {
 
 // ─── Constants ──────────────────────────────────────────────
 const LANE_COUNT = 5;
-const PX_PER_MONTH = 28; // pixels per month — readable scale
+const PX_PER_MONTH = 40; // pixels per month — more space for temporal accuracy
 const LANE_SPACING = 16;
 
 // Tier thresholds & widths
