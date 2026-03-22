@@ -30,7 +30,7 @@ interface CapsuleData {
 }
 
 // ─── Constants ──────────────────────────────────────────────
-const LANE_COUNT = 3;
+const LANE_COUNT = 5;
 const PX_PER_MONTH = 28; // pixels per month — readable scale
 const LANE_SPACING = 16;
 
@@ -41,9 +41,9 @@ function getTier(intensity: number): Tier {
   return "toc";
 }
 function getTierLane(tier: Tier): number {
-  if (tier === "toc") return 0;       // left
-  if (tier === "toctoc") return 1;    // middle
-  return 2;                            // right
+  if (tier === "toc") return 0;           // far left (multiple small ones here)
+  if (tier === "toctoc") return 2;        // center-left
+  return 4;                                // far right (rare, big ones)
 }
 function getTierWidth(tier: Tier): number {
   if (tier === "toc") return 36;
