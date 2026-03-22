@@ -103,7 +103,10 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
       setIsLoadingLifetime(true);
       fetchAppData(bd)
         .then((appResponse) => {
-          if (appResponse?.data?.success && appResponse.data.allSausages?.length) {
+          // API response may be nested: .data.data.allSausages or .data.allSausages
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const appData = (appResponse?.data as any)?.data ?? appResponse?.data;
+          if (appData?.allSausages?.length) {
             const lifetimePhases = appDataToPhases(appResponse);
             if (lifetimePhases.length > 0) {
               setTimelinePhases(lifetimePhases);

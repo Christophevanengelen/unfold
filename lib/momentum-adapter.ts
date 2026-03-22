@@ -176,7 +176,10 @@ interface RawPhase {
 export function appDataToPhases(
   response: TocTocAppResponse
 ): MomentumPhase[] {
-  const data = response.data;
+  // Handle double-nested API response: .data.data.allSausages or .data.allSausages
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawData = response.data as any;
+  const data = rawData?.data?.allSausages ? rawData.data : rawData;
   if (!data?.allSausages) return [];
 
   const today = new Date();
@@ -191,20 +194,20 @@ export function appDataToPhases(
       return aDate.localeCompare(bDate);
     });
 
-  // Group overlapping sausages into clusters
-  // Two sausages overlap if one starts before the other ends.
-  // Gap tolerance of 14 days — produces ~30-40 life phases for a full lifetime.
-  const GAP_MS = 14 * 86400000;
+  // Each significant sausage (score >= 2) becomes its own phase.
+  // Score 1 events are too frequent and add noise.
+  // This produces ~100-300 distinct phases for a full lifetime.
   const groups: RawPhase[] = [];
-  let current: RawPhase | null = null;
 
   for (const s of sorted) {
+    if (s.score < 2) continue; // Skip score 1 (toc) — too noisy
+
     const startDate = s.startDate || s.date || todayStr;
     const endDate = s.endDate || startDate;
     const startMs = new Date(startDate).getTime();
     const endMs = new Date(endDate).getTime();
 
-    const label = s.label || s.type || "";
+    const label = s.label || "";
     const lotType = Array.isArray(s.lotType) ? s.lotType[0] : (s.lotType as string | undefined);
     const domain = inferDomain(s.category, label, lotType);
     const planet = s.transitPlanet
@@ -212,43 +215,23 @@ export function appDataToPhases(
       : extractPlanet(label);
     const intensity = scoreToIntensity(s.score, s.cycle?.allHits);
 
-    if (current && startMs <= current.endMs + GAP_MS) {
-      // Merge into current group
-      current.endMs = Math.max(current.endMs, endMs);
-      current.maxScore = Math.max(current.maxScore, s.score);
-      current.planets.add(planet);
-      if (s.natalPoint) current.planets.add(extractPlanet(`${s.natalPoint} `));
-      const prevIntensity = current.domains.get(domain) || 0;
-      current.domains.set(domain, Math.max(prevIntensity, intensity));
-      // Keep the label of the highest-scoring event
-      if (s.score >= current.maxScore) {
-        current.bestLabel = label;
-        current.bestCategory = s.category;
-        current.bestAspect = s.aspect;
-        current.bestLotType = lotType;
-        current.bestLevel = s.level;
-      }
-      current.sausageCount++;
-    } else {
-      // Start a new group
-      if (current) groups.push(current);
-      current = {
-        startMs,
-        endMs,
-        maxScore: s.score,
-        domains: new Map([[domain, intensity]]),
-        planets: new Set([planet]),
-        bestLabel: label,
-        bestCategory: s.category,
-        bestAspect: s.aspect,
-        bestLotType: lotType,
-        bestLevel: s.level,
-        sausageCount: 1,
-      };
-      if (s.natalPoint) current.planets.add(extractPlanet(`${s.natalPoint} `));
-    }
+    const planets = new Set([planet]);
+    if (s.natalPoint) planets.add(extractPlanet(`${s.natalPoint} `));
+
+    groups.push({
+      startMs,
+      endMs,
+      maxScore: s.score,
+      domains: new Map([[domain, intensity]]),
+      planets,
+      bestLabel: label,
+      bestCategory: s.category,
+      bestAspect: s.aspect,
+      bestLotType: lotType,
+      bestLevel: s.level,
+      sausageCount: 1,
+    });
   }
-  if (current) groups.push(current);
 
   // Convert groups to MomentumPhase[]
   const phases: MomentumPhase[] = [];
