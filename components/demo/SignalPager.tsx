@@ -166,6 +166,43 @@ export function SignalPager() {
         </div>
       </div>
 
+      {/* Next peak highlight — Delight #2 */}
+      {future && activePage === 1 && (
+        <motion.div
+          className="mx-5 mb-2 flex items-center gap-3 rounded-xl px-3.5 py-2.5"
+          style={{
+            background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--accent-purple) 10%, transparent)",
+            zIndex: 25,
+          }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.3 }}
+        >
+          <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+            style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}
+          >
+            <div className="flex flex-col items-center gap-[2px]">
+              {(future.planets ?? []).slice(0, 2).map((p, i) => (
+                <div key={i} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: planetConfig[p]?.color ?? "#9585CC" }} />
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-body-subtle">Next peak</p>
+            <p className="text-xs font-medium text-text-heading truncate">
+              {future.phases[0]?.title ?? "Coming soon"}
+            </p>
+          </div>
+          <span className="text-[10px] text-text-body-subtle shrink-0">
+            {future.phases[0]?.startDate
+              ? MONTH_NAMES[new Date(future.phases[0].startDate + "T00:00:00").getMonth()]
+              : ""}
+          </span>
+        </motion.div>
+      )}
+
       {/* Page dots */}
       <div className="relative shrink-0" style={{ zIndex: 30 }}>
         <PageDots total={TOTAL_PAGES} active={activePage} onDotTap={scrollToPage} />
