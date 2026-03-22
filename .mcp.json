@@ -2,20 +2,31 @@
   "mcpServers": {
     "flowbite": {
       "command": "/usr/local/bin/node",
-      "args": ["/Users/jhondoe/Documents/unfold/ressources/flowbite-mcp-pro-1.0.0/build/index.js"],
+      "args": [
+        "/Users/jhondoe/Documents/unfold/ressources/flowbite-mcp-pro-1.0.0/build/index.js"
+      ],
       "env": {}
     },
     "next-devtools": {
       "command": "/usr/local/bin/npx",
-      "args": ["-y", "next-devtools-mcp@latest"]
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ]
     },
     "playwright": {
       "command": "/usr/local/bin/npx",
-      "args": ["@playwright/mcp@latest"]
+      "args": [
+        "@playwright/mcp@latest"
+      ]
     },
     "vercel": {
       "type": "http",
       "url": "https://mcp.vercel.com"
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com"
     }
   }
 }

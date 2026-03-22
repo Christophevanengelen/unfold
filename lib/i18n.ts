@@ -1,39 +1,39 @@
-import { prisma } from "@/lib/db";
+import { supabase } from "@/lib/db";
 import { cache } from "react";
 
 export type TranslationMap = Record<string, string>;
 
 /**
- * Fetch all translations for a given locale and namespace from the database.
+ * Fetch all translations for a given locale and namespace from Supabase.
  * Uses React's cache() for request-level deduplication.
  */
 export const getTranslations = cache(
   async (locale: string, namespace: string): Promise<TranslationMap> => {
-    if (!prisma) return {};
-
     try {
-      const translations = await prisma.translation.findMany({
-        where: {
-          languageCode: locale,
-          contentKey: {
-            namespace: {
-              name: namespace,
-            },
-          },
-          status: { not: "NOT_STARTED" },
-        },
-        include: {
-          contentKey: true,
-        },
-      });
+      // Join Translation → ContentKey → ContentNamespace to filter by namespace name
+      const { data, error } = await supabase
+        .from("Translation")
+        .select(`
+          value,
+          contentKey:ContentKey!inner (
+            key,
+            namespace:ContentNamespace!inner (
+              name
+            )
+          )
+        `)
+        .eq("languageCode", locale)
+        .eq("contentKey.namespace.name", namespace)
+        .neq("status", "NOT_STARTED");
+
+      if (error || !data) return {};
 
       const map: TranslationMap = {};
-      for (const t of translations) {
-        map[t.contentKey.key] = t.value;
+      for (const row of data as any[]) {
+        map[row.contentKey.key] = row.value;
       }
       return map;
     } catch {
-      // DB not available yet (development without DB) — return empty
       return {};
     }
   }
