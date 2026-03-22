@@ -121,7 +121,7 @@ export interface SausageData {
   // Sausage enrichment
   width?: "thin" | "medium" | "large";
   topics?: { house: number; color: string; label?: string }[];
-  cycle?: { hitNumber: number; allHits: number };
+  cycle?: { hitNumber: number; totalHits: number; pattern?: string; allHits: { date: string; hitNumber: number }[] };
 }
 
 export interface TocTocAppResponse {

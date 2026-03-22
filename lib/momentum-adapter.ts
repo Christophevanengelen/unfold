@@ -296,9 +296,9 @@ export function appDataToPhases(
     const rawLotType = os ? (typeof os.lotType === 'string' ? os.lotType : Array.isArray(os.lotType) ? os.lotType[0] : undefined) : undefined;
     const rawCycle = os?.cycle ? {
       hitNumber: os.cycle.hitNumber,
-      totalHits: typeof os.cycle.allHits === 'number' ? os.cycle.allHits : 1,
-      pattern: os.pattern || '',
-      allHits: [],
+      totalHits: os.cycle.totalHits ?? (Array.isArray(os.cycle.allHits) ? os.cycle.allHits.length : 1),
+      pattern: os.cycle.pattern || os.pattern || '',
+      allHits: Array.isArray(os.cycle.allHits) ? os.cycle.allHits : [],
     } : undefined;
 
     phases.push({
@@ -339,7 +339,7 @@ export function appDataToPhases(
       markers: os?.markers,
       eclipseType: os?.eclipseType,
       lifetimeNumber: os?.cycle?.hitNumber,
-      lifetimeTotal: os?.cycle ? (typeof os.cycle.allHits === 'number' ? os.cycle.allHits : 1) : undefined,
+      lifetimeTotal: os?.cycle ? (os.cycle.totalHits ?? (Array.isArray(os.cycle.allHits) ? os.cycle.allHits.length : 1)) : undefined,
       isVipTransit: os?.isVipTransit,
     });
   }
