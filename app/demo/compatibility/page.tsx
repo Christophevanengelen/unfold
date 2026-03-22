@@ -8,18 +8,10 @@ import { Share2 } from "lucide-react";
 import { mockConnections, mockUser } from "@/lib/mock-data";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
-const relationshipLabels: Record<string, string> = {
-  partner: "Partner",
-  friend: "Friend",
-  family: "Family",
-  colleague: "Colleague",
-};
-
-const relationshipColors: Record<string, string> = {
-  partner: "#D89EA0",
-  friend: "#50C4D6",
-  family: "#6BA89A",
-  colleague: "#9585CC",
+const avatarColors: Record<string, string> = {
+  J: "#D89EA0",
+  S: "#50C4D6",
+  M: "#9585CC",
 };
 
 export default function ConnectionsPage() {
@@ -53,7 +45,7 @@ export default function ConnectionsPage() {
       {/* Connected people */}
       <motion.div className="mt-4 space-y-2" variants={staggerContainer}>
         {connected.map((connection) => {
-          const relColor = relationshipColors[connection.relationship];
+          const relColor = avatarColors[connection.initial] ?? "#9585CC";
           return (
             <motion.div key={connection.id} variants={fadeInUp}>
               <Link
@@ -71,23 +63,9 @@ export default function ConnectionsPage() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold text-text-heading">
-                      {connection.name}
-                    </span>
-                    <span
-                      className="rounded-full px-1.5 py-0.5 text-[9px] font-medium"
-                      style={{
-                        background: `color-mix(in srgb, ${relColor} 12%, transparent)`,
-                        color: relColor,
-                      }}
-                    >
-                      {relationshipLabels[connection.relationship]}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-[11px] text-text-body-subtle">
-                    Tap to see timing windows
-                  </p>
+                  <span className="text-[13px] font-semibold text-text-heading">
+                    {connection.name}
+                  </span>
                 </div>
 
                 {/* Arrow */}
