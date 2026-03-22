@@ -225,6 +225,47 @@ const ASPECT_FR: Record<string, string> = {
 };
 function fr(name: string): string { return PLANET_FR[name] || name; }
 
+// ─── Impact phrases by planet × aspect ──────────────────
+// No astrology jargon — describes what the person FEELS and should DO.
+const TRANSIT_IMPACT: Record<string, Record<string, string>> = {
+  Pluto: {
+    conjunction: "Quelque chose de profond se transforme en vous. Ce qui ne fonctionne plus s'efface pour laisser place au neuf.",
+    opposition: "Une pression extérieure vous pousse à changer. Ce n'est pas confortable, mais c'est nécessaire.",
+    square: "Un blocage demande votre attention. La tension que vous ressentez pointe exactement là où la croissance est possible.",
+    trine: "Un changement profond se fait naturellement, sans forcer. Suivez le mouvement.",
+  },
+  Neptune: {
+    conjunction: "Vos certitudes se brouillent — c'est normal. L'intuition prend le relais. Faites confiance à ce que vous ressentez.",
+    opposition: "Ce que vous teniez pour acquis mérite d'être questionné. La clarté reviendra.",
+    square: "Tout semble flou en ce moment. Ne forcez aucune décision. La patience est votre meilleur outil.",
+    trine: "L'inspiration coule. Créativité, intuition, rêverie — laissez-vous porter sans chercher à contrôler.",
+  },
+  Uranus: {
+    conjunction: "L'inattendu arrive. Ce qui semblait stable bouge — c'est libérateur, même si ça secoue.",
+    opposition: "Quelque chose vous pousse à sortir de votre zone de confort. L'authenticité est le chemin.",
+    square: "Une agitation intérieure monte. Cette envie de changement est un signal — canalisez-la.",
+    trine: "Les nouvelles idées arrivent facilement. C'est le moment d'expérimenter et d'innover.",
+  },
+  Saturn: {
+    conjunction: "C'est le moment de construire du solide. La discipline que vous investissez maintenant portera longtemps.",
+    opposition: "La réalité teste ce que vous avez construit. Ce qui est solide tient. Le reste doit évoluer.",
+    square: "Ça demande de l'effort, mais chaque obstacle surmonté vous rend plus fort. Persévérez.",
+    trine: "Le travail de fond paie. Vos efforts s'accumulent tranquillement vers quelque chose de durable.",
+  },
+  Jupiter: {
+    conjunction: "Les portes s'ouvrent. C'est une fenêtre d'opportunités — soyez prêt à saisir ce qui se présente.",
+    opposition: "L'envie d'en faire trop est là. Visez l'essentiel — la croissance passe par l'équilibre.",
+    square: "L'ambition pousse, mais la réalité freine. Ajustez le cap sans perdre l'élan.",
+    trine: "Les choses se mettent en place. La chance favorise ceux qui agissent — c'est le moment.",
+  },
+  "North Node": {
+    conjunction: "Un appel vers quelque chose de nouveau. Ce qui vous attire — même si c'est inconfortable — est le bon chemin.",
+  },
+  "South Node": {
+    conjunction: "Il est temps de lâcher ce qui ne vous sert plus. Les vieux schémas sont prêts à partir.",
+  },
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getTransitNarrative(phase: any): string {
   if (!phase) return "";
@@ -233,25 +274,35 @@ export function getTransitNarrative(phase: any): string {
   const natal = phase.natalPoint;
   const aspect = phase.aspect;
 
-  if (cat === "transit" && planet && natal && aspect) {
-    return `${fr(planet)} est ${ASPECT_FR[aspect] || "en aspect avec"} votre ${fr(natal)} natal.`;
+  if (cat === "transit" && planet) {
+    // Try specific impact phrase first
+    const planetImpact = TRANSIT_IMPACT[planet];
+    if (planetImpact) {
+      const text = planetImpact[aspect] || planetImpact.conjunction;
+      if (text) return text;
+    }
+    // Fallback for unknown planets
+    return `Une énergie nouvelle influence votre quotidien dans les domaines activés.`;
   }
 
   if (cat === "eclipse") {
-    const type = phase.eclipseType === "solar" ? "solaire" : "lunaire";
-    return `Une éclipse ${type} active votre ${fr(natal || "thème")} natal.`;
+    if (phase.eclipseType === "solar") {
+      return "Un tournant s'amorce. Ce qui est semé pendant cette période grandira pendant les 6 prochains mois.";
+    }
+    return "Ce qui couvait arrive à maturité. C'est le moment de lâcher ce qui ne fonctionne plus.";
   }
 
   if (cat === "zr") {
-    const lotLabels: Record<string, string> = { fortune: "Circonstances", spirit: "Vocation", eros: "Désir" };
-    const lot = lotLabels[phase.lotType] || phase.lotType || "Fortune";
-    const sign = phase.periodSign || "";
-    const level = phase.zrLevel === 2 ? "majeure" : "secondaire";
-    return `Période ${level} du Lot de ${lot}${sign ? ` en ${sign}` : ""}.`;
+    const lotImpact: Record<string, string> = {
+      fortune: "Vos circonstances matérielles et votre quotidien sont amplifiés. Le timing favorise l'action concrète.",
+      spirit: "Votre sens du but se clarifie. Ce qui résonne avec votre mission mérite toute votre attention.",
+      eros: "L'attraction et le désir sont au premier plan. Vos relations gagnent en intensité et en profondeur.",
+    };
+    return lotImpact[phase.lotType] || "Une fenêtre de timing significative est ouverte pour vous.";
   }
 
   if (cat === "station") {
-    return `${fr(planet || "Planète")} en station — une pause qui intensifie son effet sur votre ${fr(natal || "thème")}.`;
+    return "Une pause dans le flux. Les thèmes liés à cette période s'intensifient — prenez le temps de les observer.";
   }
 
   return "";
@@ -322,27 +373,31 @@ export function getLifetimeNarrative(phase: any): string | null {
 
 // ─── Topics Narrative (from real API topics) ────────────
 
+const HOUSE_HUMAN: Record<number, string> = {
+  1: "votre manière d'être", 2: "vos finances", 3: "vos échanges",
+  4: "votre foyer", 5: "votre créativité", 6: "votre quotidien",
+  7: "vos relations", 8: "vos transformations profondes", 9: "votre horizon",
+  10: "votre carrière", 11: "votre réseau", 12: "votre vie intérieure",
+};
+
 export function getTopicsNarrative(
   topics: { house: number; topic: string; source: string }[] | undefined,
   context: TimeContext
 ): string {
   if (!topics || topics.length === 0) return "";
 
-  const houseLabels: Record<number, string> = {
-    1: "l'identité", 2: "les finances", 3: "la communication",
-    4: "le foyer", 5: "la créativité", 6: "le quotidien",
-    7: "le couple", 8: "les transformations", 9: "l'horizon",
-    10: "la carrière", 11: "le réseau", 12: "l'intériorité",
-  };
-
-  const parts = topics.map(t => houseLabels[t.house] || `la maison ${t.house}`);
+  const parts = topics.map(t => HOUSE_HUMAN[t.house] || `votre vie`);
   const unique = [...new Set(parts)];
 
+  const joined = unique.length === 1
+    ? unique[0]
+    : unique.slice(0, -1).join(", ") + " et " + unique[unique.length - 1];
+
   if (context === "current") {
-    return `Les domaines activés en ce moment : ${unique.join(", ")}.`;
+    return `Ce signal touche ${joined}.`;
   }
   if (context === "future") {
-    return `Les domaines qui seront touchés : ${unique.join(", ")}.`;
+    return `Ce signal va toucher ${joined}.`;
   }
-  return `Les domaines qui ont été touchés : ${unique.join(", ")}.`;
+  return `Ce signal a touché ${joined}.`;
 }

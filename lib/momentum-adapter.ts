@@ -307,7 +307,7 @@ export function appDataToPhases(
       title: meta.title,
       subtitle: meta.subtitle,
       description: g.sausageCount > 1
-        ? `${meta.description} (${g.sausageCount} signals active)`
+        ? `${meta.description} (${g.sausageCount} signaux actifs)`
         : meta.description,
       startDate,
       endDate,
@@ -318,11 +318,11 @@ export function appDataToPhases(
       topicColors: g.topicColors.length > 0 ? g.topicColors : undefined,
       status,
       keyInsight: g.sausageCount >= 3
-        ? `${g.sausageCount} overlapping signals — a concentrated period.`
+        ? `${g.sausageCount} signaux actifs en même temps — une période concentrée.`
         : meta.keyInsight,
       guidance:
         status === "current"
-          ? "Pay attention to this signal. It's active now."
+          ? "Ce signal est actif en ce moment. Observez les thèmes liés dans votre quotidien."
           : undefined,
       color: g.color,
       // Raw API sausage fields for detail sheet rendering

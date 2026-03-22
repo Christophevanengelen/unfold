@@ -17,6 +17,7 @@ import {
   getTransitNarrative,
   getCycleNarrative,
   getLifetimeNarrative,
+  getTopicsNarrative,
   translateApiLabel,
   formatDuration,
   getProgressPercent,
@@ -115,6 +116,7 @@ export function CapsuleDetailSheet({
   const domainNarrative = getDomainNarrative(domain, tc.context);
   const transitNarrative = getTransitNarrative(phase);
   const planetNarrative = transitNarrative || getPlanetNarrative(capsule.planets);
+  const topicsNarrative = getTopicsNarrative(phase?.apiTopics, tc.context);
   const cycleNarrative = getCycleNarrative(phase);
   const lifetimeNarrative = getLifetimeNarrative(phase);
   const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment);
@@ -213,53 +215,39 @@ export function CapsuleDetailSheet({
           </div>
         </div>
 
-        {/* ── Section 3: Life Areas Activated (from API topics or fallback) ── */}
+        {/* ── Section 3: Life Areas — fluid phrase with color dots ── */}
         {phase?.apiTopics && phase.apiTopics.length > 0 ? (
-          <div className="space-y-2 mb-5">
-            {phase.apiTopics.map((topic, i) => {
-              const hm = houseConfig[topic.house as HouseNumber];
-              return hm ? (
-                <div key={i} className="rounded-xl p-3" style={{
-                  background: "color-mix(in srgb, var(--bg-tertiary) 80%, transparent)",
-                  borderLeft: `3px solid ${topic.color}`,
-                }}>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full"
-                      style={{ background: `color-mix(in srgb, ${topic.color} 15%, transparent)` }}>
-                      <span className="text-[9px]" style={{ color: topic.color }}>{topic.house}</span>
-                    </div>
-                    <span className="text-xs font-semibold" style={{ color: "var(--text-heading)" }}>{hm.label}</span>
-                    <span className="text-[9px]" style={{ color: "var(--text-body-subtle)" }}>{hm.description}</span>
+          <div className="mb-5">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              {phase.apiTopics.map((topic: { house: number; color: string; topic: string }, i: number) => {
+                const hm = houseConfig[topic.house as HouseNumber];
+                return hm ? (
+                  <div key={i} className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
+                    style={{
+                      background: `color-mix(in srgb, ${topic.color} 10%, transparent)`,
+                      border: `1px solid color-mix(in srgb, ${topic.color} 20%, transparent)`,
+                    }}>
+                    <div className="h-2 w-2 rounded-full" style={{ background: topic.color }} />
+                    <span className="text-[11px] font-medium" style={{ color: topic.color }}>{hm.label}</span>
                   </div>
-                </div>
-              ) : null;
-            })}
+                ) : null;
+              })}
+            </div>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-body-subtle)" }}>
+              {topicsNarrative}
+            </p>
           </div>
         ) : houseMeta ? (
-          <div
-            className="rounded-xl p-4 mb-5"
-            style={{
-              background: "color-mix(in srgb, var(--bg-tertiary) 80%, transparent)",
-              borderLeft: `3px solid ${houseColor}`,
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="flex h-6 w-6 items-center justify-center rounded-full"
-                style={{ background: `color-mix(in srgb, ${houseColor} 15%, transparent)` }}
-              >
-                <span className="text-[10px]" style={{ color: houseColor }}>
-                  {house}
-                </span>
-              </div>
-              <span className="text-sm font-semibold" style={{ color: "var(--text-heading)" }}>
-                {houseMeta.label}
-              </span>
-              <span className="text-[10px]" style={{ color: "var(--text-body-subtle)" }}>
-                {houseMeta.description}
-              </span>
+          <div className="mb-5">
+            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 w-fit mb-2"
+              style={{
+                background: `color-mix(in srgb, ${houseColor} 10%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${houseColor} 20%, transparent)`,
+              }}>
+              <div className="h-2 w-2 rounded-full" style={{ background: houseColor }} />
+              <span className="text-[11px] font-medium" style={{ color: houseColor }}>{houseMeta.label}</span>
             </div>
-            <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-body-subtle)" }}>
               {domainNarrative}
             </p>
           </div>
@@ -318,7 +306,7 @@ export function CapsuleDetailSheet({
               {tc.storyLabel}
             </span>
             <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
-              {translateApiLabel(phase.apiLabel) || phase.title}
+              {phase.title}
             </h3>
             {phase.subtitle && (
               <p className="mt-1 text-xs" style={{ color: "var(--text-body-subtle)" }}>
@@ -328,6 +316,11 @@ export function CapsuleDetailSheet({
             <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
               {phase.description}
             </p>
+            {phase.apiLabel && (
+              <p className="mt-2 text-[10px]" style={{ color: "var(--text-disabled)" }}>
+                {translateApiLabel(phase.apiLabel)}
+              </p>
+            )}
           </div>
         )}
 
