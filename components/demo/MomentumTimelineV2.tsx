@@ -8,6 +8,7 @@ import {
 } from "@/lib/mock-timeline";
 import { useMomentum } from "@/lib/momentum-store";
 import { X } from "lucide-react";
+import { CapsuleDetailSheet } from "./CapsuleDetailSheet";
 
 // ─── Types ──────────────────────────────────────────────────
 type ViewMode = "focus" | "overview" | "list";
@@ -1833,7 +1834,7 @@ export function MomentumTimelineV2() {
               style={{ background: "rgba(0,0,0,0.4)" }}
               onClick={() => setSelectedCapsule(null)}
             />
-            <DetailSheet capsule={selectedCapsule} onClose={() => setSelectedCapsule(null)} />
+            <CapsuleDetailSheet capsule={selectedCapsule} onClose={() => setSelectedCapsule(null)} />
           </>
         )}
       </AnimatePresence>
