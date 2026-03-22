@@ -762,14 +762,23 @@ function FocusView({
     const el = scrollRef.current;
     if (!el) return;
 
+    let lastAge = -1;
+    let lastAway = false;
+    let rafPending = false;
+
     const onScroll = () => {
-      const centerY = el.scrollTop + el.clientHeight / 2;
-      const d = yToDate(centerY);
-      const diffMs = d.getTime() - birthDate.getTime();
-      const age = Math.max(0, Math.min(100, Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000))));
-      onAgeChange(age);
-      const distFromNow = Math.abs(centerY - nowY);
-      setIsAwayFromNow(distFromNow > el.clientHeight * 0.8);
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        const centerY = el.scrollTop + el.clientHeight / 2;
+        const d = yToDate(centerY);
+        const diffMs = d.getTime() - birthDate.getTime();
+        const age = Math.max(0, Math.min(100, Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000))));
+        if (age !== lastAge) { lastAge = age; onAgeChange(age); }
+        const away = Math.abs(centerY - nowY) > el.clientHeight * 0.8;
+        if (away !== lastAway) { lastAway = away; setIsAwayFromNow(away); }
+      });
     };
     onScroll();
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -1202,62 +1211,40 @@ function OverviewView({
   const snapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const rafId = useRef(0);
 
-  const jumpToCapsule = useCallback((direction: "past" | "future") => {
+  const jumpByYear = useCallback((direction: "past" | "future") => {
     const el = scrollRef.current;
-    if (!el || isJumping.current || overviewPositions.length === 0) return;
+    if (!el || isJumping.current) return;
 
-    const barInScroll = el.scrollTop + el.clientHeight * 0.52;
-    const sorted = [...overviewPositions].sort((a, b) => a.topY - b.topY);
-
-    let closestIdx = 0;
-    let closestDist = Infinity;
-    for (let i = 0; i < sorted.length; i++) {
-      const dist = Math.abs(sorted[i].topY - barInScroll);
-      if (dist < closestDist) { closestDist = dist; closestIdx = i; }
-    }
-
-    const nextIdx = direction === "past"
-      ? Math.min(closestIdx + 1, sorted.length - 1)
-      : Math.max(closestIdx - 1, 0);
-    if (nextIdx === closestIdx) return;
-
-    const targetScroll = Math.max(0, sorted[nextIdx].topY - el.clientHeight * 0.52);
-    const start = el.scrollTop;
-    const delta = targetScroll - start;
-    if (Math.abs(delta) < 2) return;
+    const oneYear = 12 * PX_PER_MONTH;
+    const delta = direction === "past" ? oneYear : -oneYear;
+    const targetScroll = Math.max(0, Math.min(el.scrollHeight - el.clientHeight, el.scrollTop + delta));
 
     isJumping.current = true;
-    cancelAnimationFrame(rafId.current);
-
-    const startTime = performance.now();
-    const duration = 350;
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-
-    const animate = (now: number) => {
-      const progress = Math.min((now - startTime) / duration, 1);
-      el.scrollTop = start + delta * ease(progress);
-      if (progress < 1) {
-        rafId.current = requestAnimationFrame(animate);
-      } else {
-        el.scrollTop = targetScroll;
-        setTimeout(() => { isJumping.current = false; }, 100);
-      }
-    };
-    rafId.current = requestAnimationFrame(animate);
-  }, [overviewPositions]);
+    el.scrollTo({ top: targetScroll, behavior: "smooth" });
+    setTimeout(() => { isJumping.current = false; }, 800);
+  }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
 
+    let lastAge = -1;
+    let lastAway = false;
+    let rafPending = false;
+
     const onScroll = () => {
-      const centerY = el.scrollTop + el.clientHeight / 2;
-      const d = yToDate(centerY);
-      const diffMs = d.getTime() - birthDate.getTime();
-      const age = Math.max(0, Math.min(100, Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000))));
-      onAgeChange(age);
-      const distFromNow = Math.abs(centerY - nowY);
-      setIsAwayFromNow(distFromNow > el.clientHeight * 0.8);
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        const centerY = el.scrollTop + el.clientHeight / 2;
+        const d = yToDate(centerY);
+        const diffMs = d.getTime() - birthDate.getTime();
+        const age = Math.max(0, Math.min(100, Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000))));
+        if (age !== lastAge) { lastAge = age; onAgeChange(age); }
+        const away = Math.abs(centerY - nowY) > el.clientHeight * 0.8;
+        if (away !== lastAway) { lastAway = away; setIsAwayFromNow(away); }
+      });
     };
     onScroll();
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -1464,44 +1451,44 @@ function OverviewView({
         </div>
       </div>
 
-      {/* Navigation: jump between capsules — above bottom nav with breathing room */}
-      <div className="absolute left-1/2 z-40 -translate-x-1/2 flex items-center gap-2" style={{ bottom: 72 }}>
+      {/* NOW button — center bottom */}
+      <AnimatePresence>
+        {isAwayFromNow && (
+          <motion.button
+            type="button"
+            onClick={scrollToNow}
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute left-1/2 -translate-x-1/2 z-40 flex h-8 items-center justify-center rounded-full px-3"
+            style={{ ...PILL_STYLE, bottom: 68 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Up/Down — right side, stacked vertically, thumb zone */}
+      <div className="absolute right-3 z-40 flex flex-col items-center gap-2" style={{ bottom: 68 }}>
         <motion.button
           type="button"
-          onClick={() => jumpToCapsule("past")}
-          className="flex h-8 w-8 items-center justify-center rounded-full"
-          style={PILL_STYLE}
-          whileTap={{ scale: 0.9 }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </motion.button>
-
-        <AnimatePresence>
-          {isAwayFromNow && (
-            <motion.button
-              type="button"
-              onClick={scrollToNow}
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="flex h-8 items-center justify-center rounded-full px-3"
-              style={PILL_STYLE}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        <motion.button
-          type="button"
-          onClick={() => jumpToCapsule("future")}
+          onClick={() => jumpByYear("future")}
           className="flex h-8 w-8 items-center justify-center rounded-full"
           style={PILL_STYLE}
           whileTap={{ scale: 0.9 }}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </motion.button>
+        <motion.button
+          type="button"
+          onClick={() => jumpByYear("past")}
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={PILL_STYLE}
+          whileTap={{ scale: 0.9 }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </motion.button>
       </div>
     </div>
