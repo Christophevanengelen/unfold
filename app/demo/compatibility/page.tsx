@@ -30,9 +30,9 @@ export default function ConnectionsPage() {
 
   const handleCodeSubmit = () => {
     if (code.trim().length >= 4) {
-      // In production: validate code via API, create connection
-      // Demo: redirect to first connection as example
-      router.push(`/demo/compatibility/${connected[0]?.id ?? "conn_jordan"}`);
+      // In production: validate code via API → returns partner name
+      // Demo: simulate with "Jordan" as partner name
+      router.push("/demo/invite/connected?name=Jordan");
     }
   };
 
