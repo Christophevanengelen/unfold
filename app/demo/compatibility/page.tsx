@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Share2 } from "lucide-react";
 import { mockConnections, mockUser } from "@/lib/mock-data";
-import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 const avatarColors: Record<string, string> = {
   J: "#D89EA0",
@@ -19,77 +18,59 @@ export default function ConnectionsPage() {
   const connected = mockConnections.filter((c) => c.status === "connected");
   const [code, setCode] = useState("");
   const [showCodeInput, setShowCodeInput] = useState(false);
-  // Only animate on first mount — not on every navigation back
-  const hasAnimated = useRef(false);
-  const shouldAnimate = !hasAnimated.current;
-  if (shouldAnimate) hasAnimated.current = true;
 
   const handleCodeSubmit = () => {
     if (code.trim().length >= 4) {
-      // In production: validate code via API → returns partner name
-      // Demo: simulate with "Jordan" as partner name
       router.push("/demo/invite/connected?name=Jordan");
     }
   };
 
   return (
-    <motion.div
-      className=""
-      variants={staggerContainer}
-      initial={shouldAnimate ? "hidden" : "visible"}
-      animate="visible"
-    >
+    <div>
       {/* Header */}
-      <motion.div className="mb-1 flex items-center justify-between" variants={fadeInUp}>
+      <div className="mb-1 flex items-center justify-between">
         <div>
           <h1 className="font-display text-lg font-bold text-text-heading">Connexions</h1>
           <p className="text-xs text-text-body-subtle">{connected.length} connecté{connected.length !== 1 ? "s" : ""}</p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Connected people */}
-      <motion.div className="mt-4 space-y-2" variants={staggerContainer}>
+      <div className="mt-4 space-y-2">
         {connected.map((connection) => {
           const relColor = avatarColors[connection.initial] ?? "#9585CC";
           return (
-            <motion.div key={connection.id} variants={fadeInUp}>
-              <Link
-                href={`/demo/compatibility/${connection.id}`}
-                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-colors"
-                style={{ background: "var(--bg-secondary)" }}
+            <Link
+              key={connection.id}
+              href={`/demo/compatibility/${connection.id}`}
+              className="flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-colors"
+              style={{ background: "var(--bg-secondary)" }}
+            >
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold text-white"
+                style={{ backgroundColor: relColor }}
               >
-                {/* Avatar */}
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold text-white"
-                  style={{ backgroundColor: relColor }}
-                >
-                  {connection.initial}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <span className="text-[13px] font-semibold text-text-heading">
-                    {connection.name}
-                  </span>
-                </div>
-
-                {/* Arrow */}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="1.5" className="text-text-body-subtle flex-shrink-0">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </Link>
-            </motion.div>
+                {connection.initial}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[13px] font-semibold text-text-heading">
+                  {connection.name}
+                </span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="1.5" className="text-text-body-subtle flex-shrink-0">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
           );
         })}
-      </motion.div>
+      </div>
 
       {/* Divider */}
       <div className="my-5 h-px" style={{ background: "var(--surface-medium)" }} />
 
       {/* Two CTAs: Share your code + Enter a code */}
-      <motion.div className="space-y-3" variants={fadeInUp}>
-        {/* Share your code */}
+      <div className="space-y-3">
         <Link
           href="/demo/invite/share"
           className="flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-colors"
@@ -108,7 +89,6 @@ export default function ConnectionsPage() {
           </span>
         </Link>
 
-        {/* Enter a code */}
         {!showCodeInput ? (
           <button
             onClick={() => setShowCodeInput(true)}
@@ -147,7 +127,7 @@ export default function ConnectionsPage() {
             </div>
           </motion.div>
         )}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
