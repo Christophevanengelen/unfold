@@ -175,14 +175,27 @@ export function CapsuleDetailSheet({
           )}
         </div>
 
-        {/* ── Section 2: Hero — Tier + Rarity + Dates ── */}
+        {/* ── Section 2: Hero — Tier + Score + Rarity + Dates ── */}
         <div className="mb-5">
-          <span
-            className="text-[10px] font-semibold uppercase tracking-[0.15em]"
-            style={{ color: "var(--accent-purple)" }}
-          >
-            {tierLabel}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.15em]"
+              style={{ color: "var(--accent-purple)" }}
+            >
+              {tierLabel}
+            </span>
+            {phase?.score && (
+              <span
+                className="rounded-full px-2 py-0.5 text-[9px] font-bold tabular-nums"
+                style={{
+                  background: `color-mix(in srgb, ${houseColor} 15%, transparent)`,
+                  color: houseColor,
+                }}
+              >
+                {phase.score}/4
+              </span>
+            )}
+          </div>
 
           {rarityText && (
             <div className="flex items-baseline gap-2 mt-1">

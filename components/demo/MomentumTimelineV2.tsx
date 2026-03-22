@@ -822,7 +822,7 @@ function ListView({
               className="relative flex w-full items-start gap-3 py-2.5 text-left"
               style={{ opacity: capsule.isFuture ? 0.45 : 1 }}
             >
-              {/* Dot on spine */}
+              {/* Dot on spine — uses capsule color */}
               <div className="relative z-10 mt-1.5 flex flex-shrink-0 items-center justify-center" style={{ width: 7 }}>
                 <div
                   className="rounded-full"
@@ -830,10 +830,10 @@ function ListView({
                     width: capsule.isCurrent ? 9 : 6,
                     height: capsule.isCurrent ? 9 : 6,
                     background: capsule.isCurrent
-                      ? "var(--accent-purple)"
-                      : "color-mix(in srgb, var(--accent-purple) 50%, transparent)",
+                      ? (capsule.color || "var(--accent-purple)")
+                      : `color-mix(in srgb, ${capsule.color || "var(--accent-purple)"} 70%, transparent)`,
                     boxShadow: capsule.isCurrent
-                      ? "0 0 10px rgba(149, 133, 204, 0.6)"
+                      ? `0 0 10px ${capsule.color || "rgba(149, 133, 204, 0.6)"}`
                       : "none",
                   }}
                 />
