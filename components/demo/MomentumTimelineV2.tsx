@@ -31,9 +31,9 @@ interface CapsuleData {
 }
 
 // ─── Constants ──────────────────────────────────────────────
-const LANE_COUNT = 5;
+const LANE_COUNT = 7;
 const PX_PER_MONTH = 40; // pixels per month — more space for temporal accuracy
-const LANE_SPACING = 16;
+const LANE_SPACING = 6;
 
 // Tier thresholds & widths
 function getTier(intensity: number): Tier {
@@ -41,15 +41,18 @@ function getTier(intensity: number): Tier {
   if (intensity >= 70) return "toctoc";
   return "toc";
 }
-// Lane counter for score-2 distribution across lanes 1 and 2
-let toctocLaneToggle = 0;
+// Distribute boudins across 7 lanes based on score
+let laneCounter = 0;
 function getTierLane(tier: Tier): number {
-  if (tier === "toc") return 0;            // far left — small, frequent
-  if (tier === "toctoc") {                 // alternate lanes 1 and 2
-    toctocLaneToggle++;
-    return (toctocLaneToggle % 2 === 0) ? 1 : 2;
+  if (tier === "toc") {
+    laneCounter++;
+    return laneCounter % 2;                // lanes 0-1
   }
-  return (tier === "toctoctoc") ? 4 : 3;   // far right — big, rare
+  if (tier === "toctoc") {
+    laneCounter++;
+    return 2 + (laneCounter % 3);          // lanes 2-3-4
+  }
+  return 5 + (laneCounter++ % 2);          // lanes 5-6
 }
 function getTierWidth(tier: Tier): number {
   if (tier === "toc") return 36;
