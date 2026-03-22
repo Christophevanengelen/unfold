@@ -137,7 +137,7 @@ export const planetConfig: Record<PlanetKey, PlanetMeta> = {
   saturn:          { label: "Saturne",         color: "#A89478", symbol: "♄" },  // warm taupe
   uranus:          { label: "Uranus",          color: "#7AAAB5", symbol: "♅" },  // dusty cyan
   neptune:         { label: "Neptune",         color: "#9B85C4", symbol: "♆" },  // lavender — on-brand
-  "solar-eclipse": { label: "Éclipse solaire", color: "#3D3055", symbol: "●" },  // deep purple
+  "solar-eclipse": { label: "Éclipse solaire", color: "#D4C5A0", symbol: "●" },  // warm ivory — corona glow
   "lunar-eclipse": { label: "Éclipse lunaire", color: "#A07090", symbol: "◐" },  // mauve pink
 };
 

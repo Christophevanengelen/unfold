@@ -37,7 +37,13 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="glass flex items-center justify-around pb-2" style={{ height: 56 }}>
+    <nav className="flex items-center justify-around pb-2" style={{
+      height: 56,
+      background: "color-mix(in srgb, var(--accent-purple) 8%, rgba(27, 21, 53, 0.85))",
+      border: "none",
+      borderTop: "1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)",
+      backdropFilter: "blur(16px)",
+    }}>
       {navItems.map((item) => {
         const isActive =
           item.key === "momentum"

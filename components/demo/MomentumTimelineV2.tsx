@@ -480,7 +480,14 @@ function DetailSheet({ capsule, onClose }: { capsule: CapsuleData; onClose: () =
               >
                 <div
                   className="h-2 w-2 rounded-full"
-                  style={{ background: pc.color, boxShadow: `0 0 6px ${pc.color}` }}
+                  style={{
+                    background: planet === "solar-eclipse"
+                      ? "linear-gradient(135deg, #1a1a1a 45%, #C9A86C 55%)"
+                      : pc.color,
+                    boxShadow: planet === "solar-eclipse"
+                      ? "0 0 6px rgba(201, 168, 108, 0.5)"
+                      : `0 0 6px ${pc.color}`,
+                  }}
                 />
                 <span className="text-[11px] font-medium" style={{ color: pc.color }}>
                   {pc.label}
@@ -963,8 +970,8 @@ function FocusView({
         </div>
       </div>
 
-      {/* Navigation: jump between capsules (past ▼ / now ● / future ▲) */}
-      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 flex items-center gap-2">
+      {/* Navigation: jump between capsules (past ▼ / now ● / future ▲) — above bottom nav */}
+      <div className="absolute left-1/2 z-40 -translate-x-1/2 flex items-center gap-2" style={{ bottom: 64 }}>
         {/* Past (down in timeline = older) */}
         <motion.button
           type="button"
@@ -982,14 +989,15 @@ function FocusView({
             <motion.button
               type="button"
               onClick={scrollToNow}
-              initial={{ opacity: 0, scale: 0.8, width: 0 }}
-              animate={{ opacity: 1, scale: 1, width: "auto" }}
-              exit={{ opacity: 0, scale: 0.8, width: 0 }}
-              className="flex items-center justify-center rounded-full px-3 py-1 overflow-hidden"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.6 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="flex h-8 items-center justify-center rounded-full px-3"
               style={PILL_STYLE}
               whileTap={{ scale: 0.95 }}
             >
-              <span className="text-[9px] font-semibold uppercase tracking-wider whitespace-nowrap">Now</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
             </motion.button>
           )}
         </AnimatePresence>
@@ -1378,13 +1386,25 @@ function OverviewView({
               >
                 {capsule.planets.map((planet) => {
                   const pc = planetConfig[planet];
+                  const isSolarEclipse = planet === "solar-eclipse";
                   const dc = capsule.isFuture ? "rgba(255, 255, 255, 0.6)" : pc.color;
                   const dg = capsule.isFuture
                     ? "0 0 4px rgba(255,255,255,0.15)"
                     : capsule.isCurrent
                       ? `0 0 8px ${pc.color}`
                       : `0 0 4px color-mix(in srgb, ${pc.color} 40%, transparent)`;
-                  return (
+                  return isSolarEclipse && !capsule.isFuture ? (
+                    <div
+                      key={planet}
+                      className="rounded-full"
+                      style={{
+                        width: oDotSize,
+                        height: oDotSize,
+                        background: "linear-gradient(135deg, #1a1a1a 45%, #C9A86C 55%)",
+                        boxShadow: "0 0 6px rgba(201, 168, 108, 0.5)",
+                      }}
+                    />
+                  ) : (
                     <div
                       key={planet}
                       className="rounded-full"
@@ -1444,8 +1464,8 @@ function OverviewView({
         </div>
       </div>
 
-      {/* Navigation: jump between capsules */}
-      <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 flex items-center gap-2">
+      {/* Navigation: jump between capsules — above bottom nav with breathing room */}
+      <div className="absolute left-1/2 z-40 -translate-x-1/2 flex items-center gap-2" style={{ bottom: 72 }}>
         <motion.button
           type="button"
           onClick={() => jumpToCapsule("past")}
@@ -1461,14 +1481,15 @@ function OverviewView({
             <motion.button
               type="button"
               onClick={scrollToNow}
-              initial={{ opacity: 0, scale: 0.8, width: 0 }}
-              animate={{ opacity: 1, scale: 1, width: "auto" }}
-              exit={{ opacity: 0, scale: 0.8, width: 0 }}
-              className="flex items-center justify-center rounded-full px-3 py-1 overflow-hidden"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.6 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="flex h-8 items-center justify-center rounded-full px-3"
               style={PILL_STYLE}
               whileTap={{ scale: 0.95 }}
             >
-              <span className="text-[9px] font-semibold uppercase tracking-wider whitespace-nowrap">Now</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
             </motion.button>
           )}
         </AnimatePresence>
@@ -1688,18 +1709,12 @@ export function MomentumTimelineV2() {
 
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
-      {/* ── Unified header bar ── */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 pt-2 pb-1">
-        {/* Left — spacer (age moved to NOW bar) */}
-        <div style={{ minWidth: 36 }} />
-
-        {/* Center — 3-way toggle */}
+      {/* ── Unified header bar — same breathing room as bottom nav buttons ── */}
+      <div className="absolute left-0 right-0 z-40 flex items-center justify-center px-3" style={{ top: 58 }}>
+        {/* 3-way toggle — centered */}
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
-          style={{
-            background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)",
-          }}
+          style={PILL_STYLE}
         >
           {(["focus", "overview", "list"] as ViewMode[]).map((mode) => (
             <button
@@ -1716,9 +1731,6 @@ export function MomentumTimelineV2() {
             </button>
           ))}
         </div>
-
-        {/* Right — spacer for balance */}
-        <div style={{ minWidth: 36 }} />
       </div>
 
       <AnimatePresence mode="wait">
@@ -1742,10 +1754,10 @@ export function MomentumTimelineV2() {
         ) : viewMode === "overview" ? (
           <motion.div
             key="overview"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
             className="h-full w-full pt-9"
           >
             <OverviewView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
@@ -1753,10 +1765,10 @@ export function MomentumTimelineV2() {
         ) : (
           <motion.div
             key="list"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="h-full w-full pt-9"
           >
             <ListView capsules={allCapsules} onTapCapsule={handleTapCapsule} />

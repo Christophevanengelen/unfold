@@ -47,9 +47,26 @@ export default function DemoLayout({
           }}
         />
 
-        {/* Status bar — hidden on onboarding/invite flows */}
+        {/* Content — full height, nav overlays float on top */}
+        <PremiumTeaserContext.Provider value={() => setPremiumOpen(true)}>
+          <div
+            className={`flex-1 ${
+              isFullBleed
+                ? "relative z-10 overflow-hidden"
+                : "overflow-y-auto overflow-x-hidden px-5 py-3 scrollbar-none"
+            }`}
+          >
+            {children}
+          </div>
+        </PremiumTeaserContext.Provider>
+
+        {/* Status bar — absolute overlay so content scrolls behind */}
         {!hideNav && (
-          <div className="flex items-center justify-between px-6 pt-3 pb-2">
+          <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 pt-3 pb-2" style={{
+            background: "color-mix(in srgb, var(--accent-purple) 6%, rgba(27, 21, 53, 0.85))",
+            borderBottom: "1px solid color-mix(in srgb, var(--accent-purple) 12%, transparent)",
+            backdropFilter: "blur(16px)",
+          }}>
             <span className="text-xs font-medium" style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
               9:41
             </span>
@@ -64,21 +81,12 @@ export default function DemoLayout({
           </div>
         )}
 
-        {/* Content — full width for swipe pages, padded for other routes */}
-        <PremiumTeaserContext.Provider value={() => setPremiumOpen(true)}>
-          <div
-            className={`flex-1 ${
-              isFullBleed
-                ? "relative z-10 overflow-hidden"
-                : "overflow-y-auto overflow-x-hidden px-5 py-3 scrollbar-none"
-            }`}
-          >
-            {children}
+        {/* Bottom nav — absolute overlay so content scrolls behind */}
+        {!hideNav && (
+          <div className="absolute bottom-0 left-0 right-0 z-30">
+            <BottomNav />
           </div>
-        </PremiumTeaserContext.Provider>
-
-        {/* Bottom nav (hidden on flows) */}
-        {!hideNav && <BottomNav />}
+        )}
 
         {/* Profile drawer */}
         <ProfileDrawer
