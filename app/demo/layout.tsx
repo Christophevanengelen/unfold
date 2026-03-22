@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { BottomNav } from "@/components/demo/BottomNav";
@@ -33,23 +33,6 @@ export default function DemoLayout({
   // Full-bleed routes manage their own padding and scroll
   const isFullBleed = isHome || isTimeline;
 
-  // Smooth crossfade on route change
-  // Phase 1: fade out (120ms) → Phase 2: swap content → Phase 3: fade in (120ms)
-  const [opacity, setOpacity] = useState(1);
-  const prevPath = useRef(pathname);
-  useEffect(() => {
-    if (prevPath.current !== pathname) {
-      prevPath.current = pathname;
-      // Content already swapped by Next.js — just fade in from 0
-      setOpacity(0);
-      // Wait one frame for the DOM to settle, then fade in
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setOpacity(1);
-        });
-      });
-    }
-  }, [pathname]);
 
   // SSR: render only the dark background — no content, no flash
   if (!mounted) {
@@ -88,8 +71,6 @@ export default function DemoLayout({
               "--safe-top": `${SAFE_TOP}px`,
               "--safe-bottom": `${SAFE_BOTTOM}px`,
               ...(!isFullBleed ? { paddingTop: `${SAFE_TOP}px`, paddingBottom: `${SAFE_BOTTOM}px` } : {}),
-              opacity,
-              transition: "opacity 150ms ease-out",
             } as React.CSSProperties}
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
