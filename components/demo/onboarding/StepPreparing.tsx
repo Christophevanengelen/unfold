@@ -369,7 +369,29 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
             >
               <button
                 type="button"
-                onClick={() => router.push("/demo/timeline")}
+                onClick={() => {
+                  // Check for pending invite (from invite link → onboarding → connected)
+                  const pending = typeof window !== "undefined" ? sessionStorage.getItem("unfold_pending_invite") : null;
+                  if (pending) {
+                    try {
+                      const invite = JSON.parse(pending);
+                      const params = new URLSearchParams({
+                        name: invite.name,
+                        code: invite.code,
+                        bd: invite.birthData.birthDate,
+                        bt: invite.birthData.birthTime,
+                        lat: String(invite.birthData.latitude),
+                        lng: String(invite.birthData.longitude),
+                        tz: invite.birthData.timezone,
+                        place: invite.birthData.placeOfBirth || "",
+                      });
+                      sessionStorage.removeItem("unfold_pending_invite");
+                      router.push(`/demo/invite/connected?${params.toString()}`);
+                      return;
+                    } catch { /* ignore parse errors */ }
+                  }
+                  router.push("/demo/timeline");
+                }}
                 className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
               >
                 See my signal

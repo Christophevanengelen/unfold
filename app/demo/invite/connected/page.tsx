@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import {
+  addConnection,
+  updateRelationship,
+  parseInviteParams,
+  type RelationshipType,
+} from "@/lib/connections-store";
 
 const CONFETTI_COLORS = [
   "#B07CC2", "#D89EA0", "#6BA89A", "#9585CC", "#50C4D6", "#C4A86B",
@@ -21,21 +27,42 @@ const PARTICLES = Array.from({ length: 16 }, (_, i) => {
   };
 });
 
-const RELATIONSHIP_OPTIONS = [
-  { key: "partner", label: "Partenaire", emoji: "💜", color: "#D89EA0" },
-  { key: "friend", label: "Ami·e", emoji: "💙", color: "#50C4D6" },
-  { key: "family", label: "Famille", emoji: "💚", color: "#6BA89A" },
-  { key: "colleague", label: "Collègue", emoji: "💼", color: "#9585CC" },
-] as const;
+const RELATIONSHIP_OPTIONS: { key: RelationshipType; label: string; icon: string; color: string }[] = [
+  { key: "partner", label: "Partenaire", icon: "♡", color: "#D89EA0" },
+  { key: "friend", label: "Ami·e", icon: "☆", color: "#50C4D6" },
+  { key: "family", label: "Famille", icon: "⌂", color: "#6BA89A" },
+  { key: "colleague", label: "Collègue", icon: "◈", color: "#9585CC" },
+];
 
-export default function ConnectedPage() {
+function ConnectedContent() {
   const searchParams = useSearchParams();
   const partnerName = searchParams.get("name") ?? "quelqu'un";
-  const [selectedRelation, setSelectedRelation] = useState<string | null>(null);
+  const [selectedRelation, setSelectedRelation] = useState<RelationshipType | null>(null);
+  const [connectionId, setConnectionId] = useState<string | null>(null);
+
+  // On mount, parse invite params and create connection
+  useEffect(() => {
+    const parsed = parseInviteParams(searchParams);
+    if (parsed) {
+      const conn = addConnection({
+        name: parsed.name,
+        relationship: "friend", // default, updated when user picks
+        birthData: parsed.birthData,
+        inviteCode: parsed.code,
+      });
+      setConnectionId(conn.id);
+    }
+  }, [searchParams]);
+
+  // Update relationship when user picks one
+  useEffect(() => {
+    if (connectionId && selectedRelation) {
+      updateRelationship(connectionId, selectedRelation);
+    }
+  }, [connectionId, selectedRelation]);
 
   return (
     <div className="flex h-full flex-col items-center justify-center text-center px-6">
-
       {/* Confetti burst */}
       <div className="relative mb-6">
         {PARTICLES.map((p, i) => (
@@ -115,7 +142,7 @@ export default function ConnectedPage() {
                 color: isSelected ? rel.color : "var(--text-body)",
               }}
             >
-              <span className="text-base">{rel.emoji}</span>
+              <span className="text-base">{rel.icon}</span>
               {rel.label}
             </button>
           );
@@ -130,7 +157,7 @@ export default function ConnectedPage() {
         transition={{ delay: 1.0 }}
       >
         <Link
-          href="/demo/compatibility/conn_jordan"
+          href={connectionId ? `/demo/compatibility/${connectionId}` : "/demo/compatibility"}
           className="flex w-full items-center justify-center rounded-full py-3.5 text-sm font-semibold shadow-lg transition-all active:scale-95"
           style={{
             background: selectedRelation ? "var(--bg-brand)" : "var(--surface-medium)",
@@ -149,13 +176,18 @@ export default function ConnectedPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
       >
-        <Link
-          href="/demo/compatibility"
-          className="text-xs text-text-body-subtle"
-        >
+        <Link href="/demo/compatibility" className="text-xs text-text-body-subtle">
           Retour aux connexions
         </Link>
       </motion.div>
     </div>
+  );
+}
+
+export default function ConnectedPage() {
+  return (
+    <Suspense fallback={<div className="flex h-full items-center justify-center"><p className="text-sm text-text-body-subtle">Chargement...</p></div>}>
+      <ConnectedContent />
+    </Suspense>
   );
 }

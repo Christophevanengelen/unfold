@@ -3,11 +3,11 @@
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { mockConnections } from "@/lib/mock-data";
+import { getConnection, type RealConnection } from "@/lib/connections-store";
 import { PageHeader, PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { fetchYearData } from "@/lib/momentum-api";
-import type { BirthData } from "@/lib/birth-data";
+
 import {
   compareTimelines,
   type MatchingWindow,
@@ -35,7 +35,12 @@ const relationshipLabels: Record<string, string> = {
 export default function ConnectionDetailPage() {
   const params = useParams();
   const connectionId = params.connectionId as string;
-  const connection = mockConnections.find((c) => c.id === connectionId);
+  const [connection, setConnection] = useState<RealConnection | null>(null);
+
+  // Load connection from real store
+  useEffect(() => {
+    setConnection(getConnection(connectionId));
+  }, [connectionId]);
   const { birthData: myBirthData } = useMomentum();
 
   const [windows, setWindows] = useState<MatchingWindow[]>([]);
@@ -50,15 +55,8 @@ export default function ConnectionDetailPage() {
 
       if (myBirthData && connection!.birthData) {
         try {
-          const theirBirth: BirthData = {
-            nickname: connection!.name,
-            birthDate: connection!.birthData.birthDate,
-            birthTime: connection!.birthData.birthTime,
-            latitude: connection!.birthData.latitude,
-            longitude: connection!.birthData.longitude,
-            timezone: connection!.birthData.timezone,
-            placeOfBirth: "",
-          };
+          // RealConnection.birthData is already a BirthData object
+          const theirBirth = connection!.birthData;
 
           const [myYear, theirYear] = await Promise.all([
             fetchYearData(myBirthData),
