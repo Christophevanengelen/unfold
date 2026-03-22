@@ -195,13 +195,12 @@ export function appDataToPhases(
       return aDate.localeCompare(bDate);
     });
 
-  // Show score >= 3 as full boudins (significant events).
-  // Score 1-2 are too frequent for visual display (~1000+).
-  // This gives ~300-400 phases = ~7 per year = readable timeline.
+  // Score >= 2 as boudins. Score 1 skipped (too noisy, 84 events).
+  // Score 2 = small boudins (1027), Score 3-4 = prominent boudins (344+16).
   const groups: RawPhase[] = [];
 
   for (const s of sorted) {
-    if (s.score < 3) continue;
+    if (s.score < 2) continue;
     const startDate = s.startDate || s.date || todayStr;
     const endDate = s.endDate || startDate;
     const startMs = new Date(startDate).getTime();
