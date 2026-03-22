@@ -119,7 +119,7 @@ export function CapsuleDetailSheet({
   const topicsNarrative = getTopicsNarrative(phase?.apiTopics, tc.context);
   const cycleNarrative = getCycleNarrative(phase);
   const lifetimeNarrative = getLifetimeNarrative(phase);
-  const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment);
+  const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment, phase?.apiTopics);
 
   // Date formatting — exact day/month/year, always show start → end
   const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
@@ -316,11 +316,6 @@ export function CapsuleDetailSheet({
             <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
               {phase.description}
             </p>
-            {phase.apiLabel && (
-              <p className="mt-2 text-[10px]" style={{ color: "var(--text-disabled)" }}>
-                {translateApiLabel(phase.apiLabel)}
-              </p>
-            )}
           </div>
         )}
 

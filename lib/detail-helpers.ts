@@ -188,23 +188,40 @@ export function getRarityText(tierOccurrence: number, tierTotal: number, tier: s
 
 // ─── Guidance by context ─────────────────────────────────
 
+const HOUSE_ACTIONS: Record<number, { current: string; future: string; past: string }> = {
+  1:  { current: "Prenez une initiative qui vous ressemble.", future: "Préparez un changement d'image ou de posture.", past: "Ce qui a changé en vous à cette époque est toujours actif." },
+  2:  { current: "Revoyez vos finances — un ajustement s'impose.", future: "Anticipez un mouvement financier.", past: "Les décisions financières de cette période ont laissé une empreinte." },
+  3:  { current: "Un message ou une conversation peut tout changer.", future: "Soyez attentif aux échanges qui arrivent.", past: "Une information reçue ici a orienté la suite." },
+  4:  { current: "Votre foyer demande de l'attention. Agissez chez vous.", future: "Un changement lié au logement ou à la famille approche.", past: "Ce qui a bougé chez vous a posé de nouvelles fondations." },
+  5:  { current: "Dites oui au plaisir et à la créativité.", future: "Une fenêtre créative ou romantique s'ouvre bientôt.", past: "La joie de cette période est une ressource qui reste." },
+  6:  { current: "Ajustez une routine qui ne fonctionne plus.", future: "Anticipez un changement dans votre quotidien.", past: "Les habitudes posées ici vous portent encore." },
+  7:  { current: "Investissez dans vos relations clés.", future: "Une relation importante va être activée.", past: "Ce qui s'est joué dans vos relations a tout changé." },
+  8:  { current: "Acceptez ce qui émerge, même si c'est inconfortable.", future: "Préparez-vous à lâcher quelque chose.", past: "La transformation de cette période vous a rendu plus fort." },
+  9:  { current: "Élargissez votre horizon — voyage, formation, réflexion.", future: "Une expansion se prépare — restez ouvert.", past: "Ce que vous avez appris ici guide encore vos choix." },
+  10: { current: "C'est le moment de prendre position professionnellement.", future: "Votre carrière va être sous les projecteurs.", past: "La visibilité gagnée ici continue de porter ses fruits." },
+  11: { current: "Connectez-vous aux bonnes personnes.", future: "De nouvelles alliances vont se former.", past: "Les connexions de cette période sont devenues des piliers." },
+  12: { current: "Prenez du recul. Le silence porte.", future: "Un temps de retrait sera bénéfique.", past: "Le travail intérieur de cette période a posé des bases invisibles." },
+};
+
 export function getContextualGuidance(
   domain: string,
   context: TimeContext,
   existingGuidance?: string,
   peakMoment?: string,
+  apiTopics?: { house: number }[],
 ): string {
-  const house = domainKeyToHouse(domain);
-  const label = houseConfig[house]?.label?.toLowerCase() ?? "cette zone";
+  // Use the primary topic's house for specific guidance
+  const topicHouse = apiTopics?.[0]?.house;
+  const actions = topicHouse ? HOUSE_ACTIONS[topicHouse] : null;
 
   if (context === "current") {
-    return existingGuidance ?? `Ce signal est actif. Plus vous investissez dans votre ${label}, plus vous créez d'élan.`;
+    return actions?.current ?? existingGuidance ?? "Ce signal est actif. Observez ce qui bouge dans votre vie.";
   }
   if (context === "future") {
-    return `Cette fenêtre approche. L'énergie va favoriser votre ${label}. Commencez à remarquer les thèmes liés.`;
+    return actions?.future ?? "Cette fenêtre approche. Restez attentif aux signes.";
   }
   // Past
-  return peakMoment ?? `La croissance de cette période est toujours en vous. Votre ${label} en porte la trace.`;
+  return actions?.past ?? peakMoment ?? "Cette période a laissé une empreinte durable.";
 }
 
 // ─── Transit Narrative (from real API data) ─────────────

@@ -168,12 +168,11 @@ export function getEventMeta(
   if (category === "zr") {
     const lt = Array.isArray(lotType) ? lotType[0] : lotType || "fortune";
     const base = ZR_LABELS[lt] || ZR_LABELS.fortune;
-    const lvl = level === 2 ? "Période majeure" : "Période active";
     return {
       title: base.title || "Changement de rythme",
-      subtitle: `${lvl}`,
+      subtitle: base.subtitle || "Le timing est avec vous",
       description: base.description || "Une fenêtre de timing significative est ouverte.",
-      keyInsight: level === 2 ? "C'est une période rare et à fort impact." : undefined,
+      keyInsight: level === 2 ? "C'est une période rare et à fort impact. Agissez." : undefined,
     };
   }
 
