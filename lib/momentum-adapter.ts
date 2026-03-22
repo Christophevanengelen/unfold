@@ -163,7 +163,7 @@ interface RawPhase {
   startMs: number;
   endMs: number;
   maxScore: number;
-  domains: Map<string, number>; // domain → max intensity
+  domains: Map<string, number>;
   planets: Set<string>;
   bestLabel: string;
   bestCategory: string;
@@ -171,6 +171,7 @@ interface RawPhase {
   bestLotType?: string;
   bestLevel?: number;
   sausageCount: number;
+  color?: string; // hex from API sausage
 }
 
 export function appDataToPhases(
@@ -215,6 +216,9 @@ export function appDataToPhases(
     const planets = new Set([planet]);
     if (s.natalPoint) planets.add(extractPlanet(`${s.natalPoint} `));
 
+    // Color from API: use first topic's house color (domain color)
+    const topicColor = s.topics?.[0]?.color;
+
     groups.push({
       startMs,
       endMs,
@@ -227,6 +231,7 @@ export function appDataToPhases(
       bestLotType: lotType,
       bestLevel: s.level,
       sausageCount: 1,
+      color: topicColor || s.color,
     });
   }
 
@@ -295,8 +300,9 @@ export function appDataToPhases(
         : meta.keyInsight,
       guidance:
         status === "current"
-          ? "Pay attention to this signal — it's active now."
+          ? "Pay attention to this signal. It's active now."
           : undefined,
+      color: g.color,
     });
   }
 

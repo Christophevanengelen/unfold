@@ -27,6 +27,7 @@ interface CapsuleData {
   tierTotal: number;       // total capsules of same tier
   isCurrent: boolean;
   isFuture: boolean;
+  color?: string; // hex from API — domain house color
 }
 
 // ─── Constants ──────────────────────────────────────────────
@@ -151,7 +152,8 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
       tierOccurrence: 0, // assigned below
       tierTotal: 0,
       isCurrent: false,
-      isFuture: start.getTime() > Date.now(), // visible when startDate touches today
+      isFuture: start.getTime() > Date.now(),
+      color: phase.color,
     });
   }
 
@@ -191,6 +193,7 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
       tierTotal: 0,
       isCurrent: true,
       isFuture: false,
+      color: currentPhases[0]?.color,
     });
   }
 
@@ -719,12 +722,18 @@ function FocusView({
                 width: capsuleWidth,
                 height: h,
                 borderRadius: capsuleWidth / 2,
-                background: capsule.isCurrent
-                  ? "color-mix(in srgb, var(--brand-7) 35%, var(--bg-secondary))"
-                  : "color-mix(in srgb, var(--brand-6) 22%, var(--bg-secondary))",
-                border: capsule.isCurrent
-                  ? "1px solid color-mix(in srgb, var(--brand-8) 40%, transparent)"
-                  : "1px solid color-mix(in srgb, var(--brand-6) 15%, transparent)",
+                background: capsule.color
+                  ? capsule.isCurrent
+                    ? `color-mix(in srgb, ${capsule.color} 40%, var(--bg-secondary))`
+                    : `color-mix(in srgb, ${capsule.color} 25%, var(--bg-secondary))`
+                  : capsule.isCurrent
+                    ? "color-mix(in srgb, var(--brand-7) 35%, var(--bg-secondary))"
+                    : "color-mix(in srgb, var(--brand-6) 22%, var(--bg-secondary))",
+                border: capsule.color
+                  ? `1px solid color-mix(in srgb, ${capsule.color} ${capsule.isCurrent ? "50" : "25"}%, transparent)`
+                  : capsule.isCurrent
+                    ? "1px solid color-mix(in srgb, var(--brand-8) 40%, transparent)"
+                    : "1px solid color-mix(in srgb, var(--brand-6) 15%, transparent)",
                 filter: capsule.isFuture ? "blur(2px)" : "none",
                 opacity: capsule.isFuture ? 0.4 : 1,
                 zIndex: capsule.isCurrent ? 5 : 2,
@@ -737,7 +746,7 @@ function FocusView({
                   style={{
                     borderRadius: capsuleWidth / 2,
                     background:
-                      "radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, var(--accent-purple) 12%, transparent) 0%, transparent 70%)",
+                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${capsule.color ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
                   }}
                 />
               )}
@@ -1115,12 +1124,18 @@ function OverviewView({
                 width: w,
                 height: capsuleH,
                 borderRadius: w / 2,
-                background: capsule.isCurrent
-                  ? "color-mix(in srgb, var(--brand-7) 35%, var(--bg-secondary))"
-                  : "color-mix(in srgb, var(--brand-6) 22%, var(--bg-secondary))",
-                border: capsule.isCurrent
-                  ? "1px solid color-mix(in srgb, var(--brand-8) 40%, transparent)"
-                  : "1px solid color-mix(in srgb, var(--brand-6) 15%, transparent)",
+                background: capsule.color
+                  ? capsule.isCurrent
+                    ? `color-mix(in srgb, ${capsule.color} 40%, var(--bg-secondary))`
+                    : `color-mix(in srgb, ${capsule.color} 25%, var(--bg-secondary))`
+                  : capsule.isCurrent
+                    ? "color-mix(in srgb, var(--brand-7) 35%, var(--bg-secondary))"
+                    : "color-mix(in srgb, var(--brand-6) 22%, var(--bg-secondary))",
+                border: capsule.color
+                  ? `1px solid color-mix(in srgb, ${capsule.color} ${capsule.isCurrent ? "50" : "25"}%, transparent)`
+                  : capsule.isCurrent
+                    ? "1px solid color-mix(in srgb, var(--brand-8) 40%, transparent)"
+                    : "1px solid color-mix(in srgb, var(--brand-6) 15%, transparent)",
                 filter: capsule.isFuture ? "blur(2px)" : "none",
                 opacity: capsule.isFuture ? 0.4 : 1,
                 zIndex: capsule.isCurrent ? 5 : 2,
@@ -1133,7 +1148,7 @@ function OverviewView({
                   style={{
                     borderRadius: w / 2,
                     background:
-                      "radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, var(--accent-purple) 12%, transparent) 0%, transparent 70%)",
+                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${capsule.color ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
                   }}
                 />
               )}

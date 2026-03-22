@@ -23,6 +23,7 @@ export interface MomentumPhase {
   guidance?: string; // premium-only
   keyInsight?: string;
   peakMoment?: string;
+  color?: string; // hex color from API sausage — used for boudin rendering
 }
 
 // ─── Mock Timeline ──────────────────────────────────────────
