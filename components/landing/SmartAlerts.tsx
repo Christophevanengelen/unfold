@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { MiniStatusBar } from "@/components/ui/MiniStatusBar";
 import { BottomNav } from "@/components/ui/BottomNav";
 import type { TranslationMap } from "@/lib/i18n";
@@ -174,22 +175,15 @@ export function SmartAlerts({ translations }: SmartAlertsProps) {
   return (
     <section className="relative overflow-hidden py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-        {/* Header */}
-        <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
-            {t(translations, "alerts.eyebrow", "Quiet intelligence")}
-          </p>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t(translations, "alerts.title", "It watches. You live.")}
-          </h2>
-          <p className="mt-6 text-lg text-brand-10">
-            {t(
-              translations,
-              "alerts.subtitle",
-              "Unfold doesn\u2019t spam you. It watches your signal quietly \u2014 and calls when something exceptional forms.",
-            )}
-          </p>
-        </ScrollReveal>
+        <SectionHeader
+          translations={translations}
+          eyebrowKey="alerts.eyebrow"
+          eyebrowFallback="Quiet intelligence"
+          titleKey="alerts.title"
+          titleFallback="It watches. You live."
+          subtitleKey="alerts.subtitle"
+          subtitleFallback="Unfold doesn't spam you. It watches your signal quietly — and calls when something exceptional forms."
+        />
 
         {/* Phone mockup */}
         <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.1}>

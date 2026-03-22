@@ -39,7 +39,7 @@ export default async function LandingPage({
         <Hero translations={translations} />
 
         {/* 2. Foundation — what you get for free */}
-        <FreeAwareness t={tr} />
+        <FreeAwareness t={tr} translations={translations} />
 
         {/* transition: free → depth */}
         <NarrativeTransition text={tr("transition.free_to_clarity", "Your signal is free. But your story goes deeper.")} />
@@ -69,7 +69,7 @@ export default async function LandingPage({
         <PremiumMomentum translations={translations} />
 
         {/* 9. Credibility */}
-        <ScienceTechnology t={tr} />
+        <ScienceTechnology t={tr} translations={translations} />
 
         {/* 10. Conversion */}
         <Pricing t={tr} />

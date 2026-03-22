@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { MiniStatusBar } from "@/components/ui/MiniStatusBar";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { ViewToggle } from "@/components/ui/ViewToggle";
@@ -174,22 +175,15 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
   return (
     <section className="relative overflow-hidden py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-        {/* Header */}
-        <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
-            {t(translations, "timeline.eyebrow", "YOUR STORY")}
-          </p>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t(translations, "timeline.title", "Your rhythm has a story")}
-          </h2>
-          <p className="mt-6 text-lg text-brand-10">
-            {t(
-              translations,
-              "timeline.subtitle",
-              "Every momentum period from birth to now \u2014 and what\u2019s forming ahead. Planets reveal the pattern."
-            )}
-          </p>
-        </ScrollReveal>
+        <SectionHeader
+          translations={translations}
+          eyebrowKey="timeline.eyebrow"
+          eyebrowFallback="Your story"
+          titleKey="timeline.title"
+          titleFallback="Your rhythm has a story"
+          subtitleKey="timeline.subtitle"
+          subtitleFallback="Every momentum period from birth to now — and what's forming ahead. Planets reveal the pattern."
+        />
 
         {/* Phone mockup */}
         <ScrollReveal variant="scaleIn" className="mt-16 flex justify-center" threshold={0.1}>

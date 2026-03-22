@@ -130,6 +130,44 @@ prisma/
 5. **Christophe is NOT a coder** — explain changes simply, automate everything possible
 6. **Icons: Flowbite only, NEVER emoji** — Use `flowbite-react-icons` for ALL icons. Never use emoticon/emoji icons in UI. Import from `flowbite-react-icons/outline` or `flowbite-react-icons/solid`. Browse available icons at https://flowbite.com/icons/. Source: https://github.com/themesberg/flowbite-icons
 
+## Naming & Code Conventions
+
+### Files & Components
+| What | Convention | Example |
+|------|-----------|---------|
+| React components | PascalCase | `SectionHeader.tsx`, `LifeDomains.tsx` |
+| Utility/lib files | kebab-case | `mock-data.ts`, `domain-config.tsx` |
+| API routes | kebab-case | `api/toctoc-proxy/route.ts` |
+| CSS/styles | kebab-case | `globals.css` |
+| Types files | kebab-case | `api.ts` |
+
+### Variables & Functions
+| What | Convention | Example |
+|------|-----------|---------|
+| Components | PascalCase | `SectionHeader`, `LifeDomains` |
+| Functions | camelCase | `buildCapsules`, `assignLanes` |
+| Constants | UPPER_SNAKE | `LANE_COUNT`, `PX_PER_MONTH` |
+| Config objects | camelCase | `houseConfig`, `planetConfig` |
+| Types/interfaces | PascalCase | `MomentumPhase`, `CapsuleData` |
+| CSS vars | kebab-case | `--accent-purple`, `--bg-primary` |
+| Translation keys | dot.notation | `free.title`, `compat.v2.eyebrow` |
+
+### Atomic Design — Shared UI Components
+| Component | Path | Purpose |
+|-----------|------|---------|
+| `SectionHeader` | `components/ui/SectionHeader.tsx` | Eyebrow + Title + Subtitle — enforces consistent typography |
+| `ScrollReveal` | `components/ui/ScrollReveal.tsx` | Scroll-triggered animations |
+| `MiniStatusBar` | `components/ui/MiniStatusBar.tsx` | Phone mockup status bar |
+| `BottomNav` | `components/ui/BottomNav.tsx` | Phone mockup bottom nav |
+
+**Rule:** Every landing section MUST use `SectionHeader` for its header block. No inline eyebrow/title/subtitle markup.
+
+### Product Terminology (12 Houses, NOT 3 Domains)
+The product covers **12 life domains** (astrological houses), NOT "love/health/work":
+- `houseConfig` (12 entries) = current system
+- `domainConfig` (3 entries) = deprecated, DO NOT use in new code
+- `DomainKey` = deprecated, use `HouseNumber` instead
+
 ## GitHub
 
 - **Repo:** `Christophevanengelen/unfold`

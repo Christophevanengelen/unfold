@@ -31,9 +31,10 @@ interface CapsuleData {
 }
 
 // ─── Constants ──────────────────────────────────────────────
-const LANE_COUNT = 7;
+let LANE_COUNT = 7;
 const PX_PER_MONTH = 40; // pixels per month — more space for temporal accuracy
 const LANE_SPACING = 6;
+const MIN_GAP_MS = 0; // capsules just can't overlap — no extra gap needed
 
 // Tier thresholds & widths
 function getTier(intensity: number): Tier {
@@ -41,23 +42,67 @@ function getTier(intensity: number): Tier {
   if (intensity >= 70) return "toctoc";
   return "toc";
 }
-// Distribute boudins across 7 lanes based on score
-let laneCounter = 0;
-function getTierLane(tier: Tier): number {
-  if (tier === "toc") {
-    laneCounter++;
-    return laneCounter % 2;                // lanes 0-1
-  }
-  if (tier === "toctoc") {
-    laneCounter++;
-    return 2 + (laneCounter % 3);          // lanes 2-3-4
-  }
-  return 5 + (laneCounter++ % 2);          // lanes 5-6
-}
 function getTierWidth(tier: Tier): number {
   if (tier === "toc") return 36;
   if (tier === "toctoc") return 48;
   return 64;
+}
+
+// ─── Lane assignment: temporal collision detection ──────────
+// Three passes: TOCTOCTOC first (strongest → left lanes),
+// then TOCTOC (medium → middle), then TOC (lightest → right).
+// Within each tier, capsules go on the first free lane (no overlap).
+// Left = lightest (toc), right = strongest (toctoctoc)
+const TIER_ORDER: Tier[] = ["toc", "toctoc", "toctoctoc"];
+
+function assignLanesForGroup(
+  capsules: CapsuleData[],
+  laneEnds: number[],
+  laneOffset: number,
+): number {
+  const sorted = [...capsules].sort(
+    (a, b) => a.startDate.getTime() - b.startDate.getTime()
+  );
+  let maxLane = 0;
+
+  for (const capsule of sorted) {
+    const startMs = capsule.startDate.getTime();
+    let placed = false;
+
+    // Try existing lanes for this tier group
+    for (let i = 0; i < laneEnds.length; i++) {
+      if (startMs >= laneEnds[i] + MIN_GAP_MS) {
+        capsule.lane = laneOffset + i;
+        laneEnds[i] = capsule.endDate.getTime();
+        placed = true;
+        maxLane = Math.max(maxLane, i + 1);
+        break;
+      }
+    }
+
+    if (!placed) {
+      const newIdx = laneEnds.length;
+      capsule.lane = laneOffset + newIdx;
+      laneEnds.push(capsule.endDate.getTime());
+      maxLane = Math.max(maxLane, newIdx + 1);
+    }
+  }
+
+  return maxLane;
+}
+
+function assignLanes(capsules: CapsuleData[]): void {
+  let laneOffset = 0;
+
+  for (const tier of TIER_ORDER) {
+    const group = capsules.filter((c) => c.tier === tier);
+    if (group.length === 0) continue;
+    const laneEnds: number[] = [];
+    const lanesUsed = assignLanesForGroup(group, laneEnds, laneOffset);
+    laneOffset += lanesUsed;
+  }
+
+  LANE_COUNT = Math.max(1, laneOffset);
 }
 const TIMELINE_PAD = 80;
 
@@ -75,13 +120,13 @@ const PILL_STYLE: React.CSSProperties = {
 let birthDate = new Date("1986-05-14T00:00:00");
 let timelineStartDate = new Date(birthDate);
 let timelineEndDate = new Date(birthDate);
-timelineEndDate.setFullYear(timelineEndDate.getFullYear() + 100);
+timelineEndDate.setFullYear(timelineEndDate.getFullYear() + 120);
 
 function initDates(birthStr: string) {
   birthDate = new Date(birthStr + "T00:00:00");
   timelineStartDate = new Date(birthDate);
   timelineEndDate = new Date(birthDate);
-  timelineEndDate.setFullYear(timelineEndDate.getFullYear() + 100);
+  timelineEndDate.setFullYear(timelineEndDate.getFullYear() + 120);
 }
 
 /** Months between two dates (fractional) */
@@ -125,7 +170,6 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
   const domainCounter: Record<string, number> = {};
 
   const capsules: CapsuleData[] = [];
-  const laneEndTime: number[] = new Array(LANE_COUNT).fill(0);
 
   // Separate current phases to merge them into a single capsule
   const currentPhases = sorted.filter((p) => p.status === "current");
@@ -141,7 +185,6 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
     domainCounter[phase.domain] = (domainCounter[phase.domain] || 0) + 1;
 
     const tier = getTier(phase.intensity);
-    const lane = getTierLane(tier);
 
     capsules.push({
       id: phase.id,
@@ -155,7 +198,7 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
       planets: phase.planets || [phase.domain === "love" ? "venus" : phase.domain === "health" ? "mars" : "mercury"],
       startDate: start,
       endDate: end,
-      lane,
+      lane: 0, // assigned by assignLanes()
       tier,
       tierOccurrence: 0, // assigned below
       tierTotal: 0,
@@ -195,7 +238,7 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
       planets: mergedPlanets.length > 0 ? mergedPlanets : ["mercury"],
       startDate: earliest,
       endDate: new Date(),
-      lane: getTierLane(tier),
+      lane: 0, // assigned by assignLanes()
       tier,
       tierOccurrence: 0, // assigned below
       tierTotal: 0,
@@ -204,6 +247,9 @@ function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
       color: currentPhases[0]?.color,
     });
   }
+
+  // ── Assign lanes by temporal collision detection ──
+  assignLanes(capsules);
 
   // Assign occurrence numbers for TOCTOCTOC only, by planet signature.
   // A number shows only if the same planet combo repeats across the lifetime.
@@ -286,7 +332,7 @@ function buildCurrentCapsule(timelineData: MomentumPhase[]): CapsuleData | null 
     planets: allPlanets.length > 0 ? allPlanets : ["mercury"],
     startDate: earliest,
     endDate: new Date(),
-    lane: getTierLane(tier),
+    lane: currentInAll?.lane ?? 0,
     tier,
     tierOccurrence: currentTierOcc,
     tierTotal: tierTot,
@@ -870,13 +916,18 @@ function OverviewView({
     el.scrollTo({ top: Math.max(0, nowY - viewportH * 0.5), behavior: "smooth" });
   }, [nowY]);
 
-  const maxCapsuleW = getTierWidth("toctoctoc");
-  const laneWidth = maxCapsuleW + LANE_SPACING;
-  const totalLanesWidth = LANE_COUNT * laneWidth;
-  const containerWidth = 375;
-  // Left margin for month labels
+  // Dynamic lane sizing — adapt to actual number of lanes & container width
   const labelMargin = 32;
-  const adjustedOffsetX = labelMargin + (containerWidth - labelMargin - totalLanesWidth) / 2;
+  const rightMargin = 12;
+  const availableWidth = 375 - labelMargin - rightMargin; // phone viewport
+  const maxCapsuleW = getTierWidth("toctoctoc");
+  const idealLaneWidth = maxCapsuleW + LANE_SPACING;
+  // If all lanes fit naturally, use natural width. Otherwise compress.
+  const laneWidth = LANE_COUNT * idealLaneWidth <= availableWidth
+    ? idealLaneWidth
+    : Math.max(12, Math.floor(availableWidth / LANE_COUNT));
+  const totalLanesWidth = LANE_COUNT * laneWidth;
+  const adjustedOffsetX = labelMargin + (availableWidth - totalLanesWidth) / 2;
 
   // Auto-scroll so NOW is centered — instant on mount
   useEffect(() => {
@@ -886,14 +937,17 @@ function OverviewView({
   }, [nowY]);
 
   // Pre-compute capsule positions with collision resolution
+  const fitsNaturally = LANE_COUNT * idealLaneWidth <= availableWidth;
+  const wScale = fitsNaturally ? 1 : Math.min(1, (laneWidth - LANE_SPACING) / getTierWidth("toctoctoc"));
+
   const overviewPositions = useMemo(() => {
     const CAPSULE_GAP = 6;
-    const maxW = getTierWidth("toctoctoc");
+    const maxW = fitsNaturally ? getTierWidth("toctoctoc") : Math.max(10, laneWidth - LANE_SPACING);
 
     const items = capsules.map((capsule, i) => {
       let topY = dateToY(capsule.endDate);
       const bottomY = dateToY(capsule.startDate);
-      const w = getTierWidth(capsule.tier);
+      const w = Math.max(10, Math.round(getTierWidth(capsule.tier) * wScale));
       const dc = capsule.planets.length;
       const ds = capsule.isCurrent ? 11 : 8;
       const dg = 4;

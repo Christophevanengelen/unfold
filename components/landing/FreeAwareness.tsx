@@ -2,12 +2,14 @@ import { Clock } from "flowbite-react-icons/outline";
 import { Eye } from "flowbite-react-icons/outline";
 import { ArrowRight } from "flowbite-react-icons/outline";
 import { ScrollReveal, ScrollRevealGroup, ScrollRevealItem } from "@/components/ui/ScrollReveal";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
 interface FreeAwarenessProps {
   t: (key: string, fallback?: string) => string;
+  translations?: import("@/lib/i18n").TranslationMap;
 }
 
-export function FreeAwareness({ t }: FreeAwarenessProps) {
+export function FreeAwareness({ t, translations }: FreeAwarenessProps) {
   const signals = [
     {
       icon: Clock,
@@ -35,18 +37,15 @@ export function FreeAwareness({ t }: FreeAwarenessProps) {
   return (
     <section className="relative overflow-hidden py-24 md:py-32">
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-        {/* Header text — one cohesive block */}
-        <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
-            {t("free.eyebrow", "Always free")}
-          </p>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-white md:text-5xl">
-            {t("free.title", "Three signals. One clear picture.")}
-          </h2>
-          <p className="mt-6 text-lg text-brand-10">
-            {t("free.subtitle", "Every day, Unfold reads your past, present, and next momentum — free, forever.")}
-          </p>
-        </ScrollReveal>
+        <SectionHeader
+          translations={translations}
+          eyebrowKey="free.eyebrow"
+          eyebrowFallback="Always free"
+          titleKey="free.title"
+          titleFallback="Three signals. One clear picture."
+          subtitleKey="free.subtitle"
+          subtitleFallback="Every day, Unfold reads your past, present, and next momentum — free, forever."
+        />
 
         {/* Cards — stagger in after header */}
         <ScrollRevealGroup className="mt-12 grid gap-8 md:grid-cols-3" stagger={0.15}>
