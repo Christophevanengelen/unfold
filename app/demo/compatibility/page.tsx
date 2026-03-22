@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,10 @@ export default function ConnectionsPage() {
   const connected = mockConnections.filter((c) => c.status === "connected");
   const [code, setCode] = useState("");
   const [showCodeInput, setShowCodeInput] = useState(false);
+  // Only animate on first mount — not on every navigation back
+  const hasAnimated = useRef(false);
+  const shouldAnimate = !hasAnimated.current;
+  if (shouldAnimate) hasAnimated.current = true;
 
   const handleCodeSubmit = () => {
     if (code.trim().length >= 4) {
@@ -32,7 +36,7 @@ export default function ConnectionsPage() {
     <motion.div
       className=""
       variants={staggerContainer}
-      initial="hidden"
+      initial={shouldAnimate ? "hidden" : "visible"}
       animate="visible"
     >
       {/* Header */}
