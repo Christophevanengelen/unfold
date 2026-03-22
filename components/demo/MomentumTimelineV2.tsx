@@ -135,7 +135,8 @@ function monthsBetween(a: Date, b: Date): number {
 }
 
 function getTotalMonths() { return monthsBetween(timelineStartDate, timelineEndDate) || 1200; }
-function getTotalHeight() { return TIMELINE_PAD * 2 + getTotalMonths() * PX_PER_MONTH; }
+const BIRTH_EASTER_EGG_PAD = 80; // extra space at bottom for the birth message
+function getTotalHeight() { return TIMELINE_PAD * 2 + getTotalMonths() * PX_PER_MONTH + BIRTH_EASTER_EGG_PAD; }
 
 /** Convert a date to Y position. Future (end date) = top, past (birth) = bottom */
 function dateToY(d: Date): number {
@@ -846,6 +847,36 @@ function FocusView({
             </motion.button>
           );
           })}
+
+          {/* Birth Easter egg — bottom of the timeline */}
+          <div
+            className="absolute left-0 right-0 flex flex-col items-center gap-2"
+            style={{
+              top: getTotalHeight() - TIMELINE_PAD + 20,
+            }}
+          >
+            <div
+              className="h-[1px] w-16"
+              style={{
+                background: "linear-gradient(90deg, transparent, var(--accent-purple), transparent)",
+              }}
+            />
+            <p
+              className="max-w-[200px] text-center text-[9px] leading-relaxed"
+              style={{ color: "color-mix(in srgb, var(--accent-purple) 50%, transparent)" }}
+            >
+              You weren&apos;t even crawling yet.
+              <br />
+              But the planets were already busy.
+            </p>
+            <div
+              className="h-1.5 w-1.5 rounded-full"
+              style={{
+                background: "var(--accent-purple)",
+                opacity: 0.3,
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -1254,6 +1285,36 @@ function OverviewView({
             </motion.button>
             );
           })}
+
+          {/* Birth Easter egg — bottom of the timeline */}
+          <div
+            className="absolute left-0 right-0 flex flex-col items-center gap-2"
+            style={{
+              top: getTotalHeight() - TIMELINE_PAD + 20,
+            }}
+          >
+            <div
+              className="h-[1px] w-16"
+              style={{
+                background: "linear-gradient(90deg, transparent, var(--accent-purple), transparent)",
+              }}
+            />
+            <p
+              className="max-w-[200px] text-center text-[9px] leading-relaxed"
+              style={{ color: "color-mix(in srgb, var(--accent-purple) 50%, transparent)" }}
+            >
+              You weren&apos;t even crawling yet.
+              <br />
+              But the planets were already busy.
+            </p>
+            <div
+              className="h-1.5 w-1.5 rounded-full"
+              style={{
+                background: "var(--accent-purple)",
+                opacity: 0.3,
+              }}
+            />
+          </div>
         </div>
       </div>
 
