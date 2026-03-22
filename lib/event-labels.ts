@@ -120,34 +120,34 @@ interface EventMeta {
 
 const TRANSIT_LABELS: Record<string, Record<string, Partial<EventMeta>>> = {
   Pluto: {
-    conjunction: { title: "Transformation profonde", subtitle: "Ce qui ne vous sert plus s'efface", description: "Pluton provoque un changement irréversible. Quelque chose se termine pour que du nouveau puisse émerger." },
-    opposition: { title: "Confrontation de pouvoir", subtitle: "La pression extérieure monte", description: "Des forces hors de votre contrôle exigent une adaptation. Ce qui résiste doit évoluer." },
-    square: { title: "Tension structurelle", subtitle: "Les anciennes fondations craquent", description: "La résistance signale où la croissance est en retard. Le changement est nécessaire, même s'il est difficile." },
-    trine: { title: "Puissance tranquille", subtitle: "La profondeur coule naturellement", description: "La transformation se fait en douceur. Appuyez-vous dessus sans forcer." },
+    conjunction: { title: "Transformation profonde", subtitle: "Ce qui ne vous sert plus s'efface", description: "Un changement de fond est en cours. Ce qui a fait son temps se retire pour laisser place à quelque chose de plus juste." },
+    opposition: { title: "Confrontation nécessaire", subtitle: "La pression extérieure vous fait grandir", description: "Des forces extérieures exigent une adaptation. Ce qui résiste en vous demande à être vu et ajusté." },
+    square: { title: "Tension structurelle", subtitle: "Les anciennes fondations craquent", description: "Vous sentez une résistance. Elle pointe exactement là où un changement est en retard. La difficulté est le signal." },
+    trine: { title: "Puissance tranquille", subtitle: "La profondeur coule naturellement", description: "Un changement profond se fait en douceur. Pas besoin de forcer — suivez le mouvement." },
   },
   Neptune: {
-    conjunction: { title: "Vision élargie", subtitle: "Les frontières se dissolvent", description: "Neptune dissout les certitudes et ouvre l'intuition. Confusion et inspiration coexistent." },
-    opposition: { title: "Retour au réel", subtitle: "Les illusions sont confrontées", description: "Ce que vous teniez pour acquis pourrait ne pas être ce qu'il semble. Clarifiez." },
-    square: { title: "Brouillard créatif", subtitle: "La clarté demande de la patience", description: "La confusion est temporaire. Ne forcez pas les décisions pendant cette période." },
-    trine: { title: "Flux d'inspiration", subtitle: "La créativité est amplifiée", description: "Un canal naturel s'ouvre pour le travail créatif ou spirituel. Laissez-vous porter." },
+    conjunction: { title: "Vision élargie", subtitle: "Les frontières se dissolvent", description: "Vos certitudes bougent et c'est normal. L'intuition prend le relais de la logique. Faites confiance à ce que vous ressentez." },
+    opposition: { title: "Retour au réel", subtitle: "Les illusions sont confrontées", description: "Ce que vous teniez pour acquis mérite d'être questionné. La clarté reviendra — laissez-lui le temps." },
+    square: { title: "Brouillard créatif", subtitle: "La clarté demande de la patience", description: "Tout semble flou en ce moment. Ne forcez aucune décision importante. La patience est votre meilleur atout." },
+    trine: { title: "Flux d'inspiration", subtitle: "La créativité est amplifiée", description: "Un canal naturel s'ouvre pour la création, l'intuition, la rêverie. Laissez-vous porter." },
   },
   Uranus: {
-    conjunction: { title: "Rupture libératrice", subtitle: "L'inattendu arrive", description: "Uranus brise les routines. La libération passe par la disruption — accueillez la surprise." },
-    opposition: { title: "Appel à la liberté", subtitle: "Quelque chose doit changer", description: "Des événements extérieurs vous poussent vers plus d'authenticité. Écoutez l'impulsion." },
-    square: { title: "Tension électrique", subtitle: "L'agitation monte", description: "La pression de changer est réelle. Canalisez cette énergie au lieu de la subir." },
-    trine: { title: "Innovation fluide", subtitle: "Les nouvelles idées se posent en douceur", description: "Le changement vient naturellement. Expérimentez librement." },
+    conjunction: { title: "Rupture libératrice", subtitle: "L'inattendu arrive", description: "Ce qui semblait stable bouge. C'est libérateur, même si ça secoue. Accueillez la surprise." },
+    opposition: { title: "Appel à la liberté", subtitle: "Quelque chose doit changer", description: "Des événements vous poussent vers plus d'authenticité. Écoutez l'impulsion — elle sait où elle va." },
+    square: { title: "Tension électrique", subtitle: "L'agitation monte", description: "L'envie de changement est réelle et pressante. Canalisez cette énergie au lieu de la subir." },
+    trine: { title: "Innovation fluide", subtitle: "Les nouvelles idées se posent en douceur", description: "Le changement vient naturellement. C'est le moment d'expérimenter et d'essayer du neuf." },
   },
   Saturn: {
-    conjunction: { title: "Nouvelles fondations", subtitle: "La structure se construit", description: "Saturne récompense la discipline. Engagez-vous sur ce qui compte vraiment." },
-    opposition: { title: "Heure des comptes", subtitle: "Les résultats sont testés", description: "Ce que vous avez construit est maintenant évalué par la réalité. Tenez bon." },
-    square: { title: "Croissance exigeante", subtitle: "L'effort est requis", description: "Les obstacles révèlent où il reste du travail. La difficulté est le chemin." },
+    conjunction: { title: "Nouvelles fondations", subtitle: "La structure se construit", description: "C'est le moment de bâtir du solide. La discipline investie maintenant portera ses fruits pendant des années." },
+    opposition: { title: "Heure des comptes", subtitle: "Les résultats sont testés", description: "Ce que vous avez construit est évalué par la réalité. Ce qui est solide tient. Le reste doit évoluer." },
+    square: { title: "Croissance exigeante", subtitle: "L'effort est requis", description: "Les obstacles révèlent où il reste du travail. Chaque difficulté surmontée vous rend plus fort." },
     trine: { title: "Progrès régulier", subtitle: "La discipline paie", description: "Le travail de fond porte ses fruits. Les récompenses sont méritées et durables." },
   },
   Jupiter: {
-    conjunction: { title: "Fenêtre d'expansion", subtitle: "Les possibilités se multiplient", description: "Jupiter amplifie tout ce qu'il touche. Les opportunités s'ouvrent — saisissez-les." },
-    opposition: { title: "Besoin d'équilibre", subtitle: "L'excès guette", description: "La croissance est possible mais la modération est clé. Ne vous dispersez pas." },
-    square: { title: "Tension de croissance", subtitle: "Ambition contre réalité", description: "Poussez en avant mais restez ancré. L'impatience peut coûter cher." },
-    trine: { title: "Alignement favorable", subtitle: "Le flux est avec vous", description: "Les choses se mettent en place naturellement. Agissez sur les opportunités qui se présentent." },
+    conjunction: { title: "Fenêtre d'expansion", subtitle: "Les possibilités se multiplient", description: "Les portes s'ouvrent. Les opportunités sont là — soyez prêt à saisir ce qui se présente." },
+    opposition: { title: "Besoin d'équilibre", subtitle: "L'excès guette", description: "La croissance est possible mais la modération est clé. Visez l'essentiel, ne vous dispersez pas." },
+    square: { title: "Tension de croissance", subtitle: "Ambition contre réalité", description: "L'ambition pousse, la réalité freine. Ajustez le cap sans perdre l'élan." },
+    trine: { title: "Alignement favorable", subtitle: "Le flux est avec vous", description: "Les choses se mettent en place. La chance favorise ceux qui agissent — c'est le moment." },
   },
 };
 
@@ -180,24 +180,23 @@ export function getEventMeta(
   if (category === "eclipse") {
     const isSolar = label.toLowerCase().includes("solar");
     return {
-      title: isSolar ? "Éclipse solaire" : "Éclipse lunaire",
+      title: isSolar ? "Nouveau départ" : "Point culminant",
       subtitle: isSolar ? "Un nouveau chapitre s'ouvre" : "Libération émotionnelle",
       description: isSolar
-        ? "Les éclipses marquent des tournants. Ce qui est semé maintenant grandit pendant 6 mois."
-        : "Ce qui couvait émotionnellement arrive à son point culminant.",
+        ? "Un tournant se dessine. Ce qui est semé maintenant grandira pendant les 6 prochains mois."
+        : "Ce qui couvait émotionnellement arrive à maturité. C'est le moment de lâcher ce qui ne fonctionne plus.",
     };
   }
 
   // Station events
   if (category === "station") {
-    const planet = extractPlanet(label);
     const isDirect = label.includes(" SD ");
     return {
-      title: isDirect ? "Station directe" : "Station rétrograde",
-      subtitle: `${planetConfig[planet]?.label || planet} marque une pause`,
+      title: isDirect ? "Reprise de l'élan" : "Pause et révision",
+      subtitle: isDirect ? "La clarté revient" : "Le rythme ralentit",
       description: isDirect
-        ? "L'élan reprend. La clarté revient après une période de révision."
-        : "Une période de révision et de recalibration commence. Ralentissez.",
+        ? "L'élan reprend après une période de révision. La clarté revient — avancez."
+        : "Une période de recul et de recalibration commence. Ralentissez pour mieux repartir.",
     };
   }
 

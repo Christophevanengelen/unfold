@@ -320,7 +320,7 @@ export function getTransitNarrative(phase: any): string {
   }
 
   if (cat === "station") {
-    return "Une pause dans le flux. Les thèmes liés à cette période s'intensifient — prenez le temps de les observer.";
+    return "Une pause dans le rythme. Les thèmes de cette période s'intensifient — prenez le temps de les observer.";
   }
 
   return "";
@@ -338,20 +338,20 @@ export function translateApiLabel(label: string | undefined): string | null {
     result = result.replace(new RegExp(`\\b${en}\\b`, "g"), frLabel);
   }
   result = result
-    .replace(/\bconjunction\b/gi, "conjonction")
-    .replace(/\bconjunct\b/gi, "conjonction")
-    .replace(/\bsquare\b/gi, "carré")
-    .replace(/\bopposition\b/gi, "opposition")
-    .replace(/\btrine\b/gi, "trigone")
-    .replace(/\bsextile\b/gi, "sextile")
-    .replace(/\bnatal\b/gi, "natal")
+    .replace(/\bconjunction\b/gi, "activation")
+    .replace(/\bconjunct\b/gi, "activation")
+    .replace(/\bsquare\b/gi, "tension")
+    .replace(/\bopposition\b/gi, "confrontation")
+    .replace(/\btrine\b/gi, "flux")
+    .replace(/\bsextile\b/gi, "ouverture")
+    .replace(/\bnatal\b/gi, "personnel")
     .replace(/\bReturn\b/gi, "Retour")
-    .replace(/\bSolar Eclipse\b/gi, "Éclipse solaire")
-    .replace(/\bLunar Eclipse\b/gi, "Éclipse lunaire")
-    .replace(/\bSR\b/, "station directe")
-    .replace(/\bSD\b/, "station rétrograde")
+    .replace(/\bSolar Eclipse\b/gi, "Nouveau départ")
+    .replace(/\bLunar Eclipse\b/gi, "Point culminant")
+    .replace(/\bSR\b/, "reprise")
+    .replace(/\bSD\b/, "pause")
     .replace(/\bPeak\b/gi, "Pic")
-    .replace(/\bZR\b/, "ZR");
+    .replace(/\bZR\b/, "Cycle de vie");
   return result;
 }
 
@@ -363,16 +363,16 @@ export function getCycleNarrative(phase: any): string | null {
   if (!cycle || !cycle.totalHits || cycle.totalHits <= 1) return null;
 
   const hitDescriptions: Record<number, string> = {
-    1: "Premier contact — la situation émerge.",
-    2: "Phase de révision — retour en arrière pour approfondir.",
-    3: "Résolution finale — intégration et avancée.",
+    1: "Phase d'ouverture — le sujet apparaît dans votre vie.",
+    2: "Phase de maturation — vous y revenez avec plus de recul.",
+    3: "Phase de résolution — le sujet se clarifie et avance.",
   };
 
   const hitText = cycle.totalHits <= 3
     ? hitDescriptions[cycle.hitNumber] || `Passage ${cycle.hitNumber}.`
-    : `Passage ${cycle.hitNumber} sur ${cycle.totalHits}.`;
+    : `Passage ${cycle.hitNumber} sur ${cycle.totalHits} — le sujet se précise à chaque étape.`;
 
-  return `${hitText}${cycle.pattern ? ` (${cycle.pattern})` : ""}`;
+  return hitText;
 }
 
 // ─── Lifetime Narrative ─────────────────────────────────
@@ -383,10 +383,10 @@ export function getLifetimeNarrative(phase: any): string | null {
   const total = phase?.lifetimeTotal;
   if (!n || !total || total <= 1) return null;
 
-  if (n === 1 && total > 1) return "Première fois dans votre vie. Territoire entièrement nouveau.";
-  if (n === total) return "Dernière occurrence dans votre vie. Résolution et achèvement.";
-  if (n === 2) return "Deuxième rencontre avec cette énergie. Approfondissement.";
-  return `${n}e occurrence sur ${total} dans votre vie.`;
+  if (n === 1 && total > 1) return "Première fois dans votre vie. Vous découvrez un territoire entièrement nouveau.";
+  if (n === total) return "Dernière fois dans votre vie. C'est le moment d'aller au bout de ce que cette période vous apporte.";
+  if (n === 2) return "Deuxième fois que vous vivez ça. Vous avez déjà des repères — utilisez-les.";
+  return `${n}e occurrence sur ${total} dans votre vie. Chaque passage approfondit votre compréhension.`;
 }
 
 // ─── Topics Narrative (from real API topics) ────────────
