@@ -175,6 +175,8 @@ interface RawPhase {
   bestLevel?: number;
   sausageCount: number;
   color?: string; // hex from API sausage
+  /** Original sausage for detail sheet fields */
+  originalSausage?: SausageData;
 }
 
 export function appDataToPhases(
@@ -239,6 +241,7 @@ export function appDataToPhases(
       bestLevel: s.level,
       sausageCount: 1,
       color: firstTopicColor,
+      originalSausage: s,
     });
   }
 
@@ -288,6 +291,16 @@ export function appDataToPhases(
     // Overall intensity = max across all domains in this group
     const overallIntensity = Math.max(...Array.from(g.domains.values()));
 
+    // Extract raw API fields from originalSausage for detail sheet
+    const os = g.originalSausage;
+    const rawLotType = os ? (typeof os.lotType === 'string' ? os.lotType : Array.isArray(os.lotType) ? os.lotType[0] : undefined) : undefined;
+    const rawCycle = os?.cycle ? {
+      hitNumber: os.cycle.hitNumber,
+      totalHits: typeof os.cycle.allHits === 'number' ? os.cycle.allHits : 1,
+      pattern: os.pattern || '',
+      allHits: [],
+    } : undefined;
+
     phases.push({
       id: `phase-${i}`,
       domain: bestDomain as "love" | "health" | "work",
@@ -312,6 +325,22 @@ export function appDataToPhases(
           ? "Pay attention to this signal. It's active now."
           : undefined,
       color: g.color,
+      // Raw API sausage fields for detail sheet rendering
+      apiLabel: os?.label,
+      apiCategory: os?.category,
+      transitPlanet: os?.transitPlanet,
+      natalPoint: os?.natalPoint,
+      aspect: os?.aspect,
+      cycle: rawCycle,
+      apiTopics: os?.topics?.map(t => ({ house: t.house, color: t.color, topic: t.label || '', source: '' })),
+      lotType: rawLotType,
+      zrLevel: os?.level,
+      periodSign: os?.periodSign,
+      markers: os?.markers,
+      eclipseType: os?.eclipseType,
+      lifetimeNumber: os?.cycle?.hitNumber,
+      lifetimeTotal: os?.cycle ? (typeof os.cycle.allHits === 'number' ? os.cycle.allHits : 1) : undefined,
+      isVipTransit: os?.isVipTransit,
     });
   }
 

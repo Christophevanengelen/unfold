@@ -206,3 +206,143 @@ export function getContextualGuidance(
   // Past
   return peakMoment ?? `La croissance de cette période est toujours en vous. Votre ${label} en porte la trace.`;
 }
+
+// ─── Transit Narrative (from real API data) ─────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PLANET_FR: Record<string, string> = {
+  Pluto: "Pluton", Neptune: "Neptune", Uranus: "Uranus", Saturn: "Saturne",
+  Jupiter: "Jupiter", Mars: "Mars", Venus: "Vénus", Mercury: "Mercure",
+  Sun: "Soleil", Moon: "Lune", "North Node": "Noeud Nord", "South Node": "Noeud Sud",
+  Ascendant: "Ascendant", MC: "Milieu du Ciel",
+};
+const ASPECT_FR: Record<string, string> = {
+  conjunction: "en conjonction avec",
+  square: "en carré avec",
+  opposition: "en opposition avec",
+  trine: "en trigone avec",
+  sextile: "en sextile avec",
+};
+function fr(name: string): string { return PLANET_FR[name] || name; }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getTransitNarrative(phase: any): string {
+  if (!phase) return "";
+  const cat = phase.apiCategory;
+  const planet = phase.transitPlanet;
+  const natal = phase.natalPoint;
+  const aspect = phase.aspect;
+
+  if (cat === "transit" && planet && natal && aspect) {
+    return `${fr(planet)} est ${ASPECT_FR[aspect] || "en aspect avec"} votre ${fr(natal)} natal.`;
+  }
+
+  if (cat === "eclipse") {
+    const type = phase.eclipseType === "solar" ? "solaire" : "lunaire";
+    return `Une éclipse ${type} active votre ${fr(natal || "thème")} natal.`;
+  }
+
+  if (cat === "zr") {
+    const lotLabels: Record<string, string> = { fortune: "Circonstances", spirit: "Vocation", eros: "Désir" };
+    const lot = lotLabels[phase.lotType] || phase.lotType || "Fortune";
+    const sign = phase.periodSign || "";
+    const level = phase.zrLevel === 2 ? "majeure" : "secondaire";
+    return `Période ${level} du Lot de ${lot}${sign ? ` en ${sign}` : ""}.`;
+  }
+
+  if (cat === "station") {
+    return `${fr(planet || "Planète")} en station — une pause qui intensifie son effet sur votre ${fr(natal || "thème")}.`;
+  }
+
+  return "";
+}
+
+// ─── Translate API label to French ──────────────────────
+
+export function translateApiLabel(label: string | undefined): string | null {
+  if (!label) return null;
+  // "Jupiter conjunction natal Mars" → "Jupiter conjonction Mars natal"
+  // "ZR Fortune+Spirit L3 Cancer" → keep as-is (already readable)
+  // "Solar Eclipse conjunct natal Sun" → "Éclipse solaire conjonction Soleil natal"
+  let result = label;
+  for (const [en, frLabel] of Object.entries(PLANET_FR)) {
+    result = result.replace(new RegExp(`\\b${en}\\b`, "g"), frLabel);
+  }
+  result = result
+    .replace(/\bconjunction\b/gi, "conjonction")
+    .replace(/\bconjunct\b/gi, "conjonction")
+    .replace(/\bsquare\b/gi, "carré")
+    .replace(/\bopposition\b/gi, "opposition")
+    .replace(/\btrine\b/gi, "trigone")
+    .replace(/\bsextile\b/gi, "sextile")
+    .replace(/\bnatal\b/gi, "natal")
+    .replace(/\bReturn\b/gi, "Retour")
+    .replace(/\bSolar Eclipse\b/gi, "Éclipse solaire")
+    .replace(/\bLunar Eclipse\b/gi, "Éclipse lunaire")
+    .replace(/\bSR\b/, "station directe")
+    .replace(/\bSD\b/, "station rétrograde")
+    .replace(/\bPeak\b/gi, "Pic")
+    .replace(/\bZR\b/, "ZR");
+  return result;
+}
+
+// ─── Cycle Narrative ────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getCycleNarrative(phase: any): string | null {
+  const cycle = phase?.cycle;
+  if (!cycle || !cycle.totalHits || cycle.totalHits <= 1) return null;
+
+  const hitDescriptions: Record<number, string> = {
+    1: "Premier contact — la situation émerge.",
+    2: "Phase de révision — retour en arrière pour approfondir.",
+    3: "Résolution finale — intégration et avancée.",
+  };
+
+  const hitText = cycle.totalHits <= 3
+    ? hitDescriptions[cycle.hitNumber] || `Passage ${cycle.hitNumber}.`
+    : `Passage ${cycle.hitNumber} sur ${cycle.totalHits}.`;
+
+  return `${hitText}${cycle.pattern ? ` (${cycle.pattern})` : ""}`;
+}
+
+// ─── Lifetime Narrative ─────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getLifetimeNarrative(phase: any): string | null {
+  const n = phase?.lifetimeNumber;
+  const total = phase?.lifetimeTotal;
+  if (!n || !total || total <= 1) return null;
+
+  if (n === 1 && total > 1) return "Première fois dans votre vie. Territoire entièrement nouveau.";
+  if (n === total) return "Dernière occurrence dans votre vie. Résolution et achèvement.";
+  if (n === 2) return "Deuxième rencontre avec cette énergie. Approfondissement.";
+  return `${n}e occurrence sur ${total} dans votre vie.`;
+}
+
+// ─── Topics Narrative (from real API topics) ────────────
+
+export function getTopicsNarrative(
+  topics: { house: number; topic: string; source: string }[] | undefined,
+  context: TimeContext
+): string {
+  if (!topics || topics.length === 0) return "";
+
+  const houseLabels: Record<number, string> = {
+    1: "l'identité", 2: "les finances", 3: "la communication",
+    4: "le foyer", 5: "la créativité", 6: "le quotidien",
+    7: "le couple", 8: "les transformations", 9: "l'horizon",
+    10: "la carrière", 11: "le réseau", 12: "l'intériorité",
+  };
+
+  const parts = topics.map(t => houseLabels[t.house] || `la maison ${t.house}`);
+  const unique = [...new Set(parts)];
+
+  if (context === "current") {
+    return `Les domaines activés en ce moment : ${unique.join(", ")}.`;
+  }
+  if (context === "future") {
+    return `Les domaines qui seront touchés : ${unique.join(", ")}.`;
+  }
+  return `Les domaines qui ont été touchés : ${unique.join(", ")}.`;
+}

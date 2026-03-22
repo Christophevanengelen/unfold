@@ -3,7 +3,7 @@
  * Maps planet + aspect + natal point patterns to titles/descriptions.
  */
 
-import type { DomainKey, PlanetKey } from "@/lib/domain-config";
+import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
 
 // ─── Planet name → PlanetKey mapping ────────────────────────
 
@@ -120,41 +120,41 @@ interface EventMeta {
 
 const TRANSIT_LABELS: Record<string, Record<string, Partial<EventMeta>>> = {
   Pluto: {
-    conjunction: { title: "Deep Transformation", subtitle: "Identity reshapes", description: "Pluto brings permanent change — what no longer serves you falls away." },
-    opposition: { title: "Power Confrontation", subtitle: "External pressure builds", description: "Forces outside your control demand adaptation." },
-    square: { title: "Structural Tension", subtitle: "Old foundations crack", description: "Resistance signals where growth is overdue." },
-    trine: { title: "Quiet Power", subtitle: "Depth flows naturally", description: "Transformation happens easily — lean into it." },
+    conjunction: { title: "Transformation profonde", subtitle: "Ce qui ne vous sert plus s'efface", description: "Pluton provoque un changement irréversible. Quelque chose se termine pour que du nouveau puisse émerger." },
+    opposition: { title: "Confrontation de pouvoir", subtitle: "La pression extérieure monte", description: "Des forces hors de votre contrôle exigent une adaptation. Ce qui résiste doit évoluer." },
+    square: { title: "Tension structurelle", subtitle: "Les anciennes fondations craquent", description: "La résistance signale où la croissance est en retard. Le changement est nécessaire, même s'il est difficile." },
+    trine: { title: "Puissance tranquille", subtitle: "La profondeur coule naturellement", description: "La transformation se fait en douceur. Appuyez-vous dessus sans forcer." },
   },
   Neptune: {
-    conjunction: { title: "Vision Opens", subtitle: "Boundaries dissolve", description: "Neptune dissolves certainty and opens intuition." },
-    opposition: { title: "Reality Check", subtitle: "Illusions confronted", description: "What you assumed may not be what it seems." },
-    square: { title: "Creative Fog", subtitle: "Clarity requires patience", description: "Confusion is temporary — don't force decisions." },
-    trine: { title: "Inspired Flow", subtitle: "Creativity heightened", description: "A natural channel opens for creative or spiritual work." },
+    conjunction: { title: "Vision élargie", subtitle: "Les frontières se dissolvent", description: "Neptune dissout les certitudes et ouvre l'intuition. Confusion et inspiration coexistent." },
+    opposition: { title: "Retour au réel", subtitle: "Les illusions sont confrontées", description: "Ce que vous teniez pour acquis pourrait ne pas être ce qu'il semble. Clarifiez." },
+    square: { title: "Brouillard créatif", subtitle: "La clarté demande de la patience", description: "La confusion est temporaire. Ne forcez pas les décisions pendant cette période." },
+    trine: { title: "Flux d'inspiration", subtitle: "La créativité est amplifiée", description: "Un canal naturel s'ouvre pour le travail créatif ou spirituel. Laissez-vous porter." },
   },
   Uranus: {
-    conjunction: { title: "Breakthrough", subtitle: "The unexpected arrives", description: "Uranus shatters routines — liberation comes through disruption." },
-    opposition: { title: "Freedom Call", subtitle: "Something must change", description: "External events push you toward authenticity." },
-    square: { title: "Electric Tension", subtitle: "Restlessness builds", description: "The pressure to change is real — channel it." },
-    trine: { title: "Effortless Innovation", subtitle: "New ideas land smoothly", description: "Change comes naturally — experiment freely." },
+    conjunction: { title: "Rupture libératrice", subtitle: "L'inattendu arrive", description: "Uranus brise les routines. La libération passe par la disruption — accueillez la surprise." },
+    opposition: { title: "Appel à la liberté", subtitle: "Quelque chose doit changer", description: "Des événements extérieurs vous poussent vers plus d'authenticité. Écoutez l'impulsion." },
+    square: { title: "Tension électrique", subtitle: "L'agitation monte", description: "La pression de changer est réelle. Canalisez cette énergie au lieu de la subir." },
+    trine: { title: "Innovation fluide", subtitle: "Les nouvelles idées se posent en douceur", description: "Le changement vient naturellement. Expérimentez librement." },
   },
   Saturn: {
-    conjunction: { title: "New Foundation", subtitle: "Structure builds", description: "Saturn rewards discipline — commit to what matters." },
-    opposition: { title: "Accountability", subtitle: "Results are tested", description: "What you've built is now evaluated by reality." },
-    square: { title: "Growing Pains", subtitle: "Effort required", description: "Obstacles reveal where more work is needed." },
-    trine: { title: "Steady Progress", subtitle: "Discipline pays off", description: "Hard work flows — rewards are earned and real." },
+    conjunction: { title: "Nouvelles fondations", subtitle: "La structure se construit", description: "Saturne récompense la discipline. Engagez-vous sur ce qui compte vraiment." },
+    opposition: { title: "Heure des comptes", subtitle: "Les résultats sont testés", description: "Ce que vous avez construit est maintenant évalué par la réalité. Tenez bon." },
+    square: { title: "Croissance exigeante", subtitle: "L'effort est requis", description: "Les obstacles révèlent où il reste du travail. La difficulté est le chemin." },
+    trine: { title: "Progrès régulier", subtitle: "La discipline paie", description: "Le travail de fond porte ses fruits. Les récompenses sont méritées et durables." },
   },
   Jupiter: {
-    conjunction: { title: "Expansion Window", subtitle: "Amplified clarity", description: "Jupiter expands whatever it touches — opportunities multiply." },
-    opposition: { title: "Overreach Check", subtitle: "Balance needed", description: "Growth is possible but moderation is key." },
-    square: { title: "Growth Tension", subtitle: "Ambition vs reality", description: "Push forward but stay grounded." },
-    trine: { title: "Lucky Break", subtitle: "Flow and fortune align", description: "Things fall into place — act on opportunities." },
+    conjunction: { title: "Fenêtre d'expansion", subtitle: "Les possibilités se multiplient", description: "Jupiter amplifie tout ce qu'il touche. Les opportunités s'ouvrent — saisissez-les." },
+    opposition: { title: "Besoin d'équilibre", subtitle: "L'excès guette", description: "La croissance est possible mais la modération est clé. Ne vous dispersez pas." },
+    square: { title: "Tension de croissance", subtitle: "Ambition contre réalité", description: "Poussez en avant mais restez ancré. L'impatience peut coûter cher." },
+    trine: { title: "Alignement favorable", subtitle: "Le flux est avec vous", description: "Les choses se mettent en place naturellement. Agissez sur les opportunités qui se présentent." },
   },
 };
 
 const ZR_LABELS: Record<string, Partial<EventMeta>> = {
-  fortune: { title: "Fortune Peak", subtitle: "Circumstances shift", description: "A peak period for material circumstances — timing favors action." },
-  spirit: { title: "Purpose Surge", subtitle: "Calling intensifies", description: "Your sense of direction sharpens — follow what resonates." },
-  eros: { title: "Desire Wave", subtitle: "Connection deepens", description: "Attraction and desire are heightened — relationships activate." },
+  fortune: { title: "Pic de circonstances", subtitle: "Le timing favorise l'action", description: "Une période de pic pour vos circonstances matérielles et votre vie quotidienne." },
+  spirit: { title: "Pic de vocation", subtitle: "Votre direction se clarifie", description: "Votre sens du but s'aiguise. Suivez ce qui résonne avec votre mission." },
+  eros: { title: "Pic de désir", subtitle: "L'attraction s'intensifie", description: "Le désir et l'attraction sont amplifiés. Les relations s'activent." },
 };
 
 export function getEventMeta(
@@ -168,12 +168,12 @@ export function getEventMeta(
   if (category === "zr") {
     const lt = Array.isArray(lotType) ? lotType[0] : lotType || "fortune";
     const base = ZR_LABELS[lt] || ZR_LABELS.fortune;
-    const lvl = level === 2 ? "Major" : "Active";
+    const lvl = level === 2 ? "Période majeure" : "Période active";
     return {
-      title: base.title || "Momentum Shift",
-      subtitle: `${lvl} ${base.subtitle || "period"}`,
-      description: base.description || "A significant timing window is open.",
-      keyInsight: level === 2 ? "This is a rare, high-impact period." : undefined,
+      title: base.title || "Changement de rythme",
+      subtitle: `${lvl}`,
+      description: base.description || "Une fenêtre de timing significative est ouverte.",
+      keyInsight: level === 2 ? "C'est une période rare et à fort impact." : undefined,
     };
   }
 
@@ -181,11 +181,11 @@ export function getEventMeta(
   if (category === "eclipse") {
     const isSolar = label.toLowerCase().includes("solar");
     return {
-      title: isSolar ? "Solar Eclipse" : "Lunar Eclipse",
-      subtitle: isSolar ? "New chapter opens" : "Emotional release",
+      title: isSolar ? "Éclipse solaire" : "Éclipse lunaire",
+      subtitle: isSolar ? "Un nouveau chapitre s'ouvre" : "Libération émotionnelle",
       description: isSolar
-        ? "Eclipses mark turning points — seeds planted now grow for 6 months."
-        : "What's been building emotionally comes to a head.",
+        ? "Les éclipses marquent des tournants. Ce qui est semé maintenant grandit pendant 6 mois."
+        : "Ce qui couvait émotionnellement arrive à son point culminant.",
     };
   }
 
@@ -194,11 +194,11 @@ export function getEventMeta(
     const planet = extractPlanet(label);
     const isDirect = label.includes(" SD ");
     return {
-      title: isDirect ? "Station Direct" : "Station Retrograde",
-      subtitle: `${planet} pauses and shifts`,
+      title: isDirect ? "Station directe" : "Station rétrograde",
+      subtitle: `${planetConfig[planet]?.label || planet} marque une pause`,
       description: isDirect
-        ? "Forward momentum resumes — clarity returns."
-        : "A period of review and recalibration begins.",
+        ? "L'élan reprend. La clarté revient après une période de révision."
+        : "Une période de révision et de recalibration commence. Ralentissez.",
     };
   }
 
@@ -209,9 +209,9 @@ export function getEventMeta(
       const meta = aspects[asp];
       if (meta) {
         return {
-          title: meta.title || "Transit Active",
-          subtitle: meta.subtitle || "Signal detected",
-          description: meta.description || "A planetary signal is active in your chart.",
+          title: meta.title || "Transit actif",
+          subtitle: meta.subtitle || "Signal détecté",
+          description: meta.description || "Un signal planétaire est actif dans votre thème.",
         };
       }
     }
@@ -219,8 +219,8 @@ export function getEventMeta(
 
   // Fallback
   return {
-    title: "Signal Active",
-    subtitle: "Momentum shift detected",
-    description: "A planetary configuration is influencing this period.",
+    title: "Signal actif",
+    subtitle: "Changement de rythme détecté",
+    description: "Une configuration planétaire influence cette période.",
   };
 }

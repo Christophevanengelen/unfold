@@ -27,6 +27,22 @@ export interface MomentumPhase {
   keyInsight?: string;
   peakMoment?: string;
   color?: string; // hex color from API sausage — used for boudin rendering
+  /** Raw API sausage data for detail sheet rendering */
+  apiLabel?: string;           // "Saturn opposition natal Sun"
+  apiCategory?: string;        // "transit" | "zr" | "eclipse" | "station"
+  transitPlanet?: string;      // "Saturn"
+  natalPoint?: string;         // "Sun"
+  aspect?: string;             // "conjunction" | "square" | "opposition" | "trine"
+  cycle?: { hitNumber: number; totalHits: number; pattern: string; allHits: { date: string; hitNumber: number }[] };
+  apiTopics?: { house: number; color: string; topic: string; source: string }[];
+  lotType?: string;
+  zrLevel?: number;
+  periodSign?: string;
+  markers?: string[];
+  eclipseType?: string;
+  lifetimeNumber?: number;
+  lifetimeTotal?: number;
+  isVipTransit?: boolean;
 }
 
 // ─── Mock Timeline ──────────────────────────────────────────

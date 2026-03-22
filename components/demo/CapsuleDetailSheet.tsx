@@ -14,12 +14,17 @@ import {
   domainKeyToHouse,
   getDomainNarrative,
   getPlanetNarrative,
+  getTransitNarrative,
+  getCycleNarrative,
+  getLifetimeNarrative,
+  translateApiLabel,
   formatDuration,
   getProgressPercent,
   getRarityText,
   getContextualGuidance,
   type TimeContext,
 } from "@/lib/detail-helpers";
+import type { HouseNumber } from "@/lib/domain-config";
 
 // ─── Types (imported from timeline) ──────────────────────
 interface CapsuleData {
@@ -41,6 +46,22 @@ interface CapsuleData {
     startDate: string;
     endDate?: string;
     durationWeeks: number;
+    // Raw API fields
+    apiLabel?: string;
+    apiCategory?: string;
+    transitPlanet?: string;
+    natalPoint?: string;
+    aspect?: string;
+    cycle?: { hitNumber: number; totalHits: number; pattern: string; allHits: { date: string; hitNumber: number }[] };
+    apiTopics?: { house: number; color: string; topic: string; source: string }[];
+    lotType?: string;
+    zrLevel?: number;
+    periodSign?: string;
+    markers?: string[];
+    eclipseType?: string;
+    lifetimeNumber?: number;
+    lifetimeTotal?: number;
+    isVipTransit?: boolean;
   }[];
   domains: { domain: string; intensity: number; occurrence: number; totalOccurrences: number }[];
   planets: PlanetKey[];
@@ -92,7 +113,10 @@ export function CapsuleDetailSheet({
   const duration = formatDuration(capsule.startDate, capsule.endDate);
   const rarityText = getRarityText(capsule.tierOccurrence, capsule.tierTotal, capsule.tier);
   const domainNarrative = getDomainNarrative(domain, tc.context);
-  const planetNarrative = getPlanetNarrative(capsule.planets);
+  const transitNarrative = getTransitNarrative(phase);
+  const planetNarrative = transitNarrative || getPlanetNarrative(capsule.planets);
+  const cycleNarrative = getCycleNarrative(phase);
+  const lifetimeNarrative = getLifetimeNarrative(phase);
   const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment);
 
   // Date formatting — exact day/month/year, always show start → end
@@ -189,8 +213,29 @@ export function CapsuleDetailSheet({
           </div>
         </div>
 
-        {/* ── Section 3: Life Domain Card ── */}
-        {houseMeta && (
+        {/* ── Section 3: Life Areas Activated (from API topics or fallback) ── */}
+        {phase?.apiTopics && phase.apiTopics.length > 0 ? (
+          <div className="space-y-2 mb-5">
+            {phase.apiTopics.map((topic, i) => {
+              const hm = houseConfig[topic.house as HouseNumber];
+              return hm ? (
+                <div key={i} className="rounded-xl p-3" style={{
+                  background: "color-mix(in srgb, var(--bg-tertiary) 80%, transparent)",
+                  borderLeft: `3px solid ${topic.color}`,
+                }}>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full"
+                      style={{ background: `color-mix(in srgb, ${topic.color} 15%, transparent)` }}>
+                      <span className="text-[9px]" style={{ color: topic.color }}>{topic.house}</span>
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: "var(--text-heading)" }}>{hm.label}</span>
+                    <span className="text-[9px]" style={{ color: "var(--text-body-subtle)" }}>{hm.description}</span>
+                  </div>
+                </div>
+              ) : null;
+            })}
+          </div>
+        ) : houseMeta ? (
           <div
             className="rounded-xl p-4 mb-5"
             style={{
@@ -218,7 +263,7 @@ export function CapsuleDetailSheet({
               {domainNarrative}
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* ── Section 4: Planet pills + narrative ── */}
         <div className="mb-5">
@@ -273,7 +318,7 @@ export function CapsuleDetailSheet({
               {tc.storyLabel}
             </span>
             <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
-              {phase.title}
+              {translateApiLabel(phase.apiLabel) || phase.title}
             </h3>
             {phase.subtitle && (
               <p className="mt-1 text-xs" style={{ color: "var(--text-body-subtle)" }}>
@@ -286,7 +331,7 @@ export function CapsuleDetailSheet({
           </div>
         )}
 
-        {/* ── Section 6: Insight Card ── */}
+        {/* ── Section 6: Insight Card + Cycle Info ── */}
         {phase?.keyInsight && (
           <div
             className="rounded-xl px-4 py-3 mb-4"
@@ -308,9 +353,27 @@ export function CapsuleDetailSheet({
           </div>
         )}
 
-        {/* ── Section 7: Guidance / Reflection Card ── */}
+        {cycleNarrative && (
+          <div
+            className="rounded-xl px-4 py-3 mb-4"
+            style={{
+              background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                Cycle
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+              {cycleNarrative}
+            </p>
+          </div>
+        )}
+
+        {/* ── Section 7: Guidance / Reflection Card + Lifetime ── */}
         <div
-          className="rounded-xl px-4 py-3 mb-5"
+          className="rounded-xl px-4 py-3 mb-4"
           style={{
             background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
           }}
@@ -325,6 +388,24 @@ export function CapsuleDetailSheet({
             {guidance}
           </p>
         </div>
+
+        {lifetimeNarrative && (
+          <div
+            className="rounded-xl px-4 py-3 mb-5"
+            style={{
+              background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                Dans votre vie
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+              {lifetimeNarrative}
+            </p>
+          </div>
+        )}
 
         {/* ── Section 8: Duration Progress Bar ── */}
         <div className="mb-5">
@@ -390,6 +471,27 @@ export function CapsuleDetailSheet({
                   label="Occurrence"
                   value={`${capsule.tierOccurrence}e ${getTierLabel(capsule.tier).toLowerCase()} sur ${capsule.tierTotal}`}
                 />
+                {phase?.apiCategory && (
+                  <DetailRow label="Catégorie" value={phase.apiCategory} />
+                )}
+                {phase?.transitPlanet && phase?.natalPoint && (
+                  <DetailRow label="Transit" value={`${phase.transitPlanet} → ${phase.natalPoint}`} />
+                )}
+                {phase?.aspect && (
+                  <DetailRow label="Aspect" value={phase.aspect} />
+                )}
+                {phase?.isVipTransit && (
+                  <DetailRow label="Statut" value="Transit VIP" />
+                )}
+                {phase?.markers && phase.markers.length > 0 && (
+                  <DetailRow label="Marqueurs" value={phase.markers.join(", ")} />
+                )}
+                {phase?.cycle && phase.cycle.totalHits > 1 && (
+                  <DetailRow label="Passage" value={`${phase.cycle.hitNumber} / ${phase.cycle.totalHits}`} />
+                )}
+                {phase?.lifetimeNumber && phase?.lifetimeTotal && (
+                  <DetailRow label="Vie entière" value={`${phase.lifetimeNumber}e sur ${phase.lifetimeTotal}`} />
+                )}
                 {capsule.phases.length > 1 && (
                   <div className="mt-3">
                     <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
@@ -397,7 +499,7 @@ export function CapsuleDetailSheet({
                     </span>
                     {capsule.phases.map((p, i) => (
                       <p key={i} className="text-[11px] mt-1" style={{ color: "var(--text-body-subtle)" }}>
-                        {p.title}
+                        {translateApiLabel(p.apiLabel) || p.title}
                       </p>
                     ))}
                   </div>
