@@ -137,6 +137,7 @@ const PLANET_MEANINGS: Record<PlanetKey, string> = {
   saturn: "teste ce qui est solide et demande de la rigueur",
   uranus: "amène des surprises et des ruptures libératrices",
   neptune: "dissout les certitudes et invite à l'intuition",
+  pluto: "transforme en profondeur ce qui ne fonctionne plus",
   "solar-eclipse": "marque un nouveau départ puissant",
   "lunar-eclipse": "ferme un chapitre et libère de l'espace",
 };

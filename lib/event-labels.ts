@@ -17,7 +17,7 @@ const PLANET_MAP: Record<string, PlanetKey> = {
   Saturn: "saturn",
   Uranus: "uranus",
   Neptune: "neptune",
-  Pluto: "neptune", // closest PlanetKey — no "pluto" in our design system
+  Pluto: "pluto",
   "North Node": "sun", // karmic, solar-like
   "South Node": "moon", // karmic, lunar-like
   eclipse: "solar-eclipse",

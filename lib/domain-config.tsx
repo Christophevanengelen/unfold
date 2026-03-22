@@ -117,7 +117,7 @@ export const zrLotLabels: Record<string, string> = {
 
 export type PlanetKey =
   | "sun" | "moon" | "mercury" | "venus" | "mars"
-  | "jupiter" | "saturn" | "uranus" | "neptune"
+  | "jupiter" | "saturn" | "uranus" | "neptune" | "pluto"
   | "solar-eclipse" | "lunar-eclipse";
 
 interface PlanetMeta {
@@ -137,13 +137,14 @@ export const planetConfig: Record<PlanetKey, PlanetMeta> = {
   saturn:          { label: "Saturne",         color: "#A89478", symbol: "♄" },  // warm taupe
   uranus:          { label: "Uranus",          color: "#7AAAB5", symbol: "♅" },  // dusty cyan
   neptune:         { label: "Neptune",         color: "#9B85C4", symbol: "♆" },  // lavender — on-brand
+  pluto:           { label: "Pluton",          color: "#7A6B8A", symbol: "♇" },  // deep mauve — transformative
   "solar-eclipse": { label: "Éclipse solaire", color: "#D4C5A0", symbol: "●" },  // warm ivory — corona glow
   "lunar-eclipse": { label: "Éclipse lunaire", color: "#A07090", symbol: "◐" },  // mauve pink
 };
 
 export const PLANET_KEYS: PlanetKey[] = [
   "sun", "moon", "mercury", "venus", "mars",
-  "jupiter", "saturn", "uranus", "neptune",
+  "jupiter", "saturn", "uranus", "neptune", "pluto",
   "solar-eclipse", "lunar-eclipse",
 ];
 
@@ -151,7 +152,7 @@ export const PLANET_KEYS: PlanetKey[] = [
 /** Maps API transitPlanet names to our PlanetKey for color/icon lookup */
 export function transitPlanetToKey(transitPlanet: string): PlanetKey | null {
   const map: Record<string, PlanetKey> = {
-    "Pluto": "neptune",    // no Pluto in PlanetKey, closest visual
+    "Pluto": "pluto",
     "Neptune": "neptune",
     "Uranus": "uranus",
     "Saturn": "saturn",
