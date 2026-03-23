@@ -42,9 +42,10 @@ const PLANETS: PlanetOrbit[] = [
 ];
 
 const CENTER = 125;
-// Total animation: 0.5s delay + 2s orbit + 0.5s settle
+// Installation sequence: sun → rings → planets pop → orbit → settle
+const ORBIT_DELAY = 1.4;      // planets start orbiting at 1.4s
 const ORBIT_DURATION = 2;
-const SETTLE_DELAY = ORBIT_DURATION + 0.5;
+const SETTLE_DELAY = ORBIT_DELAY + ORBIT_DURATION;
 
 export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) {
   return (
@@ -58,6 +59,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline -mt-0.5 mr-1">
@@ -68,9 +70,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
 
       <motion.div
         className="mt-6 text-center"
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
         <h1 className="font-display text-2xl font-bold"
           style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}>
@@ -82,12 +84,12 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
 
       <motion.p
         className="mt-2 text-center text-xs leading-relaxed"
-        style={{ color: "var(--accent-purple)", opacity: 0.45 }}
+        style={{ color: "var(--accent-purple)" }}
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.45 }}
-        transition={{ delay: 0.4 }}
+        animate={{ opacity: 0.85 }}
+        transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        The domain tells you what. The planets tell you why.
+        Each one carries a signal. Some are active right now.
       </motion.p>
 
       <div className="flex-1 relative overflow-hidden">
@@ -108,9 +110,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
             transition={{ delay: SETTLE_DELAY, duration: 0.6 }}
           />
 
-          {/* Orbit rings */}
-          {PLANETS.filter(p => p.orbit > 0).map(p => (
-            <div
+          {/* Orbit rings — staggered from center outward */}
+          {PLANETS.filter(p => p.orbit > 0).map((p, i) => (
+            <motion.div
               key={`orbit-${p.key}`}
               className="absolute rounded-full"
               style={{
@@ -120,6 +122,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                 top: CENTER - p.orbit,
                 border: `1px solid rgba(255,255,255,0.04)`,
               }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 + i * 0.08, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
             />
           ))}
 
@@ -134,9 +139,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
               backgroundColor: planetConfig.sun.color,
               boxShadow: `0 0 20px ${planetConfig.sun.color}90, 0 0 40px ${planetConfig.sun.color}60, 0 0 80px ${planetConfig.sun.color}30`,
             }}
-            initial={{ opacity: 0, scale: 0 }}
+            initial={{ opacity: 0, scale: 0.6 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
+            transition={{ delay: 0.3, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
           />
 
           {/* Planets — orbit then settle */}
@@ -159,7 +164,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                 }}
                 initial={{ rotate: p.fromAngle }}
                 animate={{ rotate: p.fromAngle + totalAngle }}
-                transition={{ delay: 0.5, duration: ORBIT_DURATION, ease: [0.2, 0.8, 0.2, 1] }}
+                transition={{ delay: ORBIT_DELAY, duration: ORBIT_DURATION, ease: [0.4, 0, 0.2, 1] }}
               >
                 {/* Planet at 12 o'clock — dot centered on orbit, label below (absolute) */}
                 <div className="absolute"
@@ -170,9 +175,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                     className="relative"
                     initial={{ rotate: -p.fromAngle }}
                     animate={{ rotate: -(p.fromAngle + totalAngle) }}
-                    transition={{ delay: 0.5, duration: ORBIT_DURATION, ease: [0.2, 0.8, 0.2, 1] }}
+                    transition={{ delay: ORBIT_DELAY, duration: ORBIT_DURATION, ease: [0.4, 0, 0.2, 1] }}
                   >
-                    {/* Dot — centered on orbit point */}
+                    {/* Dot — pop in with spring, then glow on settle */}
                     <motion.div
                       className="rounded-full relative flex items-center justify-center"
                       style={{
@@ -180,13 +185,17 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                         height: p.size,
                         backgroundColor: config.color,
                       }}
-                      initial={{ opacity: 0.7 }}
+                      initial={{ opacity: 0, scale: 0.4 }}
                       animate={{
                         opacity: 1,
                         scale: p.isActive ? 1.2 : 1,
                         boxShadow: p.isActive ? `0 0 ${p.size * 3}px ${config.color}60` : "none",
                       }}
-                      transition={{ delay: SETTLE_DELAY, duration: 0.5 }}
+                      transition={{
+                        opacity: { delay: 0.8 + i * 0.1, duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+                        scale: { delay: 0.8 + i * 0.1, duration: 0.6, ease: [0.4, 0, 0.2, 1] },
+                        boxShadow: { delay: SETTLE_DELAY, duration: 0.8, ease: [0.4, 0, 0.2, 1] },
+                      }}
                     >
                       {p.isActive && (
                         <motion.div
@@ -229,9 +238,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         animate={{ opacity: 1 }}
         transition={{ delay: SETTLE_DELAY + 0.5 }}
       >
-        Some are passing through your zone.
-        <br />
-        Which ones? It depends on you.
+        Which ones are yours?
       </motion.p>
 
       <motion.div
@@ -245,7 +252,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
           onClick={onNext}
           className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
         >
-          Find out
+          Reveal my signal
         </button>
       </motion.div>
     </motion.div>

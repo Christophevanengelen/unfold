@@ -40,9 +40,9 @@ export function StepPromise({ onNext }: StepPromiseProps) {
       {/* Logo zone — golden ratio 61.8% */}
       <motion.div
         className="relative z-10 flex flex-[1.618] flex-col items-center justify-center"
-        initial={{ opacity: 0, scale: 0.85 }}
+        initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 180, damping: 22 }}
+        transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
       >
         <img
           src="/logo-unfold-start.svg"
@@ -60,9 +60,9 @@ export function StepPromise({ onNext }: StepPromiseProps) {
         <motion.h1
           className="font-display text-[24px] font-bold leading-tight"
           style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
+          transition={{ delay: 0.6, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
           Some periods of your life
           <br />
@@ -74,7 +74,7 @@ export function StepPromise({ onNext }: StepPromiseProps) {
           style={{ color: "var(--accent-purple)", opacity: 0.6 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
+          transition={{ delay: 1.0, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
           There is a reason.
         </motion.p>
@@ -82,9 +82,9 @@ export function StepPromise({ onNext }: StepPromiseProps) {
         {/* CTA */}
         <motion.div
           className="mt-auto pb-8 pt-6"
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.4 }}
+          transition={{ delay: 1.5, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
           <button
             type="button"

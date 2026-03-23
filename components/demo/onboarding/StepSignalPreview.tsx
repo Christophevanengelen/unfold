@@ -94,7 +94,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline -mt-0.5 mr-1">
@@ -105,9 +105,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
 
       <motion.div
         className="mt-4 text-center"
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.4 }}
+        transition={{ delay: 0.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
         <h1 className="font-display text-2xl font-bold"
           style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}>
@@ -209,9 +209,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
       {/* CTA */}
       <motion.div
         className="pt-2 pb-1"
-        initial={{ opacity: 0.5, y: 0 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.3 }}
+        transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
         <button
           type="button"
