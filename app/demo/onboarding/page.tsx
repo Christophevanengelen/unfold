@@ -3,13 +3,12 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue } from "motion/react";
 import { StepPromise } from "@/components/demo/onboarding/StepPromise";
-import { StepSignalPreview } from "@/components/demo/onboarding/StepSignalPreview";
 import { StepTimelineTeaser } from "@/components/demo/onboarding/StepTimelineTeaser";
 import { StepInput } from "@/components/demo/onboarding/StepInput";
 import type { OnboardingFormData } from "@/components/demo/onboarding/StepInput";
 import { StepPreparing } from "@/components/demo/onboarding/StepPreparing";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 4;
 const SWIPE_THRESHOLD = 50;
 
 /** Slide animation variants — direction-aware */
@@ -34,13 +33,13 @@ const stepTransition = {
 };
 
 /** Screens where swiping back is disabled */
-const NO_SWIPE_BACK = new Set([0, 4]); // first screen, preparing screen
+const NO_SWIPE_BACK = new Set([0, 3]); // first screen, preparing screen
 /** Screens where swiping forward is disabled (use CTA instead) */
-const NO_SWIPE_FORWARD = new Set([3, 4]); // form input, preparing screen
+const NO_SWIPE_FORWARD = new Set([2, 3]); // form input, preparing screen
 
 /**
- * Onboarding orchestrator — 5-screen single-page flow.
- * 0: Promise  1: Signal Preview  2: Timeline Teaser  3: Birth Input  4: Preparing
+ * Onboarding orchestrator — 4-screen single-page flow.
+ * 0: Promise  1: Timeline Teaser  2: Birth Input  3: Preparing
  */
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
@@ -85,10 +84,8 @@ export default function OnboardingPage() {
       case 0:
         return <StepPromise onNext={next} />;
       case 1:
-        return <StepSignalPreview onNext={next} onBack={back} />;
-      case 2:
         return <StepTimelineTeaser onNext={next} onBack={back} />;
-      case 3:
+      case 2:
         return (
           <StepInput
             formData={formData}
@@ -97,7 +94,7 @@ export default function OnboardingPage() {
             onBack={back}
           />
         );
-      case 4:
+      case 3:
         return <StepPreparing formData={formData} />;
       default:
         return null;

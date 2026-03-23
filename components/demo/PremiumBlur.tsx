@@ -1,0 +1,110 @@
+"use client";
+
+import { motion } from "motion/react";
+import { Lock } from "flowbite-react-icons/outline";
+
+// ─── Feature-specific CTA text ──────────────────────────
+const FEATURE_TEXT: Record<string, { headline: string; sub: string }> = {
+  future: {
+    headline: "Déverrouille ton futur",
+    sub: "Accède à tes capsules futures et anticipe tes moments clés",
+  },
+  ai: {
+    headline: "Personnalisation premium",
+    sub: "Des analyses IA illimitées, taillées pour ton profil",
+  },
+  default: {
+    headline: "Fonctionnalité premium",
+    sub: "Passe au niveau supérieur pour débloquer cette fonctionnalité",
+  },
+};
+
+interface PremiumBlurProps {
+  children: React.ReactNode;
+  /** Context key: "future" | "ai" | undefined → default */
+  feature?: string;
+  /** Blur amount in px (default 8) */
+  blurAmount?: number;
+}
+
+export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurProps) {
+  const text = FEATURE_TEXT[feature ?? ""] ?? FEATURE_TEXT.default;
+
+  const handleUpgrade = () => {
+    // Dispatch custom event — PremiumTeaser in demo layout listens
+    window.dispatchEvent(new CustomEvent("unfold:show-premium"));
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Blurred children */}
+      <div
+        className="pointer-events-none select-none"
+        style={{ filter: `blur(${blurAmount}px)` }}
+        aria-hidden="true"
+      >
+        {children}
+      </div>
+
+      {/* Premium overlay — glass morphism with gradient */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 px-4 text-center"
+        style={{
+          background: "linear-gradient(160deg, rgba(27, 21, 53, 0.75) 0%, rgba(27, 21, 53, 0.55) 50%, rgba(124, 107, 191, 0.15) 100%)",
+          backdropFilter: "blur(4px)",
+        }}
+      >
+        {/* Lock icon */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+          className="flex items-center justify-center rounded-full"
+          style={{
+            width: 36,
+            height: 36,
+            background: "color-mix(in srgb, var(--accent-purple) 15%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)",
+          }}
+        >
+          <Lock size={16} style={{ color: "var(--accent-purple)" }} />
+        </motion.div>
+
+        {/* Text */}
+        <div>
+          <p
+            className="font-display text-sm font-semibold"
+            style={{ color: "var(--text-heading)", letterSpacing: "-0.01em" }}
+          >
+            {text.headline}
+          </p>
+          <p
+            className="mt-1 text-[11px] leading-relaxed"
+            style={{ color: "var(--text-body-subtle)" }}
+          >
+            {text.sub}
+          </p>
+        </div>
+
+        {/* CTA button with glow */}
+        <motion.button
+          type="button"
+          onClick={handleUpgrade}
+          whileTap={{ scale: 0.96 }}
+          className="mt-1 rounded-full px-5 py-2 text-[11px] font-semibold transition-all duration-200"
+          style={{
+            background: "var(--accent-purple)",
+            color: "#fff",
+            boxShadow: "0 0 20px color-mix(in srgb, var(--accent-purple) 40%, transparent), 0 2px 8px rgba(0,0,0,0.3)",
+            letterSpacing: "0.01em",
+          }}
+        >
+          Voir les plans — 9,99/mois
+        </motion.button>
+      </motion.div>
+    </div>
+  );
+}

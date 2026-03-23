@@ -8,6 +8,9 @@ import {
 } from "@/lib/mock-timeline";
 import { useMomentum } from "@/lib/momentum-store";
 import { CapsuleDetailSheet } from "./CapsuleDetailSheet";
+import { DailyBriefing } from "./DailyBriefing";
+import { isPremium } from "@/lib/premium-gate";
+import { usePremiumTeaser } from "./PremiumTeaserContext";
 
 // ─── Types ──────────────────────────────────────────────────
 type ViewMode = "overview" | "list";
@@ -815,7 +818,7 @@ function ListView({
               key={capsule.id}
               ref={capsule.isCurrent ? currentRef : undefined}
               type="button"
-              onClick={() => !capsule.isFuture && onTapCapsule(capsule)}
+              onClick={() => onTapCapsule(capsule)}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02, duration: 0.3 }}
@@ -917,6 +920,7 @@ function getSavedViewMode(): ViewMode {
 
 export function MomentumTimelineV2() {
   const { timelinePhases, birthDateStr, state, isLoadingLifetime } = useMomentum();
+  const openPremium = usePremiumTeaser();
   const [viewMode, _setViewMode] = useState<ViewMode>(getSavedViewMode);
   const setViewMode = useCallback((mode: ViewMode) => {
     _setViewMode(mode);
@@ -950,23 +954,33 @@ export function MomentumTimelineV2() {
   }, [allCapsules]);
 
   const handleTapCapsule = useCallback((capsule: CapsuleData) => {
-    if (capsule.isFuture) return;
+    if (capsule.isFuture && !isPremium()) {
+      openPremium();
+      return;
+    }
     setSelectedCapsule(capsule);
-  }, []);
+  }, [openPremium]);
 
   const handleAgeChange = useCallback((age: number) => {
     setVisibleAge(age);
   }, []);
 
-  // Show loader only while initial data loads (no phases at all yet)
-  if (state === "loading" && timelinePhases.length === 0) {
+  // Show loader while initial data loads OR while lifetime sausages are still loading
+  // The yearData phases have incomplete visual data (no house colors, no topics, wrong durations)
+  // so we must NOT render them as capsules — show skeleton instead until real sausages arrive
+  if (
+    (state === "loading" && timelinePhases.length === 0) ||
+    isLoadingLifetime
+  ) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">
         <div
           className="h-6 w-6 animate-spin rounded-full border-2 border-transparent"
           style={{ borderTopColor: "var(--accent-purple)", borderRightColor: "var(--accent-purple)" }}
         />
-        <p className="text-xs text-text-body-subtle">Chargement de votre timeline...</p>
+        <p className="text-xs text-text-body-subtle">
+          {isLoadingLifetime ? "Construction de votre timeline..." : "Chargement de votre timeline..."}
+        </p>
       </div>
     );
   }
@@ -1013,6 +1027,13 @@ export function MomentumTimelineV2() {
           ))}
         </div>
       </div>
+
+      {/* Daily Briefing — pinned at top, only in overview mode */}
+      {viewMode === "overview" && (
+        <div className="absolute top-[90px] left-0 right-0 z-30">
+          <DailyBriefing />
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {viewMode === "overview" ? (
@@ -1110,7 +1131,7 @@ export function MomentumTimelineV2() {
               style={{ background: "rgba(0,0,0,0.4)" }}
               onClick={() => setSelectedCapsule(null)}
             />
-            <CapsuleDetailSheet capsule={selectedCapsule} onClose={() => setSelectedCapsule(null)} />
+            <CapsuleDetailSheet capsule={selectedCapsule} isFuture={selectedCapsule.isFuture} onClose={() => setSelectedCapsule(null)} />
           </>
         )}
       </AnimatePresence>

@@ -10,6 +10,22 @@ import { PremiumTeaserContext } from "@/components/demo/PremiumTeaserContext";
 import { MomentumProvider } from "@/lib/momentum-store";
 import { OnboardingGuard } from "@/components/demo/OnboardingGuard";
 import { SAFE_TOP, SAFE_BOTTOM } from "@/lib/layout-constants";
+import { checkAndUpdateStreak } from "@/lib/streak";
+
+/**
+ * Capacitor detection — true when running inside native app shell.
+ * Enables fullscreen mode (no phone frame, real safe areas).
+ */
+function useIsNative() {
+  const [isNative, setIsNative] = useState(false);
+  useEffect(() => {
+    const native =
+      typeof window !== "undefined" &&
+      ("Capacitor" in window || process.env.NEXT_PUBLIC_NATIVE === "true");
+    setIsNative(native);
+  }, []);
+  return isNative;
+}
 
 export default function DemoLayout({
   children,
@@ -17,12 +33,24 @@ export default function DemoLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const isNative = useIsNative();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
 
   // Prevent SSR flash — demo is 100% client-side (API data, IndexedDB, etc.)
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [streak, setStreak] = useState(0);
+  useEffect(() => {
+    setMounted(true);
+    setStreak(checkAndUpdateStreak());
+  }, []);
+
+  // Listen for custom event from PremiumBlur CTA
+  useEffect(() => {
+    const handler = () => setPremiumOpen(true);
+    window.addEventListener("unfold:show-premium", handler);
+    return () => window.removeEventListener("unfold:show-premium", handler);
+  }, []);
 
   // Hide bottom nav on onboarding/invite flows
   const HIDDEN_NAV_ROUTES = ["/demo/onboarding", "/demo/invite"];
@@ -39,12 +67,21 @@ export default function DemoLayout({
     return <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }} />;
   }
 
+  // Native: fullscreen, real safe areas
+  // Web: phone frame mockup (375x812)
+  const frameClasses = isNative
+    ? "relative flex h-[100dvh] w-full flex-col overflow-hidden bg-bg-primary"
+    : "relative flex h-[812px] w-[375px] flex-col overflow-hidden rounded-[2.5rem] border border-brand-6/40 bg-bg-primary";
+
+  const safeTop = isNative ? "env(safe-area-inset-top, 48px)" : `${SAFE_TOP}px`;
+  const safeBottom = isNative ? "env(safe-area-inset-bottom, 34px)" : `${SAFE_BOTTOM}px`;
+
   return (
     <MomentumProvider>
-    <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }}>
-      {/* Mobile frame */}
+    <div className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"} style={{ backgroundColor: "#110D24" }}>
+      {/* Mobile frame (conditional) */}
       <div
-        className="relative flex h-[812px] w-[375px] flex-col overflow-hidden rounded-[2.5rem] border border-brand-6/40 bg-bg-primary"
+        className={frameClasses}
         style={{
           transform: "translateZ(0)",
         }}
@@ -68,9 +105,9 @@ export default function DemoLayout({
                 : "overflow-y-auto overflow-x-hidden px-5 scrollbar-none"
             }`}
             style={{
-              "--safe-top": `${SAFE_TOP}px`,
-              "--safe-bottom": `${SAFE_BOTTOM}px`,
-              ...(!isFullBleed ? { paddingTop: `${SAFE_TOP}px`, paddingBottom: `${SAFE_BOTTOM}px` } : {}),
+              "--safe-top": safeTop,
+              "--safe-bottom": safeBottom,
+              ...(!isFullBleed ? { paddingTop: safeTop, paddingBottom: safeBottom } : {}),
             } as React.CSSProperties}
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
@@ -88,13 +125,23 @@ export default function DemoLayout({
               9:41
             </span>
             <UnfoldLogo size={22} />
-            <button
-              onClick={() => setDrawerOpen(true)}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
-              aria-label="Profile"
-            >
-              A
-            </button>
+            <div className="flex items-center gap-2">
+              {streak >= 2 && (
+                <span
+                  className="text-[9px] font-semibold tabular-nums"
+                  style={{ color: "var(--accent-purple)", opacity: 0.6 }}
+                >
+                  Jour {streak}
+                </span>
+              )}
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
+                aria-label="Profile"
+              >
+                A
+              </button>
+            </div>
           </div>
         )}
 
@@ -118,13 +165,15 @@ export default function DemoLayout({
         />
       </div>
 
-      {/* Exit link — subtle, bottom right */}
-      <a
-        href="/en#pricing"
-        className="absolute bottom-2 right-4 text-[10px] text-white/20 hover:text-white/40 transition-colors"
-      >
-        unfold.app
-      </a>
+      {/* Exit link — only in web frame mode */}
+      {!isNative && (
+        <a
+          href="/en#pricing"
+          className="absolute bottom-2 right-4 text-[10px] text-white/20 hover:text-white/40 transition-colors"
+        >
+          unfold.app
+        </a>
+      )}
     </div>
     </MomentumProvider>
   );

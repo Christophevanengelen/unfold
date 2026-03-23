@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
 
 interface StepPromiseProps {
   onNext: () => void;
@@ -44,12 +44,11 @@ export function StepPromise({ onNext }: StepPromiseProps) {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", stiffness: 180, damping: 22 }}
       >
-        <Image
+        <img
           src="/logo-unfold-start.svg"
           alt="Unfold"
           width={190}
           height={162}
-          priority
         />
       </motion.div>
 

@@ -1,8 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Clock, Fire, CalendarMonth, Lightbulb, ChevronDown, ArrowRight } from "flowbite-react-icons/outline";
+import { Clock, Fire, CalendarMonth, Lightbulb, ChevronDown, ArrowRight, ShareNodes } from "flowbite-react-icons/outline";
+import { ShareSignalCard } from "./ShareSignalCard";
+import { getPersonalizedText, type PersonalizedText } from "@/lib/openai-personalize";
+import { getUserProfileSync } from "@/lib/user-profile";
+import { getBirthDataSync } from "@/lib/birth-data";
+import { getObservedProfileSync, trackCapsuleOpen, trackDomainClick, trackDomainReadTime } from "@/lib/observed-profile";
+import { buildEffectiveProfile, needsRefresh, getStaleFields } from "@/lib/effective-profile";
+import { FeedbackThumb } from "@/components/demo/FeedbackThumb";
+import { PremiumBlur } from "@/components/demo/PremiumBlur";
+import { isPremium } from "@/lib/premium-gate";
+import { MicroRefresh } from "@/components/demo/MicroRefresh";
 import {
   planetConfig,
   houseConfig,
@@ -89,12 +99,21 @@ function BannerIcon({ icon, size = 14 }: { icon: string; size?: number }) {
 // ─── Main Component ──────────────────────────────────────
 export function CapsuleDetailSheet({
   capsule,
+  isFuture,
   onClose,
 }: {
   capsule: CapsuleData;
+  isFuture?: boolean;
   onClose: () => void;
 }) {
+  // Gate: blur AI sections for free users on future capsules
+  const shouldBlurAi = (isFuture ?? capsule.isFuture) && !isPremium();
   const [showMore, setShowMore] = useState(false);
+  const [aiText, setAiText] = useState<PersonalizedText | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showRefresh, setShowRefresh] = useState<"stressLevel" | "currentGoal" | null>(null);
+  const [showShare, setShowShare] = useState(false);
+  const openedAt = useState(() => Date.now())[0];
 
   // Dismiss on Escape
   useEffect(() => {
@@ -102,6 +121,82 @@ export function CapsuleDetailSheet({
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
+
+  // Track capsule open + domain click (observed profile)
+  useEffect(() => {
+    trackCapsuleOpen();
+    const domain = capsule.phases[0]?.domain;
+    if (domain) trackDomainClick(domain, capsule.id);
+  }, [capsule]);
+
+  // Track read time on unmount
+  useEffect(() => {
+    return () => {
+      const domain = capsule.phases[0]?.domain;
+      if (domain) trackDomainReadTime(domain, capsule.id, Date.now() - openedAt);
+    };
+  }, [capsule, openedAt]);
+
+  // Check if volatile fields need refresh
+  useEffect(() => {
+    const profile = getUserProfileSync();
+    if (!profile) return;
+    const stale = getStaleFields(profile);
+    if (stale.stressLevel) setShowRefresh("stressLevel");
+    else if (stale.currentGoal) setShowRefresh("currentGoal");
+  }, []);
+
+  // Load personalized AI text (using effective profile)
+  const loadAiText = useCallback(async () => {
+    const declaredProfile = getUserProfileSync();
+    const birthData = getBirthDataSync();
+    if (!declaredProfile || !birthData) return;
+
+    // Build effective profile from declared + observed
+    const observed = getObservedProfileSync();
+    const userProfile = buildEffectiveProfile(declaredProfile, observed);
+
+    setAiLoading(true);
+    try {
+      const phase = capsule.phases[0];
+      const capsuleContext = {
+        tier: capsule.tier,
+        isCurrent: capsule.isCurrent,
+        isFuture: capsule.isFuture,
+        planets: capsule.planets,
+        score: phase?.score,
+        domain: phase?.domain,
+        apiLabel: phase?.apiLabel,
+        apiCategory: phase?.apiCategory,
+        transitPlanet: phase?.transitPlanet,
+        natalPoint: phase?.natalPoint,
+        aspect: phase?.aspect,
+        apiTopics: phase?.apiTopics,
+        startDate: capsule.startDate.toISOString(),
+        endDate: capsule.endDate.toISOString(),
+        lifetimeNumber: phase?.lifetimeNumber,
+        lifetimeTotal: phase?.lifetimeTotal,
+        isVipTransit: phase?.isVipTransit,
+        durationWeeks: phase?.durationWeeks,
+      };
+      const result = await getPersonalizedText(
+        capsule.id,
+        capsuleContext,
+        userProfile,
+        birthData.placeOfBirth ?? "",
+        "fr"
+      );
+      if (result) setAiText(result);
+    } catch {
+      // Silently fail — fallback to template text
+    } finally {
+      setAiLoading(false);
+    }
+  }, [capsule]);
+
+  useEffect(() => {
+    loadAiText();
+  }, [loadAiText]);
 
   const phase = capsule.phases[0];
   const tc = getTimeContext(capsule.isCurrent, capsule.isFuture);
@@ -174,6 +269,25 @@ export function CapsuleDetailSheet({
             />
           )}
         </div>
+
+        {/* ── Micro-refresh (stale volatile fields) ── */}
+        {showRefresh && (
+          <MicroRefresh
+            field={showRefresh}
+            onDone={() => {
+              // After stress, check if goal also needs refresh
+              if (showRefresh === "stressLevel") {
+                const p = getUserProfileSync();
+                const stale = getStaleFields(p);
+                setShowRefresh(stale.currentGoal ? "currentGoal" : null);
+              } else {
+                setShowRefresh(null);
+              }
+              // Reload AI text with fresh profile
+              loadAiText();
+            }}
+          />
+        )}
 
         {/* ── Section 2: Hero — Tier + Score + Rarity + Dates ── */}
         <div className="mb-5">
@@ -310,7 +424,26 @@ export function CapsuleDetailSheet({
         </div>
 
         {/* ── Section 5: Story — title + description ── */}
-        {phase && (
+        {phase && (shouldBlurAi ? (
+          <div className="mb-5">
+            <PremiumBlur feature="ai" blurAmount={10}>
+              <div className="px-1 py-2">
+                <span
+                  className="text-[9px] font-semibold uppercase tracking-wider"
+                  style={{ color: "var(--accent-purple)" }}
+                >
+                  {tc.storyLabel}
+                </span>
+                <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
+                  {phase.title}
+                </h3>
+                <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
+                  {phase.description}
+                </p>
+              </div>
+            </PremiumBlur>
+          </div>
+        ) : (
           <div className="mb-5">
             <span
               className="text-[9px] font-semibold uppercase tracking-wider"
@@ -332,14 +465,49 @@ export function CapsuleDetailSheet({
                 {phase.subtitle}
               </p>
             )}
-            <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
-              {phase.description}
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={aiText?.story ? "ai" : "template"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-3 text-[13px] leading-relaxed"
+                style={{ color: "var(--text-body)" }}
+              >
+                {aiText?.story ?? phase.description}
+              </motion.p>
+            </AnimatePresence>
+            {aiLoading && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <div className="h-1 w-1 rounded-full animate-pulse" style={{ background: "var(--accent-purple)" }} />
+                <span className="text-[9px]" style={{ color: "var(--text-body-subtle)" }}>Personnalisation...</span>
+              </div>
+            )}
           </div>
-        )}
+        ))}
 
         {/* ── Section 6: Insight Card + Cycle Info ── */}
-        {phase?.keyInsight && (
+        {phase?.keyInsight && (shouldBlurAi ? (
+          <div className="mb-4">
+            <PremiumBlur feature="ai" blurAmount={10}>
+              <div
+                className="rounded-xl px-4 py-3"
+                style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
+              >
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Lightbulb size={12} style={{ color: "var(--accent-purple)" }} />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                    {tc.insightLabel}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+                  {phase.keyInsight}
+                </p>
+              </div>
+            </PremiumBlur>
+          </div>
+        ) : (
           <div
             className="rounded-xl px-4 py-3 mb-4"
             style={{
@@ -354,11 +522,21 @@ export function CapsuleDetailSheet({
                 {tc.insightLabel}
               </span>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
-              {phase.keyInsight}
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={aiText?.insight ? "ai" : "template"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-xs leading-relaxed"
+                style={{ color: "var(--text-body)" }}
+              >
+                {aiText?.insight ?? phase.keyInsight}
+              </motion.p>
+            </AnimatePresence>
           </div>
-        )}
+        ))}
 
         {cycleNarrative && (
           <div
@@ -379,22 +557,53 @@ export function CapsuleDetailSheet({
         )}
 
         {/* ── Section 7: Guidance / Reflection Card + Lifetime ── */}
-        <div
-          className="rounded-xl px-4 py-3 mb-4"
-          style={{
-            background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
-          }}
-        >
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
-            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-              {tc.context === "past" ? "Avec le recul" : tc.context === "current" ? "En pratique" : "Pour vous préparer"}
-            </span>
+        {shouldBlurAi ? (
+          <div className="mb-4">
+            <PremiumBlur feature="ai" blurAmount={10}>
+              <div
+                className="rounded-xl px-4 py-3"
+                style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
+              >
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                    Pour vous préparer
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+                  {guidance}
+                </p>
+              </div>
+            </PremiumBlur>
           </div>
-          <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
-            {guidance}
-          </p>
-        </div>
+        ) : (
+          <div
+            className="rounded-xl px-4 py-3 mb-4"
+            style={{
+              background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                {tc.context === "past" ? "Avec le recul" : tc.context === "current" ? "En pratique" : "Pour vous préparer"}
+              </span>
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={aiText?.guidance ? "ai" : "template"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-xs leading-relaxed"
+                style={{ color: "var(--text-body)" }}
+              >
+                {aiText?.guidance ?? guidance}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        )}
 
         {lifetimeNarrative && (
           <div
@@ -446,6 +655,28 @@ export function CapsuleDetailSheet({
             </span>
           </div>
         </div>
+
+        {/* ── Feedback + Share ── */}
+        {aiText && (
+          <div className="flex items-center justify-end gap-3 mb-3">
+            {!capsule.isFuture && (
+              <button
+                type="button"
+                onClick={() => setShowShare(true)}
+                className="flex items-center justify-center h-7 w-7 rounded-full transition-opacity duration-200"
+                style={{
+                  color: "var(--text-body-subtle)",
+                  opacity: 0.3,
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.3"; }}
+              >
+                <ShareNodes size={14} />
+              </button>
+            )}
+            <FeedbackThumb capsuleId={capsule.id} />
+          </div>
+        )}
 
         {/* ── Section 9: Collapsible More Details ── */}
         <button
@@ -520,6 +751,13 @@ export function CapsuleDetailSheet({
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── Share Signal Card Overlay ── */}
+      <AnimatePresence>
+        {showShare && (
+          <ShareSignalCard capsule={capsule} onClose={() => setShowShare(false)} />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

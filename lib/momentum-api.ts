@@ -156,21 +156,50 @@ function birthHash(birth: BirthData): string {
 
 // ─── API Calls ──────────────────────────────────────────────
 
+const API_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
+const ALLOWED_ENDPOINTS = ["toctoc", "toctoc-app", "toctoc-year", "toctoc-timeline"];
+
+/**
+ * Dual-mode API caller:
+ * - Dev (Next.js server running): uses /api/toctoc proxy (avoids CORS)
+ * - Static export / Capacitor: calls external API directly
+ */
 async function callProxy(
   endpoint: string,
   birth: BirthData
 ): Promise<unknown> {
+  if (!ALLOWED_ENDPOINTS.includes(endpoint)) {
+    throw new Error(`Invalid endpoint: ${endpoint}`);
+  }
+
+  const payload = {
+    birthDate: birth.birthDate,
+    birthTime: birth.birthTime,
+    latitude: birth.latitude,
+    longitude: birth.longitude,
+    timezone: birth.timezone,
+  };
+
+  // Static export / Capacitor mode: call external API directly
+  const useDirectApi =
+    process.env.NEXT_PUBLIC_API_MODE === "direct" ||
+    typeof window !== "undefined" && "Capacitor" in window;
+
+  if (useDirectApi) {
+    const res = await fetch(`${API_BASE}/${endpoint}.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`API returned ${res.status}`);
+    return res.json();
+  }
+
+  // Dev mode: use Next.js proxy (handles CORS)
   const res = await fetch("/api/toctoc", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      endpoint,
-      birthDate: birth.birthDate,
-      birthTime: birth.birthTime,
-      latitude: birth.latitude,
-      longitude: birth.longitude,
-      timezone: birth.timezone,
-    }),
+    body: JSON.stringify({ endpoint, ...payload }),
   });
   if (!res.ok) throw new Error(`API returned ${res.status}`);
   return res.json();
