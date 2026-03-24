@@ -4,7 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AppStoreBadges } from "./AppStoreBadges";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { planetConfig } from "@/lib/domain-config";
+import { planetConfig, houseConfig } from "@/lib/domain-config";
+import { Lightbulb, ArrowRight, Fire } from "flowbite-react-icons/outline";
 import { generateSignalFromDate } from "@/lib/signal-generator";
 import type { GeneratedSignal } from "@/lib/signal-generator";
 import type { TranslationMap } from "@/lib/i18n";
@@ -30,124 +31,197 @@ const BG_BOUDINS = [
   { x: "75%", y: "85%", w: 14, h: 22, color: "#6BA89A", opacity: 0.07 },
 ];
 
-// ─── Signal Result — Rich mini-report ───────────────────────
+// ─── Tier helpers ───────────────────────────────────────────
+function tierDisplayLabel(tier: string): string {
+  if (tier === "toctoctoc") return "Moment fort";
+  if (tier === "toctoc") return "Signal clair";
+  return "Signal subtil";
+}
+
+// ─── Signal Result — Premium mini detail sheet ──────────────
 function SignalResult({ signal }: { signal: GeneratedSignal }) {
-  const mainColor = "#B07CC2";
-  const tierLabel = signal.tier === "toctoctoc" ? "Strong" : signal.tier === "toctoc" ? "Clear" : "Subtle";
-  // Simulated rich data based on signal (deterministic from intensity)
-  const durationWeeks = Math.round(4 + (signal.intensity / 100) * 12);
-  const upcomingCount = 2 + (signal.intensity % 3);
-  const bw = signal.tier === "toctoctoc" ? 48 : signal.tier === "toctoc" ? 38 : 30;
-  const bh = signal.tier === "toctoctoc" ? 80 : signal.tier === "toctoc" ? 60 : 44;
+  const hm = houseConfig[signal.house];
+  const houseColor = hm.color;
+  const secondaryHm = signal.secondaryHouse ? houseConfig[signal.secondaryHouse] : null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
       className="mx-auto mt-10 max-w-md"
     >
       <div
-        className="landing-glass relative overflow-hidden rounded-3xl p-6 md:p-8"
+        className="landing-glass relative overflow-hidden rounded-3xl"
         style={{
           border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)",
-          boxShadow: "0 0 40px color-mix(in srgb, var(--accent-purple) 12%, transparent)",
+          boxShadow: "0 0 60px color-mix(in srgb, var(--accent-purple) 15%, transparent)",
         }}
       >
-        {/* Top row: boudin + signal summary */}
-        <div className="flex items-center gap-5">
-          {/* Boudin */}
+        {/* ── Header: context banner ── */}
+        <div className="px-6 pt-6 pb-0 md:px-8 md:pt-8">
           <motion.div
-            className="relative flex-shrink-0 flex items-center justify-center"
-            style={{
-              width: bw,
-              height: bh,
-              borderRadius: bw / 2,
-              background: `linear-gradient(135deg, ${mainColor}, color-mix(in srgb, ${mainColor} 60%, transparent))`,
-              border: `1.5px solid ${mainColor}`,
-              boxShadow: `0 0 30px color-mix(in srgb, ${mainColor} 30%, transparent)`,
-            }}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.15, type: "spring", stiffness: 300 }}
+            className="flex items-center gap-2"
           >
-            <div className="flex flex-col items-center gap-[3px]">
-              {signal.planets.map((key) => {
-                const planet = planetConfig[key];
-                return (
-                  <div key={key} className="rounded-full"
-                    style={{ width: 5, height: 5, backgroundColor: planet.color, boxShadow: `0 0 4px ${planet.color}80` }} />
-                );
-              })}
+            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
+              style={{
+                background: `color-mix(in srgb, ${houseColor} 12%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${houseColor} 25%, transparent)`,
+              }}>
+              <div className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: houseColor }} />
+              <Fire size={10} style={{ color: houseColor }} />
+              <span className="text-[10px] font-semibold" style={{ color: houseColor }}>
+                Signal actif
+              </span>
             </div>
+            <span className="rounded-full px-2 py-0.5 text-[9px] font-bold"
+              style={{
+                background: "color-mix(in srgb, var(--accent-purple) 15%, transparent)",
+                color: "var(--accent-purple)",
+              }}>
+              {signal.score}/4
+            </span>
+          </motion.div>
+        </div>
+
+        {/* ── Tier + title ── */}
+        <div className="px-6 pt-3 md:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.15em]"
+              style={{ color: "var(--accent-purple)" }}>
+              {tierDisplayLabel(signal.tier)}
+            </p>
+            <p className="mt-1 font-display text-xl font-bold text-white" style={{ letterSpacing: "-0.01em" }}>
+              Votre signal actuel
+            </p>
           </motion.div>
 
-          {/* Signal summary */}
+          {/* Date + duration */}
           <motion.div
-            className="flex-1"
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
+            className="mt-1.5 flex items-center gap-2"
           >
-            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: mainColor }}>
-              Your current signal
-            </p>
-            <p className="mt-1 text-lg font-bold text-white">
-              {tierLabel} intensity
-            </p>
-            <p className="mt-0.5 text-sm text-brand-10/60">
-              ~{durationWeeks} weeks remaining
+            <span className="text-[11px] text-brand-10/50">
+              {`~${signal.durationWeeks} semaines restantes`}
+            </span>
+          </motion.div>
+        </div>
+
+        {/* ── House topic pills ── */}
+        <div className="px-6 pt-4 md:px-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="flex flex-wrap gap-2"
+          >
+            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
+              style={{
+                background: `color-mix(in srgb, ${houseColor} 10%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${houseColor} 20%, transparent)`,
+              }}>
+              <div className="h-2 w-2 rounded-full" style={{ background: houseColor }} />
+              <span className="text-[11px] font-medium" style={{ color: houseColor }}>{hm.label}</span>
+            </div>
+            {secondaryHm && (
+              <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
+                style={{
+                  background: `color-mix(in srgb, ${secondaryHm.color} 10%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${secondaryHm.color} 20%, transparent)`,
+                }}>
+                <div className="h-2 w-2 rounded-full" style={{ background: secondaryHm.color }} />
+                <span className="text-[11px] font-medium" style={{ color: secondaryHm.color }}>{secondaryHm.label}</span>
+              </div>
+            )}
+          </motion.div>
+        </div>
+
+        {/* ── Planet pills (staggered) ── */}
+        <div className="px-6 pt-3 md:px-8">
+          <div className="flex flex-wrap gap-2">
+            {signal.planets.map((key, i) => {
+              const pc = planetConfig[key];
+              return (
+                <motion.div
+                  key={key}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + i * 0.08, type: "spring", stiffness: 300 }}
+                  className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
+                  style={{
+                    background: `color-mix(in srgb, ${pc.color} 12%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${pc.color} 25%, transparent)`,
+                  }}
+                >
+                  <div className="h-2 w-2 rounded-full"
+                    style={{ background: pc.color, boxShadow: `0 0 6px ${pc.color}` }} />
+                  <span className="text-[11px] font-medium" style={{ color: pc.color }}>{pc.label}</span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Narrative ── */}
+        <div className="px-6 pt-5 md:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            <p className="text-[12px] leading-relaxed text-brand-10/70">
+              {signal.narrative}
             </p>
           </motion.div>
         </div>
 
-        {/* Planet pills */}
-        <motion.div
-          className="mt-5 flex flex-wrap gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          {signal.planets.map((key) => {
-            const planet = planetConfig[key];
-            return (
-              <span key={key} className="rounded-full px-3 py-1 text-xs font-medium"
-                style={{ background: `color-mix(in srgb, ${planet.color} 12%, transparent)`, color: planet.color }}>
-                {planet.label}
+        {/* ── Insight card ── */}
+        <div className="px-6 pt-4 md:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75, duration: 0.4 }}
+            className="rounded-xl px-4 py-3"
+            style={{
+              background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Lightbulb size={11} style={{ color: "var(--accent-purple)" }} />
+              <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                En pratique
               </span>
-            );
-          })}
-        </motion.div>
+            </div>
+            <p className="text-[11px] leading-relaxed text-brand-10/70">
+              {signal.action}
+            </p>
+          </motion.div>
+        </div>
 
-        {/* Divider */}
-        <div className="my-5 h-px w-full" style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }} />
+        {/* ── Divider ── */}
+        <div className="mx-6 my-4 h-px md:mx-8" style={{ background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)" }} />
 
-        {/* Stats row */}
+        {/* ── Teaser CTA ── */}
         <motion.div
-          className="grid grid-cols-2 gap-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-        >
-          <div>
-            <p className="text-2xl font-bold text-white">{upcomingCount}</p>
-            <p className="text-xs text-brand-10/50">momentum periods this year</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-white">{signal.planets.length}</p>
-            <p className="text-xs text-brand-10/50">planets active right now</p>
-          </div>
-        </motion.div>
-
-        {/* Teaser */}
-        <motion.p
-          className="mt-5 text-sm text-brand-10/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.9 }}
+          className="px-6 pb-6 md:px-8 md:pb-8 flex items-center gap-3"
         >
-          This is just a preview. The app reveals your full timeline, peak windows, and life domains.
-        </motion.p>
+          <ArrowRight size={14} style={{ color: "var(--accent-purple)", opacity: 0.6 }} />
+          <p className="text-[11px] text-brand-10/40">
+            {"Ceci est un aper\u00e7u. L\u2019app r\u00e9v\u00e8le votre timeline compl\u00e8te, vos fen\u00eatres cl\u00e9s et vos domaines de vie."}
+          </p>
+        </motion.div>
       </div>
     </motion.div>
   );
