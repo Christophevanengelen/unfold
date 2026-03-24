@@ -92,8 +92,9 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
         throw new Error("No signals found for this birth data");
       }
 
-      setPhases(yearPhases);
-      setTimelinePhases(yearPhases); // temporary until lifetime loads
+      setPhases(yearPhases); // year data for signal cards only
+      // Do NOT set timelinePhases with year data — they have no house colors,
+      // no topics, and render as ugly dark bars. Timeline waits for lifetime sausages.
       setIsLive(true);
       setState("ready");
 

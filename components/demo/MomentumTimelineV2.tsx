@@ -967,14 +967,12 @@ export function MomentumTimelineV2() {
     setVisibleAge(age);
   }, []);
 
-  // Show loader only when we have zero data at all.
-  // If coming from onboarding, lifetime data is already loaded (prefetched during StepPreparing).
-  // If year data is available but lifetime still loading, still show the spinner
-  // (year data has incomplete visuals — no house colors, no topics).
-  const hasLifetimeData = timelinePhases.length > 100; // lifetime = ~1000+ phases, year = ~20-50
+  // Show spinner ONLY while lifetime is actively loading.
+  // After onboarding, isLoadingLifetime is already false (prefetched in StepPreparing).
+  // So this spinner only shows on direct navigation or page refresh.
   if (
     (state === "loading" && timelinePhases.length === 0) ||
-    (isLoadingLifetime && !hasLifetimeData)
+    isLoadingLifetime
   ) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">
