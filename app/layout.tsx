@@ -24,6 +24,20 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} suppressHydrationWarning>
+      {/* react-scan: visual re-render overlay in dev — activate with ?react-scan in URL */}
+      {process.env.NODE_ENV === "development" && (
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                if (window.location.search.includes('react-scan')) {
+                  import('https://unpkg.com/react-scan/dist/auto.global.js');
+                }
+              `,
+            }}
+          />
+        </head>
+      )}
       <body className={`${uniformRounded.variable} ${uniformRounded.className} antialiased`} suppressHydrationWarning>
         <ThemeProvider>{children}</ThemeProvider>
       </body>

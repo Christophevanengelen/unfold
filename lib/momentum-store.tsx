@@ -1,11 +1,16 @@
 "use client";
 
 /**
- * MomentumProvider — React Context that manages the full data lifecycle.
+ * MomentumProvider — React Context with SWR caching.
  *
- * On mount: check birth data → check cache → fetch API → adapt → phases.
- * Falls back to mock data if no birth data or API error.
- * Exposes phases for SignalPager (home) and MomentumTimelineV2 (timeline).
+ * Pattern: Stale-While-Revalidate
+ * 1. Mount → read cached phases from localStorage (instant, sync)
+ * 2. Display cached data immediately (stale)
+ * 3. Background → fetch fresh data from API (revalidate)
+ * 4. On success → update UI + write to cache (IndexedDB + localStorage)
+ * 5. On error → keep showing stale data
+ *
+ * Sources: swr.vercel.app, RFC 5861
  */
 
 import {
@@ -14,152 +19,170 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
+import useSWR from "swr";
 import { getBirthData, getBirthDataSync, saveBirthData, type BirthData } from "@/lib/birth-data";
-import { migrateFromLocalStorage } from "@/lib/storage";
+import { migrateFromLocalStorage, storage } from "@/lib/storage";
 import { fetchYearData, fetchAppData } from "@/lib/momentum-api";
 import { yearDataToPhases, appDataToPhases } from "@/lib/momentum-adapter";
 import type { MomentumPhase } from "@/types/momentum";
 
-// ─── Context shape ──────────────────────────────────────────
+// ─── Cache layer — dual-write (IndexedDB + localStorage) ──────
+
+const CACHE_YEAR = "unfold_cache_year_phases";
+const CACHE_LIFETIME = "unfold_cache_lifetime_phases";
+
+function readSync(key: string): MomentumPhase[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function persist(key: string, data: MomentumPhase[]) {
+  storage.setPersistent(key, data).catch(() => {});
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch { /* quota */ }
+}
+
+// ─── SWR fetchers ────────────────────────────────────────────
+
+async function fetchYear(bd: BirthData): Promise<MomentumPhase[]> {
+  const res = await fetchYearData(bd);
+  if (!res?.data?.success) throw new Error("Year API failed");
+  const phases = yearDataToPhases(res);
+  if (phases.length === 0) throw new Error("No signals found");
+  persist(CACHE_YEAR, phases);
+  return phases;
+}
+
+async function fetchLifetime(bd: BirthData): Promise<MomentumPhase[]> {
+  const res = await fetchAppData(bd);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const appData = (res?.data as any)?.data ?? res?.data;
+  if (!appData?.allSausages?.length) return [];
+  const phases = appDataToPhases(res);
+  if (phases.length > 0) {
+    persist(CACHE_LIFETIME, phases);
+    console.log("[Momentum] Lifetime cached:", phases.length, "phases");
+  }
+  return phases;
+}
+
+// ─── Context ──────────────────────────────────────────────────
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 interface MomentumContextValue {
-  /** Current phases for home capsules (from API data) */
   phases: MomentumPhase[];
-  /** Full lifetime phases for timeline (from app data, or year data as fallback) */
   timelinePhases: MomentumPhase[];
-  /** Loading state */
   state: LoadState;
-  /** Error message if any */
   error: string | null;
-  /** Whether using real API data */
   isLive: boolean;
-  /** Whether the lifetime data is still loading in background */
   isLoadingLifetime: boolean;
-  /** Current birth data (null if not onboarded yet) */
   birthData: BirthData | null;
-  /** Birth date string for timeline coordinate system */
   birthDateStr: string;
-  /** True when no birth data exists — UI should redirect to onboarding */
   needsOnboarding: boolean;
-  /** Trigger a fetch with new or existing birth data */
   loadSignals: (birth?: BirthData) => Promise<void>;
 }
 
 const MomentumContext = createContext<MomentumContextValue | null>(null);
 
-// ─── Provider ───────────────────────────────────────────────
+// ─── Provider ─────────────────────────────────────────────────
 
 export function MomentumProvider({ children }: { children: ReactNode }) {
-  const [phases, setPhases] = useState<MomentumPhase[]>([]);
-  const [timelinePhases, setTimelinePhases] = useState<MomentumPhase[]>([]);
-  const [state, setState] = useState<LoadState>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [isLive, setIsLive] = useState(false);
-  const [isLoadingLifetime, setIsLoadingLifetime] = useState(false);
   const [birthData, setBirthData] = useState<BirthData | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const birthDateStr = birthData?.birthDate || "";
-
-  const loadSignals = useCallback(async (birth?: BirthData) => {
-    const bd = birth || (await getBirthData()) || getBirthDataSync();
-    if (!bd) {
-      // No birth data — signal onboarding needed
-      setNeedsOnboarding(true);
-      setState("ready");
-      return;
-    }
-
-    setBirthData(bd);
-    setNeedsOnboarding(false);
-    if (birth) await saveBirthData(bd);
-    setState("loading");
-    setError(null);
-
-    try {
-      // Fast fetch: 3-year window (2-10s)
-      const yearResponse = await fetchYearData(bd);
-      if (!yearResponse?.data?.success) {
-        throw new Error("API returned unsuccessful response");
-      }
-
-      const yearPhases = yearDataToPhases(yearResponse);
-      if (yearPhases.length === 0) {
-        throw new Error("No signals found for this birth data");
-      }
-
-      setPhases(yearPhases); // year data for signal cards only
-      // Do NOT set timelinePhases with year data — they have no house colors,
-      // no topics, and render as ugly dark bars. Timeline waits for lifetime sausages.
-      setIsLive(true);
-      setState("ready");
-
-      // Background: fetch lifetime sausages (30-120s)
-      setIsLoadingLifetime(true);
-      fetchAppData(bd)
-        .then((appResponse) => {
-          // API response may be nested: .data.data.allSausages or .data.allSausages
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const appData = (appResponse?.data as any)?.data ?? appResponse?.data;
-          console.log("[Momentum] App data loaded:", appData?.allSausages?.length ?? 0, "sausages");
-          if (appData?.allSausages?.length) {
-            const lifetimePhases = appDataToPhases(appResponse);
-            console.log("[Momentum] Converted to", lifetimePhases.length, "phases");
-            if (lifetimePhases.length > 0) {
-              setTimelinePhases(lifetimePhases);
-            }
-          }
-        })
-        .catch(() => {
-          // Lifetime fetch failed — year data is still good, just less timeline coverage
-        })
-        .finally(() => {
-          setIsLoadingLifetime(false);
-        });
-    } catch (err) {
-      console.error("[Momentum] API error:", err);
-      setError(err instanceof Error ? err.message : "Failed to load signals");
-      setPhases([]);
-      setTimelinePhases([]);
-      setIsLive(false);
-      setState("error");
-    }
-  }, []);
-
-  // Auto-load on mount: migrate localStorage → IndexedDB, then load
+  // Resolve birth data on mount
   useEffect(() => {
     (async () => {
       await migrateFromLocalStorage();
-      const stored = await getBirthData();
-      if (stored) {
-        loadSignals(stored);
+      const bd = await getBirthData();
+      if (bd) {
+        setBirthData(bd);
       } else {
-        // No birth data — needs onboarding
         setNeedsOnboarding(true);
-        setState("ready");
       }
+      setMounted(true);
     })();
-  }, [loadSignals]);
+  }, []);
+
+  // SWR: year phases (fast, 2-5s)
+  const {
+    data: yearPhases,
+    error: yearError,
+    isValidating: isLoadingYear,
+  } = useSWR(
+    birthData ? ["year-phases", birthData.birthDate] : null,
+    () => fetchYear(birthData!),
+    {
+      fallbackData: readSync(CACHE_YEAR),
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 60_000, // don't refetch within 1 min
+    }
+  );
+
+  // SWR: lifetime phases (slow, 30-120s)
+  const {
+    data: lifetimePhases,
+    isValidating: isLoadingLifetime,
+  } = useSWR(
+    birthData ? ["lifetime-phases", birthData.birthDate] : null,
+    () => fetchLifetime(birthData!),
+    {
+      fallbackData: readSync(CACHE_LIFETIME),
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 300_000, // don't refetch within 5 min
+    }
+  );
+
+  const phases = yearPhases ?? readSync(CACHE_YEAR);
+  const timelinePhases = lifetimePhases ?? readSync(CACHE_LIFETIME);
+
+  const state: LoadState = yearError
+    ? "error"
+    : (!mounted || (isLoadingYear && phases.length === 0))
+      ? "loading"
+      : "ready";
+
+  const isLive = phases.length > 0;
+  const birthDateStr = birthData?.birthDate || "";
+
+  // Manual trigger for onboarding flow
+  const loadSignals = useCallback(async (birth?: BirthData) => {
+    const bd = birth || (await getBirthData()) || getBirthDataSync();
+    if (!bd) {
+      setNeedsOnboarding(true);
+      return;
+    }
+    if (birth) await saveBirthData(bd);
+    setBirthData(bd);
+    setNeedsOnboarding(false);
+  }, []);
+
+  const errorMsg = yearError?.message ?? null;
+
+  const value = useMemo<MomentumContextValue>(() => ({
+    phases,
+    timelinePhases,
+    state,
+    error: errorMsg,
+    isLive,
+    isLoadingLifetime,
+    birthData,
+    birthDateStr,
+    needsOnboarding,
+    loadSignals,
+  }), [phases, timelinePhases, state, errorMsg, isLive, isLoadingLifetime, birthData, birthDateStr, needsOnboarding, loadSignals]);
 
   return (
-    <MomentumContext.Provider
-      value={{
-        phases,
-        timelinePhases,
-        state,
-        error,
-        isLive,
-        isLoadingLifetime,
-        birthData,
-        birthDateStr,
-        needsOnboarding,
-        loadSignals,
-      }}
-    >
+    <MomentumContext.Provider value={value}>
       {children}
     </MomentumContext.Provider>
   );

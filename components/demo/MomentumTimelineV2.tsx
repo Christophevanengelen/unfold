@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, startTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
 import { TimelineWelcome, shouldShowWelcome } from "./TimelineWelcome";
 import { FirstUseGuide, shouldShowFirstUseGuide } from "./FirstUseGuide";
@@ -327,6 +328,7 @@ function OverviewView({
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowY = dateToY(new Date());
   const [isAwayFromNow, setIsAwayFromNow] = useState(false);
+  const [scrollRange, setScrollRange] = useState<[number, number]>([0, 2000]);
 
   const scrollToNow = useCallback(() => {
     const el = scrollRef.current;
@@ -358,7 +360,9 @@ function OverviewView({
   useEffect(() => {
     if (!scrollRef.current) return;
     const viewportH = scrollRef.current.clientHeight || 700;
-    scrollRef.current.scrollTop = Math.max(0, nowY - viewportH * 0.50);
+    const scrollTop = Math.max(0, nowY - viewportH * 0.50);
+    scrollRef.current.scrollTop = scrollTop;
+    setScrollRange([scrollTop, scrollTop + viewportH]);
   }, [nowY]);
 
   // Pre-compute capsule positions with collision resolution
@@ -523,6 +527,8 @@ function OverviewView({
       rafPending = true;
       requestAnimationFrame(() => {
         rafPending = false;
+        // Track visible scroll range for month label virtualization
+        setScrollRange([el.scrollTop, el.scrollTop + el.clientHeight]);
         const centerY = el.scrollTop + el.clientHeight / 2;
         const d = yToDate(centerY);
         const diffMs = d.getTime() - birthDate.getTime();
@@ -543,8 +549,8 @@ function OverviewView({
       <div ref={scrollRef} className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
         <div className="relative" style={{ height: getTotalHeight() }}>
 
-          {/* Month labels on the left */}
-          {monthLabels.map(({ month, year, y, isJan, isCurrent }) => (
+          {/* Month labels on the left — virtualized: only render visible range + buffer */}
+          {monthLabels.filter(({ y }) => y > scrollRange[0] - 500 && y < scrollRange[1] + 500).map(({ month, year, y, isJan, isCurrent }) => (
             <div key={`${year}-${month}`} className="absolute" style={{ top: y, left: 4 }}>
               {/* Current month: pill badge */}
               {isCurrent ? (
@@ -768,28 +774,137 @@ function OverviewView({
 function ListView({
   capsules,
   onTapCapsule,
+  onAgeChange,
 }: {
   capsules: CapsuleData[];
   onTapCapsule: (capsule: CapsuleData) => void;
+  onAgeChange?: (age: number) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentRef = useRef<HTMLButtonElement>(null);
+  const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [isAwayFromNow, setIsAwayFromNow] = useState(false);
 
   // Sort chronologically (most recent first for natural reading)
   const sorted = useMemo(() => {
     return [...capsules].sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
   }, [capsules]);
 
+  // Flatten sorted capsules into a list of { type: "header" | "capsule" } items for virtualization
+  type FlatItem = { type: "header"; monthKey: string } | { type: "capsule"; capsule: CapsuleData };
+  const flatItems = useMemo<FlatItem[]>(() => {
+    const items: FlatItem[] = [];
+    let lastMonthKey = "";
+    for (const capsule of sorted) {
+      const monthKey = `${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
+      if (monthKey !== lastMonthKey) {
+        items.push({ type: "header", monthKey });
+        lastMonthKey = monthKey;
+      }
+      items.push({ type: "capsule", capsule });
+    }
+    return items;
+  }, [sorted]);
+
+  // Find the index of the current capsule for initial scroll
+  const currentIndex = useMemo(() => {
+    return flatItems.findIndex(item => item.type === "capsule" && item.capsule.isCurrent);
+  }, [flatItems]);
+
+  const virtualizer = useVirtualizer({
+    count: flatItems.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: (index) => flatItems[index]?.type === "header" ? 36 : 64,
+    overscan: 10,
+  });
+
   // Auto-scroll to current on mount
   useEffect(() => {
-    if (currentRef.current) {
-      currentRef.current.scrollIntoView({ block: "center", behavior: "instant" });
+    if (currentIndex >= 0) {
+      virtualizer.scrollToIndex(currentIndex, { align: "center" });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex]);
+
+  // Cache birth year once (avoid localStorage reads on every scroll)
+  const birthYearRef = useRef<number>(0);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('unfold_birth_data');
+      birthYearRef.current = raw ? parseInt(JSON.parse(raw).birthDate?.split('-')[0] || '1985') : 1985;
+    } catch { birthYearRef.current = 1985; }
+  }, []);
+
+  // Track visible age from scroll position (rAF-throttled)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !onAgeChange) return;
+    let rafPending = false;
+    const handleScroll = () => {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        const viewportCenter = el.scrollTop + el.clientHeight / 2;
+        let closestCapsule: CapsuleData | null = null;
+        let closestDist = Infinity;
+        for (const [id, row] of rowRefs.current) {
+          const dist = Math.abs(row.offsetTop + row.clientHeight / 2 - viewportCenter);
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestCapsule = sorted.find(c => c.id === id) ?? null;
+          }
+        }
+        if (closestCapsule) {
+          onAgeChange(closestCapsule.startDate.getFullYear() - birthYearRef.current);
+        }
+        if (currentRef.current) {
+          const rect = currentRef.current.getBoundingClientRect();
+          const parentRect = el.getBoundingClientRect();
+          setIsAwayFromNow(rect.bottom < parentRect.top || rect.top > parentRect.bottom);
+        }
+      });
+    };
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [sorted, onAgeChange]);
+
+  const scrollToNow = useCallback(() => {
+    currentRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, []);
+
+  const jumpByMonth = useCallback((direction: "up" | "down") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ top: direction === "up" ? -300 : 300, behavior: "smooth" });
   }, []);
 
   return (
-    <div ref={scrollRef} className="no-scrollbar h-full overflow-y-auto px-4 pb-6">
-      {/* Spine + rows */}
+    <div className="relative h-full">
+      {/* NOW button — absolute, centered bottom */}
+      {isAwayFromNow && (
+        <button
+          type="button"
+          onClick={scrollToNow}
+          className="absolute left-1/2 -translate-x-1/2 z-30 flex h-8 items-center justify-center rounded-full px-3"
+          style={{ ...PILL_STYLE, bottom: 68 }}
+        >
+          <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
+        </button>
+      )}
+
+      {/* Up/Down — absolute right */}
+      <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: 68 }}>
+        <button type="button" onClick={() => jumpByMonth("up")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+        <button type="button" onClick={() => jumpByMonth("down")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+      </div>
+
+      <div ref={scrollRef} className="no-scrollbar h-full overflow-y-auto px-4 pb-6">
+      {/* Spine + virtualized rows */}
       <div className="relative ml-3">
         {/* Vertical spine */}
         <div
@@ -802,108 +917,138 @@ function ListView({
           }}
         />
 
-        {sorted.map((capsule, i) => {
-          const phase = capsule.phases[0];
-          if (!phase) return null;
-          const tierLabel = capsule.tier === "toctoctoc" ? "PEAK" : capsule.tier === "toctoc" ? "CLEAR" : "SUBTLE";
-          const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} '${String(capsule.startDate.getFullYear()).slice(2)}`;
-          const endLabel = capsule.isCurrent
-            ? "now"
-            : `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} '${String(capsule.endDate.getFullYear()).slice(2)}`;
-          const maxIntensity = Math.max(...capsule.phases.map(p => p.intensity));
+        <div style={{ height: `${virtualizer.getTotalSize()}px`, width: "100%", position: "relative" }}>
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const item = flatItems[virtualRow.index];
+            if (!item) return null;
 
-          return (
-            <motion.button
-              key={capsule.id}
-              ref={capsule.isCurrent ? currentRef : undefined}
-              type="button"
-              onClick={() => onTapCapsule(capsule)}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.02, duration: 0.3 }}
-              className="relative flex w-full items-start gap-3 py-2.5 text-left"
-              style={{ opacity: capsule.isFuture ? 0.45 : 1 }}
-            >
-              {/* Dot on spine — uses capsule color */}
-              <div className="relative z-10 mt-1.5 flex flex-shrink-0 items-center justify-center" style={{ width: 7 }}>
+            if (item.type === "header") {
+              return (
                 <div
-                  className="rounded-full"
-                  style={{
-                    width: capsule.isCurrent ? 9 : 6,
-                    height: capsule.isCurrent ? 9 : 6,
-                    background: capsule.isCurrent
-                      ? (capsule.color || "var(--accent-purple)")
-                      : `color-mix(in srgb, ${capsule.color || "var(--accent-purple)"} 70%, transparent)`,
-                    boxShadow: capsule.isCurrent
-                      ? `0 0 10px ${capsule.color || "rgba(149, 133, 204, 0.6)"}`
-                      : "none",
-                  }}
-                />
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-[11px] font-semibold leading-tight truncate"
-                    style={{ color: capsule.isCurrent ? "#fff" : "var(--text-heading)" }}
-                  >
-                    {phase.title}
-                  </span>
-                  {capsule.isCurrent && (
-                    <span
-                      className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wider"
-                      style={{
-                        background: "color-mix(in srgb, var(--accent-purple) 30%, transparent)",
-                        color: "#C1A7FF",
-                        border: "1px solid color-mix(in srgb, var(--accent-purple) 40%, transparent)",
-                      }}
-                    >
-                      NOW
-                    </span>
-                  )}
-                </div>
-
-                <span className="mt-0.5 block text-[9px]" style={{ color: "var(--text-disabled)" }}>
-                  {startLabel} — {endLabel}
-                </span>
-
-                {/* Planet dots + tier */}
-                <div className="mt-1 flex items-center gap-2">
-                  <div className="flex gap-0.5">
-                    {(capsule.topicColors?.length ? capsule.topicColors : capsule.planets.map(p => planetConfig[p].color)).map((color, pi) => (
-                      <div
-                        key={`dot-${pi}`}
-                        className="h-[5px] w-[5px] rounded-full"
-                        style={{
-                          background: capsule.isFuture ? "rgba(255,255,255,0.4)" : color,
-                          boxShadow: capsule.isFuture ? "none" : `0 0 3px ${color}`,
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <span
-                    className="text-[7px] font-semibold tracking-wider"
-                    style={{ color: "color-mix(in srgb, var(--accent-purple) 60%, transparent)" }}
-                  >
-                    {tierLabel}
-                  </span>
-                </div>
-              </div>
-
-              {/* Intensity */}
-              <div className="flex-shrink-0 pt-0.5">
-                <span
-                  className="text-[13px] font-bold tabular-nums"
-                  style={{ color: capsule.isCurrent ? "#C1A7FF" : "var(--text-body-subtle)" }}
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${virtualRow.start}px)` }}
                 >
-                  {maxIntensity}
-                </span>
+                  <div className="mt-4 mb-2 ml-4">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
+                      {item.monthKey}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+
+            const capsule = item.capsule;
+            const phase = capsule.phases[0];
+            if (!phase) return null;
+
+            const tierLabel = capsule.tier === "toctoctoc" ? "PEAK" : capsule.tier === "toctoc" ? "CLEAR" : "SUBTLE";
+            const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} '${String(capsule.startDate.getFullYear()).slice(2)}`;
+            const endLabel = capsule.isCurrent
+              ? "now"
+              : `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} '${String(capsule.endDate.getFullYear()).slice(2)}`;
+            const maxIntensity = Math.max(...capsule.phases.map(p => p.intensity));
+            const dotColors = capsule.topicColors?.length ? capsule.topicColors : capsule.planets.map(p => planetConfig[p].color);
+
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${virtualRow.start}px)` }}
+              >
+              <button
+                ref={capsule.isCurrent ? currentRef : undefined}
+                type="button"
+                onClick={() => onTapCapsule(capsule)}
+                className="relative flex w-full items-start gap-3 py-2.5 text-left"
+                style={{ opacity: capsule.isFuture ? 0.45 : 1 }}
+              >
+                {/* Dot on spine */}
+                <div className="relative z-10 mt-1.5 flex flex-shrink-0 items-center justify-center" style={{ width: 7 }}>
+                  <div
+                    className="rounded-full"
+                    style={{
+                      width: capsule.isCurrent ? 9 : 6,
+                      height: capsule.isCurrent ? 9 : 6,
+                      background: capsule.isCurrent
+                        ? (capsule.color || "var(--accent-purple)")
+                        : `color-mix(in srgb, ${capsule.color || "var(--accent-purple)"} 70%, transparent)`,
+                      boxShadow: capsule.isCurrent
+                        ? `0 0 10px ${capsule.color || "rgba(149, 133, 204, 0.6)"}`
+                        : "none",
+                    }}
+                  />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-[11px] font-semibold leading-tight truncate"
+                      style={{ color: capsule.isCurrent ? "#fff" : "var(--text-heading)" }}
+                    >
+                      {phase.title}
+                    </span>
+                    {capsule.isCurrent && (
+                      <span
+                        className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wider"
+                        style={{
+                          background: "color-mix(in srgb, var(--accent-purple) 30%, transparent)",
+                          color: "#C1A7FF",
+                          border: "1px solid color-mix(in srgb, var(--accent-purple) 40%, transparent)",
+                        }}
+                      >
+                        NOW
+                      </span>
+                    )}
+                  </div>
+
+                  <span className="mt-0.5 block text-[9px]" style={{ color: "var(--text-disabled)" }}>
+                    {startLabel} — {endLabel}
+                  </span>
+
+                  {/* Planet dots + tier */}
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {dotColors.map((color, pi) => (
+                        <div
+                          key={`dot-${pi}`}
+                          className="h-[5px] w-[5px] rounded-full"
+                          style={{
+                            background: capsule.isFuture ? "rgba(255,255,255,0.4)" : color,
+                            boxShadow: capsule.isFuture ? "none" : `0 0 3px ${color}`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span
+                      className="text-[7px] font-semibold tracking-wider"
+                      style={{ color: "color-mix(in srgb, var(--accent-purple) 60%, transparent)" }}
+                    >
+                      {tierLabel}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Intensity */}
+                <div className="flex-shrink-0 pt-0.5">
+                  <span
+                    className="text-[13px] font-bold tabular-nums"
+                    style={{ color: capsule.isCurrent ? "#C1A7FF" : "var(--text-body-subtle)" }}
+                  >
+                    {maxIntensity}
+                  </span>
+                </div>
+              </button>
               </div>
-            </motion.button>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+    </div>
     </div>
   );
 }
@@ -918,11 +1063,11 @@ function getSavedViewMode(): ViewMode {
 }
 
 export function MomentumTimelineV2() {
-  const { timelinePhases, birthDateStr, state, isLoadingLifetime } = useMomentum();
+  const { timelinePhases, phases, birthDateStr, state, isLoadingLifetime } = useMomentum();
   const openPremium = usePremiumTeaser();
   const [viewMode, _setViewMode] = useState<ViewMode>(getSavedViewMode);
   const setViewMode = useCallback((mode: ViewMode) => {
-    _setViewMode(mode);
+    startTransition(() => _setViewMode(mode));
     if (typeof window !== "undefined") localStorage.setItem("unfold_view_mode", mode);
   }, []);
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleData | null>(null);
@@ -948,16 +1093,12 @@ export function MomentumTimelineV2() {
 
   const [visibleAge, setVisibleAge] = useState(currentAge);
 
-  const allCapsules = useMemo(() => buildCapsules(timelinePhases), [timelinePhases]);
+  // Use timeline (lifetime) phases when available, fall back to year phases for instant display
+  const allCapsules = useMemo(
+    () => buildCapsules(timelinePhases.length > 0 ? timelinePhases : phases),
+    [timelinePhases, phases]
+  );
 
-  // DEBUG: tier distribution — remove after verification
-  useMemo(() => {
-    const dist = { toc: 0, toctoc: 0, toctoctoc: 0 };
-    allCapsules.forEach(c => dist[c.tier]++);
-    const scores = allCapsules.map(c => c.phases[0]?.score ?? 0);
-    const scoreDist = { s1: scores.filter(s => s === 1).length, s2: scores.filter(s => s === 2).length, s3: scores.filter(s => s === 3).length, s4: scores.filter(s => s >= 4).length };
-    console.log("[TIER DIST]", JSON.stringify(dist), "scores:", JSON.stringify(scoreDist), "total:", allCapsules.length);
-  }, [allCapsules]);
 
   const handleTapCapsule = useCallback((capsule: CapsuleData) => {
     if (capsule.isFuture && !isPremium()) {
@@ -1012,7 +1153,7 @@ export function MomentumTimelineV2() {
       </AnimatePresence>
 
       {/* ── View toggle — top, below header — hidden during welcome/guide ── */}
-      {!showWelcome && !showGuide && briefingDismissed && <div className="absolute left-0 right-0 z-40 flex items-center justify-center" style={{ top: LAYOUT.toggleTop, paddingInline: S.px }}>
+      {!showWelcome && !showGuide && <div className="absolute left-0 right-0 z-20 flex items-center justify-center" style={{ top: LAYOUT.toggleTop, paddingInline: S.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}
@@ -1061,36 +1202,36 @@ export function MomentumTimelineV2() {
         </div>
       )}
 
-      <AnimatePresence mode="wait">
-        {viewMode === "overview" ? (
-          <motion.div
-            key="overview"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="h-full w-full pt-9"
-          >
-            <OverviewView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="list"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="h-full w-full pt-9"
-          >
-            <ListView capsules={allCapsules} onTapCapsule={handleTapCapsule} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Both views stay mounted — crossfade transition for premium feel */}
+      <div
+        className="absolute inset-0 pt-9"
+        style={{
+          opacity: viewMode === "overview" ? 1 : 0,
+          scale: viewMode === "overview" ? "1" : "0.97",
+          pointerEvents: viewMode === "overview" ? "auto" : "none",
+          transition: "opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), scale 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+          willChange: "opacity, transform",
+        }}
+      >
+        <OverviewView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
+      </div>
+      <div
+        className="absolute inset-0 pt-9"
+        style={{
+          opacity: viewMode === "list" ? 1 : 0,
+          scale: viewMode === "list" ? "1" : "0.97",
+          pointerEvents: viewMode === "list" ? "auto" : "none",
+          transition: "opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), scale 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+          willChange: "opacity, transform",
+        }}
+      >
+        <ListView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
+      </div>
 
       {/* Fixed age indicator — minimal, premium.
           A thin line across the screen with the age on the right.
           Quiet when browsing past/future. Glows when aligned with today. */}
-      {viewMode !== "list" && (() => {
+      {(() => {
         const isToday = visibleAge === currentAge;
         return (
         <div
