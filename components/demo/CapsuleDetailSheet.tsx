@@ -219,7 +219,10 @@ export function CapsuleDetailSheet({
   const houseColor = capsule.color ?? houseMeta?.color ?? "var(--accent-purple)";
   const progress = getProgressPercent(capsule.startDate, capsule.endDate);
   const duration = formatDuration(capsule.startDate, capsule.endDate);
-  const rarityText = getRarityText(capsule.tierOccurrence, capsule.tierTotal, capsule.tier);
+  // Use API lifetime data when available, fallback to client-computed tier counts
+  const lifetimeNum = phase?.lifetimeNumber ?? capsule.tierOccurrence;
+  const lifetimeTotal = phase?.lifetimeTotal ?? capsule.tierTotal;
+  const rarityText = getRarityText(lifetimeNum, lifetimeTotal, capsule.tier);
   const domainNarrative = getDomainNarrative(domain, tc.context);
   const transitNarrative = getTransitNarrative(phase);
   const planetNarrative = transitNarrative || getPlanetNarrative(capsule.planets);
@@ -329,7 +332,7 @@ export function CapsuleDetailSheet({
                 className="text-3xl font-bold tabular-nums font-display"
                 style={{ color: "var(--text-heading)" }}
               >
-                {capsule.tierOccurrence}
+                {lifetimeNum}
                 <span className="text-sm font-normal align-super" style={{ color: "var(--text-body-subtle)" }}>e</span>
               </span>
               <span className="text-xs" style={{ color: "var(--text-body-subtle)" }}>
@@ -730,7 +733,7 @@ export function CapsuleDetailSheet({
                 <DetailRow label="Durée" value={`${capsule.phases[0]?.durationWeeks ?? "—"} semaines`} />
                 <DetailRow
                   label="Occurrence"
-                  value={`${capsule.tierOccurrence}e ${getTierLabel(capsule.tier).toLowerCase()} sur ${capsule.tierTotal}`}
+                  value={`${lifetimeNum}e ${getTierLabel(capsule.tier).toLowerCase()} sur ${lifetimeTotal}`}
                 />
                 {phase?.apiCategory && (
                   <DetailRow label="Catégorie" value={phase.apiCategory} />
