@@ -31,20 +31,9 @@ interface DomainEvent {
   ts: number;    // Date.now()
 }
 
-export interface ObservedProfile {
-  events: DomainEvent[];
-  /** Unique capsule IDs opened per domain (for first-open detection) */
-  seenCapsules: Partial<Record<PriorityDomain, string[]>>;
-  /** Click count per domain — infers priorities */
-  domainClicks: Partial<Record<PriorityDomain, number>>;
-  /** Time spent reading per domain (ms) */
-  domainReadTime: Partial<Record<PriorityDomain, number>>;
-  /** Positive feedback count per guidance style */
-  styleFeedback: Partial<Record<string, number>>;
-  /** Total capsule opens (triggers PersonalizeFlow) */
-  capsuleOpenCount: number;
-  updatedAt?: string;
-}
+// Re-export from canonical type — single source of truth
+import type { ObservedProfile as _ObservedProfile } from "@/types/user-profile";
+export type ObservedProfile = _ObservedProfile;
 
 export const EMPTY_OBSERVED: ObservedProfile = {
   events: [],
@@ -59,30 +48,39 @@ export const EMPTY_OBSERVED: ObservedProfile = {
 
 export async function getObservedProfile(): Promise<ObservedProfile> {
   const data = await storage.getPersistent<ObservedProfile>(STORAGE_KEY);
-  return data ?? { ...EMPTY_OBSERVED, events: [], seenCapsules: {} };
+  return data ?? EMPTY_OBSERVED;
+}
+
+function backfill(raw: Partial<ObservedProfile>): ObservedProfile {
+  const result: ObservedProfile = {
+    events: raw.events ?? [],
+    seenCapsules: raw.seenCapsules ?? {},
+    domainClicks: raw.domainClicks ?? {},
+    domainReadTime: raw.domainReadTime ?? {},
+    styleFeedback: raw.styleFeedback ?? {},
+    capsuleOpenCount: raw.capsuleOpenCount ?? 0,
+    updatedAt: raw.updatedAt,
+  };
+  // Backfill aggregated fields from events for legacy data
+  if (Object.keys(result.domainClicks).length === 0 && result.events.length > 0) {
+    for (const e of result.events) {
+      if (e.type === "open") {
+        result.domainClicks[e.domain] = (result.domainClicks[e.domain] ?? 0) + 1;
+      } else if (e.type === "read") {
+        result.domainReadTime[e.domain] = (result.domainReadTime[e.domain] ?? 0) + e.value;
+      }
+    }
+  }
+  return result;
 }
 
 export function getObservedProfileSync(): ObservedProfile {
-  if (typeof window === "undefined") return { ...EMPTY_OBSERVED };
+  if (typeof window === "undefined") return EMPTY_OBSERVED;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    const stored = raw ? JSON.parse(raw) : { ...EMPTY_OBSERVED };
-    // Backfill aggregated fields from events for legacy data
-    if (!stored.domainClicks || !stored.domainReadTime) {
-      stored.domainClicks = stored.domainClicks ?? {};
-      stored.domainReadTime = stored.domainReadTime ?? {};
-      stored.styleFeedback = stored.styleFeedback ?? {};
-      for (const e of (stored.events ?? [])) {
-        if (e.type === "open") {
-          stored.domainClicks[e.domain] = (stored.domainClicks[e.domain] ?? 0) + 1;
-        } else if (e.type === "read") {
-          stored.domainReadTime[e.domain] = (stored.domainReadTime[e.domain] ?? 0) + e.value;
-        }
-      }
-    }
-    return stored;
+    return raw ? backfill(JSON.parse(raw)) : EMPTY_OBSERVED;
   } catch {
-    return { ...EMPTY_OBSERVED };
+    return EMPTY_OBSERVED;
   }
 }
 

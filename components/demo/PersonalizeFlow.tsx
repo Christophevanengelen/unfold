@@ -374,7 +374,7 @@ interface ScreenStyleProps {
   stressLevel: StressLevel | undefined;
   setStressLevel: (v: StressLevel) => void;
   goalPreset: CurrentGoalPreset | undefined;
-  setGoalPreset: (v: CurrentGoalPreset) => void;
+  setGoalPreset: (v: CurrentGoalPreset | undefined) => void;
   goalFreeText: string;
   setGoalFreeText: (v: string) => void;
 }

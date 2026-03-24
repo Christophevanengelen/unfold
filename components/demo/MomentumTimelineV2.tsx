@@ -1012,7 +1012,7 @@ export function MomentumTimelineV2() {
       </AnimatePresence>
 
       {/* ── View toggle — top, below header — hidden during welcome/guide ── */}
-      {!showWelcome && !showGuide && briefingDismissed && <div className="absolute left-0 right-0 z-40 flex items-center justify-center" style={{ top: LAYOUT.toggleTop, paddingInline: LAYOUT.px }}>
+      {!showWelcome && !showGuide && briefingDismissed && <div className="absolute left-0 right-0 z-40 flex items-center justify-center" style={{ top: LAYOUT.toggleTop, paddingInline: S.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}

@@ -61,7 +61,7 @@ export function buildEffectiveProfile(
   observed: ObservedProfile | null
 ): EffectiveProfile {
   const d = declared ?? {};
-  const o = observed ?? { domainClicks: {}, domainReadTime: {}, styleFeedback: {}, capsuleOpenCount: 0 };
+  const o: ObservedProfile = observed ?? { events: [], seenCapsules: {}, domainClicks: {}, domainReadTime: {}, styleFeedback: {}, capsuleOpenCount: 0 };
 
   // ── Priorities: declared (if fresh) + observed fallback ──
   const declaredPriorities = d.priorities ?? [];

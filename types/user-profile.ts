@@ -89,6 +89,10 @@ export interface UserProfile {
 // ─── Observed Profile (learned from behavior) ────────────
 
 export interface ObservedProfile {
+  /** Raw behavior events */
+  events: { domain: PriorityDomain; type: string; capsuleId: string; value: number; ts: number }[];
+  /** Unique capsule IDs opened per domain */
+  seenCapsules: Partial<Record<PriorityDomain, string[]>>;
   /** Click count per domain — infers priorities */
   domainClicks: Partial<Record<PriorityDomain, number>>;
   /** Time spent reading per domain (ms) */
@@ -102,6 +106,8 @@ export interface ObservedProfile {
 }
 
 export const EMPTY_OBSERVED: ObservedProfile = {
+  events: [],
+  seenCapsules: {},
   domainClicks: {},
   domainReadTime: {},
   styleFeedback: {},

@@ -168,7 +168,7 @@ export function CapsuleDetailSheet({
 
     setAiLoading(true);
     try {
-      const phase = capsule.phases[0];
+      const phase = capsule.phases[0] as import("@/types/momentum").MomentumPhase | undefined;
       const capsuleContext = {
         tier: capsule.tier,
         isCurrent: capsule.isCurrent,
