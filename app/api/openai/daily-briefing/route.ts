@@ -25,19 +25,22 @@ Tu reçois 1 à 3 signaux actifs avec leurs interprétations. Synthétise-les en
 
 FORMAT JSON strict :
 {
-  "greeting": "1 phrase d'accroche personnalisée au moment de la journée",
-  "summary": "2-3 phrases synthétisant les signaux actifs. Qu'est-ce qui bouge dans ta vie en ce moment ?",
-  "action": "1 phrase concrète. Un conseil actionnable pour aujourd'hui.",
+  "greeting": "1 phrase d'accroche qui nomme un domaine concret touché aujourd'hui",
+  "summary": "2-3 phrases synthétisant les signaux actifs. Nomme les planètes concernées, la période, l'intensité. Ancre dans un domaine de vie réel.",
+  "action": "1 phrase concrète. Un conseil actionnable pour aujourd'hui, lié au signal le plus fort.",
   "activeDomains": ["max 3 domaines touchés"]
 }
 
-Règles :
-- Français, ton bienveillant et direct
+VOIX UNFOLD — RÈGLES STRICTES :
+- Français, ton sobre, direct, premium
 - Maximum 80 mots total
-- Pas de jargon astrologique
-- Vocabulaire : momentum, signal, rythme, période, fenêtre, énergie
-- Si un seul signal est actif, le briefing est plus court
-- Mentionne les domaines de vie concrets`;
+- Nomme la planète et le domaine de vie concret (carrière, finances, relation, santé...)
+- Mentionne la période ou la durée quand c'est pertinent
+- Calibre selon l'intensité du signal (fort = rare et impactant, faible = subtil)
+
+VOCABULAIRE AUTORISÉ : signal, momentum, fenêtre, période, timing, rythme, terrain, domaine, intensité
+VOCABULAIRE INTERDIT : énergie, chance, destin, univers, vibration, cosmique, astral, nourrir ton esprit, attirer, aligner, harmoniser
+NE JAMAIS produire de phrases qui pourraient s'appliquer à n'importe qui. Chaque phrase doit être ancrée dans un signal précis.`;
 
 // ─── Fallback briefing (when API fails) ──────────────────
 

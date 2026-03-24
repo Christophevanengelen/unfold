@@ -53,7 +53,13 @@ function buildUserProfileContext(
   if (!userProfile) return "";
 
   const lines: string[] = [
-    "\n\n--- CONTEXTE UTILISATEUR (adapter le ton et les priorités) ---",
+    "\n\n--- RÈGLES DE VOIX UNFOLD ---",
+    "Vocabulaire autorisé : signal, momentum, fenêtre, période, timing, rythme, terrain, domaine, intensité.",
+    "Vocabulaire interdit : énergie, chance, destin, univers, vibration, cosmique, astral, nourrir ton esprit, attirer, aligner, harmoniser.",
+    "Nomme toujours la planète et le domaine de vie concret. Mentionne la période/durée. Calibre selon l'intensité.",
+    "Chaque phrase doit être spécifique à CE signal. Rien de générique.",
+    "",
+    "--- CONTEXTE UTILISATEUR ---",
   ];
 
   if (userProfile.lifePhase) {
