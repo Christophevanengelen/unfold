@@ -166,12 +166,14 @@ function getLaneX(lane: number, capsules: CapsuleData[], gap: number): number {
 
 const TIMELINE_PAD = 80;
 
-// ─── Shared pill button style (design system) ──────────────
+// ─── Shared glass pill style (matches ViewToggle glass effect) ──────────────
+// Uses a semi-opaque dark base so small buttons stay readable over capsules
 const PILL_STYLE: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)",
+  background: "color-mix(in srgb, var(--accent-purple) 20%, rgba(27, 21, 53, 0.75))",
   color: "var(--accent-purple)",
-  border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--accent-purple) 30%, transparent)",
   backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
 };
 
 // ─── Date helpers ───────────────────────────────────────────
@@ -836,6 +838,7 @@ function ListView({
   }, []);
 
   // Track visible age from scroll position (rAF-throttled)
+  // Uses virtualizer items instead of DOM refs for accurate tracking
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !onAgeChange) return;
@@ -846,38 +849,79 @@ function ListView({
       requestAnimationFrame(() => {
         rafPending = false;
         const viewportCenter = el.scrollTop + el.clientHeight / 2;
+        // Find the virtual item closest to viewport center
         let closestCapsule: CapsuleData | null = null;
         let closestDist = Infinity;
-        for (const [id, row] of rowRefs.current) {
-          const dist = Math.abs(row.offsetTop + row.clientHeight / 2 - viewportCenter);
+        for (const vItem of virtualizer.getVirtualItems()) {
+          const itemCenter = vItem.start + vItem.size / 2;
+          const dist = Math.abs(itemCenter - viewportCenter);
           if (dist < closestDist) {
-            closestDist = dist;
-            closestCapsule = sorted.find(c => c.id === id) ?? null;
+            const fi = flatItems[vItem.index];
+            if (fi?.type === "capsule") {
+              closestDist = dist;
+              closestCapsule = fi.capsule;
+            }
           }
         }
         if (closestCapsule) {
           onAgeChange(closestCapsule.startDate.getFullYear() - birthYearRef.current);
         }
-        if (currentRef.current) {
-          const rect = currentRef.current.getBoundingClientRect();
-          const parentRect = el.getBoundingClientRect();
-          setIsAwayFromNow(rect.bottom < parentRect.top || rect.top > parentRect.bottom);
+        // Detect if we're away from "now" using virtualizer range
+        // When the current capsule is virtualized away, currentRef is null → we're far away
+        if (currentIndex >= 0) {
+          const visibleItems = virtualizer.getVirtualItems();
+          const firstVisible = visibleItems[0]?.index ?? 0;
+          const lastVisible = visibleItems[visibleItems.length - 1]?.index ?? 0;
+          const away = currentIndex < firstVisible || currentIndex > lastVisible;
+          setIsAwayFromNow(away);
         }
       });
     };
     el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
-  }, [sorted, onAgeChange]);
+  }, [flatItems, onAgeChange, virtualizer, currentIndex]);
 
   const scrollToNow = useCallback(() => {
-    currentRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, []);
+    if (currentIndex >= 0) {
+      virtualizer.scrollToIndex(currentIndex, { align: "center", behavior: "smooth" });
+    }
+  }, [currentIndex, virtualizer]);
 
-  const jumpByMonth = useCallback((direction: "up" | "down") => {
+  // Jump by year — find the next year-boundary header in flatItems relative to current viewport
+  const jumpByYear = useCallback((direction: "future" | "past") => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollBy({ top: direction === "up" ? -300 : 300, behavior: "smooth" });
-  }, []);
+    // Find which flatItem is currently centered
+    const viewportCenter = el.scrollTop + el.clientHeight / 2;
+    let centerIdx = 0;
+    const items = virtualizer.getVirtualItems();
+    for (const item of items) {
+      if (item.start + item.size / 2 >= viewportCenter) { centerIdx = item.index; break; }
+      centerIdx = item.index;
+    }
+    // Extract current year from center item
+    let currentYear = new Date().getFullYear();
+    for (let i = centerIdx; i >= 0; i--) {
+      const fi = flatItems[i];
+      if (fi?.type === "header") {
+        const y = parseInt(fi.monthKey.split(" ").pop() || "");
+        if (!isNaN(y)) { currentYear = y; break; }
+      }
+      if (fi?.type === "capsule") {
+        currentYear = fi.capsule.startDate.getFullYear();
+        break;
+      }
+    }
+    // Sorted is most recent first → "future" = earlier index, "past" = later index
+    const targetYear = direction === "future" ? currentYear + 1 : currentYear - 1;
+    // Find header for target year
+    const targetIdx = flatItems.findIndex(
+      (fi) => fi.type === "header" && fi.monthKey.endsWith(String(targetYear))
+    );
+    if (targetIdx >= 0) {
+      virtualizer.scrollToIndex(targetIdx, { align: "start", behavior: "smooth" });
+    }
+  }, [flatItems, virtualizer]);
 
   return (
     <div className="relative h-full">
@@ -893,12 +937,12 @@ function ListView({
         </button>
       )}
 
-      {/* Up/Down — absolute right */}
+      {/* Up/Down — absolute right, jump by year like overview */}
       <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: 68 }}>
-        <button type="button" onClick={() => jumpByMonth("up")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
+        <button type="button" onClick={() => jumpByYear("future")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
-        <button type="button" onClick={() => jumpByMonth("down")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
+        <button type="button" onClick={() => jumpByYear("past")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
       </div>
@@ -1250,7 +1294,7 @@ export function MomentumTimelineV2() {
               transition: "all 0.5s ease-out",
             }}
           />
-          {/* Age sticker — floats above capsules */}
+          {/* Age sticker — floats above capsules, glass effect like toggle */}
           <div
             className="absolute right-2 flex items-center justify-center rounded-full"
             style={{
@@ -1259,12 +1303,13 @@ export function MomentumTimelineV2() {
               height: 28,
               padding: "0 10px",
               background: isToday
-                ? "color-mix(in srgb, var(--accent-purple) 25%, rgba(27, 21, 53, 0.95))"
-                : "rgba(27, 21, 53, 0.9)",
+                ? "color-mix(in srgb, var(--accent-purple) 25%, rgba(27, 21, 53, 0.85))"
+                : "color-mix(in srgb, var(--accent-purple) 15%, rgba(27, 21, 53, 0.8))",
               border: `1px solid ${isToday
                 ? "color-mix(in srgb, var(--accent-purple) 40%, transparent)"
-                : "color-mix(in srgb, var(--accent-purple) 15%, transparent)"}`,
-              backdropFilter: "blur(8px)",
+                : "color-mix(in srgb, var(--accent-purple) 30%, transparent)"}`,
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
               transition: "all 0.5s ease-out",
             }}
           >
