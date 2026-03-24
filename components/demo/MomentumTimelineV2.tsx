@@ -837,49 +837,41 @@ function ListView({
     } catch { birthYearRef.current = 1985; }
   }, []);
 
-  // Track visible age from scroll position (rAF-throttled)
-  // Uses virtualizer items instead of DOM refs for accurate tracking
+  // Track visible age from virtualizer scroll offset (no manual scroll listener needed)
+  // useVirtualizer returns a new object each render with updated scrollOffset,
+  // so we derive age reactively from the virtual items.
+  const virtualItems = virtualizer.getVirtualItems();
+  const scrollOffset = virtualizer.scrollOffset ?? 0;
+  const scrollSize = scrollRef.current?.clientHeight ?? 700;
+
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || !onAgeChange) return;
-    let rafPending = false;
-    const handleScroll = () => {
-      if (rafPending) return;
-      rafPending = true;
-      requestAnimationFrame(() => {
-        rafPending = false;
-        const viewportCenter = el.scrollTop + el.clientHeight / 2;
-        // Find the virtual item closest to viewport center
-        let closestCapsule: CapsuleData | null = null;
-        let closestDist = Infinity;
-        for (const vItem of virtualizer.getVirtualItems()) {
-          const itemCenter = vItem.start + vItem.size / 2;
-          const dist = Math.abs(itemCenter - viewportCenter);
-          if (dist < closestDist) {
-            const fi = flatItems[vItem.index];
-            if (fi?.type === "capsule") {
-              closestDist = dist;
-              closestCapsule = fi.capsule;
-            }
-          }
+    if (!onAgeChange || virtualItems.length === 0) return;
+    const viewportCenter = scrollOffset + scrollSize / 2;
+    // Find the virtual item closest to viewport center
+    let closestCapsule: CapsuleData | null = null;
+    let closestDist = Infinity;
+    for (const vItem of virtualItems) {
+      const itemCenter = vItem.start + vItem.size / 2;
+      const dist = Math.abs(itemCenter - viewportCenter);
+      if (dist < closestDist) {
+        const fi = flatItems[vItem.index];
+        if (fi?.type === "capsule") {
+          closestDist = dist;
+          closestCapsule = fi.capsule;
         }
-        if (closestCapsule) {
-          onAgeChange(closestCapsule.startDate.getFullYear() - birthYearRef.current);
-        }
-        // Detect if we're away from "now" using virtualizer range
-        // When the current capsule is virtualized away, currentRef is null → we're far away
-        if (currentIndex >= 0) {
-          const visibleItems = virtualizer.getVirtualItems();
-          const firstVisible = visibleItems[0]?.index ?? 0;
-          const lastVisible = visibleItems[visibleItems.length - 1]?.index ?? 0;
-          const away = currentIndex < firstVisible || currentIndex > lastVisible;
-          setIsAwayFromNow(away);
-        }
-      });
-    };
-    el.addEventListener("scroll", handleScroll, { passive: true });
-    return () => el.removeEventListener("scroll", handleScroll);
-  }, [flatItems, onAgeChange, virtualizer, currentIndex]);
+      }
+    }
+    if (closestCapsule) {
+      onAgeChange(closestCapsule.startDate.getFullYear() - birthYearRef.current);
+    }
+    // Detect if we're away from "now"
+    if (currentIndex >= 0) {
+      const firstVisible = virtualItems[0]?.index ?? 0;
+      const lastVisible = virtualItems[virtualItems.length - 1]?.index ?? 0;
+      const away = currentIndex < firstVisible || currentIndex > lastVisible;
+      setIsAwayFromNow(away);
+    }
+  }, [virtualItems, scrollOffset, scrollSize, flatItems, onAgeChange, currentIndex]);
 
   const scrollToNow = useCallback(() => {
     if (currentIndex >= 0) {
