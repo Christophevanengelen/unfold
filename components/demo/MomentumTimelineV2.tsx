@@ -1112,12 +1112,12 @@ export function MomentumTimelineV2() {
     setVisibleAge(age);
   }, []);
 
-  // Show spinner ONLY while lifetime is actively loading.
-  // After onboarding, isLoadingLifetime is already false (prefetched in StepPreparing).
-  // So this spinner only shows on direct navigation or page refresh.
+  // Show spinner only when we have NO data at all.
+  // If year data (phases) arrived, show timeline immediately — lifetime loads in background.
+  const hasAnyData = phases.length > 0 || timelinePhases.length > 0;
   if (
-    (state === "loading" && timelinePhases.length === 0) ||
-    isLoadingLifetime
+    (state === "loading" && !hasAnyData) ||
+    (isLoadingLifetime && !hasAnyData)
   ) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">

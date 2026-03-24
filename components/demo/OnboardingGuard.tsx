@@ -53,8 +53,8 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Data loaded but empty
-  if (timelinePhases.length === 0) {
+  // Data loaded but both sources empty — redirect to onboarding
+  if (timelinePhases.length === 0 && !isLive) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-sm text-text-body-subtle">Aucun signal détecté</p>
