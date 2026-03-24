@@ -40,16 +40,14 @@ export default function ConnectionsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-1 flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-text-heading">Connexions</h1>
-          <p className="text-xs text-text-body-subtle">
-            {connections.length > 0
-              ? `${connections.length} connecté${connections.length !== 1 ? "s" : ""}`
-              : "Invitez quelqu'un pour commencer"
-            }
-          </p>
-        </div>
+      <div className="mb-1 text-center">
+        <h1 className="font-display text-2xl font-bold text-text-heading">Connexions</h1>
+        <p className="text-xs text-text-body-subtle">
+          {connections.length > 0
+            ? `${connections.length} connecté${connections.length !== 1 ? "s" : ""}`
+            : "Invitez quelqu'un pour commencer"
+          }
+        </p>
       </div>
 
       {/* Connected people — real connections only */}
