@@ -35,6 +35,12 @@ export interface ObservedProfile {
   events: DomainEvent[];
   /** Unique capsule IDs opened per domain (for first-open detection) */
   seenCapsules: Partial<Record<PriorityDomain, string[]>>;
+  /** Click count per domain — infers priorities */
+  domainClicks: Partial<Record<PriorityDomain, number>>;
+  /** Time spent reading per domain (ms) */
+  domainReadTime: Partial<Record<PriorityDomain, number>>;
+  /** Positive feedback count per guidance style */
+  styleFeedback: Partial<Record<string, number>>;
   /** Total capsule opens (triggers PersonalizeFlow) */
   capsuleOpenCount: number;
   updatedAt?: string;
@@ -43,6 +49,9 @@ export interface ObservedProfile {
 export const EMPTY_OBSERVED: ObservedProfile = {
   events: [],
   seenCapsules: {},
+  domainClicks: {},
+  domainReadTime: {},
+  styleFeedback: {},
   capsuleOpenCount: 0,
 };
 
@@ -54,12 +63,26 @@ export async function getObservedProfile(): Promise<ObservedProfile> {
 }
 
 export function getObservedProfileSync(): ObservedProfile {
-  if (typeof window === "undefined") return { ...EMPTY_OBSERVED, events: [], seenCapsules: {} };
+  if (typeof window === "undefined") return { ...EMPTY_OBSERVED };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : { ...EMPTY_OBSERVED, events: [], seenCapsules: {} };
+    const stored = raw ? JSON.parse(raw) : { ...EMPTY_OBSERVED };
+    // Backfill aggregated fields from events for legacy data
+    if (!stored.domainClicks || !stored.domainReadTime) {
+      stored.domainClicks = stored.domainClicks ?? {};
+      stored.domainReadTime = stored.domainReadTime ?? {};
+      stored.styleFeedback = stored.styleFeedback ?? {};
+      for (const e of (stored.events ?? [])) {
+        if (e.type === "open") {
+          stored.domainClicks[e.domain] = (stored.domainClicks[e.domain] ?? 0) + 1;
+        } else if (e.type === "read") {
+          stored.domainReadTime[e.domain] = (stored.domainReadTime[e.domain] ?? 0) + e.value;
+        }
+      }
+    }
+    return stored;
   } catch {
-    return { ...EMPTY_OBSERVED, events: [], seenCapsules: {} };
+    return { ...EMPTY_OBSERVED };
   }
 }
 
