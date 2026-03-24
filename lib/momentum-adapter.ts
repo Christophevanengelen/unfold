@@ -340,9 +340,20 @@ export function appDataToPhases(
       periodSign: os?.periodSign,
       markers: os?.markers,
       eclipseType: os?.eclipseType,
-      lifetimeNumber: os?.cycle?.hitNumber,
-      lifetimeTotal: os?.cycle ? (os.cycle.totalHits ?? (Array.isArray(os.cycle.allHits) ? os.cycle.allHits.length : 1)) : undefined,
+      // NOTE: API does NOT provide lifetime occurrence counts.
+      // cycle.hitNumber = D-R-D pass (e.g. 2nd of 3 passes of same transit).
+      // Do NOT map cycle → lifetime. Leave undefined so UI falls back to client computation.
+      lifetimeNumber: undefined,
+      lifetimeTotal: undefined,
       isVipTransit: os?.isVipTransit,
+      // Transit window data
+      windowStart: os?.windowStart,
+      windowEnd: os?.windowEnd,
+      exactDates: os?.exactDates,
+      parileDate: os?.parileDate,
+      isReturn: os?.isReturn,
+      isHalfReturn: os?.isHalfReturn,
+      stationType: os?.stationType,
       boudinId: os?.id,
     });
   }

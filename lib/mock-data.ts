@@ -517,10 +517,12 @@ function eventToSausage(e: AnyTocTocEvent): Sausage {
   return {
     ...e,
     width,
-    topics,
+    topics: topics.map((t, i) => ({ house: (i + 1) as number, color: e.color, label: t })),
     cycle: e.category === "transit" ? {
       hitNumber: 1,
-      allHits: (e as TransitEvent).exactDates,
+      totalHits: (e as TransitEvent).exactDates.length,
+      pattern: (e as TransitEvent).pattern,
+      allHits: (e as TransitEvent).exactDates.map((d, i) => ({ date: d, hitNumber: i + 1 })),
     } : undefined,
   };
 }

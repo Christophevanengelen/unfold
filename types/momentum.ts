@@ -18,7 +18,7 @@ export interface MomentumPhase {
   intensity: number; // 0-100 — visual intensity
   score?: number; // 1-4 raw API score — determines tier directly (1=TOC, 2=TOCTOC, 3-4=TOCTOCTOC)
   planets: PlanetKey[]; // 1-5 planetary transits active during this phase
-  /** Topic colors from API — each topic = one dot in the sausage */
+  /** @deprecated Use apiTopics instead — topicColors was redundant */
   topicColors?: string[];
   status: "past" | "current" | "future";
   guidance?: string; // premium-only
@@ -38,9 +38,19 @@ export interface MomentumPhase {
   periodSign?: string;
   markers?: string[];
   eclipseType?: string;
+  /** @deprecated API does not provide lifetime counts. Always undefined from adapter. */
   lifetimeNumber?: number;
+  /** @deprecated API does not provide lifetime counts. Always undefined from adapter. */
   lifetimeTotal?: number;
   isVipTransit?: boolean;
+  // Transit window data (from API sausage)
+  windowStart?: string;
+  windowEnd?: string;
+  exactDates?: string[];
+  parileDate?: string;     // exact date of tightest orb
+  isReturn?: boolean;      // Saturn/Jupiter return
+  isHalfReturn?: boolean;  // half-return (opposition to natal position)
+  stationType?: string;    // "SR" (stations retrograde) or "SD" (stations direct)
   /** Index in the API response — fallback for TocToc personalize calls */
   boudinIndex?: number;
   /** Sausage ID from API — primary key for TocToc personalize calls */

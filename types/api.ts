@@ -140,15 +140,53 @@ export interface NatalContext {
 // ─── House Colors (from toctoc-app) ──────────────────────
 export type HouseColors = Record<string, string>; // "1" → "#hex", ..., "12" → "#hex"
 
+// ─── Sausage Topic (enriched from toctoc-app) ────────────
+export interface SausageTopic {
+  house: number;   // 1-12
+  color: string;   // hex — use directly for rendering
+  label?: string;  // human-readable topic name
+}
+
+// ─── Sausage Cycle (D-R-D pass info) ─────────────────────
+// When a transit hits the same natal point multiple times (Direct-Retro-Direct),
+// cycle tracks which pass this is. NOT a lifetime count.
+export interface SausageCycle {
+  hitNumber: number;    // which pass (1, 2, 3...)
+  totalHits: number;    // total passes expected
+  pattern?: string;     // "Direct-Retrograde-Direct"
+  allHits: { date: string; hitNumber: number }[];
+}
+
 // ─── Sausage (enriched event from toctoc-app) ────────────
 export interface Sausage extends TocTocEvent {
+  startDate?: string;   // sausage start (may differ from event date)
   width: "thin" | "medium" | "large";
-  topics: string[];
-  // Transit sausages also have cycle info
-  cycle?: {
-    hitNumber: number;
-    allHits: string[]; // dates
-  };
+  topics: SausageTopic[];
+  cycle?: SausageCycle;
+  // Transit-specific (carried from TransitEvent)
+  transitPlanet?: string;
+  natalPoint?: string;
+  aspect?: Aspect;
+  parileDate?: string;
+  windowStart?: string;
+  windowEnd?: string;
+  exactDates?: string[];
+  pattern?: string;
+  isReturn?: boolean;
+  isHalfReturn?: boolean;
+  isVipTransit?: boolean;
+  // Eclipse-specific
+  eclipseType?: "solar" | "lunar";
+  eclipseAxis?: EclipseAxis;
+  axisColor?: string;
+  // ZR-specific
+  lotType?: ZRLotType | ZRLotType[];
+  level?: 2 | 3;
+  periodSign?: string;
+  markers?: ZRMarker[];
+  isCulmination?: boolean;
+  // Station-specific
+  stationType?: "SR" | "SD";
 }
 
 // ─── Person Info ─────────────────────────────────────────
@@ -197,6 +235,8 @@ export interface TocTocData {
 }
 
 // ─── toctoc-app.php Response ─────────────────────────────
+// NOTE: API may return double-nested: { success, data: { success, data: { allSausages } } }
+// The adapter handles both { data.allSausages } and { data.data.allSausages }.
 export interface TocTocAppData {
   person: PersonInfo;
   natalPoints: Record<string, NatalPoint>;

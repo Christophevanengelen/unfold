@@ -70,9 +70,14 @@ interface CapsuleData {
     periodSign?: string;
     markers?: string[];
     eclipseType?: string;
-    lifetimeNumber?: number;
-    lifetimeTotal?: number;
     isVipTransit?: boolean;
+    windowStart?: string;
+    windowEnd?: string;
+    exactDates?: string[];
+    parileDate?: string;
+    isReturn?: boolean;
+    isHalfReturn?: boolean;
+    stationType?: string;
   }[];
   domains: { domain: string; intensity: number; occurrence: number; totalOccurrences: number }[];
   planets: PlanetKey[];
@@ -219,10 +224,8 @@ export function CapsuleDetailSheet({
   const houseColor = capsule.color ?? houseMeta?.color ?? "var(--accent-purple)";
   const progress = getProgressPercent(capsule.startDate, capsule.endDate);
   const duration = formatDuration(capsule.startDate, capsule.endDate);
-  // Use API lifetime data when available, fallback to client-computed tier counts
-  const lifetimeNum = phase?.lifetimeNumber ?? capsule.tierOccurrence;
-  const lifetimeTotal = phase?.lifetimeTotal ?? capsule.tierTotal;
-  const rarityText = getRarityText(lifetimeNum, lifetimeTotal, capsule.tier);
+  // Client-computed count by planet signature (how many times same planet combo repeats)
+  const rarityText = getRarityText(capsule.tierOccurrence, capsule.tierTotal, capsule.tier);
   const domainNarrative = getDomainNarrative(domain, tc.context);
   const transitNarrative = getTransitNarrative(phase);
   const planetNarrative = transitNarrative || getPlanetNarrative(capsule.planets);
@@ -332,7 +335,7 @@ export function CapsuleDetailSheet({
                 className="text-3xl font-bold tabular-nums font-display"
                 style={{ color: "var(--text-heading)" }}
               >
-                {lifetimeNum}
+                {capsule.tierOccurrence}
                 <span className="text-sm font-normal align-super" style={{ color: "var(--text-body-subtle)" }}>e</span>
               </span>
               <span className="text-xs" style={{ color: "var(--text-body-subtle)" }}>
@@ -731,10 +734,12 @@ export function CapsuleDetailSheet({
                 <DetailRow label="Score" value={`${phase?.score ?? "—"} / 4`} />
                 <DetailRow label="Intensité" value={`${phase?.intensity ?? "—"} / 100`} />
                 <DetailRow label="Durée" value={`${capsule.phases[0]?.durationWeeks ?? "—"} semaines`} />
-                <DetailRow
-                  label="Occurrence"
-                  value={`${lifetimeNum}e ${getTierLabel(capsule.tier).toLowerCase()} sur ${lifetimeTotal}`}
-                />
+                {capsule.tierOccurrence > 0 && (
+                  <DetailRow
+                    label="Occurrence"
+                    value={`${capsule.tierOccurrence}e ${getTierLabel(capsule.tier).toLowerCase()} sur ${capsule.tierTotal}`}
+                  />
+                )}
                 {phase?.apiCategory && (
                   <DetailRow label="Catégorie" value={phase.apiCategory} />
                 )}
@@ -747,6 +752,15 @@ export function CapsuleDetailSheet({
                 {phase?.isVipTransit && (
                   <DetailRow label="Statut" value="Transit VIP" />
                 )}
+                {phase?.isReturn && (
+                  <DetailRow label="Retour" value={phase?.isHalfReturn ? "Demi-retour" : "Retour complet"} />
+                )}
+                {phase?.stationType && (
+                  <DetailRow label="Station" value={phase.stationType === "SR" ? "Reprise directe" : "Pause rétrograde"} />
+                )}
+                {phase?.windowStart && phase?.windowEnd && (
+                  <DetailRow label="Fenêtre" value={`${phase.windowStart} → ${phase.windowEnd}`} />
+                )}
                 {phase?.markers && phase.markers.length > 0 && (
                   <DetailRow label="Marqueurs" value={phase.markers.map((m: string) =>
                     m === "LB" ? "Pivot de vie (LB)" :
@@ -755,10 +769,12 @@ export function CapsuleDetailSheet({
                   ).join(", ")} />
                 )}
                 {phase?.cycle && phase.cycle.totalHits > 1 && (
-                  <DetailRow label="Passage" value={`${phase.cycle.hitNumber} / ${phase.cycle.totalHits}`} />
-                )}
-                {phase?.lifetimeNumber && phase?.lifetimeTotal && (
-                  <DetailRow label="Vie entière" value={`${phase.lifetimeNumber}e sur ${phase.lifetimeTotal}`} />
+                  <>
+                    <DetailRow label="Passage" value={`${phase.cycle.hitNumber} / ${phase.cycle.totalHits}`} />
+                    {phase.cycle.pattern && (
+                      <DetailRow label="Schéma" value={phase.cycle.pattern} />
+                    )}
+                  </>
                 )}
                 {capsule.phases.length > 1 && (
                   <div className="mt-3">

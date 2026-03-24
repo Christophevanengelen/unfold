@@ -146,7 +146,7 @@ export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardP
               className="mt-3 text-[10px] tabular-nums"
               style={{ color: "var(--text-disabled)" }}
             >
-              {capsule.tier === "toctoctoc" && (capsule.phases[0]?.lifetimeNumber ?? capsule.tierOccurrence) > 0 ? `#${capsule.phases[0]?.lifetimeNumber ?? capsule.tierOccurrence} · ` : ""}{startLabel} — {endLabel}
+              {capsule.tier === "toctoctoc" && capsule.tierOccurrence > 0 ? `#${capsule.tierOccurrence} · ` : ""}{startLabel} — {endLabel}
             </p>
 
             {/* Explore button */}

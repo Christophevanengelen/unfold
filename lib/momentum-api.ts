@@ -106,6 +106,9 @@ export interface SausageData {
   exactDates?: string[];
   pattern?: string;
   isVipTransit?: boolean;
+  isReturn?: boolean;
+  isHalfReturn?: boolean;
+  bestOrb?: number;
   // ZR-specific
   lotType?: string | string[];
   level?: number;

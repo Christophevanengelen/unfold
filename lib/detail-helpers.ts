@@ -180,11 +180,20 @@ export function getProgressPercent(startDate: Date, endDate: Date): number {
   return Math.round(((now - startDate.getTime()) / (endDate.getTime() - startDate.getTime())) * 100);
 }
 
-// ─── Rarity Text ─────────────────────────────────────────
+// ─── Rarity Text (client-computed planet signature count) ─
 
 export function getRarityText(tierOccurrence: number, tierTotal: number, tier: string): string | null {
   if (tier !== "toctoctoc" || tierOccurrence <= 0) return null;
   return `sur ${tierTotal} dans votre vie`;
+}
+
+// ─── Cycle Text (D-R-D pass count from API) ──────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getCyclePassText(phase: any): string | null {
+  const cycle = phase?.cycle;
+  if (!cycle || !cycle.totalHits || cycle.totalHits <= 1) return null;
+  return `Passage ${cycle.hitNumber} sur ${cycle.totalHits}`;
 }
 
 // ─── Guidance by context ─────────────────────────────────
@@ -376,6 +385,9 @@ export function getCycleNarrative(phase: any): string | null {
 }
 
 // ─── Lifetime Narrative ─────────────────────────────────
+// NOTE: The API does NOT provide lifetime occurrence counts.
+// This function is kept for backward compat but currently unused
+// since lifetimeNumber/lifetimeTotal are always undefined from API.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getLifetimeNarrative(phase: any): string | null {

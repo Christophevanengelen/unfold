@@ -243,7 +243,7 @@ export function SignalPager() {
                 {/* Header */}
                 <div className="flex items-center gap-3 pt-2">
                   <span className="text-2xl font-bold tabular-nums" style={{ color: "var(--text-heading)" }}>
-                    {selectedCapsule.phases[0]?.lifetimeNumber ?? selectedCapsule.tierOccurrence}
+                    {selectedCapsule.tierOccurrence}
                   </span>
                   <div>
                     <span className="text-[10px] font-semibold uppercase tracking-[0.15em]" style={{ color: "var(--accent-purple)" }}>
