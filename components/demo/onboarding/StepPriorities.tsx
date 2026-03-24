@@ -157,9 +157,9 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
       {/* CTA */}
       <motion.div
         className="mt-auto"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2, duration: 0.8, ease: EASE }}
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ delay: 1.2, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       >
         <button
           type="button"

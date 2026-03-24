@@ -23,12 +23,12 @@ export function TimelineWelcome({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     // name → message → fade out
-    const t1 = setTimeout(() => setPhase("message"), 2000);
-    const t2 = setTimeout(() => setPhase("fade"), 5500);
+    const t1 = setTimeout(() => setPhase("message"), 3500);
+    const t2 = setTimeout(() => setPhase("fade"), 9000);
     const t3 = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, "true");
       onDone();
-    }, 6800);
+    }, 10500);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [onDone]);
 

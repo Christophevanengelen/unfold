@@ -249,14 +249,24 @@ function BriefingCard({
 
 // ─── Organism: Container ─────────────────────────────────
 
-export function DailyBriefing() {
+export function DailyBriefing({ onDismiss: onDismissParent }: { onDismiss?: () => void } = {}) {
   const { birthData } = useMomentum();
   const { data, state } = useBriefingData(birthData);
-  const [dismissed, setDismissed] = useState(false);
-  const handleDismiss = useCallback(() => setDismissed(true), []);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const stored = localStorage.getItem("unfold_briefing_dismissed");
+    if (!stored) return false;
+    // Only persist for today — show again tomorrow
+    return stored === new Date().toISOString().slice(0, 10);
+  });
+  const handleDismiss = useCallback(() => {
+    setDismissed(true);
+    localStorage.setItem("unfold_briefing_dismissed", new Date().toISOString().slice(0, 10));
+    onDismissParent?.();
+  }, [onDismissParent]);
 
   if (!birthData || state === "error" || dismissed) return null;
-  if (state === "loading" || state === "idle") return <BriefingSkeleton />;
+  if (state === "loading" || state === "idle") return null;
   if (!data) return null;
 
   return (

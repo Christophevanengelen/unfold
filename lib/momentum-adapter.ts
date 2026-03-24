@@ -127,7 +127,8 @@ export function yearDataToPhases(
     }
 
     phases.push({
-      id: `api-${phaseIndex++}`,
+      id: `api-${phaseIndex}`,
+      boudinIndex: phaseIndex++,
       domain,
       title: meta.title,
       subtitle: meta.subtitle,
@@ -303,6 +304,7 @@ export function appDataToPhases(
 
     phases.push({
       id: `phase-${i}`,
+      boudinIndex: i,
       domain: bestDomain as "love" | "health" | "work",
       title: meta.title,
       subtitle: meta.subtitle,
@@ -341,6 +343,7 @@ export function appDataToPhases(
       lifetimeNumber: os?.cycle?.hitNumber,
       lifetimeTotal: os?.cycle ? (os.cycle.totalHits ?? (Array.isArray(os.cycle.allHits) ? os.cycle.allHits.length : 1)) : undefined,
       isVipTransit: os?.isVipTransit,
+      boudinId: os?.id,
     });
   }
 

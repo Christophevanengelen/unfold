@@ -38,7 +38,9 @@ export async function getPersonalizedText(
   capsuleContext: Record<string, unknown>,
   userProfile: UserProfile | null,
   birthCity: string | null,
-  locale: string
+  locale: string,
+  boudinIndex?: number,
+  boudinId?: string
 ): Promise<PersonalizedText | null> {
   const key = cacheKey(capsuleId, userProfile);
 
@@ -46,12 +48,24 @@ export async function getPersonalizedText(
   const cached = await storage.get<PersonalizedText>(key, TTL_30_DAYS);
   if (cached) return cached;
 
-  // Call server
+  // Get birth data for TocToc API
+  const { getBirthDataSync } = await import("@/lib/birth-data");
+  const birthData = getBirthDataSync();
+  if (!birthData || (boudinId === undefined && boudinIndex === undefined)) {
+    console.error("[AI] Missing birthData or boudinId/boudinIndex");
+    return null;
+  }
+
+  // Call server — boudinId priority, boudinIndex fallback
   try {
     const response = await fetch("/api/openai/personalize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ capsuleContext, userProfile, birthCity, locale }),
+      body: JSON.stringify({
+        birthData,
+        ...(boudinId !== undefined ? { boudinId } : { boudinIndex }),
+        capsuleContext, userProfile, birthCity, locale,
+      }),
     });
 
     if (!response.ok) {
@@ -82,7 +96,9 @@ export function preGenerateForCapsules(
   capsuleContexts: Record<string, unknown>[],
   userProfile: UserProfile | null,
   birthCity: string | null,
-  locale: string
+  locale: string,
+  boudinIndices?: number[],
+  boudinIds?: string[]
 ): void {
   // Run in background — don't block the caller
   (async () => {
@@ -96,7 +112,7 @@ export function preGenerateForCapsules(
       const cached = await storage.get<PersonalizedText>(key, TTL_30_DAYS);
       if (cached) continue;
 
-      await getPersonalizedText(id, context, userProfile, birthCity, locale);
+      await getPersonalizedText(id, context, userProfile, birthCity, locale, boudinIndices?.[i], boudinIds?.[i]);
 
       // Delay between calls to stay under rate limits
       if (i < capsuleIds.length - 1) {

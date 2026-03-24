@@ -729,7 +729,7 @@ function OverviewView({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.6 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute left-1/2 -translate-x-1/2 z-40 flex h-8 items-center justify-center rounded-full px-3"
+            className="absolute left-1/2 -translate-x-1/2 z-30 flex h-8 items-center justify-center rounded-full px-3"
             style={{ ...PILL_STYLE, bottom: 68 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -739,7 +739,7 @@ function OverviewView({
       </AnimatePresence>
 
       {/* Up/Down — right side, stacked vertically, thumb zone */}
-      <div className="absolute right-3 z-40 flex flex-col items-center gap-2" style={{ bottom: 68 }}>
+      <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: 68 }}>
         <motion.button
           type="button"
           onClick={() => jumpByYear("future")}
@@ -927,7 +927,12 @@ export function MomentumTimelineV2() {
   }, []);
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleData | null>(null);
   const [showWelcome, setShowWelcome] = useState(() => shouldShowWelcome());
-  const [showGuide, setShowGuide] = useState(false);
+  const [showGuide, setShowGuide] = useState(() => !shouldShowWelcome() && shouldShowFirstUseGuide());
+  const [briefingDismissed, setBriefingDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const stored = localStorage.getItem("unfold_briefing_dismissed");
+    return stored === new Date().toISOString().slice(0, 10);
+  });
 
   // Initialize date helpers from birth data
   useMemo(() => initDates(birthDateStr), [birthDateStr]);
@@ -1006,8 +1011,8 @@ export function MomentumTimelineV2() {
         )}
       </AnimatePresence>
 
-      {/* ── View toggle — top, below header ── */}
-      <div className="absolute left-0 right-0 z-40 flex items-center justify-center" style={{ top: LAYOUT.toggleTop, paddingInline: LAYOUT.px }}>
+      {/* ── View toggle — top, below header — hidden during welcome/guide ── */}
+      {!showWelcome && !showGuide && briefingDismissed && <div className="absolute left-0 right-0 z-40 flex items-center justify-center" style={{ top: LAYOUT.toggleTop, paddingInline: LAYOUT.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}
@@ -1045,12 +1050,14 @@ export function MomentumTimelineV2() {
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
-      {/* Daily Briefing — pinned at top, only in overview mode */}
-      {viewMode === "overview" && (
-        <div className="absolute left-0 right-0 z-30" style={{ top: LAYOUT.briefingTop }}>
-          <DailyBriefing />
+      {/* Daily Briefing — pinned at top, only after welcome + guide are done */}
+      {viewMode === "overview" && !showWelcome && !showGuide && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center px-5 pointer-events-none">
+          <div className="pointer-events-auto w-full">
+            <DailyBriefing onDismiss={() => setBriefingDismissed(true)} />
+          </div>
         </div>
       )}
 

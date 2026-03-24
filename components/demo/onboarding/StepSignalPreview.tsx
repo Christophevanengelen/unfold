@@ -307,25 +307,22 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
         {/* Halo removed — will be rendered inside boudin with overflow visible */}
       </div>
 
-      {/* CTA — only appears after all highlights have played */}
-      <AnimatePresence>
-        {phase >= 3 && (
-          <motion.div
-            className="mt-auto"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <button
-              type="button"
-              onClick={onNext}
-              className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
-            >
-              What does it mean?
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* CTA — always in layout, fades in smoothly */}
+      <motion.div
+        className="mt-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: phase >= 3 ? 1 : 0 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        style={{ pointerEvents: phase >= 3 ? "auto" : "none" }}
+      >
+        <button
+          type="button"
+          onClick={onNext}
+          className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
+        >
+          What does it mean?
+        </button>
+      </motion.div>
     </motion.div>
   );
 }

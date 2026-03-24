@@ -123,8 +123,18 @@ export function CapsuleDetailSheet({
   }, [onClose]);
 
   // Track capsule open + domain click (observed profile)
+  // After 3 opens, trigger PersonalizeFlow if profile is incomplete
   useEffect(() => {
-    trackCapsuleOpen();
+    trackCapsuleOpen().then((count) => {
+      if (count === 3) {
+        const profile = getUserProfileSync();
+        if (!profile?.lifePhase) {
+          // User has priorities from onboarding but not full profile yet
+          // Trigger PersonalizeFlow via custom event
+          window.dispatchEvent(new CustomEvent("unfold:show-personalize"));
+        }
+      }
+    });
     const domain = capsule.phases[0]?.domain;
     if (domain) trackDomainClick(domain, capsule.id);
   }, [capsule]);
@@ -184,7 +194,9 @@ export function CapsuleDetailSheet({
         capsuleContext,
         userProfile,
         birthData.placeOfBirth ?? "",
-        "fr"
+        "fr",
+        phase?.boudinIndex,
+        phase?.boudinId
       );
       if (result) setAiText(result);
     } catch {
@@ -478,6 +490,17 @@ export function CapsuleDetailSheet({
                 {aiText?.story ?? phase.description}
               </motion.p>
             </AnimatePresence>
+            {aiText && !aiLoading && (
+              <motion.p
+                className="mt-1.5 text-[9px] font-medium uppercase tracking-wider"
+                style={{ color: "var(--accent-purple)", opacity: 0.4 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.4 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                Personnalisé pour toi
+              </motion.p>
+            )}
             {aiLoading && (
               <div className="mt-2 flex items-center gap-1.5">
                 <div className="h-1 w-1 rounded-full animate-pulse" style={{ background: "var(--accent-purple)" }} />

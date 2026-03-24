@@ -321,25 +321,22 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         </AnimatePresence>
       </div>
 
-      {/* CTA — only after all spotlights complete */}
-      <AnimatePresence>
-        {spotlightIndex >= ACTIVE_PLANETS.length && (
-          <motion.div
-            className="mt-auto"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <button
-              type="button"
-              onClick={onNext}
-              className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
-            >
-              Reveal my signal
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* CTA — always in layout, fades in smoothly */}
+      <motion.div
+        className="mt-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: spotlightIndex >= ACTIVE_PLANETS.length ? 1 : 0 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        style={{ pointerEvents: spotlightIndex >= ACTIVE_PLANETS.length ? "auto" : "none" }}
+      >
+        <button
+          type="button"
+          onClick={onNext}
+          className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
+        >
+          Reveal my signal
+        </button>
+      </motion.div>
     </motion.div>
   );
 }

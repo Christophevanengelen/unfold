@@ -205,14 +205,14 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
           // Progressive reveal — respect reading time
           // "ready" is set by the useEffect below when lifetime data arrives
           setTimeout(() => setRevealPhase("past"), 800);       // pause before past reveal
-          setTimeout(() => setRevealPhase("present"), 6000);   // 5.2s to read past highlights
+          setTimeout(() => setRevealPhase("present"), 8800);   // 8s to read past highlights
         }, 600);
       } catch {
         setError("Connection issue. Using sample data instead.");
         setCompleted([0, 1, 2]);
         setVisible([0, 1, 2]);
         setTimeout(() => setRevealPhase("past"), 600);
-        setTimeout(() => setRevealPhase("present"), 5000);
+        setTimeout(() => setRevealPhase("present"), 8600);
       }
     }
 
@@ -234,7 +234,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
 
     // Data is ready. Ensure minimum 4s reading time on "present"
     const elapsed = Date.now() - presentShownAt.current;
-    const remaining = Math.max(0, 4000 - elapsed);
+    const remaining = Math.max(0, 7000 - elapsed);
     const timer = setTimeout(() => setRevealPhase("ready"), remaining);
     return () => clearTimeout(timer);
   }, [revealPhase, isLoadingLifetime]);

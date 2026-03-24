@@ -41,4 +41,8 @@ export interface MomentumPhase {
   lifetimeNumber?: number;
   lifetimeTotal?: number;
   isVipTransit?: boolean;
+  /** Index in the API response — fallback for TocToc personalize calls */
+  boudinIndex?: number;
+  /** Sausage ID from API — primary key for TocToc personalize calls */
+  boudinId?: string;
 }
