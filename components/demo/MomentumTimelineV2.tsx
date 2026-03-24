@@ -624,18 +624,13 @@ function OverviewView({
                 width: w,
                 height: capsuleH,
                 borderRadius: w / 2,
-                background: hc
-                  ? capsule.isCurrent
-                    ? `color-mix(in srgb, ${hc} 40%, var(--bg-secondary))`
-                    : `color-mix(in srgb, ${hc} 25%, var(--bg-secondary))`
-                  : capsule.isCurrent
-                    ? "color-mix(in srgb, var(--brand-7) 35%, var(--bg-secondary))"
-                    : "color-mix(in srgb, var(--brand-6) 22%, var(--bg-secondary))",
-                border: hc
-                  ? `1px solid color-mix(in srgb, ${hc} ${capsule.isCurrent ? "50" : "25"}%, transparent)`
-                  : capsule.isCurrent
-                    ? "1px solid color-mix(in srgb, var(--brand-8) 40%, transparent)"
-                    : "1px solid color-mix(in srgb, var(--brand-6) 15%, transparent)",
+                background: `color-mix(in srgb, ${hc ?? "var(--accent-purple)"} ${capsule.isCurrent ? "12" : "8"}%, transparent)`,
+                border: `1.5px solid color-mix(in srgb, ${hc ?? "var(--accent-purple)"} ${capsule.isCurrent ? "30" : "18"}%, transparent)`,
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                boxShadow: capsule.isCurrent
+                  ? `0 0 16px color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 20%, transparent)`
+                  : "none",
                 filter: capsule.isFuture ? "blur(2px)" : "none",
                 opacity: capsule.isFuture ? 0.4 : 1,
                 zIndex: capsule.isCurrent ? 5 : 2,
@@ -1011,8 +1006,8 @@ export function MomentumTimelineV2() {
         )}
       </AnimatePresence>
 
-      {/* ── View toggle — thumb zone, above bottom nav ── */}
-      <div className="absolute left-0 right-0 z-40 flex items-center justify-center" style={{ bottom: LAYOUT.toggleBottom, paddingInline: LAYOUT.px }}>
+      {/* ── View toggle — top, below header ── */}
+      <div className="absolute left-0 right-0 z-40 flex items-center justify-center" style={{ top: LAYOUT.toggleTop, paddingInline: LAYOUT.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}

@@ -4,7 +4,6 @@ import { motion } from "motion/react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { CalendarMonth, Clock, ChartPie } from "flowbite-react-icons/outline";
 import { mockForecast } from "@/lib/mock-data";
-import { OnboardingProgress } from "./OnboardingProgress";
 
 interface StepPremiumProps {
   onNext: () => void;
@@ -108,7 +107,6 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
       initial="hidden"
       animate="visible"
     >
-      <OnboardingProgress current={3} />
 
       {/* Back */}
       <motion.button

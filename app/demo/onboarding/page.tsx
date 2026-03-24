@@ -5,11 +5,14 @@ import { motion, AnimatePresence, useMotionValue } from "motion/react";
 import { StepPromise } from "@/components/demo/onboarding/StepPromise";
 import { StepSignalPreview } from "@/components/demo/onboarding/StepSignalPreview";
 import { StepTimelineTeaser } from "@/components/demo/onboarding/StepTimelineTeaser";
+import { StepPriorities } from "@/components/demo/onboarding/StepPriorities";
 import { StepInput } from "@/components/demo/onboarding/StepInput";
 import type { OnboardingFormData } from "@/components/demo/onboarding/StepInput";
 import { StepPreparing } from "@/components/demo/onboarding/StepPreparing";
+import { saveUserProfile } from "@/lib/user-profile";
+import type { PriorityDomain } from "@/types/user-profile";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 const SWIPE_THRESHOLD = 50;
 
 /** Slide animation variants — direction-aware */
@@ -34,18 +37,19 @@ const stepTransition = {
 };
 
 /** Screens where swiping back is disabled */
-const NO_SWIPE_BACK = new Set([0, 4]); // first screen, preparing screen
+const NO_SWIPE_BACK = new Set([0, 5]); // first screen, preparing screen
 /** Screens where swiping forward is disabled (use CTA instead) */
-const NO_SWIPE_FORWARD = new Set([3, 4]); // form input, preparing screen
+const NO_SWIPE_FORWARD = new Set([4, 5]); // form input, preparing screen
 
 /**
- * Onboarding orchestrator — 5-screen single-page flow.
- * 0: Promise  1: Signal Preview  2: Timeline Teaser  3: Birth Input  4: Preparing
+ * Onboarding orchestrator — 6-screen single-page flow.
+ * 0: Promise  1: Signal Preview  2: Timeline Teaser  3: Priorities  4: Birth Input  5: Preparing
  */
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState(1);
   const dragX = useMotionValue(0);
+  const [priorities, setPriorities] = useState<PriorityDomain[]>([]);
   const [formData, setFormData] = useState<OnboardingFormData>({
     nickname: "",
     dob: "",
@@ -62,6 +66,17 @@ export default function OnboardingPage() {
     setDir(-1);
     setStep((s) => Math.max(s - 1, 0));
   }, []);
+
+  // Save priorities when user advances past step 3
+  const handlePrioritiesNext = useCallback(() => {
+    if (priorities.length > 0) {
+      saveUserProfile({
+        priorities,
+        prioritiesSetAt: new Date().toISOString(),
+      });
+    }
+    next();
+  }, [priorities, next]);
 
   const handleDragEnd = useCallback(
     (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
@@ -90,6 +105,15 @@ export default function OnboardingPage() {
         return <StepTimelineTeaser onNext={next} onBack={back} />;
       case 3:
         return (
+          <StepPriorities
+            selected={priorities}
+            onChange={setPriorities}
+            onNext={handlePrioritiesNext}
+            onBack={back}
+          />
+        );
+      case 4:
+        return (
           <StepInput
             formData={formData}
             onChange={setFormData}
@@ -97,7 +121,7 @@ export default function OnboardingPage() {
             onBack={back}
           />
         );
-      case 4:
+      case 5:
         return <StepPreparing formData={formData} />;
       default:
         return null;
@@ -107,7 +131,7 @@ export default function OnboardingPage() {
   const isFirstScreen = step === 0;
 
   return (
-    <div className="relative h-full overflow-hidden">
+    <div className="relative h-full overflow-hidden p-5">
       <AnimatePresence mode="wait" custom={dir}>
         <motion.div
           key={step}

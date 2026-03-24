@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-import { OnboardingProgress } from "./OnboardingProgress";
 
 interface StepCompatibilityProps {
   onNext: () => void;
@@ -101,7 +100,6 @@ export function StepCompatibility({
       initial="hidden"
       animate="visible"
     >
-      <OnboardingProgress current={2} />
 
       {/* Back */}
       <motion.button

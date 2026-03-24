@@ -1,7 +1,9 @@
 "use client";
 
-import { motion } from "motion/react";
-import { OnboardingProgress } from "./OnboardingProgress";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+
+import { suggestCities } from "@/lib/birth-data";
 
 export interface OnboardingFormData {
   nickname: string;
@@ -55,6 +57,10 @@ export function StepInput({
   onNext,
   onBack,
 }: StepInputProps) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const placeRef = useRef<HTMLDivElement>(null);
+
   const isValid =
     formData.nickname.trim() !== "" &&
     formData.dob !== "" &&
@@ -63,19 +69,40 @@ export function StepInput({
 
   const handleChange = (key: keyof OnboardingFormData, value: string) => {
     onChange({ ...formData, [key]: value });
+    if (key === "placeOfBirth") {
+      const results = suggestCities(value);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0 && value.length >= 2);
+    }
   };
+
+  const selectCity = (city: string) => {
+    onChange({ ...formData, placeOfBirth: city });
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (placeRef.current && !placeRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
     <motion.div
       className="flex h-full flex-col"
     >
-      <OnboardingProgress current={3} />
 
       {/* Back */}
       <motion.button
         type="button"
         onClick={onBack}
-        className="mt-4 self-start text-xs font-medium"
+        className="self-start text-xs font-medium"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -119,45 +146,84 @@ export function StepInput({
 
       {/* Form fields */}
       <div className="mt-5 space-y-3.5">
-        {fields.map((field, i) => (
-          <motion.div
-            key={field.key}
-            className="rounded-2xl border border-border-light bg-bg-secondary px-4 py-3.5 transition-colors duration-200 focus-within:border-accent-purple"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 + i * 0.15, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <label>
-              <span
-                className="font-medium uppercase"
-                style={{
-                  fontSize: 10,
-                  letterSpacing: "0.12em",
-                  color: "var(--accent-purple)",
-                  opacity: 0.5,
-                }}
-              >
-                {field.label}
-              </span>
-              <input
-                type={field.type}
-                value={formData[field.key]}
-                onChange={(e) => handleChange(field.key, e.target.value)}
-                placeholder={field.placeholder}
-                className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
-                style={{ color: "var(--accent-purple)" }}
-              />
-            </label>
-            {"helper" in field && field.helper && (
-              <p
-                className="mt-1"
-                style={{ fontSize: 10, color: "var(--accent-purple)", opacity: 0.5 }}
-              >
-                {field.helper}
-              </p>
-            )}
-          </motion.div>
-        ))}
+        {fields.map((field, i) => {
+          const isPlaceField = field.key === "placeOfBirth";
+          return (
+            <motion.div
+              key={field.key}
+              ref={isPlaceField ? placeRef : undefined}
+              className="relative rounded-2xl border border-border-light bg-bg-secondary px-4 py-3.5 transition-colors duration-200 focus-within:border-accent-purple"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 + i * 0.15, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+            >
+              <label>
+                <span
+                  className="font-medium uppercase"
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: "0.12em",
+                    color: "var(--accent-purple)",
+                    opacity: 0.5,
+                  }}
+                >
+                  {field.label}
+                </span>
+                <input
+                  type={field.type}
+                  value={formData[field.key]}
+                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  onFocus={() => {
+                    if (isPlaceField && suggestions.length > 0) setShowSuggestions(true);
+                  }}
+                  placeholder={field.placeholder}
+                  autoComplete={isPlaceField ? "off" : undefined}
+                  className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
+                  style={{ color: "var(--accent-purple)" }}
+                />
+              </label>
+              {"helper" in field && field.helper && (
+                <p
+                  className="mt-1"
+                  style={{ fontSize: 10, color: "var(--accent-purple)", opacity: 0.5 }}
+                >
+                  {field.helper}
+                </p>
+              )}
+              {/* City autocomplete dropdown */}
+              {isPlaceField && (
+                <AnimatePresence>
+                  {showSuggestions && suggestions.length > 0 && (
+                    <motion.div
+                      className="absolute left-0 right-0 z-50 mt-1 rounded-xl border overflow-hidden"
+                      style={{
+                        top: "100%",
+                        background: "var(--bg-secondary)",
+                        borderColor: "var(--border-light)",
+                      }}
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      {suggestions.map((city) => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => selectCity(city)}
+                          className="w-full px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-brand-3/30"
+                          style={{ color: "var(--accent-purple)" }}
+                        >
+                          {city}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Reassurance */}
@@ -173,7 +239,7 @@ export function StepInput({
 
       {/* CTA */}
       <motion.div
-        className="mt-auto pt-4"
+        className="mt-auto"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.6, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}

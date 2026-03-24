@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { OnboardingProgress } from "./OnboardingProgress";
+import { motion, AnimatePresence } from "motion/react";
 
 interface StepSignalPreviewProps {
   onNext: () => void;
@@ -27,16 +26,16 @@ const BOUDINS = [
   { y: -100, w: 26, h: 40,  color: "#6BA89A", opacity: 0.35, dots: 3, year: 2029 },
   // NOW
   { y: -35,  w: 38, h: 64,  color: "#B07CC2", opacity: 1,    dots: 4, year: 2026, isCurrent: true },
-  // Past (below NOW)
-  { y: 60,   w: 28, h: 44,  color: "#6BA89A", opacity: 0.7,  dots: 3, year: 2020 },
-  { y: 120,  w: 24, h: 36,  color: "#D89EA0", opacity: 0.6,  dots: 2, year: 2016 },
-  { y: 172,  w: 30, h: 50,  color: "#9585CC", opacity: 0.6,  dots: 3, year: 2011 },
-  { y: 238,  w: 20, h: 30,  color: "#6BA89A", opacity: 0.5,  dots: 2, year: 2007 },
-  { y: 284,  w: 26, h: 44,  color: "#B07CC2", opacity: 0.5,  dots: 2, year: 2003 },
-  { y: 344,  w: 22, h: 36,  color: "#C4A86B", opacity: 0.5,  dots: 2, year: 1999 },
-  { y: 396,  w: 16, h: 22,  color: "#9585CC", opacity: 0.4,  dots: 1, year: 1995 },
-  { y: 434,  w: 18, h: 28,  color: "#6BA89A", opacity: 0.4,  dots: 1, year: 1990 },
-  { y: 478,  w: 14, h: 20,  color: "#8B7FC2", opacity: 0.4,  dots: 1, year: 1985 },
+  // Past (below NOW) — each boudin spaced so none overlap (min 16px gap)
+  { y: 90,   w: 28, h: 44,  color: "#6BA89A", opacity: 0.7,  dots: 3, year: 2020 },  // bottom: 134
+  { y: 150,  w: 24, h: 36,  color: "#D89EA0", opacity: 0.6,  dots: 2, year: 2016 },  // bottom: 186
+  { y: 202,  w: 30, h: 50,  color: "#9585CC", opacity: 0.6,  dots: 3, year: 2011 },  // bottom: 252
+  { y: 268,  w: 20, h: 30,  color: "#6BA89A", opacity: 0.5,  dots: 2, year: 2007 },  // bottom: 298
+  { y: 314,  w: 26, h: 44,  color: "#B07CC2", opacity: 0.5,  dots: 2, year: 2003 },  // bottom: 358
+  { y: 374,  w: 22, h: 36,  color: "#C4A86B", opacity: 0.5,  dots: 2, year: 1999 },  // bottom: 410
+  { y: 426,  w: 16, h: 22,  color: "#9585CC", opacity: 0.4,  dots: 1, year: 1995 },  // bottom: 448
+  { y: 464,  w: 18, h: 28,  color: "#6BA89A", opacity: 0.4,  dots: 1, year: 1990 },  // bottom: 492
+  { y: 508,  w: 14, h: 20,  color: "#8B7FC2", opacity: 0.4,  dots: 1, year: 1985 },  // bottom: 528
 ];
 
 const SCROLL_DISTANCE = 580;
@@ -58,9 +57,22 @@ function getCrossTime(boudinY: number): number {
   return Math.max(0, Math.min(1, progress)) * SCROLL_DURATION;
 }
 
+/**
+ * Staged reveal phases — each element gets its "moment"
+ * 0: scroll playing (0-3.5s)
+ * 1: NOW line spotlight (3.5s)
+ * 2: current boudin spotlight + annotation (5s)
+ * 3: CTA visible (6.5s)
+ */
+const PHASE_NOW_HIGHLIGHT = SCROLL_DURATION + 0.5;   // 3.7s
+const PHASE_BOUDIN_SPOTLIGHT = PHASE_NOW_HIGHLIGHT + 1.5; // 5.2s
+const PHASE_CTA_REVEAL = PHASE_BOUDIN_SPOTLIGHT + 1.5;    // 6.7s
+
 export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
   // Year counter
   const [displayYear, setDisplayYear] = useState(1985);
+  // Staged highlight phases
+  const [phase, setPhase] = useState(0);
 
   useEffect(() => {
     const startYear = 1985;
@@ -83,14 +95,21 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // Phase timers — sequential spotlight
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), PHASE_NOW_HIGHLIGHT * 1000);
+    const t2 = setTimeout(() => setPhase(2), PHASE_BOUDIN_SPOTLIGHT * 1000);
+    const t3 = setTimeout(() => setPhase(3), PHASE_CTA_REVEAL * 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
   return (
     <motion.div className="flex h-full flex-col">
-      <OnboardingProgress current={1} />
 
       <motion.button
         type="button"
         onClick={onBack}
-        className="mt-4 self-start text-xs font-medium"
+        className="self-start text-xs font-medium"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -104,7 +123,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
       </motion.button>
 
       <motion.div
-        className="mt-4 text-center"
+        className="mt-6 text-center"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
@@ -119,24 +138,52 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
       <div className="relative mt-4 flex-1 overflow-hidden"
         style={{ maskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 88%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 88%, transparent 100%)" }}>
 
-        {/* Fixed NOW line — always at center, above everything */}
-        <div
+        {/* Fixed NOW line — below the current boudin with breathing room */}
+        <motion.div
           className="absolute left-0 right-0 flex items-center gap-2 z-20"
-          style={{ top: "50%", transform: "translateY(-50%)" }}
+          style={{ top: "calc(46% + 16px)", transform: "translateY(-50%)" }}
+          animate={phase >= 1 ? {
+            opacity: [0.6, 1, 0.6],
+          } : { opacity: 1 }}
+          transition={phase >= 1 ? {
+            duration: 2,
+            repeat: phase === 1 ? Infinity : 0,
+            ease: "easeInOut",
+          } : {}}
         >
-          <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.25))" }} />
-          <span className="text-[9px] font-bold uppercase tracking-[0.2em] px-2"
-            style={{ color: "white", opacity: 0.6 }}>
+          <motion.div
+            className="flex-1 h-px"
+            style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.25))" }}
+            animate={phase >= 1 ? {
+              background: "linear-gradient(to right, transparent, rgba(255,255,255,0.6))",
+            } : {}}
+            transition={{ duration: 0.6 }}
+          />
+          <motion.span
+            className="text-[9px] font-bold uppercase tracking-[0.2em] px-2"
+            style={{ color: "white" }}
+            animate={phase >= 1 ? { opacity: 1, scale: 1.15 } : { opacity: 0.6, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
             now
-          </span>
-          <div className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(255,255,255,0.25))" }} />
-        </div>
+          </motion.span>
+          <motion.div
+            className="flex-1 h-px"
+            style={{ background: "linear-gradient(to left, transparent, rgba(255,255,255,0.25))" }}
+            animate={phase >= 1 ? {
+              background: "linear-gradient(to left, transparent, rgba(255,255,255,0.6))",
+            } : {}}
+            transition={{ duration: 0.6 }}
+          />
+        </motion.div>
+
+        {/* Halo ring removed — moved inside boudin render */}
 
 
         {/* Scrolling strip */}
         <motion.div
           className="absolute left-0 right-0"
-          style={{ top: "50%" }}
+          style={{ top: "46%" }}
           initial={{ y: -SCROLL_DISTANCE }}
           animate={{ y: -44 }}
           transition={{ duration: SCROLL_DURATION, ease: SCROLL_EASE }}
@@ -151,17 +198,25 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
               <motion.div
                 key={i}
                 className="absolute"
-                style={{ top: s.y, left, width: s.w, height: s.h }}
-                // Future: 100%. Present: highlighted + glow. Past: 50%.
+                style={{ top: s.y, left, width: s.w, height: s.h, overflow: "visible" }}
+                // Phase 2+: current boudin gets a dramatic spotlight
                 animate={
                   isLast
-                    ? { scale: [1, 1, 1.2], opacity: [0.8, 0.8, 1] }
-                    : { scale: 1, opacity: isPast ? 0.5 : 1 }
+                    ? {
+                        scale: phase >= 2 ? 1.35 : [1, 1, 1.2],
+                        opacity: 1,
+                      }
+                    : {
+                        scale: 1,
+                        opacity: phase >= 2 ? (isPast ? 0.25 : 0.4) : (isPast ? 0.5 : 1),
+                      }
                 }
                 transition={
                   isLast
-                    ? { duration: SCROLL_DURATION + 0.5, delay: 0, times: [0, 0.85, 1], ease: "easeOut" }
-                    : { duration: 0.3, delay: 0.2 }
+                    ? phase >= 2
+                      ? { duration: 0.6, ease: [0.4, 0, 0.2, 1] }
+                      : { duration: SCROLL_DURATION + 0.5, delay: 0, times: [0, 0.85, 1], ease: "easeOut" }
+                    : { duration: 0.5, ease: "easeOut" }
                 }
               >
                 <motion.div
@@ -177,13 +232,15 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                   }}
                   animate={{
                     boxShadow: isLast
-                      ? [`0 0 0px transparent`, `0 0 0px transparent`, `0 0 24px color-mix(in srgb, ${s.color} 40%, transparent)`]
+                      ? phase >= 2
+                        ? `0 0 32px ${s.color}80, 0 0 64px ${s.color}40`
+                        : [`0 0 0px transparent`, `0 0 0px transparent`, `0 0 24px color-mix(in srgb, ${s.color} 40%, transparent)`]
                       : `0 0 0px transparent`,
                   }}
                   transition={{
-                    duration: isLast ? SCROLL_DURATION + 0.5 : 0.3,
-                    delay: isLast ? 0 : 0.2,
-                    times: isLast ? [0, 0.85, 1] : undefined,
+                    duration: isLast ? (phase >= 2 ? 0.8 : SCROLL_DURATION + 0.5) : 0.3,
+                    delay: isLast && phase < 2 ? 0 : 0.2,
+                    times: isLast && phase < 2 ? [0, 0.85, 1] : undefined,
                   }}
                 />
                 {s.dots > 0 && (
@@ -200,27 +257,75 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                     ))}
                   </div>
                 )}
+                {/* Halo pulse — around current boudin, overflow visible */}
+                {isLast && phase >= 1 && phase < 3 && (
+                  <motion.div
+                    className="absolute rounded-full pointer-events-none"
+                    style={{
+                      top: "50%",
+                      left: "50%",
+                      width: s.w + 30,
+                      height: s.h + 30,
+                      x: "-50%",
+                      y: "-50%",
+                      border: `1.5px solid ${s.color}`,
+                    }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: [0, 0.5, 0], scale: [0.9, 1.4, 1.8] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
+                  />
+                )}
               </motion.div>
             );
           })}
         </motion.div>
+
+        {/* Annotation overlay — fixed position outside strip, not clipped */}
+        <AnimatePresence>
+          {phase >= 2 && (
+            <motion.div
+              className="absolute z-30 left-0 right-0 flex justify-center"
+              style={{ top: "calc(46% + 42px)" }}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <span className="text-[11px] font-semibold px-3 py-1.5 rounded-full"
+                style={{
+                  color: "#D4B8E0",
+                  background: "rgba(176, 124, 194, 0.25)",
+                  border: "1px solid rgba(176, 124, 194, 0.5)",
+                  backdropFilter: "blur(8px)",
+                }}>
+                Your signal is active
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Halo removed — will be rendered inside boudin with overflow visible */}
       </div>
 
-      {/* CTA */}
-      <motion.div
-        className="pt-2 pb-1"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-      >
-        <button
-          type="button"
-          onClick={onNext}
-          className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
-        >
-          What does it mean?
-        </button>
-      </motion.div>
+      {/* CTA — only appears after all highlights have played */}
+      <AnimatePresence>
+        {phase >= 3 && (
+          <motion.div
+            className="mt-auto"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <button
+              type="button"
+              onClick={onNext}
+              className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
+            >
+              What does it mean?
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

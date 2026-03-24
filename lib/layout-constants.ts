@@ -55,8 +55,8 @@ export const LAYOUT = {
   safeBottom: SAFE_BOTTOM,
   /** Briefing card top position */
   briefingTop: SAFE_TOP + S.xs, // 56px
-  /** View toggle bottom position (above bottom nav) */
-  toggleBottom: BOTTOM_NAV_H + S.md, // 72px
+  /** View toggle top position (below header) */
+  toggleTop: SAFE_TOP + S.sm, // 60px
 } as const;
 
 /** CSS custom property names (set on layout, consumed by full-bleed pages) */

@@ -111,14 +111,38 @@ export function resolveCity(city: string): {
   lng: number;
   tz: string;
 } {
+  const cleaned = city.trim();
   // Exact match
-  if (CITY_COORDS[city]) return CITY_COORDS[city];
+  if (CITY_COORDS[cleaned]) return CITY_COORDS[cleaned];
   // Case-insensitive match
-  const lower = city.toLowerCase();
+  const lower = cleaned.toLowerCase();
   const match = Object.entries(CITY_COORDS).find(
     ([k]) => k.toLowerCase() === lower
   );
   if (match) return match[1];
+  // Handle "City, Country" format — extract city part
+  const cityPart = cleaned.split(",")[0].trim();
+  if (cityPart !== cleaned) {
+    const cityLower = cityPart.toLowerCase();
+    const cityMatch = Object.entries(CITY_COORDS).find(
+      ([k]) => k.toLowerCase() === cityLower
+    );
+    if (cityMatch) return cityMatch[1];
+  }
+  // Partial / fuzzy match — check if input contains a known city name
+  const fuzzy = Object.entries(CITY_COORDS).find(
+    ([k]) => lower.includes(k.toLowerCase()) || k.toLowerCase().includes(lower)
+  );
+  if (fuzzy) return fuzzy[1];
   // Fallback
   return CITY_COORDS.Brussels;
+}
+
+/** Get autocomplete suggestions for a city query */
+export function suggestCities(query: string): string[] {
+  if (!query || query.trim().length < 2) return [];
+  const lower = query.toLowerCase().trim();
+  return Object.keys(CITY_COORDS).filter(
+    (city) => city.toLowerCase().includes(lower)
+  );
 }

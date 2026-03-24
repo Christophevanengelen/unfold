@@ -45,11 +45,16 @@ export default function DemoLayout({
     setStreak(checkAndUpdateStreak());
   }, []);
 
-  // Listen for custom event from PremiumBlur CTA
+  // Listen for custom events
   useEffect(() => {
-    const handler = () => setPremiumOpen(true);
-    window.addEventListener("unfold:show-premium", handler);
-    return () => window.removeEventListener("unfold:show-premium", handler);
+    const handlePremium = () => setPremiumOpen(true);
+    const handlePersonalize = () => setDrawerOpen(true); // opens ProfileDrawer which has PersonalizeFlow
+    window.addEventListener("unfold:show-premium", handlePremium);
+    window.addEventListener("unfold:show-personalize", handlePersonalize);
+    return () => {
+      window.removeEventListener("unfold:show-premium", handlePremium);
+      window.removeEventListener("unfold:show-personalize", handlePersonalize);
+    };
   }, []);
 
   // Hide bottom nav on onboarding/invite flows
@@ -59,7 +64,7 @@ export default function DemoLayout({
   const isHome = pathname === "/demo";
   const isTimeline = pathname === "/demo/timeline";
   // Full-bleed routes manage their own padding and scroll
-  const isFullBleed = isHome || isTimeline;
+  const isFullBleed = isHome || isTimeline || isOnboarding;
 
 
   // SSR: render only the dark background — no content, no flash

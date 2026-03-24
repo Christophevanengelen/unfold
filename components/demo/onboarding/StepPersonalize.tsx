@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-import { OnboardingProgress } from "./OnboardingProgress";
 
 interface StepPersonalizeProps {
   onNext: () => void;
@@ -57,7 +56,6 @@ export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
       initial="hidden"
       animate="visible"
     >
-      <OnboardingProgress current={4} />
 
       {/* Back */}
       <motion.button

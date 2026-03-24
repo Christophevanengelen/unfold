@@ -7,7 +7,6 @@ import { ScoreRing } from "@/components/demo/ScoreRing";
 import { SatelliteScores } from "@/components/demo/SatelliteScores";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { mockToday, mockDeltas } from "@/lib/mock-data";
-import { OnboardingProgress } from "./OnboardingProgress";
 
 interface StepHabitProps {
   onNext: () => void;
@@ -35,7 +34,6 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
       initial="hidden"
       animate="visible"
     >
-      <OnboardingProgress current={1} />
 
       {/* Back */}
       <motion.button

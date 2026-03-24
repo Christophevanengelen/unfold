@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "motion/react";
-import { OnboardingProgress } from "./OnboardingProgress";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+
 import { planetConfig, type PlanetKey } from "@/lib/domain-config";
 
 interface StepTimelineTeaserProps {
@@ -47,15 +48,43 @@ const ORBIT_DELAY = 1.4;      // planets start orbiting at 1.4s
 const ORBIT_DURATION = 2;
 const SETTLE_DELAY = ORBIT_DELAY + ORBIT_DURATION;
 
+// Active planets for sequential spotlight
+const ACTIVE_PLANETS = PLANETS.filter(p => p.isActive && p.orbit > 0);
+
+/**
+ * Sequential spotlight phases:
+ * 0: orbiting (0 - SETTLE_DELAY)
+ * 1: first active planet spotlight
+ * 2: second active planet spotlight
+ * 3: third active planet spotlight
+ * 4: all lit + CTA visible
+ */
+const SPOTLIGHT_START = SETTLE_DELAY + 0.8;  // 4.2s — first planet spotlight
+const SPOTLIGHT_INTERVAL = 1.2;               // 1.2s between each planet
+
 export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) {
+  // Which active planet is currently spotlighted (-1 = none, 0-N = index, N+1 = all done)
+  const [spotlightIndex, setSpotlightIndex] = useState(-1);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    ACTIVE_PLANETS.forEach((_, i) => {
+      timers.push(setTimeout(() => setSpotlightIndex(i), (SPOTLIGHT_START + i * SPOTLIGHT_INTERVAL) * 1000));
+    });
+    // Final phase: all lit + CTA
+    timers.push(setTimeout(
+      () => setSpotlightIndex(ACTIVE_PLANETS.length),
+      (SPOTLIGHT_START + ACTIVE_PLANETS.length * SPOTLIGHT_INTERVAL) * 1000
+    ));
+    return () => timers.forEach(clearTimeout);
+  }, []);
   return (
     <motion.div className="flex h-full flex-col">
-      <OnboardingProgress current={2} />
 
       <motion.button
         type="button"
         onClick={onBack}
-        className="mt-4 self-start text-xs font-medium"
+        className="self-start text-xs font-medium"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -144,12 +173,16 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
             transition={{ delay: 0.3, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
           />
 
-          {/* Planets — orbit then settle */}
+          {/* Planets — orbit then settle, then sequential spotlight */}
           {PLANETS.filter(p => p.orbit > 0).map((p, i) => {
             const config = planetConfig[p.key];
-
-            // Orbit animation: from fromAngle, rotate N full turns, land on toAngle
             const totalAngle = p.rotations * 360 + (p.toAngle - p.fromAngle);
+
+            // Find this planet's spotlight index (among active planets)
+            const activeIdx = ACTIVE_PLANETS.findIndex(ap => ap.key === p.key);
+            const isBeingSpotlighted = activeIdx !== -1 && spotlightIndex === activeIdx;
+            const hasBeenSpotlighted = activeIdx !== -1 && spotlightIndex > activeIdx;
+            const isLit = isBeingSpotlighted || hasBeenSpotlighted;
 
             return (
               <motion.div
@@ -160,24 +193,22 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                   height: p.orbit * 2,
                   left: CENTER - p.orbit,
                   top: CENTER - p.orbit,
-                  zIndex: p.isActive ? 10 : 1,
+                  zIndex: isBeingSpotlighted ? 20 : p.isActive ? 10 : 1,
                 }}
                 initial={{ rotate: p.fromAngle }}
                 animate={{ rotate: p.fromAngle + totalAngle }}
                 transition={{ delay: ORBIT_DELAY, duration: ORBIT_DURATION, ease: [0.4, 0, 0.2, 1] }}
               >
-                {/* Planet at 12 o'clock — dot centered on orbit, label below (absolute) */}
                 <div className="absolute"
                   style={{ left: "50%", top: 0, transform: "translate(-50%, -50%)" }}>
 
-                  {/* Counter-rotate the content so labels stay horizontal */}
                   <motion.div
                     className="relative"
                     initial={{ rotate: -p.fromAngle }}
                     animate={{ rotate: -(p.fromAngle + totalAngle) }}
                     transition={{ delay: ORBIT_DELAY, duration: ORBIT_DURATION, ease: [0.4, 0, 0.2, 1] }}
                   >
-                    {/* Dot — pop in with spring, then glow on settle */}
+                    {/* Planet dot — spotlighted planets scale up and glow */}
                     <motion.div
                       className="rounded-full relative flex items-center justify-center"
                       style={{
@@ -187,17 +218,38 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                       }}
                       initial={{ opacity: 0, scale: 0.4 }}
                       animate={{
-                        opacity: 1,
-                        scale: p.isActive ? 1.2 : 1,
-                        boxShadow: p.isActive ? `0 0 ${p.size * 3}px ${config.color}60` : "none",
+                        opacity: p.isActive
+                          ? (spotlightIndex >= 0 ? (isLit ? 1 : 0.3) : 1)
+                          : (spotlightIndex >= 0 ? 0.2 : 1),
+                        scale: isBeingSpotlighted ? 1.6 : (isLit ? 1.2 : 1),
+                        boxShadow: isBeingSpotlighted
+                          ? `0 0 ${p.size * 5}px ${config.color}90, 0 0 ${p.size * 8}px ${config.color}40`
+                          : isLit
+                            ? `0 0 ${p.size * 3}px ${config.color}60`
+                            : "none",
                       }}
                       transition={{
-                        opacity: { delay: 0.8 + i * 0.1, duration: 0.5, ease: [0.4, 0, 0.2, 1] },
-                        scale: { delay: 0.8 + i * 0.1, duration: 0.6, ease: [0.4, 0, 0.2, 1] },
-                        boxShadow: { delay: SETTLE_DELAY, duration: 0.8, ease: [0.4, 0, 0.2, 1] },
+                        opacity: { delay: spotlightIndex >= 0 ? 0 : 0.8 + i * 0.1, duration: 0.5 },
+                        scale: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+                        boxShadow: { duration: 0.6 },
                       }}
                     >
-                      {p.isActive && (
+                      {/* Pulse ring — only on currently spotlighted planet */}
+                      {p.isActive && isBeingSpotlighted && (
+                        <motion.div
+                          className="absolute rounded-full"
+                          style={{
+                            width: (p.size + 6) * 2,
+                            height: (p.size + 6) * 2,
+                            border: `1.5px solid ${config.color}`,
+                          }}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: [0, 0.5, 0], scale: [0.8, 1.6, 2] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+                        />
+                      )}
+                      {/* Subtle pulse on already-lit planets */}
+                      {p.isActive && hasBeenSpotlighted && (
                         <motion.div
                           className="absolute rounded-full"
                           style={{
@@ -205,23 +257,31 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                             height: (p.size + 4) * 2,
                             border: `1px solid ${config.color}`,
                           }}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: [0, 0.3, 0], scale: [1, 1.4, 1] }}
-                          transition={{ delay: SETTLE_DELAY + 0.5, duration: 2.5, repeat: Infinity }}
+                          animate={{ opacity: [0, 0.2, 0], scale: [1, 1.3, 1] }}
+                          transition={{ duration: 2.5, repeat: Infinity }}
                         />
                       )}
                     </motion.div>
-                    {/* Label — absolute below dot, doesn't affect dot position */}
+                    {/* Label — appears when planet is spotlighted or has been */}
                     {p.isActive && (
-                      <motion.span
-                        className="absolute left-1/2 text-[9px] font-semibold whitespace-nowrap"
-                        style={{ color: config.color, top: p.size + 6, transform: "translateX(-50%)" }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.9 }}
-                        transition={{ delay: SETTLE_DELAY + 0.3, duration: 0.4 }}
-                      >
-                        {config.label}
-                      </motion.span>
+                      <AnimatePresence>
+                        {isLit && (
+                          <motion.span
+                            className="absolute left-1/2 text-[9px] font-semibold whitespace-nowrap"
+                            style={{
+                              color: config.color,
+                              top: p.size + 6,
+                              transform: "translateX(-50%)",
+                            }}
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: isBeingSpotlighted ? 1 : 0.7, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.4 }}
+                          >
+                            {config.label}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
                     )}
                   </motion.div>
                 </div>
@@ -231,30 +291,55 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         </div>
       </div>
 
-      <motion.p
-        className="text-center text-sm leading-relaxed px-6 pb-2"
-        style={{ color: "var(--accent-purple)", opacity: 0.6 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: SETTLE_DELAY + 0.5 }}
-      >
-        Which ones are yours?
-      </motion.p>
+      {/* Caption — updates as each planet is spotlighted */}
+      <div className="text-center text-sm leading-relaxed px-6 pb-2 h-8">
+        <AnimatePresence mode="wait">
+          {spotlightIndex >= 0 && spotlightIndex < ACTIVE_PLANETS.length && (
+            <motion.p
+              key={`spotlight-${spotlightIndex}`}
+              style={{ color: planetConfig[ACTIVE_PLANETS[spotlightIndex].key].color }}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.3 }}
+            >
+              <span className="font-semibold">{planetConfig[ACTIVE_PLANETS[spotlightIndex].key].label}</span>
+              {" "}is active right now
+            </motion.p>
+          )}
+          {spotlightIndex >= ACTIVE_PLANETS.length && (
+            <motion.p
+              key="all-done"
+              style={{ color: "var(--accent-purple)", opacity: 0.8 }}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              Which ones are yours?
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
 
-      <motion.div
-        className="pt-2 pb-1"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.3 }}
-      >
-        <button
-          type="button"
-          onClick={onNext}
-          className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
-        >
-          Reveal my signal
-        </button>
-      </motion.div>
+      {/* CTA — only after all spotlights complete */}
+      <AnimatePresence>
+        {spotlightIndex >= ACTIVE_PLANETS.length && (
+          <motion.div
+            className="mt-auto"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <button
+              type="button"
+              onClick={onNext}
+              className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
+            >
+              Reveal my signal
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
