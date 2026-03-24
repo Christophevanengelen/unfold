@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "motion/react";
-import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { OnboardingProgress } from "./OnboardingProgress";
 
 export interface OnboardingFormData {
@@ -36,7 +35,7 @@ const fields = [
     label: "Time of birth",
     type: "time",
     placeholder: "HH:MM",
-    helper: "The more precise, the better your signal.",
+    helper: "Precision sharpens your signal.",
   },
   {
     key: "placeOfBirth" as const,
@@ -69,9 +68,6 @@ export function StepInput({
   return (
     <motion.div
       className="flex h-full flex-col"
-      variants={staggerContainer}
-      initial="hidden"
-      animate="visible"
     >
       <OnboardingProgress current={3} />
 
@@ -81,7 +77,9 @@ export function StepInput({
         onClick={onBack}
         className="mt-4 self-start text-xs font-medium"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
-        variants={fadeInUp}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
       >
         <svg
           width="16"
@@ -103,16 +101,20 @@ export function StepInput({
       <motion.h1
         className="mt-5 font-display text-2xl font-bold"
         style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}
-        variants={fadeInUp}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
         Your timing is unique.
       </motion.h1>
       <motion.p
         className="mt-1.5 text-sm"
         style={{ color: "var(--accent-purple)", opacity: 0.7 }}
-        variants={fadeInUp}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        Born at a different moment, different signal. Enter yours.
+        Configure yours.
       </motion.p>
 
       {/* Form fields */}
@@ -123,7 +125,7 @@ export function StepInput({
             className="rounded-2xl border border-border-light bg-bg-secondary px-4 py-3.5 transition-colors duration-200 focus-within:border-accent-purple"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 + i * 0.15, duration: 0.35 }}
+            transition={{ delay: 0.6 + i * 0.15, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
           >
             <label>
               <span
@@ -162,13 +164,20 @@ export function StepInput({
       <motion.p
         className="mt-4 text-center text-xs"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
-        variants={fadeInUp}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
         Your details are only used to prepare your personal rhythm.
       </motion.p>
 
       {/* CTA */}
-      <motion.div className="mt-auto pt-4" variants={fadeInUp}>
+      <motion.div
+        className="mt-auto pt-4"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.6, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+      >
         <button
           type="button"
           onClick={() => isValid && onNext()}

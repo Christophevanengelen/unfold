@@ -17,6 +17,124 @@ const statusLines = [
   "Preparing your first capsule",
 ];
 
+// ─── Scan Feed — reveals what the engine is analyzing ────
+
+const SCAN_STEPS = [
+  { label: "Pluto deep cycles",       detail: "transformation periods",  delay: 0.5 },
+  { label: "Neptune dissolve phases",  detail: "intuition windows",      delay: 2.5 },
+  { label: "Uranus breakthrough",      detail: "liberation moments",     delay: 4.5 },
+  { label: "Saturn structure tests",   detail: "maturity checkpoints",   delay: 6.5 },
+  { label: "Jupiter expansion gates",  detail: "growth opportunities",   delay: 8.5 },
+  { label: "Eclipse axis series",      detail: "turning points",         delay: 10.5 },
+  { label: "Zodiacal releasing peaks", detail: "life chapter markers",   delay: 13.0 },
+  { label: "Station retrogrades",      detail: "revision periods",       delay: 15.5 },
+  { label: "Cycle convergences",       detail: "peak intensity windows", delay: 18.0 },
+];
+
+function ScanFeed({ isLoading, phaseCount }: { isLoading: boolean; phaseCount: number }) {
+  const [visibleCount, setVisibleCount] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading && phaseCount > 100) {
+      // Data arrived — show all remaining instantly
+      setVisibleCount(SCAN_STEPS.length);
+      return;
+    }
+
+    const timers = SCAN_STEPS.map((step, i) =>
+      setTimeout(() => setVisibleCount(c => Math.max(c, i + 1)), step.delay * 1000)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [isLoading, phaseCount]);
+
+  const isDone = !isLoading && phaseCount > 100;
+
+  return (
+    <motion.div
+      className="mt-8 w-full max-w-[240px]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[9px] font-medium uppercase tracking-widest"
+          style={{ color: "var(--accent-purple)", opacity: 0.4 }}>
+          Scanning your birth chart
+        </span>
+      </div>
+
+      <div className="space-y-[6px]">
+        {SCAN_STEPS.slice(0, visibleCount).map((step, i) => {
+          const isLatest = i === visibleCount - 1 && !isDone;
+          return (
+            <motion.div
+              key={step.label}
+              className="flex items-center gap-2"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            >
+              {/* Status dot */}
+              <div className="flex-shrink-0">
+                {isLatest ? (
+                  <motion.div
+                    className="h-[5px] w-[5px] rounded-full"
+                    style={{ background: "var(--accent-purple)" }}
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                ) : (
+                  <div className="h-[5px] w-[5px] rounded-full"
+                    style={{ background: isDone ? "var(--success)" : "var(--accent-purple)", opacity: isDone ? 0.8 : 0.3 }}
+                  />
+                )}
+              </div>
+
+              {/* Label */}
+              <span className="text-[10px] font-medium"
+                style={{
+                  color: "var(--accent-purple)",
+                  opacity: isLatest ? 0.8 : 0.35,
+                }}>
+                {step.label}
+              </span>
+
+              {/* Detail — only on latest */}
+              {isLatest && (
+                <motion.span
+                  className="text-[9px] ml-auto"
+                  style={{ color: "var(--accent-purple)", opacity: 0.25 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.25 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  {step.detail}
+                </motion.span>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Final count when done */}
+      {isDone && (
+        <motion.div
+          className="mt-3 flex items-center gap-1.5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <CheckCircle size={12} style={{ color: "var(--success)" }} />
+          <span className="text-[10px] font-medium"
+            style={{ color: "var(--success)", opacity: 0.8 }}>
+            {phaseCount} signals mapped across your lifetime
+          </span>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
 /**
  * Screen 5 — Preparing Your Signal (Progressive Reveal).
  *
@@ -28,7 +146,7 @@ const statusLines = [
  */
 export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   const router = useRouter();
-  const { loadSignals, state, phases, isLive } = useMomentum();
+  const { loadSignals, state, phases, isLive, isLoadingLifetime, timelinePhases } = useMomentum();
 
   // Prefetch timeline chunk + route while user watches the reveal
   useEffect(() => {
@@ -84,23 +202,49 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
 
         setTimeout(() => {
           setCompleted((c) => [...c, 2]);
-          // Start progressive reveal after loading completes
-          setTimeout(() => setRevealPhase("past"), 600);
-          setTimeout(() => setRevealPhase("present"), 3500);
-          setTimeout(() => setRevealPhase("ready"), 5500);
+          // Progressive reveal — respect reading time
+          // "ready" is set by the useEffect below when lifetime data arrives
+          setTimeout(() => setRevealPhase("past"), 800);       // pause before past reveal
+          setTimeout(() => setRevealPhase("present"), 6000);   // 5.2s to read past highlights
         }, 600);
       } catch {
         setError("Connection issue. Using sample data instead.");
         setCompleted([0, 1, 2]);
         setVisible([0, 1, 2]);
-        setTimeout(() => setRevealPhase("past"), 400);
-        setTimeout(() => setRevealPhase("present"), 2500);
-        setTimeout(() => setRevealPhase("ready"), 4000);
+        setTimeout(() => setRevealPhase("past"), 600);
+        setTimeout(() => setRevealPhase("present"), 5000);
       }
     }
 
     run();
   }, [formData, loadSignals]);
+
+  // Wait for lifetime data to be ready, then show "ready" CTA
+  // Minimum 4s on "present" phase so user can read, then wait for data
+  const presentShownAt = useRef<number>(0);
+  useEffect(() => {
+    if (revealPhase === "present") {
+      presentShownAt.current = Date.now();
+    }
+  }, [revealPhase]);
+
+  useEffect(() => {
+    if (revealPhase !== "present") return;
+    if (isLoadingLifetime) return; // still loading — wait
+
+    // Data is ready. Ensure minimum 4s reading time on "present"
+    const elapsed = Date.now() - presentShownAt.current;
+    const remaining = Math.max(0, 4000 - elapsed);
+    const timer = setTimeout(() => setRevealPhase("ready"), remaining);
+    return () => clearTimeout(timer);
+  }, [revealPhase, isLoadingLifetime]);
+
+  // Safety timeout — don't block forever if lifetime takes too long (45s max)
+  useEffect(() => {
+    if (revealPhase !== "present") return;
+    const timer = setTimeout(() => setRevealPhase("ready"), 45000);
+    return () => clearTimeout(timer);
+  }, [revealPhase]);
 
   return (
     <div className="flex h-full flex-col items-center justify-center text-center px-5">
@@ -305,6 +449,9 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
                 )}
               </>
             )}
+
+            {/* Live scan feed — show the science behind the signal */}
+            <ScanFeed isLoading={isLoadingLifetime} phaseCount={timelinePhases.length} />
           </motion.div>
         )}
 

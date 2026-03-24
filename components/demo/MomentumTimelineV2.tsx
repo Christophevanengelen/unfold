@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
+import { TimelineWelcome, shouldShowWelcome } from "./TimelineWelcome";
 import {
   type MomentumPhase,
 } from "@/lib/mock-timeline";
@@ -927,6 +928,7 @@ export function MomentumTimelineV2() {
     if (typeof window !== "undefined") localStorage.setItem("unfold_view_mode", mode);
   }, []);
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleData | null>(null);
+  const [showWelcome, setShowWelcome] = useState(() => shouldShowWelcome());
 
   // Initialize date helpers from birth data
   useMemo(() => initDates(birthDateStr), [birthDateStr]);
@@ -965,12 +967,14 @@ export function MomentumTimelineV2() {
     setVisibleAge(age);
   }, []);
 
-  // Show loader while initial data loads OR while lifetime sausages are still loading
-  // The yearData phases have incomplete visual data (no house colors, no topics, wrong durations)
-  // so we must NOT render them as capsules — show skeleton instead until real sausages arrive
+  // Show loader only when we have zero data at all.
+  // If coming from onboarding, lifetime data is already loaded (prefetched during StepPreparing).
+  // If year data is available but lifetime still loading, still show the spinner
+  // (year data has incomplete visuals — no house colors, no topics).
+  const hasLifetimeData = timelinePhases.length > 100; // lifetime = ~1000+ phases, year = ~20-50
   if (
     (state === "loading" && timelinePhases.length === 0) ||
-    isLoadingLifetime
+    (isLoadingLifetime && !hasLifetimeData)
   ) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">
@@ -987,6 +991,11 @@ export function MomentumTimelineV2() {
 
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
+      {/* ── First-time welcome overlay ── */}
+      {showWelcome && (
+        <TimelineWelcome onDone={() => setShowWelcome(false)} />
+      )}
+
       {/* ── View toggle — 2-icon switch ── */}
       <div className="absolute left-0 right-0 z-40 flex items-center justify-center px-3" style={{ top: 58 }}>
         <div
