@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
 import { TimelineWelcome, shouldShowWelcome } from "./TimelineWelcome";
+import { FirstUseGuide, shouldShowFirstUseGuide } from "./FirstUseGuide";
 import {
   type MomentumPhase,
 } from "@/lib/mock-timeline";
@@ -69,11 +70,13 @@ function mapHouseColor(apiColor?: string): string | undefined {
   return HOUSE_PALETTE[apiColor.toUpperCase()] || HOUSE_PALETTE[apiColor] || apiColor;
 }
 
+import { S, LAYOUT } from "@/lib/layout-constants";
+
 // ─── Constants ──────────────────────────────────────────────
 let LANE_COUNT = 7;
-const PX_PER_MONTH = 112; // pixels per month — ~6 months per screen height
+const PX_PER_MONTH = 112;
 const LANE_SPACING = 6;
-const MIN_GAP_MS = 0; // capsules just can't overlap — no extra gap needed
+const MIN_GAP_MS = 0;
 
 // Tier from raw API score (1-4) — no interpretation, direct from backend
 function getTier(_intensity: number, score?: number): Tier {
@@ -929,6 +932,7 @@ export function MomentumTimelineV2() {
   }, []);
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleData | null>(null);
   const [showWelcome, setShowWelcome] = useState(() => shouldShowWelcome());
+  const [showGuide, setShowGuide] = useState(false);
 
   // Initialize date helpers from birth data
   useMemo(() => initDates(birthDateStr), [birthDateStr]);
@@ -991,11 +995,24 @@ export function MomentumTimelineV2() {
     <div className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
       {/* ── First-time welcome overlay ── */}
       {showWelcome && (
-        <TimelineWelcome onDone={() => setShowWelcome(false)} />
+        <TimelineWelcome onDone={() => {
+          setShowWelcome(false);
+          // After welcome fades, show the guide
+          if (shouldShowFirstUseGuide()) {
+            setTimeout(() => setShowGuide(true), 800);
+          }
+        }} />
       )}
 
-      {/* ── View toggle — 2-icon switch ── */}
-      <div className="absolute left-0 right-0 z-40 flex items-center justify-center px-3" style={{ top: 58 }}>
+      {/* ── First-use guide hints ── */}
+      <AnimatePresence>
+        {showGuide && (
+          <FirstUseGuide onDone={() => setShowGuide(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* ── View toggle — thumb zone, above bottom nav ── */}
+      <div className="absolute left-0 right-0 z-40 flex items-center justify-center" style={{ bottom: LAYOUT.toggleBottom, paddingInline: LAYOUT.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}
@@ -1037,7 +1054,7 @@ export function MomentumTimelineV2() {
 
       {/* Daily Briefing — pinned at top, only in overview mode */}
       {viewMode === "overview" && (
-        <div className="absolute top-[90px] left-0 right-0 z-30">
+        <div className="absolute left-0 right-0 z-30" style={{ top: LAYOUT.briefingTop }}>
           <DailyBriefing />
         </div>
       )}
