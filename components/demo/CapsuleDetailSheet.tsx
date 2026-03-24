@@ -189,10 +189,23 @@ export function CapsuleDetailSheet({
         apiTopics: phase?.apiTopics,
         startDate: capsule.startDate.toISOString(),
         endDate: capsule.endDate.toISOString(),
-        lifetimeNumber: phase?.lifetimeNumber,
-        lifetimeTotal: phase?.lifetimeTotal,
         isVipTransit: phase?.isVipTransit,
         durationWeeks: phase?.durationWeeks,
+        // Cycle D-R-D info
+        cycle: phase?.cycle,
+        // Transit window
+        windowStart: phase?.windowStart,
+        windowEnd: phase?.windowEnd,
+        exactDates: phase?.exactDates,
+        parileDate: phase?.parileDate,
+        // Special transit types
+        isReturn: phase?.isReturn,
+        isHalfReturn: phase?.isHalfReturn,
+        stationType: phase?.stationType,
+        // Eclipse data
+        eclipseType: phase?.eclipseType,
+        // Markers
+        markers: phase?.markers,
       };
       const result = await getPersonalizedText(
         capsule.id,
@@ -567,7 +580,7 @@ export function CapsuleDetailSheet({
           </div>
         ))}
 
-        {cycleNarrative && (
+        {(aiText?.hitInfo || cycleNarrative) && (
           <div
             className="rounded-xl px-4 py-3 mb-4"
             style={{
@@ -579,9 +592,19 @@ export function CapsuleDetailSheet({
                 Cycle
               </span>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
-              {cycleNarrative}
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={aiText?.hitInfo ? "ai" : "template"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-xs leading-relaxed"
+                style={{ color: "var(--text-body)" }}
+              >
+                {aiText?.hitInfo ?? cycleNarrative}
+              </motion.p>
+            </AnimatePresence>
           </div>
         )}
 
@@ -634,9 +657,9 @@ export function CapsuleDetailSheet({
           </div>
         )}
 
-        {lifetimeNarrative && (
+        {(aiText?.lifetimeInfo || lifetimeNarrative) && (
           <div
-            className="rounded-xl px-4 py-3 mb-5"
+            className="rounded-xl px-4 py-3 mb-4"
             style={{
               background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
             }}
@@ -646,8 +669,36 @@ export function CapsuleDetailSheet({
                 Dans votre vie
               </span>
             </div>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={aiText?.lifetimeInfo ? "ai" : "template"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-xs leading-relaxed"
+                style={{ color: "var(--text-body)" }}
+              >
+                {aiText?.lifetimeInfo ?? lifetimeNarrative}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        )}
+
+        {aiText?.convergenceNote && (
+          <div
+            className="rounded-xl px-4 py-3 mb-5"
+            style={{
+              background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                Convergence
+              </span>
+            </div>
             <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
-              {lifetimeNarrative}
+              {aiText.convergenceNote}
             </p>
           </div>
         )}
@@ -760,6 +811,15 @@ export function CapsuleDetailSheet({
                 )}
                 {phase?.windowStart && phase?.windowEnd && (
                   <DetailRow label="Fenêtre" value={`${phase.windowStart} → ${phase.windowEnd}`} />
+                )}
+                {phase?.parileDate && (
+                  <DetailRow label="Pic d'intensité" value={phase.parileDate} />
+                )}
+                {phase?.exactDates && phase.exactDates.length > 1 && (
+                  <DetailRow label="Dates exactes" value={phase.exactDates.join(", ")} />
+                )}
+                {phase?.eclipseType && (
+                  <DetailRow label="Éclipse" value={phase.eclipseType === "solar" ? "Solaire (nouveau départ)" : "Lunaire (point culminant)"} />
                 )}
                 {phase?.markers && phase.markers.length > 0 && (
                   <DetailRow label="Marqueurs" value={phase.markers.map((m: string) =>

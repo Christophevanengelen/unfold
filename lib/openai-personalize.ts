@@ -14,6 +14,14 @@ export type PersonalizedText = {
   story: string;
   insight: string;
   guidance: string;
+  // Extended fields from Marie Ange's OpenAI format
+  titre?: string;
+  sousTitre?: string;
+  corps?: string;
+  avecLeRecul?: string;
+  hitInfo?: string;        // AI-written cycle narrative (D-R-D pass explanation)
+  lifetimeInfo?: string;   // AI-written lifetime narrative
+  convergenceNote?: string; // when multiple signals converge
 };
 
 // ─── Constants ──────────────────────────────────────────────
