@@ -186,6 +186,19 @@ export async function POST(request: NextRequest) {
       endDate: llmPayload?.endDate,
       topics: llmPayload?.topics?.map((t: { house?: number; topic?: string }) => ({ house: t.house, topic: t.topic })),
     }));
+    // ── Log cycle + lifetime data from Marie Ange's detail endpoint ──
+    console.log("[AUDIT] llmPayload cycle/lifetime:", JSON.stringify({
+      cycle: llmPayload?.cycle,
+      hitNumber: llmPayload?.hitNumber,
+      totalHits: llmPayload?.totalHits,
+      lifetimeNumber: llmPayload?.lifetimeNumber,
+      lifetimeTotal: llmPayload?.lifetimeTotal,
+      lifetimeCount: llmPayload?.lifetimeCount,
+      occurrenceCount: llmPayload?.occurrenceCount,
+      sameTransitCount: llmPayload?.sameTransitCount,
+      pattern: llmPayload?.pattern,
+    }));
+    console.log("[AUDIT] llmPayload ALL keys:", Object.keys(llmPayload || {}));
     console.log("[AUDIT] === END TRACE ===");
 
     if (!systemPrompt || !llmPayload) {
@@ -243,7 +256,7 @@ export async function POST(request: NextRequest) {
     }));
 
     return NextResponse.json({
-      // Marie Ange's format
+      // Marie Ange's format (from OpenAI)
       titre: parsed.titre ?? "",
       sousTitre: parsed.sousTitre ?? "",
       corps: parsed.corps ?? "",
@@ -253,6 +266,12 @@ export async function POST(request: NextRequest) {
       hitInfo: parsed.hitInfo ?? null,
       lifetimeInfo: parsed.lifetimeInfo ?? null,
       convergenceNote: parsed.convergenceNote ?? null,
+      // Raw cycle/lifetime data from boudin-detail endpoint (for direct display)
+      rawCycle: llmPayload?.cycle ?? null,
+      rawLifetime: {
+        number: llmPayload?.lifetimeNumber ?? llmPayload?.lifetimeCount ?? llmPayload?.occurrenceNumber ?? null,
+        total: llmPayload?.lifetimeTotal ?? llmPayload?.totalLifetime ?? llmPayload?.occurrenceCount ?? llmPayload?.sameTransitCount ?? null,
+      },
       // Backward compat (our original format)
       story: parsed.corps ?? "",
       insight: parsed.sousTitre ?? "",

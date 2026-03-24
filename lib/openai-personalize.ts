@@ -22,6 +22,9 @@ export type PersonalizedText = {
   hitInfo?: string;        // AI-written cycle narrative (D-R-D pass explanation)
   lifetimeInfo?: string;   // AI-written lifetime narrative
   convergenceNote?: string; // when multiple signals converge
+  // Raw data from boudin-detail endpoint (for direct display)
+  rawCycle?: { hitNumber?: number; totalHits?: number; pattern?: string } | null;
+  rawLifetime?: { number?: number | null; total?: number | null } | null;
 };
 
 // ─── Constants ──────────────────────────────────────────────

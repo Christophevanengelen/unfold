@@ -237,8 +237,12 @@ export function CapsuleDetailSheet({
   const houseColor = capsule.color ?? houseMeta?.color ?? "var(--accent-purple)";
   const progress = getProgressPercent(capsule.startDate, capsule.endDate);
   const duration = formatDuration(capsule.startDate, capsule.endDate);
-  // Client-computed count by planet signature (how many times same planet combo repeats)
-  const rarityText = getRarityText(capsule.tierOccurrence, capsule.tierTotal, capsule.tier);
+  // Prefer API lifetime data (from boudin-detail via OpenAI call), fallback to client-computed
+  const apiLifetimeNum = aiText?.rawLifetime?.number;
+  const apiLifetimeTotal = aiText?.rawLifetime?.total;
+  const displayLifetimeNum = apiLifetimeNum ?? capsule.tierOccurrence;
+  const displayLifetimeTotal = apiLifetimeTotal ?? capsule.tierTotal;
+  const rarityText = getRarityText(displayLifetimeNum, displayLifetimeTotal, capsule.tier);
   const domainNarrative = getDomainNarrative(domain, tc.context);
   const transitNarrative = getTransitNarrative(phase);
   const planetNarrative = transitNarrative || getPlanetNarrative(capsule.planets);
@@ -348,7 +352,7 @@ export function CapsuleDetailSheet({
                 className="text-3xl font-bold tabular-nums font-display"
                 style={{ color: "var(--text-heading)" }}
               >
-                {capsule.tierOccurrence}
+                {displayLifetimeNum}
                 <span className="text-sm font-normal align-super" style={{ color: "var(--text-body-subtle)" }}>e</span>
               </span>
               <span className="text-xs" style={{ color: "var(--text-body-subtle)" }}>
@@ -785,10 +789,10 @@ export function CapsuleDetailSheet({
                 <DetailRow label="Score" value={`${phase?.score ?? "—"} / 4`} />
                 <DetailRow label="Intensité" value={`${phase?.intensity ?? "—"} / 100`} />
                 <DetailRow label="Durée" value={`${capsule.phases[0]?.durationWeeks ?? "—"} semaines`} />
-                {capsule.tierOccurrence > 0 && (
+                {displayLifetimeNum > 0 && (
                   <DetailRow
-                    label="Occurrence"
-                    value={`${capsule.tierOccurrence}e ${getTierLabel(capsule.tier).toLowerCase()} sur ${capsule.tierTotal}`}
+                    label="Dans votre vie"
+                    value={`${displayLifetimeNum}e ${getTierLabel(capsule.tier).toLowerCase()} sur ${displayLifetimeTotal}`}
                   />
                 )}
                 {phase?.apiCategory && (
