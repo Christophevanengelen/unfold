@@ -168,6 +168,26 @@ export async function POST(request: NextRequest) {
     const systemPrompt = detail.systemPrompt ?? detail.data?.systemPrompt;
     const llmPayload = detail.llmPayload ?? detail.data?.llmPayload;
 
+    // ── DEBUG: trace pipeline for Marie Ange audit ──
+    console.log("[AUDIT] === PIPELINE TRACE ===");
+    console.log("[AUDIT] Input:", JSON.stringify({ boudinId, boudinIndex, birthDate: birthData.birthDate }));
+    console.log("[AUDIT] TocToc request body:", JSON.stringify(detailBody));
+    console.log("[AUDIT] TocToc response keys:", Object.keys(detail));
+    console.log("[AUDIT] systemPrompt length:", systemPrompt?.length ?? "MISSING");
+    console.log("[AUDIT] systemPrompt first 200 chars:", systemPrompt?.substring(0, 200));
+    console.log("[AUDIT] llmPayload keys:", llmPayload ? Object.keys(llmPayload) : "MISSING");
+    console.log("[AUDIT] llmPayload critical fields:", JSON.stringify({
+      category: llmPayload?.category,
+      transitPlanet: llmPayload?.transitPlanet,
+      natalPoint: llmPayload?.natalPoint,
+      aspect: llmPayload?.aspect,
+      score: llmPayload?.score,
+      startDate: llmPayload?.startDate,
+      endDate: llmPayload?.endDate,
+      topics: llmPayload?.topics?.map((t: { house?: number; topic?: string }) => ({ house: t.house, topic: t.topic })),
+    }));
+    console.log("[AUDIT] === END TRACE ===");
+
     if (!systemPrompt || !llmPayload) {
       return NextResponse.json(
         { error: "Missing systemPrompt or llmPayload from TocToc API" },
@@ -215,7 +235,12 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Step 4: Parse and return Marie Ange's format ──
+    console.log("[AUDIT] OpenAI raw response:", content.substring(0, 500));
     const parsed = JSON.parse(content);
+    console.log("[AUDIT] Parsed output planets mentioned:", JSON.stringify({
+      titre: parsed.titre,
+      domainesActives: parsed.domainesActives,
+    }));
 
     return NextResponse.json({
       // Marie Ange's format
