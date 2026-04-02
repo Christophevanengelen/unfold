@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, Fire, CalendarMonth, Lightbulb, ChevronDown, ArrowRight, ShareNodes } from "flowbite-react-icons/outline";
 import { ShareSignalCard } from "./ShareSignalCard";
+import { TypewriterText } from "./TypewriterText";
 import { getPersonalizedText, type PersonalizedText } from "@/lib/openai-personalize";
 import { getUserProfileSync } from "@/lib/user-profile";
 import { getBirthDataSync } from "@/lib/birth-data";
@@ -78,6 +79,8 @@ interface CapsuleData {
     isReturn?: boolean;
     isHalfReturn?: boolean;
     stationType?: string;
+    // Lifetime occurrences (from toctoc-app-short)
+    allPeriods?: { date: string; endDate?: string; lifetimeNumber: number; totalHits?: number; isCurrent?: boolean }[];
   }[];
   domains: { domain: string; intensity: number; occurrence: number; totalOccurrences: number }[];
   planets: PlanetKey[];
@@ -116,6 +119,7 @@ export function CapsuleDetailSheet({
   const [showMore, setShowMore] = useState(false);
   const [aiText, setAiText] = useState<PersonalizedText | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [streamingCorps, setStreamingCorps] = useState<string | null>(null);
   const [showRefresh, setShowRefresh] = useState<"stressLevel" | "currentGoal" | null>(null);
   const [showShare, setShowShare] = useState(false);
   const openedAt = useState(() => Date.now())[0];
@@ -128,18 +132,8 @@ export function CapsuleDetailSheet({
   }, [onClose]);
 
   // Track capsule open + domain click (observed profile)
-  // After 3 opens, trigger PersonalizeFlow if profile is incomplete
   useEffect(() => {
-    trackCapsuleOpen().then((count) => {
-      if (count === 3) {
-        const profile = getUserProfileSync();
-        if (!profile?.lifePhase) {
-          // User has priorities from onboarding but not full profile yet
-          // Trigger PersonalizeFlow via custom event
-          window.dispatchEvent(new CustomEvent("unfold:show-personalize"));
-        }
-      }
-    });
+    trackCapsuleOpen();
     const domain = capsule.phases[0]?.domain;
     if (domain) trackDomainClick(domain, capsule.id);
   }, [capsule]);
@@ -163,13 +157,13 @@ export function CapsuleDetailSheet({
 
   // Load personalized AI text (using effective profile)
   const loadAiText = useCallback(async () => {
-    const declaredProfile = getUserProfileSync();
     const birthData = getBirthDataSync();
-    if (!declaredProfile || !birthData) return;
+    if (!birthData) return;
 
-    // Build effective profile from declared + observed
+    // Build effective profile from declared + observed (optional — works without)
+    const declaredProfile = getUserProfileSync();
     const observed = getObservedProfileSync();
-    const userProfile = buildEffectiveProfile(declaredProfile, observed);
+    const userProfile = declaredProfile ? buildEffectiveProfile(declaredProfile, observed) : null;
 
     setAiLoading(true);
     try {
@@ -214,9 +208,13 @@ export function CapsuleDetailSheet({
         birthData.placeOfBirth ?? "",
         "fr",
         phase?.boudinIndex,
-        phase?.boudinId
+        phase?.boudinId,
+        ({ corps }) => setStreamingCorps(corps)
       );
-      if (result) setAiText(result);
+      if (result) {
+        setAiText(result);
+        setStreamingCorps(null);
+      }
     } catch {
       // Silently fail — fallback to template text
     } finally {
@@ -237,12 +235,18 @@ export function CapsuleDetailSheet({
   const houseColor = capsule.color ?? houseMeta?.color ?? "var(--accent-purple)";
   const progress = getProgressPercent(capsule.startDate, capsule.endDate);
   const duration = formatDuration(capsule.startDate, capsule.endDate);
-  // Prefer API lifetime data (from boudin-detail via OpenAI call), fallback to client-computed
+  // Prefer API lifetime data (from boudin-detail via OpenAI call),
+  // then phase lifetime data (from toctoc-app-short).
+  // IMPORTANT: never fall back to tierOccurrence/tierTotal (those are NOT lifetime counts).
   const apiLifetimeNum = aiText?.rawLifetime?.number;
   const apiLifetimeTotal = aiText?.rawLifetime?.total;
-  const displayLifetimeNum = apiLifetimeNum ?? capsule.tierOccurrence;
-  const displayLifetimeTotal = apiLifetimeTotal ?? capsule.tierTotal;
-  const rarityText = getRarityText(displayLifetimeNum, displayLifetimeTotal, capsule.tier);
+  const phaseLifetimeNum = (phase as import("@/types/momentum").MomentumPhase | undefined)?.lifetimeNumber;
+  const phaseLifetimeTotal = (phase as import("@/types/momentum").MomentumPhase | undefined)?.lifetimeTotal;
+  const displayLifetimeNum = apiLifetimeNum ?? phaseLifetimeNum;
+  const displayLifetimeTotal = apiLifetimeTotal ?? phaseLifetimeTotal;
+  const rarityText = (displayLifetimeNum && displayLifetimeTotal)
+    ? getRarityText(displayLifetimeNum, displayLifetimeTotal, "toctoctoc")
+    : null;
   const domainNarrative = getDomainNarrative(domain, tc.context);
   const transitNarrative = getTransitNarrative(phase);
   const planetNarrative = transitNarrative || getPlanetNarrative(capsule.planets);
@@ -250,6 +254,46 @@ export function CapsuleDetailSheet({
   const cycleNarrative = getCycleNarrative(phase);
   const lifetimeNarrative = getLifetimeNarrative(phase);
   const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment, phase?.apiTopics);
+
+  // Resolved insight/guidance: AI text first, then rich template fallbacks.
+  // This ensures Insight clé and Avec le recul are ALWAYS visible.
+  const insightText = aiText?.insight
+    || cycleNarrative
+    || lifetimeNarrative
+    || transitNarrative
+    || planetNarrative
+    || null;
+  const guidanceText = aiText?.guidance || guidance;
+
+  // Lifetime periods list: prefer API/AI payload, fall back to phase data.
+  const lifetimePeriods =
+    (aiText?.allPeriods && aiText.allPeriods.length > 0 ? aiText.allPeriods : null)
+    ?? (phase?.allPeriods && phase.allPeriods.length > 0 ? phase.allPeriods : null);
+
+  // Cycle passes list: prefer API/AI payload, fall back to phase cycle/exactDates.
+  const cycleFromAi = aiText?.rawCycle?.allHits && aiText.rawCycle.allHits.length > 1
+    ? aiText.rawCycle
+    : null;
+  const cycleFromPhase = phase?.cycle?.allHits && phase.cycle.allHits.length > 1
+    ? { hitNumber: phase.cycle.hitNumber, totalHits: phase.cycle.totalHits, pattern: phase.cycle.pattern, allHits: phase.cycle.allHits }
+    : null;
+  const cycleFromExactDates = phase?.exactDates && phase.exactDates.length > 1
+    ? {
+        hitNumber: phase?.cycle?.hitNumber ?? 1,
+        totalHits: phase?.cycle?.totalHits ?? phase.exactDates.length,
+        pattern: phase?.cycle?.pattern ?? "",
+        allHits: phase.exactDates.map((date, idx) => ({
+          date,
+          hitNumber: idx + 1,
+          isCurrent: (phase?.cycle?.hitNumber ? idx + 1 === phase.cycle.hitNumber : false),
+        })),
+      }
+    : null;
+
+  const cyclePasses =
+    cycleFromAi
+    ?? cycleFromPhase
+    ?? cycleFromExactDates;
 
   // Date formatting — exact day/month/year, always show start → end
   const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
@@ -267,7 +311,7 @@ export function CapsuleDetailSheet({
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
       transition={{ type: "spring", stiffness: 300, damping: 35 }}
-      className="absolute inset-x-0 bottom-0 z-50 flex flex-col"
+      className="absolute inset-x-0 bottom-0 z-[60] flex flex-col"
       style={{
         borderRadius: "1.5rem 1.5rem 0 0",
         background: "var(--bg-secondary)",
@@ -346,7 +390,7 @@ export function CapsuleDetailSheet({
             )}
           </div>
 
-          {rarityText && (
+          {rarityText && displayLifetimeNum && displayLifetimeTotal && (
             <div className="flex items-baseline gap-2 mt-1">
               <span
                 className="text-3xl font-bold tabular-nums font-display"
@@ -458,7 +502,7 @@ export function CapsuleDetailSheet({
           )}
         </div>
 
-        {/* ── Section 5: Story — title + description ── */}
+        {/* ── Section 5: Story — title + description (LLM only) ── */}
         {phase && (shouldBlurAi ? (
           <div className="mb-5">
             <PremiumBlur feature="ai" blurAmount={10}>
@@ -470,10 +514,10 @@ export function CapsuleDetailSheet({
                   {tc.storyLabel}
                 </span>
                 <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
-                  {phase.title}
+                  {aiText?.titre || phase.title}
                 </h3>
                 <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
-                  {phase.description}
+                  {aiText?.story || phase.description}
                 </p>
               </div>
             </PremiumBlur>
@@ -486,74 +530,36 @@ export function CapsuleDetailSheet({
             >
               {tc.storyLabel}
             </span>
-            <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
-              {phase.title}
-            </h3>
             {/* Show translated API label — the real transit name */}
             {phase.apiLabel && (
               <p className="mt-1 text-[11px] font-medium" style={{ color: houseColor, opacity: 0.8 }}>
                 {translateApiLabel(phase.apiLabel)}
               </p>
             )}
-            {phase.subtitle && !phase.apiLabel && (
-              <p className="mt-1 text-xs" style={{ color: "var(--text-body-subtle)" }}>
-                {phase.subtitle}
+            {aiText?.titre && (
+              <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
+                {aiText.titre}
+              </h3>
+            )}
+            {aiText?.story ? (
+              <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
+                <TypewriterText text={aiText.story} speed={50} />
               </p>
-            )}
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={aiText?.story ? "ai" : "template"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mt-3 text-[13px] leading-relaxed"
-                style={{ color: "var(--text-body)" }}
-              >
-                {aiText?.story ?? phase.description}
-              </motion.p>
-            </AnimatePresence>
-            {aiText && !aiLoading && (
-              <motion.p
-                className="mt-1.5 text-[9px] font-medium uppercase tracking-wider"
-                style={{ color: "var(--accent-purple)", opacity: 0.4 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.4 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-              >
-                Personnalisé pour toi
-              </motion.p>
-            )}
-            {aiLoading && (
-              <div className="mt-2 flex items-center gap-1.5">
-                <div className="h-1 w-1 rounded-full animate-pulse" style={{ background: "var(--accent-purple)" }} />
-                <span className="text-[9px]" style={{ color: "var(--text-body-subtle)" }}>Personnalisation...</span>
+            ) : (aiLoading || streamingCorps) ? (
+              // Always show shimmer while loading — streaming partial text is never displayed
+              // directly because it can contain incomplete words (mid-token truncation).
+              <div className="mt-3 space-y-2">
+                <div className="h-3 w-4/5 rounded animate-pulse" style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }} />
+                <div className="h-3 w-3/5 rounded animate-pulse" style={{ background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)" }} />
+                <div className="h-3 w-2/3 rounded animate-pulse" style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)" }} />
               </div>
-            )}
+            ) : null}
           </div>
         ))}
 
-        {/* ── Section 6: Insight Card + Cycle Info ── */}
-        {phase?.keyInsight && (shouldBlurAi ? (
-          <div className="mb-4">
-            <PremiumBlur feature="ai" blurAmount={10}>
-              <div
-                className="rounded-xl px-4 py-3"
-                style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
-              >
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Lightbulb size={12} style={{ color: "var(--accent-purple)" }} />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                    {tc.insightLabel}
-                  </span>
-                </div>
-                <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
-                  {phase.keyInsight}
-                </p>
-              </div>
-            </PremiumBlur>
-          </div>
-        ) : (
+        {/* ── Section 6: Insight Card ── */}
+        {/* Always shown (AI text preferred, rich template fallback otherwise) */}
+        {!shouldBlurAi && (insightText || aiLoading) && (
           <div
             className="rounded-xl px-4 py-3 mb-4"
             style={{
@@ -568,23 +574,39 @@ export function CapsuleDetailSheet({
                 {tc.insightLabel}
               </span>
             </div>
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={aiText?.insight ? "ai" : "template"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="text-xs leading-relaxed"
-                style={{ color: "var(--text-body)" }}
-              >
-                {aiText?.insight ?? phase.keyInsight}
-              </motion.p>
-            </AnimatePresence>
+            {insightText ? (
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+                {aiText?.insight
+                  ? <TypewriterText text={insightText} speed={45} />
+                  : insightText}
+              </p>
+            ) : (
+              <div className="h-3 w-3/4 rounded animate-pulse" style={{ background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)" }} />
+            )}
           </div>
-        ))}
+        )}
+        {shouldBlurAi && phase?.keyInsight && (
+          <div className="mb-4">
+            <PremiumBlur feature="ai" blurAmount={10}>
+              <div
+                className="rounded-xl px-4 py-3"
+                style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
+              >
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Lightbulb size={12} style={{ color: "var(--accent-purple)" }} />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                    {tc.insightLabel}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+                  {aiText?.insight || phase.keyInsight}
+                </p>
+              </div>
+            </PremiumBlur>
+          </div>
+        )}
 
-        {(aiText?.hitInfo || cycleNarrative) && (
+        {aiText?.hitInfo && (
           <div
             className="rounded-xl px-4 py-3 mb-4"
             style={{
@@ -596,23 +618,88 @@ export function CapsuleDetailSheet({
                 Cycle
               </span>
             </div>
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={aiText?.hitInfo ? "ai" : "template"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="text-xs leading-relaxed"
-                style={{ color: "var(--text-body)" }}
-              >
-                {aiText?.hitInfo ?? cycleNarrative}
-              </motion.p>
-            </AnimatePresence>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+              <TypewriterText text={aiText.hitInfo} speed={45} />
+            </p>
           </div>
         )}
 
-        {/* ── Section 7: Guidance / Reflection Card + Lifetime ── */}
+        {/* ── Section 6b: Cycle passes (D-R-D multi-hit dates) ── */}
+        {cyclePasses?.allHits && cyclePasses.allHits.length > 1 && (
+          <div className="mb-4">
+            <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+              Passes du cycle ({cyclePasses.totalHits ?? cyclePasses.allHits.length})
+            </span>
+            {cyclePasses.pattern && (
+              <p className="mt-1 text-[10px]" style={{ color: "var(--text-body-subtle)" }}>
+                {cyclePasses.pattern}
+              </p>
+            )}
+            <div className="mt-2 space-y-1.5">
+              {cyclePasses.allHits.map((hit, i) => {
+                const d = new Date(hit.date);
+                const label = `${MONTH_NAMES[d.getMonth()]} ${d.getDate().toString().padStart(2, "0")} '${String(d.getFullYear()).slice(2)}`;
+                const isCurrent = hit.isCurrent || hit.hitNumber === cyclePasses?.hitNumber;
+                const today = new Date();
+                const isPast = !isCurrent && d < today;
+                const isFuture = !isCurrent && d >= today;
+                return (
+                  <div key={i} className="flex items-center gap-2">
+                    <span
+                      className="flex-shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold"
+                      style={{
+                        background: isCurrent
+                          ? houseColor
+                          : isPast
+                          ? "color-mix(in srgb, var(--accent-purple) 18%, transparent)"
+                          : "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
+                        color: isCurrent ? "var(--bg-primary)" : "var(--text-body-subtle)",
+                        opacity: isFuture ? 0.5 : 1,
+                      }}
+                    >
+                      {hit.hitNumber}
+                    </span>
+                    <span
+                      className="text-[11px] tabular-nums"
+                      style={{
+                        color: isCurrent ? "var(--text-heading)" : "var(--text-body-subtle)",
+                        fontWeight: isCurrent ? 600 : 400,
+                        opacity: isFuture ? 0.5 : 1,
+                      }}
+                    >
+                      {label}
+                    </span>
+                    {isPast && (
+                      <span
+                        className="text-[9px] font-semibold rounded px-1 py-0.5"
+                        style={{
+                          background: "color-mix(in srgb, var(--text-body-subtle) 12%, transparent)",
+                          color: "var(--text-body-subtle)",
+                        }}
+                      >
+                        passé
+                      </span>
+                    )}
+                    {isCurrent && (
+                      <span
+                        className="text-[9px] font-semibold rounded px-1 py-0.5"
+                        style={{
+                          background: `color-mix(in srgb, ${houseColor} 15%, transparent)`,
+                          color: houseColor,
+                        }}
+                      >
+                        maintenant
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Section 7: Guidance / Reflection Card ── */}
+        {/* Always shown: AI text preferred, template string (guidance) as fallback */}
         {shouldBlurAi ? (
           <div className="mb-4">
             <PremiumBlur feature="ai" blurAmount={10}>
@@ -623,11 +710,11 @@ export function CapsuleDetailSheet({
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
                   <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                    Pour vous préparer
+                    Pour te préparer
                   </span>
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
-                  {guidance}
+                  {guidanceText}
                 </p>
               </div>
             </PremiumBlur>
@@ -642,26 +729,23 @@ export function CapsuleDetailSheet({
             <div className="flex items-center gap-1.5 mb-1.5">
               <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
               <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                {tc.context === "past" ? "Avec le recul" : tc.context === "current" ? "En pratique" : "Pour vous préparer"}
+                {tc.context === "past" ? "Avec le recul" : tc.context === "current" ? "En pratique" : "Pour te préparer"}
               </span>
             </div>
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={aiText?.guidance ? "ai" : "template"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="text-xs leading-relaxed"
-                style={{ color: "var(--text-body)" }}
-              >
-                {aiText?.guidance ?? guidance}
-              </motion.p>
-            </AnimatePresence>
+            {aiLoading && !guidanceText ? (
+              <div className="h-3 w-3/5 rounded animate-pulse" style={{ background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)" }} />
+            ) : (
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+                {aiText?.guidance
+                  ? <TypewriterText text={guidanceText} speed={45} />
+                  : guidanceText}
+              </p>
+            )}
           </div>
         )}
 
-        {(aiText?.lifetimeInfo || lifetimeNarrative) && (
+        {/* ── Section 7b: Lifetime info (LLM narrative) ── */}
+        {aiText?.lifetimeInfo && (
           <div
             className="rounded-xl px-4 py-3 mb-4"
             style={{
@@ -670,25 +754,78 @@ export function CapsuleDetailSheet({
           >
             <div className="flex items-center gap-1.5 mb-1.5">
               <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                Dans votre vie
+                Dans ta vie
               </span>
             </div>
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={aiText?.lifetimeInfo ? "ai" : "template"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="text-xs leading-relaxed"
-                style={{ color: "var(--text-body)" }}
-              >
-                {aiText?.lifetimeInfo ?? lifetimeNarrative}
-              </motion.p>
-            </AnimatePresence>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+              <TypewriterText text={aiText.lifetimeInfo} speed={45} />
+            </p>
           </div>
         )}
 
+        {/* ── Section 7c: All lifetime occurrences list ── */}
+        {/* Show when total is rare (≤ 10) and we have the dates, OR when total is known but dates aren't loaded yet */}
+        {displayLifetimeTotal !== undefined && displayLifetimeTotal <= 10 && !lifetimePeriods && (
+          <div className="mb-4">
+            <p className="text-[11px] italic" style={{ color: "var(--text-body-subtle)" }}>
+              Ce signal se produit {displayLifetimeTotal} fois dans ta vie — ouvre la fiche pour voir toutes les dates.
+            </p>
+          </div>
+        )}
+        {lifetimePeriods && lifetimePeriods.length >= 1 && (displayLifetimeTotal ?? 99) <= 10 && (
+          <div className="mb-4">
+            <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+              {phase?.apiLabel ? translateApiLabel(phase.apiLabel) : "Ce signal"} ({lifetimePeriods.length})
+            </span>
+            <div className="mt-2 space-y-1.5">
+              {lifetimePeriods.map((p, i) => {
+                const start = new Date(p.date);
+                const end = p.endDate ? new Date(p.endDate) : start;
+                const startLabel = `${MONTH_NAMES[start.getMonth()]} ${start.getDate().toString().padStart(2, "0")} '${String(start.getFullYear()).slice(2)}`;
+                const endLabel = `${MONTH_NAMES[end.getMonth()]} ${end.getDate().toString().padStart(2, "0")} '${String(end.getFullYear()).slice(2)}`;
+                const isCurrent = p.isCurrent;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2"
+                  >
+                    <span
+                      className="flex-shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold"
+                      style={{
+                        background: isCurrent ? houseColor : "color-mix(in srgb, var(--accent-purple) 12%, transparent)",
+                        color: isCurrent ? "var(--bg-primary)" : "var(--text-body-subtle)",
+                      }}
+                    >
+                      {p.lifetimeNumber}
+                    </span>
+                    <span
+                      className="text-[11px] tabular-nums"
+                      style={{
+                        color: isCurrent ? "var(--text-heading)" : "var(--text-body-subtle)",
+                        fontWeight: isCurrent ? 600 : 400,
+                      }}
+                    >
+                      {startLabel} → {endLabel}
+                    </span>
+                    {p.totalHits && p.totalHits > 1 && (
+                      <span
+                        className="text-[10px] font-semibold rounded px-1"
+                        style={{
+                          background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)",
+                          color: "var(--accent-purple)",
+                        }}
+                      >
+                        ×{p.totalHits}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Convergence note ── */}
         {aiText?.convergenceNote && (
           <div
             className="rounded-xl px-4 py-3 mb-5"
@@ -789,10 +926,10 @@ export function CapsuleDetailSheet({
                 <DetailRow label="Score" value={`${phase?.score ?? "—"} / 4`} />
                 <DetailRow label="Intensité" value={`${phase?.intensity ?? "—"} / 100`} />
                 <DetailRow label="Durée" value={`${capsule.phases[0]?.durationWeeks ?? "—"} semaines`} />
-                {displayLifetimeNum > 0 && (
+                {displayLifetimeNum && displayLifetimeTotal && displayLifetimeTotal > 0 && (
                   <DetailRow
-                    label="Dans votre vie"
-                    value={`${displayLifetimeNum}e ${getTierLabel(capsule.tier).toLowerCase()} sur ${displayLifetimeTotal}`}
+                    label="Dans ta vie"
+                    value={`${displayLifetimeNum}e occurrence sur ${displayLifetimeTotal}`}
                   />
                 )}
                 {phase?.apiCategory && (

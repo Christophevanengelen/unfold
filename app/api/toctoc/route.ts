@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
     const allowedEndpoints = [
       "toctoc",
       "toctoc-app",
+      "toctoc-app-short",
       "toctoc-year",
       "toctoc-timeline",
     ];

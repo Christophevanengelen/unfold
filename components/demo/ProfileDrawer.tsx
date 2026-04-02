@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { User, Sun, Moon, AdjustmentsHorizontal } from "flowbite-react-icons/outline";
+import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit } from "flowbite-react-icons/outline";
 import { BottomSheet } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { PersonalizeFlow } from "@/components/demo/PersonalizeFlow";
 import { getUserProfileSync, saveUserProfile } from "@/lib/user-profile";
 import { isProfileComplete, type UserProfile } from "@/types/user-profile";
+import { useAuth } from "@/lib/auth-context";
+import { signOut } from "@/lib/supabase-auth";
+import { clearBirthData } from "@/lib/birth-data";
+import { AuthSheet } from "@/components/demo/AuthSheet";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -15,10 +20,13 @@ interface ProfileDrawerProps {
 }
 
 export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
+  const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const { birthData } = useMomentum();
+  const { user, isAuthenticated } = useAuth();
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
 
   const userName = birthData?.nickname || "You";
@@ -76,6 +84,21 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             </span>
           </button>
 
+          {/* Edit birth data */}
+          <button
+            type="button"
+            onClick={() => { onClose(); router.push("/demo/onboarding"); }}
+            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+          >
+            <span className="flex items-center gap-2.5">
+              <CalendarEdit size={16} className="text-accent-purple" />
+              Ma naissance
+            </span>
+            <span className="text-xs text-text-body-subtle">
+              {birthData?.birthDate ? "Modifier" : "Configurer"}
+            </span>
+          </button>
+
           {/* Theme toggle */}
           <button
             type="button"
@@ -94,6 +117,44 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               {isDark ? "Dark" : "Light"}
             </span>
           </button>
+
+          {/* Divider */}
+          <div className="my-4 h-px bg-brand-3" />
+
+          {/* Auth section */}
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-text-body-subtle">
+            Compte
+          </p>
+
+          {isAuthenticated ? (
+            <>
+              <p className="px-3 mb-2 text-xs text-text-body-subtle truncate">
+                {user?.email}
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOut();
+                  clearBirthData();
+                  onClose();
+                  router.push("/demo/onboarding");
+                }}
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+              >
+                <ArrowLeftToBracket size={16} className="text-text-body-subtle" />
+                Se déconnecter
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { onClose(); setTimeout(() => setAuthOpen(true), 300); }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+            >
+              <ArrowRightToBracket size={16} className="text-accent-purple" />
+              Se connecter
+            </button>
+          )}
         </div>
       </BottomSheet>
 
@@ -102,6 +163,12 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
         open={personalizeOpen}
         onClose={() => setPersonalizeOpen(false)}
         onComplete={handlePersonalizeComplete}
+      />
+
+      {/* Auth sheet */}
+      <AuthSheet
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
       />
     </>
   );

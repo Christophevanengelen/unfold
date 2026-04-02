@@ -53,6 +53,8 @@ const PLANET_DETAILS: Record<PlanetKey, { headline: string; body: string; timing
   uranus: { headline: "", body: "", timing: "" },
   neptune: { headline: "", body: "", timing: "" },
   pluto: { headline: "", body: "", timing: "" },
+  "north-node": { headline: "", body: "", timing: "" },
+  "south-node": { headline: "", body: "", timing: "" },
   "solar-eclipse": { headline: "", body: "", timing: "" },
   "lunar-eclipse": { headline: "", body: "", timing: "" },
 };

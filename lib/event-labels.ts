@@ -18,8 +18,8 @@ const PLANET_MAP: Record<string, PlanetKey> = {
   Uranus: "uranus",
   Neptune: "neptune",
   Pluto: "pluto",
-  "North Node": "sun", // karmic, solar-like
-  "South Node": "moon", // karmic, lunar-like
+  "North Node": "north-node",
+  "South Node": "south-node",
   eclipse: "solar-eclipse",
 };
 
@@ -149,6 +149,16 @@ const TRANSIT_LABELS: Record<string, Record<string, Partial<EventMeta>>> = {
     square: { title: "Tension de croissance", subtitle: "Ambition contre réalité", description: "L'ambition pousse, la réalité freine. Ajustez le cap sans perdre l'élan." },
     trine: { title: "Alignement favorable", subtitle: "Le flux est avec vous", description: "Les choses se mettent en place. La chance favorise ceux qui agissent — c'est le moment." },
   },
+  "South Node": {
+    conjunction: { title: "Libération karmique", subtitle: "Ce qui ne vous sert plus s'efface", description: "Le Noeud Sud active un point de votre thème. Il est temps de lâcher les schémas devenus obsolètes pour faire de la place à ce qui vient." },
+    opposition: { title: "Tiraillement ancien", subtitle: "Un vieux réflexe résiste", description: "Un ancien schéma vous retient face à un appel de croissance. Observez ce que vous avez du mal à lâcher." },
+    square: { title: "Friction de lâcher-prise", subtitle: "Le passé résiste au présent", description: "Un conflit entre un fonctionnement ancien et ce que la situation exige. Le lâcher-prise est la clé." },
+  },
+  "North Node": {
+    conjunction: { title: "Cap de croissance", subtitle: "La direction se clarifie", description: "Le Noeud Nord pointe exactement vers votre direction de croissance. Les opportunités qui se présentent méritent votre pleine attention." },
+    opposition: { title: "Recalibrage de direction", subtitle: "Le cap demande un ajustement", description: "Votre direction de vie est questionnée. C'est une invitation à vérifier que vous avancez vers ce qui compte vraiment." },
+    square: { title: "Carrefour de vie", subtitle: "Un choix de direction s'impose", description: "Vous êtes à un carrefour. La tension pousse à choisir entre confort du connu et appel de la croissance." },
+  },
 };
 
 const ZR_LABELS: Record<string, Partial<EventMeta>> = {
@@ -162,11 +172,45 @@ export function getEventMeta(
   label: string,
   aspect?: string,
   lotType?: string,
-  level?: number
+  level?: number,
+  markers?: string[]
 ): EventMeta {
-  // ZR events
+  // ZR events — differentiate by marker (LB, Cu, pre-LB, peak)
   if (category === "zr") {
     const lt = Array.isArray(lotType) ? lotType[0] : lotType || "fortune";
+    const lotLabel = lt === "fortune" ? "circonstances" : lt === "spirit" ? "vocation" : "désir";
+
+    // LB — Loosening of the Bond (major life pivot)
+    if (markers?.includes("LB")) {
+      return {
+        title: "Pivot majeur",
+        subtitle: `Votre ${lotLabel} change de cap`,
+        description: `Un tournant décisif dans votre ${lotLabel}. Ce qui a été construit arrive à maturité et la séquence "saute" vers un nouveau chapitre. Ce qui a été semé ces dernières années porte ses fruits ou se transforme.`,
+        keyInsight: "C'est l'un des pivots les plus marquants de votre timeline. Ce qui change ici redéfinit la direction.",
+      };
+    }
+
+    // Culmination — 10th sign from the lot (peak of cycle)
+    if (markers?.includes("Cu")) {
+      return {
+        title: "Apogée du cycle",
+        subtitle: `Le sommet de votre ${lotLabel}`,
+        description: `Ce qui a été construit dans le domaine de votre ${lotLabel} atteint son point culminant. C'est le moment où les résultats deviennent visibles et tangibles.`,
+        keyInsight: "Le sommet du cycle — ce que vous avez bâti est maintenant à son plus haut. Observez ce qui se manifeste.",
+      };
+    }
+
+    // pre-LB — Foreshadowing (seed of a future pivot)
+    if (markers?.includes("pre-LB")) {
+      return {
+        title: "Période graine",
+        subtitle: `Un pivot futur se prépare`,
+        description: `Ce qui se passe maintenant dans votre ${lotLabel} prépare un tournant futur. Les thèmes qui émergent sont les graines d'un changement majeur à venir dans ~8 ans.`,
+        keyInsight: "Période de foreshadowing — ce qui émerge maintenant annonce un pivot futur. Observez les thèmes récurrents.",
+      };
+    }
+
+    // Regular peak
     const base = ZR_LABELS[lt] || ZR_LABELS.fortune;
     return {
       title: base.title || "Changement de rythme",

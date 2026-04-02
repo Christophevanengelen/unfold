@@ -52,7 +52,7 @@ function toPlanetKey(ev: ApiEvent): PlanetKey {
     Pluto: "neptune", Neptune: "neptune", Uranus: "uranus",
     Saturn: "saturn", Jupiter: "jupiter", Mars: "mars",
     Venus: "venus", Mercury: "mercury", Sun: "sun", Moon: "moon",
-    "North Node": "sun", "South Node": "moon",
+    "North Node": "north-node", "South Node": "south-node",
   };
   if (ev.category === "eclipse") return ev.label?.includes("Solar") ? "solar-eclipse" : "lunar-eclipse";
   if (ev.category === "zr") return "jupiter";

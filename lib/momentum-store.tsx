@@ -31,8 +31,8 @@ import type { MomentumPhase } from "@/types/momentum";
 
 // ─── Cache layer — dual-write (IndexedDB + localStorage) ──────
 
-const CACHE_YEAR = "unfold_cache_year_phases";
-const CACHE_LIFETIME = "unfold_cache_lifetime_phases";
+const CACHE_YEAR = "unfold_cache_year_phases_v4";
+const CACHE_LIFETIME = "unfold_cache_lifetime_phases_v4";
 
 function readSync(key: string): MomentumPhase[] {
   if (typeof window === "undefined") return [];
@@ -60,9 +60,6 @@ async function fetchYear(bd: BirthData): Promise<MomentumPhase[]> {
 
 async function fetchLifetime(bd: BirthData): Promise<MomentumPhase[]> {
   const res = await fetchAppData(bd);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const appData = (res?.data as any)?.data ?? res?.data;
-  if (!appData?.allSausages?.length) return [];
   const phases = appDataToPhases(res);
   if (phases.length > 0) {
     persist(CACHE_LIFETIME, phases);

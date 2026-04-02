@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
 import { scaleIn } from "@/lib/animations";
@@ -31,7 +31,12 @@ const SCAN_STEPS = [
   { label: "Cycle convergences",       detail: "peak intensity windows", delay: 18.0 },
 ];
 
-function ScanFeed({ isLoading, phaseCount }: { isLoading: boolean; phaseCount: number }) {
+interface IntensityBreakdown {
+  label: string;
+  count: number;
+}
+
+function ScanFeed({ isLoading, phaseCount, breakdown }: { isLoading: boolean; phaseCount: number; breakdown?: IntensityBreakdown[] }) {
   const [visibleCount, setVisibleCount] = useState(0);
 
   useEffect(() => {
@@ -116,19 +121,31 @@ function ScanFeed({ isLoading, phaseCount }: { isLoading: boolean; phaseCount: n
         })}
       </div>
 
-      {/* Final count when done */}
+      {/* Final count with intensity breakdown */}
       {isDone && (
         <motion.div
-          className="mt-3 flex items-center gap-1.5"
+          className="mt-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
         >
-          <CheckCircle size={12} style={{ color: "var(--success)" }} />
-          <span className="text-[10px] font-medium"
-            style={{ color: "var(--success)", opacity: 0.8 }}>
-            {phaseCount} signals mapped across your lifetime
-          </span>
+          <div className="flex items-center gap-1.5 mb-2">
+            <CheckCircle size={12} style={{ color: "var(--success)" }} />
+            <span className="text-[10px] font-medium"
+              style={{ color: "var(--success)", opacity: 0.8 }}>
+              {phaseCount} signals mapped across your lifetime
+            </span>
+          </div>
+          {breakdown && (
+            <div className="flex items-center gap-3 ml-[18px]">
+              {breakdown.map((b) => (
+                <span key={b.label} className="text-[9px]"
+                  style={{ color: "var(--accent-purple)", opacity: 0.4 }}>
+                  <span className="font-semibold" style={{ opacity: 0.7 }}>{b.count}</span> {b.label}
+                </span>
+              ))}
+            </div>
+          )}
         </motion.div>
       )}
     </motion.div>
@@ -160,11 +177,50 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   const allDone = completed.length === statusLines.length;
   const didStart = useRef(false);
 
-  // Get memorable past phases for the reveal
-  const pastHighlights = phases
-    .filter(p => p.status === "past" && p.intensity >= 70)
-    .sort((a, b) => b.intensity - a.intensity)
-    .slice(0, 3);
+  // Get memorable past phases for the reveal — prefer lifetime data for deeper history
+  // Pick highest-intensity past phases, with variety in years
+  const lifetimeSource = timelinePhases.length > 0 ? timelinePhases : phases;
+  const pastHighlights = useMemo(() => {
+    const candidates = lifetimeSource
+      .filter(p => p.status === "past" && p.intensity >= 70)
+      .sort((a, b) => b.intensity - a.intensity);
+    const picked: typeof candidates = [];
+    const usedYears = new Set<number>();
+    for (const p of candidates) {
+      const year = new Date(p.startDate + "T00:00:00").getFullYear();
+      if (!usedYears.has(year)) {
+        picked.push(p);
+        usedYears.add(year);
+        if (picked.length >= 3) break;
+      }
+    }
+    // If not enough unique years, fill from remaining
+    if (picked.length < 3) {
+      for (const p of candidates) {
+        if (!picked.includes(p)) {
+          picked.push(p);
+          if (picked.length >= 3) break;
+        }
+      }
+    }
+    return picked;
+  }, [lifetimeSource]);
+
+  // Breakdown by TocToc intensity levels (score 1-4)
+  const intensityBreakdown = useMemo(() => {
+    if (timelinePhases.length === 0) return undefined;
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0 } as Record<number, number>;
+    for (const p of timelinePhases) {
+      const s = p.score ?? 1;
+      counts[Math.min(4, Math.max(1, s))]++;
+    }
+    return [
+      { label: "subtle", count: counts[1] },
+      { label: "notable", count: counts[2] },
+      { label: "major", count: counts[3] },
+      { label: "peak", count: counts[4] },
+    ].filter(b => b.count > 0);
+  }, [timelinePhases]);
 
   // Get current phase
   const currentPhase = phases.find(p => p.status === "current");
@@ -451,7 +507,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
             )}
 
             {/* Live scan feed — show the science behind the signal */}
-            <ScanFeed isLoading={isLoadingLifetime} phaseCount={timelinePhases.length} />
+            <ScanFeed isLoading={isLoadingLifetime} phaseCount={timelinePhases.length} breakdown={intensityBreakdown} />
           </motion.div>
         )}
 

@@ -63,6 +63,41 @@ export async function getProfile(): Promise<BirthData | null> {
   }
 }
 
+// ─── Auth linking ───────────────────────────────────────
+
+/** Link the current device's profile to a Supabase Auth user */
+export async function linkProfileToAuth(authUserId: string): Promise<void> {
+  if (!supabase) return;
+  const deviceId = getDeviceId();
+  if (!deviceId) return;
+
+  try {
+    await supabase
+      .from("profiles")
+      .update({ auth_user_id: authUserId, updated_at: new Date().toISOString() })
+      .eq("device_id", deviceId);
+  } catch (err) {
+    console.warn("[supabase-store] linkProfileToAuth failed:", err);
+  }
+}
+
+/** Get a profile by auth user ID (for sign-in recovery) */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getProfileByAuthId(authUserId: string): Promise<Record<string, any> | null> {
+  if (!supabase) return null;
+
+  try {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("auth_user_id", authUserId)
+      .single();
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Connections ─────────────────────────────────────────
 
 export interface SupabaseConnection {

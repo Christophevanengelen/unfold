@@ -9,8 +9,27 @@ import { PremiumTeaser } from "@/components/demo/PremiumTeaser";
 import { PremiumTeaserContext } from "@/components/demo/PremiumTeaserContext";
 import { MomentumProvider } from "@/lib/momentum-store";
 import { OnboardingGuard } from "@/components/demo/OnboardingGuard";
+import { AuthProvider } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
 import { SAFE_TOP, SAFE_BOTTOM } from "@/lib/layout-constants";
 import { checkAndUpdateStreak } from "@/lib/streak";
+
+function AvatarButton({ onClick }: { onClick: () => void }) {
+  const { user, isAuthenticated } = useAuth();
+  const initial = isAuthenticated && user?.email ? user.email[0].toUpperCase() : "A";
+  return (
+    <button
+      onClick={onClick}
+      className="relative flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
+      aria-label="Profile"
+    >
+      {initial}
+      {isAuthenticated && (
+        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-400 ring-1 ring-bg-primary" />
+      )}
+    </button>
+  );
+}
 
 /**
  * Capacitor detection — true when running inside native app shell.
@@ -82,6 +101,7 @@ export default function DemoLayout({
   const safeBottom = isNative ? "env(safe-area-inset-bottom, 34px)" : `${SAFE_BOTTOM}px`;
 
   return (
+    <AuthProvider>
     <MomentumProvider>
     <div className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"} style={{ backgroundColor: "#110D24" }}>
       {/* Mobile frame (conditional) */}
@@ -106,7 +126,7 @@ export default function DemoLayout({
           <div
             className={`flex-1 ${
               isFullBleed
-                ? "relative z-10 overflow-hidden"
+                ? "relative overflow-hidden"
                 : "overflow-y-auto overflow-x-hidden px-5 scrollbar-none"
             }`}
             style={{
@@ -139,13 +159,7 @@ export default function DemoLayout({
                   Jour {streak}
                 </span>
               )}
-              <button
-                onClick={() => setDrawerOpen(true)}
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
-                aria-label="Profile"
-              >
-                A
-              </button>
+              <AvatarButton onClick={() => setDrawerOpen(true)} />
             </div>
           </div>
         )}
@@ -181,5 +195,6 @@ export default function DemoLayout({
       )}
     </div>
     </MomentumProvider>
+    </AuthProvider>
   );
 }

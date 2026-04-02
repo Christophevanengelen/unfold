@@ -118,6 +118,7 @@ export const zrLotLabels: Record<string, string> = {
 export type PlanetKey =
   | "sun" | "moon" | "mercury" | "venus" | "mars"
   | "jupiter" | "saturn" | "uranus" | "neptune" | "pluto"
+  | "north-node" | "south-node"
   | "solar-eclipse" | "lunar-eclipse";
 
 interface PlanetMeta {
@@ -138,6 +139,8 @@ export const planetConfig: Record<PlanetKey, PlanetMeta> = {
   uranus:          { label: "Uranus",          color: "#7AAAB5", symbol: "♅" },  // dusty cyan
   neptune:         { label: "Neptune",         color: "#9B85C4", symbol: "♆" },  // lavender — on-brand
   pluto:           { label: "Pluton",          color: "#7A6B8A", symbol: "♇" },  // deep mauve — transformative
+  "north-node":    { label: "Noeud Nord",       color: "#B5C98A", symbol: "☊" },  // sage green — growth direction
+  "south-node":    { label: "Noeud Sud",        color: "#C4A07A", symbol: "☋" },  // warm amber — release
   "solar-eclipse": { label: "Éclipse solaire", color: "#D4C5A0", symbol: "●" },  // warm ivory — corona glow
   "lunar-eclipse": { label: "Éclipse lunaire", color: "#A07090", symbol: "◐" },  // mauve pink
 };
@@ -145,6 +148,7 @@ export const planetConfig: Record<PlanetKey, PlanetMeta> = {
 export const PLANET_KEYS: PlanetKey[] = [
   "sun", "moon", "mercury", "venus", "mars",
   "jupiter", "saturn", "uranus", "neptune", "pluto",
+  "north-node", "south-node",
   "solar-eclipse", "lunar-eclipse",
 ];
 
@@ -160,8 +164,8 @@ export function transitPlanetToKey(transitPlanet: string): PlanetKey | null {
     "Mars": "mars",
     "Venus": "venus",
     "Mercury": "mercury",
-    "North Node": "sun",
-    "South Node": "sun",
+    "North Node": "north-node",
+    "South Node": "south-node",
     "eclipse": "solar-eclipse",
   };
   return map[transitPlanet] ?? null;

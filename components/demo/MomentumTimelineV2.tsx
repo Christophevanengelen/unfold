@@ -14,6 +14,11 @@ import { CapsuleDetailSheet } from "./CapsuleDetailSheet";
 import { DailyBriefing } from "./DailyBriefing";
 import { isPremium } from "@/lib/premium-gate";
 import { usePremiumTeaser } from "./PremiumTeaserContext";
+import { preGenerateForCapsules } from "@/lib/openai-personalize";
+import { getUserProfileSync } from "@/lib/user-profile";
+import { getBirthDataSync } from "@/lib/birth-data";
+import { getObservedProfileSync } from "@/lib/observed-profile";
+import { buildEffectiveProfile } from "@/lib/effective-profile";
 
 // ─── Types ──────────────────────────────────────────────────
 type ViewMode = "overview" | "list";
@@ -1135,6 +1140,67 @@ export function MomentumTimelineV2() {
     [timelinePhases, phases]
   );
 
+  // Pre-warm AI text for the top 3 most relevant capsules as soon as data loads.
+  // By the time the user taps, the L1 cache is hot → text appears instantly.
+  useEffect(() => {
+    if (!allCapsules.length) return;
+    const declaredProfile = getUserProfileSync();
+    const birthData = getBirthDataSync();
+    if (!declaredProfile || !birthData) return;
+
+    const observed = getObservedProfileSync();
+    const effectiveProfile = buildEffectiveProfile(declaredProfile, observed);
+
+    const tierOrder: Record<string, number> = { toctoctoc: 0, toctoc: 1, toc: 2 };
+    const top = [...allCapsules]
+      .filter(c => c.isCurrent || (!c.isFuture || isPremium()))
+      .sort((a, b) => {
+        if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+        return (tierOrder[a.tier] ?? 9) - (tierOrder[b.tier] ?? 9);
+      })
+      .slice(0, 3);
+
+    const ids = top.map(c => c.id);
+    const contexts = top.map(c => {
+      const phase = c.phases[0];
+      return {
+        tier: c.tier,
+        isCurrent: c.isCurrent,
+        isFuture: c.isFuture,
+        planets: c.planets,
+        score: phase?.score,
+        domain: phase?.domain,
+        apiLabel: phase?.apiLabel,
+        apiCategory: phase?.apiCategory,
+        transitPlanet: phase?.transitPlanet,
+        natalPoint: phase?.natalPoint,
+        aspect: phase?.aspect,
+        apiTopics: phase?.apiTopics,
+        startDate: c.startDate.toISOString(),
+        endDate: c.endDate.toISOString(),
+        isVipTransit: phase?.isVipTransit,
+        durationWeeks: phase?.durationWeeks,
+        cycle: phase?.cycle,
+        windowStart: phase?.windowStart,
+        windowEnd: phase?.windowEnd,
+        exactDates: phase?.exactDates,
+        parileDate: phase?.parileDate,
+        isReturn: phase?.isReturn,
+        isHalfReturn: phase?.isHalfReturn,
+        stationType: phase?.stationType,
+        eclipseType: phase?.eclipseType,
+        markers: phase?.markers,
+      };
+    });
+    const boudinIds = top.map(c => c.phases[0]?.boudinId) as string[];
+    const boudinIndices = top.map(c => c.phases[0]?.boudinIndex) as number[];
+
+    preGenerateForCapsules(
+      ids, contexts, effectiveProfile,
+      birthData.placeOfBirth ?? "", "fr",
+      boudinIndices, boudinIds
+    );
+  }, [allCapsules]);
 
   const handleTapCapsule = useCallback((capsule: CapsuleData) => {
     if (capsule.isFuture && !isPremium()) {
@@ -1331,7 +1397,7 @@ export function MomentumTimelineV2() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-40"
+              className="absolute inset-0 z-[55]"
               style={{ background: "rgba(0,0,0,0.4)" }}
               onClick={() => setSelectedCapsule(null)}
             />

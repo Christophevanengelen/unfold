@@ -7,7 +7,7 @@
  */
 
 import type { MomentumPhase } from "@/types/momentum";
-import type { ApiEvent, MonthData, TocTocYearResponse, SausageData, TocTocAppResponse } from "@/lib/momentum-api";
+import type { ApiEvent, MonthData, TocTocYearResponse, TocTocAppShortResponse, ShortBoudinData } from "@/lib/momentum-api";
 import {
   inferDomain,
   extractPlanet,
@@ -73,7 +73,8 @@ export function yearDataToPhases(
       label,
       ev.aspect,
       ev.lotType,
-      ev.level
+      ev.level,
+      ev.markers
     );
 
     // Compute date range
@@ -117,9 +118,11 @@ export function yearDataToPhases(
     const durationWeeks = Math.max(1, Math.round(durationMs / (7 * 86400000)));
 
     // Collect planets (main transit + natal point if different)
+    // Angles (ASC, MC, IC, Desc) are not celestial bodies — skip
+    const ANGLE_NAMES_YEAR = new Set(["ASC", "MC", "IC", "Desc", "Ascendant", "Midheaven", "Descendant"]);
     const planets: PlanetKey[] = [planet];
     const natal = extractNatalPoint(label);
-    if (natal) {
+    if (natal && !ANGLE_NAMES_YEAR.has(natal)) {
       const natalPlanet = extractPlanet(`${natal} `);
       if (natalPlanet !== planet && !planets.includes(natalPlanet)) {
         planets.push(natalPlanet);
@@ -153,116 +156,65 @@ export function yearDataToPhases(
   return phases;
 }
 
-// ─── App Data (sausages) → MomentumPhase[] ──────────────────
-// Used for the full lifetime timeline (toctoc-app.php, 30-120s)
-//
-// Strategy: group overlapping sausages into merged phases.
-// 1309 individual events → ~40-80 life phases on the timeline.
-// Grouping: sausages that overlap in time merge into one phase.
-// The highest score determines the tier, planets combine.
-
-interface RawPhase {
-  startMs: number;
-  endMs: number;
-  maxScore: number;
-  domains: Map<string, number>;
-  planets: Set<string>;
-  /** Topic colors from API — each topic = one dot in the sausage */
-  topicColors: string[];
-  bestLabel: string;
-  bestCategory: string;
-  bestAspect?: string;
-  bestLotType?: string;
-  bestLevel?: number;
-  sausageCount: number;
-  color?: string; // hex from API sausage
-  /** Original sausage for detail sheet fields */
-  originalSausage?: SausageData;
-}
+// ─── App Data (short boudins) → MomentumPhase[] ─────────────
+// Uses toctoc-app-short.php (~475 KB vs ~11 MB for full toctoc-app)
+// Each boudin is already a single event with abbreviated field names.
+// Detail data (LLM payload, natal context) fetched on-demand via toctoc-boudin-detail.
 
 export function appDataToPhases(
-  response: TocTocAppResponse
+  response: TocTocAppShortResponse
 ): MomentumPhase[] {
-  // Handle double-nested API response: .data.data.allSausages or .data.allSausages
+  // Handle double-nested API response: .data.data.boudins or .data.boudins
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rawData = response.data as any;
-  const data = rawData?.data?.allSausages ? rawData.data : rawData;
-  if (!data?.allSausages) return [];
+  const data = rawData?.data?.boudins ? rawData.data : rawData;
+  if (!data?.boudins) return [];
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
-  // Sort sausages by start date
-  const sorted = [...data.allSausages]
-    .filter(s => (s.startDate || s.date))
-    .sort((a, b) => {
-      const aDate = a.startDate || a.date || "";
-      const bDate = b.startDate || b.date || "";
-      return aDate.localeCompare(bDate);
-    });
+  const phases: MomentumPhase[] = [];
 
-  // All scores included: 1 = TOC (thin), 2 = TOCTOC (medium), 3-4 = TOCTOCTOC (large)
-  const groups: RawPhase[] = [];
+  // Sort boudins by start date (should already be sorted, but ensure)
+  const sorted = [...data.boudins]
+    .filter((b: ShortBoudinData) => b.s)
+    .sort((a: ShortBoudinData, b: ShortBoudinData) => a.s.localeCompare(b.s));
 
-  for (const s of sorted) {
-    if (s.score < 1) continue;
-    const startDate = s.startDate || s.date || todayStr;
-    const endDate = s.endDate || startDate;
+  for (let i = 0; i < sorted.length; i++) {
+    const b = sorted[i] as ShortBoudinData;
+    if (b.sc < 1) continue;
+
+    const startDate = b.s;
+    const endDate = b.e || startDate;
     const startMs = new Date(startDate).getTime();
     const endMs = new Date(endDate).getTime();
 
-    const label = s.label || "";
-    const lotType = Array.isArray(s.lotType) ? s.lotType[0] : (s.lotType as string | undefined);
-    const domain = inferDomain(s.category, label, lotType);
-    const planet = s.transitPlanet
-      ? extractPlanet(`${s.transitPlanet} `)
-      : extractPlanet(label);
-    const intensity = scoreToIntensity(s.score, s.cycle?.allHits);
+    const label = b.lbl || "";
+    const lotType = Array.isArray(b.lotType) ? b.lotType[0] : undefined;
+    const domain = inferDomain(b.cat, label, lotType);
+    const intensity = scoreToIntensity(b.sc);
 
-    const planets = new Set([planet]);
-    if (s.natalPoint) planets.add(extractPlanet(`${s.natalPoint} `));
-
-    // Topic colors from API — each topic = one dot in the sausage
-    const topicColors = (s.topics || []).map((t: { color: string }) => t.color);
-
-    // Fallback: if no topics, use the sausage color itself
-    const firstTopicColor = topicColors[0] || s.color;
-
-    groups.push({
-      startMs,
-      endMs,
-      maxScore: s.score,
-      domains: new Map([[domain, intensity]]),
-      planets,
-      topicColors,
-      bestLabel: label,
-      bestCategory: s.category,
-      bestAspect: s.aspect,
-      bestLotType: lotType,
-      bestLevel: s.level,
-      sausageCount: 1,
-      color: firstTopicColor,
-      originalSausage: s,
-    });
-  }
-
-  // Convert groups to MomentumPhase[]
-  const phases: MomentumPhase[] = [];
-
-  for (let i = 0; i < groups.length; i++) {
-    const g = groups[i];
-    const startDate = new Date(g.startMs).toISOString().split("T")[0];
-    const endDate = new Date(g.endMs).toISOString().split("T")[0];
-
-    // Pick the dominant domain (highest intensity)
-    let bestDomain: string = "work";
-    let bestIntensity = 0;
-    for (const [d, intensity] of g.domains) {
-      if (intensity > bestIntensity) {
-        bestDomain = d;
-        bestIntensity = intensity;
+    // ZR boudins have no planets — they're time-lord technique, not transits
+    // Eclipse boudins use the eclipse key, not a planet
+    const planets: PlanetKey[] = [];
+    if (b.cat !== "zr") {
+      const planet = b.tp
+        ? extractPlanet(`${b.tp} `)
+        : extractPlanet(label);
+      planets.push(planet);
+      // Angles (ASC, MC, IC, Desc) are not celestial bodies — skip adding as planet pill
+      const ANGLE_NAMES = new Set(["ASC", "MC", "IC", "Desc", "Ascendant", "Midheaven", "Descendant"]);
+      if (b.np && !ANGLE_NAMES.has(b.np)) {
+        const natalPlanet = extractPlanet(`${b.np} `);
+        if (natalPlanet !== planet && !planets.includes(natalPlanet)) {
+          planets.push(natalPlanet);
+        }
       }
     }
+
+    // Topic colors come pre-resolved as hex array from short API
+    const topicColors = b.tc || [];
+    const firstTopicColor = topicColors[0] || b.col;
 
     // Determine status
     let status: "past" | "current" | "future";
@@ -274,87 +226,69 @@ export function appDataToPhases(
       status = "future";
     }
 
-    const durationMs = g.endMs - g.startMs;
+    const durationMs = endMs - startMs;
     const durationWeeks = Math.max(1, Math.round(durationMs / (7 * 86400000)));
 
-    // Cap planets at 5 (most relevant)
-    const planetList = Array.from(g.planets).slice(0, 5) as PlanetKey[];
+    const meta = getEventMeta(b.cat, label, b.asp, lotType, b.lvl, b.markers);
 
-    // Use the best event's metadata for title/description
-    const meta = getEventMeta(
-      g.bestCategory,
-      g.bestLabel,
-      g.bestAspect,
-      g.bestLotType,
-      g.bestLevel
-    );
-
-    // Overall intensity = max across all domains in this group
-    const overallIntensity = Math.max(...Array.from(g.domains.values()));
-
-    // Extract raw API fields from originalSausage for detail sheet
-    const os = g.originalSausage;
-    const rawLotType = os ? (typeof os.lotType === 'string' ? os.lotType : Array.isArray(os.lotType) ? os.lotType[0] : undefined) : undefined;
-    const rawCycle = os?.cycle ? {
-      hitNumber: os.cycle.hitNumber,
-      totalHits: os.cycle.totalHits ?? (Array.isArray(os.cycle.allHits) ? os.cycle.allHits.length : 1),
-      pattern: os.cycle.pattern || os.pattern || '',
-      allHits: Array.isArray(os.cycle.allHits) ? os.cycle.allHits : [],
+    // Map short cycle to detail format
+    const rawCycle = b.cyc ? {
+      hitNumber: b.cyc.h,
+      totalHits: b.cyc.t,
+      pattern: '',
+      // Include all exact hit dates if available (from cyc.all)
+      allHits: b.cyc.all
+        ? b.cyc.all.map((date, idx) => ({ date, hitNumber: idx + 1, isCurrent: idx + 1 === b.cyc!.h }))
+        : [] as { date: string; hitNumber: number; isCurrent?: boolean }[],
     } : undefined;
 
     phases.push({
       id: `phase-${i}`,
       boudinIndex: i,
-      domain: bestDomain as "love" | "health" | "work",
+      domain: domain as "love" | "health" | "work",
       title: meta.title,
       subtitle: meta.subtitle,
-      description: g.sausageCount > 1
-        ? `${meta.description} (${g.sausageCount} signaux actifs)`
-        : meta.description,
+      description: meta.description,
       startDate,
       endDate,
       durationWeeks,
-      intensity: overallIntensity,
-      score: g.maxScore, // raw API score 1-4 — used for tier sizing
-      planets: planetList,
-      topicColors: g.topicColors.length > 0 ? g.topicColors : undefined,
+      intensity,
+      score: b.sc,
+      planets,
+      topicColors: topicColors.length > 0 ? topicColors : undefined,
       status,
-      keyInsight: g.sausageCount >= 3
-        ? `${g.sausageCount} signaux actifs en même temps — une période concentrée.`
-        : meta.keyInsight,
+      keyInsight: meta.keyInsight,
       guidance:
         status === "current"
-          ? "Ce signal est actif en ce moment. Observez les thèmes liés dans votre quotidien."
+          ? "Ce signal est actif en ce moment. Observe les thèmes liés dans ton quotidien."
           : undefined,
-      color: g.color,
-      // Raw API sausage fields for detail sheet rendering
-      apiLabel: os?.label,
-      apiCategory: os?.category,
-      transitPlanet: os?.transitPlanet,
-      natalPoint: os?.natalPoint,
-      aspect: os?.aspect,
+      color: firstTopicColor,
+      // Raw API fields for detail sheet (mapped from short names)
+      apiLabel: label,
+      apiCategory: b.cat,
+      transitPlanet: b.tp,
+      natalPoint: b.np,
+      aspect: b.asp,
       cycle: rawCycle,
-      apiTopics: os?.topics?.map(t => ({ house: t.house, color: t.color, topic: t.label || '', source: '' })),
-      lotType: rawLotType,
-      zrLevel: os?.level,
-      periodSign: os?.periodSign,
-      markers: os?.markers,
-      eclipseType: os?.eclipseType,
-      // NOTE: API does NOT provide lifetime occurrence counts.
-      // cycle.hitNumber = D-R-D pass (e.g. 2nd of 3 passes of same transit).
-      // Do NOT map cycle → lifetime. Leave undefined so UI falls back to client computation.
-      lifetimeNumber: undefined,
-      lifetimeTotal: undefined,
-      isVipTransit: os?.isVipTransit,
-      // Transit window data
-      windowStart: os?.windowStart,
-      windowEnd: os?.windowEnd,
-      exactDates: os?.exactDates,
-      parileDate: os?.parileDate,
-      isReturn: os?.isReturn,
-      isHalfReturn: os?.isHalfReturn,
-      stationType: os?.stationType,
-      boudinId: os?.id,
+      apiTopics: topicColors.map((c, idx) => ({ house: b.th?.[idx] ?? b.nh ?? b.pH ?? idx + 1, color: c, topic: '', source: '' })),
+      lotType,
+      zrLevel: b.lvl,
+      periodSign: b.pSign,
+      markers: b.markers,
+      isPeakPeriod: b.isPeak,
+      isCulmination: b.isCu || b.markers?.includes("Cu"),
+      isLB: b.isLB || b.markers?.includes("LB"),
+      isPreLB: b.isPreLB || b.markers?.includes("pre-LB"),
+      linkedLB: b.lnkLB,
+      linkedForeshadow: b.lnkFS,
+      eclipseType: b.eType,
+      lifetimeNumber: b.ltNum,
+      lifetimeTotal: b.ltTot,
+      allPeriods: b.allP,
+      stationType: b.stType,
+      // Use the exact sausage ID (hit-specific for multi-hit transits, e.g. transit_abc_h3)
+      // The detail API uses calculateTocTocApp which creates the same _h{n} IDs
+      boudinId: b.id,
     });
   }
 

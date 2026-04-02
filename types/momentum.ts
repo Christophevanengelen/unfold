@@ -37,11 +37,18 @@ export interface MomentumPhase {
   zrLevel?: number;
   periodSign?: string;
   markers?: string[];
+  isPeakPeriod?: boolean;
+  isCulmination?: boolean;
+  isLB?: boolean;
+  isPreLB?: boolean;
+  linkedLB?: { lbSign: string; lbStart: string; lbEnd: string } | null;
+  linkedForeshadow?: { foreshadowSign: string; foreshadowStart: string; foreshadowEnd: string } | null;
   eclipseType?: string;
-  /** @deprecated API does not provide lifetime counts. Always undefined from adapter. */
+  /** Lifetime occurrence count from API (transit, station, ZR, eclipse) */
   lifetimeNumber?: number;
-  /** @deprecated API does not provide lifetime counts. Always undefined from adapter. */
+  /** Total lifetime occurrences from API */
   lifetimeTotal?: number;
+  allPeriods?: { date: string; endDate?: string; lifetimeNumber: number }[];
   isVipTransit?: boolean;
   // Transit window data (from API sausage)
   windowStart?: string;

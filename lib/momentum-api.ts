@@ -5,7 +5,7 @@
  * Results are deterministic per birth data (same input = same output).
  */
 
-import type { BirthData } from "./birth-data";
+import { birthHash, type BirthData } from "./birth-data";
 import { storage } from "./storage";
 
 // ─── API Response Types ─────────────────────────────────────
@@ -114,7 +114,16 @@ export interface SausageData {
   level?: number;
   periodSign?: string;
   markers?: string[];
+  isPeakPeriod?: boolean;
   isCulmination?: boolean;
+  isLB?: boolean;
+  isPreLB?: boolean;
+  linkedLB?: { lbSign: string; lbStart: string; lbEnd: string } | null;
+  linkedForeshadow?: { foreshadowSign: string; foreshadowStart: string; foreshadowEnd: string } | null;
+  // Lifetime context (transits, stations, ZR, eclipses)
+  lifetimeNumber?: number;
+  lifetimeTotal?: number;
+  allPeriods?: { date: string; endDate?: string; lifetimeNumber: number }[];
   // Eclipse-specific
   eclipseType?: string;
   eclipseAxis?: string;
@@ -125,6 +134,47 @@ export interface SausageData {
   width?: "thin" | "medium" | "large";
   topics?: { house: number; color: string; label?: string }[];
   cycle?: { hitNumber: number; totalHits: number; pattern?: string; allHits: { date: string; hitNumber: number }[] };
+}
+
+/** Short boudin from toctoc-app-short — minimal fields for timeline rendering */
+export interface ShortBoudinData {
+  id: string;
+  cat: string;         // category: transit|zr|eclipse|station
+  s: string;           // startDate
+  e?: string;          // endDate
+  sc: number;          // score (1-4)
+  w: string;           // width: thin|medium|large
+  col: string;         // hex color
+  lbl: string;         // label
+  gid?: string;        // groupId
+  asp?: string;        // aspect
+  tp?: string;         // transitPlanet
+  np?: string;         // natalPoint
+  tc?: string[];       // topicColors (hex array)
+  th?: number[];       // topicHouses (per-topic house numbers)
+  past?: boolean;      // isPast
+  nh?: number;         // natalHouse
+  nhc?: string;        // natalHouseColor
+  bid?: string;        // base boudin ID (before _h{n} suffix for multi-hit transits)
+  cyc?: { h: number; t: number; all?: string[] }; // cycle: hitNumber/totalHits/allExactDates
+  lotType?: string[];  // ZR lot types (deduplicated)
+  lvl?: number;        // ZR level
+  pSign?: string;      // ZR period sign
+  pH?: number;         // ZR period house
+  markers?: string[];  // ZR markers: "LB", "Cu", "pre-LB"
+  isPeak?: boolean;    // ZR isPeakPeriod
+  isCu?: boolean;      // ZR isCulmination
+  isLB?: boolean;      // ZR Loosening of the Bond
+  isPreLB?: boolean;   // ZR foreshadowing period
+  lnkLB?: { lbSign: string; lbStart: string; lbEnd: string } | null;          // linkedLB
+  lnkFS?: { foreshadowSign: string; foreshadowStart: string; foreshadowEnd: string } | null; // linkedForeshadow
+  ltNum?: number;      // lifetimeNumber
+  ltTot?: number;      // lifetimeTotal
+  allP?: { date: string; endDate?: string; lifetimeNumber: number }[];  // allPeriods
+  eType?: string;      // eclipse type
+  eSign?: string;      // eclipse sign
+  eHouses?: number[];  // eclipse axis houses
+  stType?: string;     // station type SR|SD
 }
 
 export interface TocTocAppResponse {
@@ -151,16 +201,29 @@ export interface TocTocAppResponse {
   };
 }
 
-// ─── Cache (IndexedDB-backed) ───────────────────────────────
-
-function birthHash(birth: BirthData): string {
-  return `${birth.birthDate}_${birth.birthTime}_${birth.latitude.toFixed(2)}_${birth.longitude.toFixed(2)}`;
+/** Response from toctoc-app-short — lightweight boudin data for timeline */
+export interface TocTocAppShortResponse {
+  success: boolean;
+  data: {
+    success: boolean;
+    person: {
+      name: string;
+      birthDate: string;
+      birthTime: string;
+    };
+    houseColors: Record<string, string>;
+    boudins: ShortBoudinData[];
+    total: number;
+    computeTimeSeconds: number;
+  };
 }
+
+// ─── Cache (IndexedDB-backed) ───────────────────────────────
 
 // ─── API Calls ──────────────────────────────────────────────
 
 const API_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
-const ALLOWED_ENDPOINTS = ["toctoc", "toctoc-app", "toctoc-year", "toctoc-timeline"];
+const ALLOWED_ENDPOINTS = ["toctoc", "toctoc-app", "toctoc-app-short", "toctoc-year", "toctoc-timeline"];
 
 /**
  * Dual-mode API caller:
@@ -227,21 +290,21 @@ export async function fetchYearData(
   return data;
 }
 
-/** Full lifetime sausages (30-120s). Use for background enrichment. */
+/** Full lifetime boudins (~475 KB via toctoc-app-short). Use for background enrichment. */
 export async function fetchAppData(
   birth: BirthData
-): Promise<TocTocAppResponse> {
-  const cacheKey = `unfold_app_${birthHash(birth)}`;
-  const cached = await storage.getCache<TocTocAppResponse>(cacheKey);
+): Promise<TocTocAppShortResponse> {
+  const cacheKey = `unfold_app_short_v2_${birthHash(birth)}`;
+  const cached = await storage.getCache<TocTocAppShortResponse>(cacheKey);
   if (cached) {
-    console.log("[Momentum] App data from cache (lifetime sausages)");
+    console.log("[Momentum] App data from cache (short boudins)");
     return cached;
   }
 
-  const data = (await callProxy("toctoc-app", birth)) as TocTocAppResponse;
+  const data = (await callProxy("toctoc-app-short", birth)) as TocTocAppShortResponse;
   if (data?.success || data?.data?.success) {
     await storage.setCache(cacheKey, data);
-    console.log("[Momentum] App data fetched & cached");
+    console.log("[Momentum] App short data fetched & cached");
   }
   return data;
 }

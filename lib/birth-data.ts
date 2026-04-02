@@ -18,6 +18,11 @@ export interface BirthData {
   placeOfBirth: string;
 }
 
+/** Stable hash for cache keys — same birth data = same hash */
+export function birthHash(birth: BirthData): string {
+  return `${birth.birthDate}_${birth.birthTime}_${birth.latitude.toFixed(2)}_${birth.longitude.toFixed(2)}`;
+}
+
 export async function saveBirthData(data: BirthData): Promise<void> {
   await storage.setPersistent(STORAGE_KEY, data);
   // Also keep in localStorage as fallback (sync access needed in some places)

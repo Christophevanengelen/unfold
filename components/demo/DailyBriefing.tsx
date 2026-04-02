@@ -1,18 +1,13 @@
 "use client";
 
 /**
- * DailyBriefing — editorial AI card at top of timeline.
+ * DailyBriefing — two AI cards at top of timeline.
+ *
+ * DailyCard   — "Aujourd'hui"  — fast signals (Mars+, L4 ZR, eclipses active today)
+ * PeriodCard  — "En ce moment" — slow outer planets, major transits spanning weeks/months
  *
  * Grid: 8px base. All spacing = multiples of 8.
  * Touch: minimum 44px targets (Apple HIG).
- * Rule: internal spacing ≤ external spacing.
- *
- * Architecture (atomic design):
- *   useBriefingData (hook) → fetch + cache
- *   DailyBriefing (organism) → state orchestration
- *   BriefingCard (molecule) → card layout
- *   DomainPill (atom) → single pill
- *   BriefingSkeleton (atom) → loading state
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -64,14 +59,14 @@ function getDomainColor(domain: string): string {
   return "var(--accent-purple)";
 }
 
-function todayKey(): string {
+function dateKey(prefix: string): string {
   const d = new Date();
-  return `daily_briefing_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${prefix}_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // ─── Hook: data fetching ─────────────────────────────────
 
-function useBriefingData(birthData: BirthData | null) {
+function useBriefingData(birthData: BirthData | null, endpoint: string, cachePrefix: string) {
   const [data, setData] = useState<BriefingData | null>(null);
   const [state, setState] = useState<LoadState>("idle");
 
@@ -81,7 +76,7 @@ function useBriefingData(birthData: BirthData | null) {
     setState("loading");
 
     async function load() {
-      const cacheKey = todayKey();
+      const cacheKey = dateKey(cachePrefix);
 
       try {
         const cached = await storage.get<BriefingData>(cacheKey, CACHE_TTL_MS);
@@ -89,7 +84,7 @@ function useBriefingData(birthData: BirthData | null) {
       } catch { /* miss */ }
 
       try {
-        const res = await fetch("/api/openai/daily-briefing", {
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ birthData }),
@@ -104,7 +99,7 @@ function useBriefingData(birthData: BirthData | null) {
 
     load();
     return () => { cancelled = true; };
-  }, [birthData]);
+  }, [birthData, endpoint, cachePrefix]);
 
   return { data, state };
 }
@@ -118,7 +113,7 @@ function DomainPill({ domain }: { domain: string }) {
       className="inline-flex rounded-full font-medium"
       style={{
         fontSize: 10,
-        padding: `${S.xs}px ${S.sm + S.xs}px`, // 4px 12px
+        padding: `${S.xs}px ${S.sm + S.xs}px`,
         color,
         background: `color-mix(in srgb, ${color} 12%, transparent)`,
         border: `1px solid color-mix(in srgb, ${color} 18%, transparent)`,
@@ -129,31 +124,15 @@ function DomainPill({ domain }: { domain: string }) {
   );
 }
 
-// ─── Atom: Skeleton ──────────────────────────────────────
+// ─── Molecule: Brief Card ────────────────────────────────
 
-function BriefingSkeleton() {
-  return (
-    <div style={{ padding: `${S.sm}px ${S.px}px` }}>
-      <div
-        className="rounded-2xl animate-pulse"
-        style={{
-          background: CARD_BG,
-          border: CARD_BORDER,
-          padding: `${S.md}px ${S.px}px`,
-          height: 48,
-        }}
-      />
-    </div>
-  );
-}
-
-// ─── Molecule: Card ──────────────────────────────────────
-
-function BriefingCard({
+function BriefCard({
   briefing,
+  eyebrow,
   onDismiss,
 }: {
   briefing: BriefingData;
+  eyebrow: string;
   onDismiss: () => void;
 }) {
   return (
@@ -167,14 +146,11 @@ function BriefingCard({
         background: CARD_BG,
         backdropFilter: CARD_BLUR,
         border: CARD_BORDER,
-        padding: `${S.md}px ${S.px}px ${S.px}px`, // 16 20 20
+        padding: `${S.md}px ${S.px}px ${S.px}px`,
       }}
     >
-      {/* ── Row 1: Eyebrow + Close (aligned) ── */}
-      <div
-        className="flex items-center"
-        style={{ marginBottom: S.md }} // 16px
-      >
+      {/* ── Row 1: Eyebrow + Close ── */}
+      <div className="flex items-center" style={{ marginBottom: S.md }}>
         <Star style={{ width: 12, height: 12, color: "var(--accent-purple)", opacity: 0.7 }} />
         <span
           className="font-semibold uppercase"
@@ -184,22 +160,17 @@ function BriefingCard({
             color: "var(--accent-purple)",
             opacity: 0.7,
             lineHeight: 1,
-            marginLeft: S.sm, // 8px
+            marginLeft: S.sm,
             flex: 1,
           }}
         >
-          Aujourd&apos;hui
+          {eyebrow}
         </span>
         <button
           type="button"
           onClick={onDismiss}
           className="flex items-center justify-center"
-          style={{
-            width: 44,  // Apple HIG minimum
-            height: 44,
-            marginTop: -S.sm, // compensate padding
-            marginRight: -S.sm,
-          }}
+          style={{ width: 44, height: 44, marginTop: -S.sm, marginRight: -S.sm }}
           aria-label="Fermer"
         >
           <CloseCircle style={{ width: 18, height: 18, color: "var(--accent-purple)", opacity: 0.35 }} />
@@ -212,8 +183,8 @@ function BriefingCard({
           fontSize: 14,
           lineHeight: 1.7,
           color: "rgba(255, 255, 255, 0.85)",
-          marginBottom: S.md, // 16px
-          paddingRight: S.sm, // 8px — avoid close button overlap
+          marginBottom: S.md,
+          paddingRight: S.sm,
         }}
       >
         {briefing.summary}
@@ -222,22 +193,14 @@ function BriefingCard({
       {/* ── Row 3: Action ── */}
       <p
         className="font-medium"
-        style={{
-          fontSize: 12,
-          lineHeight: 1.5,
-          color: "var(--accent-purple)",
-          marginBottom: S.md, // 16px
-        }}
+        style={{ fontSize: 12, lineHeight: 1.5, color: "var(--accent-purple)", marginBottom: S.md }}
       >
         {briefing.action}
       </p>
 
       {/* ── Row 4: Domain pills ── */}
       {briefing.activeDomains.length > 0 && (
-        <div
-          className="flex flex-wrap items-center"
-          style={{ gap: S.sm }} // 8px
-        >
+        <div className="flex flex-wrap items-center" style={{ gap: S.sm }}>
           {briefing.activeDomains.slice(0, 3).map((domain) => (
             <DomainPill key={domain} domain={domain} />
           ))}
@@ -247,33 +210,87 @@ function BriefingCard({
   );
 }
 
+// ─── Atom: Skeleton ──────────────────────────────────────
+
+function BriefingSkeleton() {
+  return (
+    <div
+      className="rounded-2xl animate-pulse"
+      style={{ background: CARD_BG, border: CARD_BORDER, height: 48 }}
+    />
+  );
+}
+
+// ─── Inner: Daily Card (fast signals) ────────────────────
+
+function DailyCard({ birthData }: { birthData: BirthData }) {
+  const { data, state } = useBriefingData(birthData, "/api/openai/daily-brief", "daily_brief");
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const stored = localStorage.getItem("unfold_daily_dismissed");
+    return stored === new Date().toISOString().slice(0, 10);
+  });
+
+  const handleDismiss = useCallback(() => {
+    setDismissed(true);
+    localStorage.setItem("unfold_daily_dismissed", new Date().toISOString().slice(0, 10));
+  }, []);
+
+  if (dismissed || state === "error") return null;
+  if (state === "loading" || state === "idle") return <BriefingSkeleton />;
+  if (!data) return null;
+
+  return (
+    <AnimatePresence>
+      {!dismissed && (
+        <BriefCard briefing={data} eyebrow="Aujourd'hui" onDismiss={handleDismiss} />
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ─── Inner: Period Card (slow transits) ──────────────────
+
+function PeriodCard({ birthData }: { birthData: BirthData }) {
+  const { data, state } = useBriefingData(birthData, "/api/openai/daily-briefing", "daily_briefing");
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const stored = localStorage.getItem("unfold_briefing_dismissed");
+    return stored === new Date().toISOString().slice(0, 10);
+  });
+
+  const handleDismiss = useCallback(() => {
+    setDismissed(true);
+    localStorage.setItem("unfold_briefing_dismissed", new Date().toISOString().slice(0, 10));
+  }, []);
+
+  if (dismissed || state === "error") return null;
+  if (state === "loading" || state === "idle") return <BriefingSkeleton />;
+  if (!data) return null;
+
+  return (
+    <AnimatePresence>
+      {!dismissed && (
+        <BriefCard briefing={data} eyebrow="En ce moment" onDismiss={handleDismiss} />
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ─── Organism: Container ─────────────────────────────────
 
 export function DailyBriefing({ onDismiss: onDismissParent }: { onDismiss?: () => void } = {}) {
   const { birthData } = useMomentum();
-  const { data, state } = useBriefingData(birthData);
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const stored = localStorage.getItem("unfold_briefing_dismissed");
-    if (!stored) return false;
-    // Only persist for today — show again tomorrow
-    return stored === new Date().toISOString().slice(0, 10);
-  });
-  const handleDismiss = useCallback(() => {
-    setDismissed(true);
-    localStorage.setItem("unfold_briefing_dismissed", new Date().toISOString().slice(0, 10));
-    onDismissParent?.();
-  }, [onDismissParent]);
 
-  if (!birthData || state === "error" || dismissed) return null;
-  if (state === "loading" || state === "idle") return null;
-  if (!data) return null;
+  if (!birthData) return null;
+
+  // onDismissParent kept for API compat — not used per-card since each dismisses independently
+  void onDismissParent;
 
   return (
-    <div style={{ padding: `${S.sm}px ${S.px}px` }}>
-      <AnimatePresence>
-        {!dismissed && <BriefingCard briefing={data} onDismiss={handleDismiss} />}
-      </AnimatePresence>
+    <div style={{ padding: `${S.sm}px ${S.px}px`, display: "flex", flexDirection: "column", gap: S.sm }}>
+      <DailyCard birthData={birthData} />
+      <PeriodCard birthData={birthData} />
     </div>
   );
 }

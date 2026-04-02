@@ -23,8 +23,9 @@ export type PersonalizedText = {
   lifetimeInfo?: string;   // AI-written lifetime narrative
   convergenceNote?: string; // when multiple signals converge
   // Raw data from boudin-detail endpoint (for direct display)
-  rawCycle?: { hitNumber?: number; totalHits?: number; pattern?: string } | null;
+  rawCycle?: { hitNumber?: number; totalHits?: number; pattern?: string; allHits?: { date: string; hitNumber: number; isCurrent?: boolean }[] } | null;
   rawLifetime?: { number?: number | null; total?: number | null } | null;
+  allPeriods?: { date: string; endDate?: string; lifetimeNumber: number; isCurrent?: boolean; totalHits?: number }[] | null;
 };
 
 // ─── Constants ──────────────────────────────────────────────
@@ -35,7 +36,54 @@ const PRE_GENERATE_DELAY_MS = 500;
 // ─── Cache key builder ──────────────────────────────────────
 
 function cacheKey(capsuleId: string, profile: UserProfile | null): string {
-  return `ai_${capsuleId}_${profileHash(profile)}`;
+  return `ai_v10_${capsuleId}_${profileHash(profile)}`;
+}
+
+// ─── Main API ───────────────────────────────────────────────
+
+// ─── Partial corps extractor (streaming) ────────────────────
+
+/**
+ * Extracts the partially-received `corps` value from an incomplete JSON string.
+ * Returns null if the `corps` field hasn't started yet.
+ *
+ * Handles all standard JSON escape sequences correctly, including French apostrophes
+ * (\u2019 / \' / straight ') which were previously causing truncation artifacts.
+ */
+function extractPartialCorps(accumulated: string): string | null {
+  const match = accumulated.match(/"corps"\s*:\s*"/);
+  if (!match || match.index === undefined) return null;
+
+  const rest = accumulated.slice(match.index + match[0].length);
+  let result = "";
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === "\\" && i + 1 < rest.length) {
+      const next = rest[i + 1];
+      if (next === "n") { result += "\n"; i++; }
+      else if (next === "r") { result += "\r"; i++; }
+      else if (next === "t") { result += "\t"; i++; }
+      else if (next === '"') { result += '"'; i++; }
+      else if (next === "\\") { result += "\\"; i++; }
+      else if (next === "'") { result += "'"; i++; } // non-standard but safe
+      else if (next === "u" && i + 5 < rest.length) {
+        // \uXXXX unicode escape — decode properly
+        const hex = rest.slice(i + 2, i + 6);
+        if (/^[0-9a-fA-F]{4}$/.test(hex)) {
+          result += String.fromCharCode(parseInt(hex, 16));
+          i += 5;
+        } else {
+          result += next; i++;
+        }
+      } else {
+        result += next; i++;
+      }
+    } else if (rest[i] === '"') {
+      break; // End of field value
+    } else {
+      result += rest[i];
+    }
+  }
+  return result || null;
 }
 
 // ─── Main API ───────────────────────────────────────────────
@@ -43,6 +91,7 @@ function cacheKey(capsuleId: string, profile: UserProfile | null): string {
 /**
  * Get personalized text for a capsule.
  * Checks cache first (30-day TTL), then calls the server route.
+ * Supports streaming: calls onStreaming with partial corps text as tokens arrive.
  */
 export async function getPersonalizedText(
   capsuleId: string,
@@ -51,7 +100,8 @@ export async function getPersonalizedText(
   birthCity: string | null,
   locale: string,
   boudinIndex?: number,
-  boudinId?: string
+  boudinId?: string,
+  onStreaming?: (partial: { corps: string }) => void
 ): Promise<PersonalizedText | null> {
   const key = cacheKey(capsuleId, userProfile);
 
@@ -84,11 +134,68 @@ export async function getPersonalizedText(
       return null;
     }
 
+    // ── Handle SSE streaming response ──
+    if (response.headers.get("content-type")?.includes("text/event-stream") && response.body) {
+      return new Promise<PersonalizedText | null>((resolve) => {
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let accumulated = ""; // OpenAI delta tokens
+
+        function processBuffer() {
+          const events = buffer.split("\n\n");
+          buffer = events.pop() ?? "";
+
+          for (const block of events) {
+            let eventType = "";
+            let eventData = "";
+            for (const line of block.split("\n")) {
+              if (line.startsWith("event: ")) eventType = line.slice(7).trim();
+              if (line.startsWith("data: ")) eventData = line.slice(6).trim();
+            }
+            if (!eventData) continue;
+
+            if (eventType === "delta") {
+              try {
+                const { c } = JSON.parse(eventData) as { c: string };
+                accumulated += c;
+                if (onStreaming) {
+                  const partial = extractPartialCorps(accumulated);
+                  if (partial) onStreaming({ corps: partial });
+                }
+              } catch { /* skip */ }
+            } else if (eventType === "done") {
+              try {
+                const result = JSON.parse(eventData) as PersonalizedText;
+                storage.set(key, result);
+                resolve(result);
+              } catch {
+                resolve(null);
+              }
+            } else if (eventType === "error") {
+              resolve(null);
+            }
+          }
+        }
+
+        (async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              processBuffer();
+            }
+          } catch {
+            resolve(null);
+          }
+        })();
+      });
+    }
+
+    // ── Non-streaming fallback (cache hits return plain JSON) ──
     const result: PersonalizedText = await response.json();
-
-    // Cache the result
     await storage.set(key, result);
-
     return result;
   } catch (error) {
     console.error("[AI] Personalize error:", error);
