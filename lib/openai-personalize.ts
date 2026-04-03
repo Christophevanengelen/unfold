@@ -36,7 +36,7 @@ const PRE_GENERATE_DELAY_MS = 500;
 // ─── Cache key builder ──────────────────────────────────────
 
 function cacheKey(capsuleId: string, profile: UserProfile | null): string {
-  return `ai_v10_${capsuleId}_${profileHash(profile)}`;
+  return `ai_v11_${capsuleId}_${profileHash(profile)}`;
 }
 
 // ─── Main API ───────────────────────────────────────────────

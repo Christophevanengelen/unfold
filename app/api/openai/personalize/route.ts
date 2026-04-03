@@ -19,10 +19,24 @@ import { supabase } from "@/lib/db";
 const TOCTOC_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
 const OPENAI_MODEL = "gpt-4o";
 
-// ─── Smart System Prompt Builder ────────────────────────
-// Replaces Marie Ange's generic systemPrompt with a data-driven one
-// grounded in the actual llmPayload from boudin-detail.
+// ─── Output Format Spec ─────────────────────────────────
+// Appended to Marie Ange's systemPrompt from the detail endpoint.
+// Simple 6-field JSON — less surface area for model to go off-track.
 
+const JSON_OUTPUT_FORMAT = `
+
+## FORMAT DE SORTIE (JSON strict — respecte EXACTEMENT ces 6 clés)
+Retourne UNIQUEMENT ce JSON valide, sans texte avant ni après, sans markdown :
+{
+  "titre": "3 mots max, percutant",
+  "sousTitre": "1 phrase courte qui nomme le thème central",
+  "corps": "2 à 4 phrases fluides. Nomme les domaines de vie (maisons). Calibre au score. 1 conseil concret.",
+  "avecLeRecul": "1 phrase sur la perspective long terme ou la leçon",
+  "domainesActives": ["max 3 domaines en français, ex: Identité, Relations, Finances, Foyer, Carrière"],
+  "intensite": <reprends le score entier 1-4 de l'événement>
+}`;
+
+// Legacy — kept only for reference, no longer used
 const TRANSIT_PLANET_PROFILE: Record<string, { verb: string; theme: string; duration: string }> = {
   Saturn:      { verb: "structurer",     theme: "tests, limites, responsabilités, maturité — confrontation avec la réalité", duration: "thème sur des mois ; pic autour de la date exacte" },
   Jupiter:     { verb: "développer",     theme: "ouverture, opportunité, croissance — dire oui avec discernement", duration: "fenêtre courte ; saisir dans la semaine" },
@@ -299,11 +313,11 @@ function makeBirthHash(bd: { birthDate: string; birthTime: string; latitude: num
 }
 
 function makeProfileHash(profile: Record<string, unknown> | null): string {
-  // v2 prefix — bumped to invalidate all cached delineations generated before apostrophe/streaming fix
-  if (!profile) return "v2_none";
+  // v3 prefix — bumped to invalidate delineations cached with old 9-field format
+  if (!profile) return "v3_none";
   const keys = ["lifePhase", "effectivePriorities", "effectiveStyle", "effectiveStress", "currentGoal", "workStatus", "relationshipStatus"];
   const vals = keys.map(k => profile[k] ?? "").map(v => Array.isArray(v) ? v.join(",") : String(v));
-  return "v2_" + (vals.join("|") || "none");
+  return "v3_" + (vals.join("|") || "none");
 }
 
 async function getCachedDelineation(birthHash: string, boudinId: string, profileHash: string) {
@@ -552,13 +566,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Step 2: Build smart system prompt from llmPayload data ──
-    // We build our own prompt grounded in the actual data instead of using
-    // Marie Ange's generic systemPrompt. Her llmPayload (the data) is excellent;
-    // her systemPrompt (the instructions) is not.
-    const smartPrompt = buildSmartSystemPrompt(llmPayload);
+    // ── Step 2: Build system prompt ──
+    // Use Marie Ange's category-specific systemPrompt from the detail endpoint.
+    // Append: our JSON output format spec + optional user profile context.
+    const apiSystemPrompt = systemPrompt ?? "Tu es un astrologue expert. Génère une délinéation personnalisée en français.";
     const userContext = buildUserProfileContext(userProfile);
-    const fullSystemPrompt = smartPrompt + userContext;
+    const fullSystemPrompt = apiSystemPrompt + JSON_OUTPUT_FORMAT + userContext;
 
     // ── Step 3: Call OpenAI with streaming ──
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -610,11 +623,11 @@ export async function POST(request: NextRequest) {
     function buildResult(parsed: Record<string, unknown>) {
       const titre = String(parsed.titre ?? "").trim();
       const sousTitreRaw = String(parsed.sousTitre ?? "").trim();
-      const corpsRaw = String(parsed.corps ?? "").trim();
+      // Accept "corps" or legacy "cor" (model sometimes abbreviates the key)
+      const corpsRaw = String(parsed.corps ?? parsed.cor ?? "").trim();
       const avecLeReculRaw = String(parsed.avecLeRecul ?? "").trim();
 
-      // Hard fallback: keep Insight clé / Avec le recul visible even if model under-fills fields.
-      // We prefer explicit fields, then derive from body.
+      // Fallbacks: derive subtitle / insight from body text if model omits them
       const firstSentence = (() => {
         const m = corpsRaw.match(/^[^.!?]+[.!?]/);
         return (m?.[0] ?? "").trim();
@@ -625,7 +638,7 @@ export async function POST(request: NextRequest) {
       })();
 
       const sousTitre = sousTitreRaw || firstSentence || (titre ? `${titre}.` : "");
-      const avecLeRecul = avecLeReculRaw || lastSentence || (sousTitre ? "Avec le recul, ce chapitre t'aide à clarifier ce qui compte vraiment." : "");
+      const avecLeRecul = avecLeReculRaw || lastSentence || "Avec le recul, ce chapitre t'aide à clarifier ce qui compte vraiment.";
 
       return {
         titre,
@@ -634,9 +647,6 @@ export async function POST(request: NextRequest) {
         avecLeRecul,
         domainesActives: parsed.domainesActives ?? [],
         intensite: parsed.intensite ?? 0,
-        hitInfo: parsed.hitInfo ?? null,
-        lifetimeInfo: parsed.lifetimeInfo ?? null,
-        convergenceNote: parsed.convergenceNote ?? null,
         ...meta,
         story: corpsRaw,
         insight: sousTitre,
@@ -652,14 +662,18 @@ export async function POST(request: NextRequest) {
         const reader = openaiRes.body!.getReader();
         const decoder = new TextDecoder();
         let fullContent = "";
+        let lineBuffer = ""; // handles SSE lines split across chunks
 
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value, { stream: true });
-            for (const line of chunk.split("\n")) {
+            lineBuffer += decoder.decode(value, { stream: true });
+            const lines = lineBuffer.split(/\r?\n/);
+            lineBuffer = lines.pop() ?? ""; // keep incomplete last line
+
+            for (const line of lines) {
               if (!line.startsWith("data: ")) continue;
               const raw = line.slice(6).trim();
               if (raw === "[DONE]") continue;
@@ -673,19 +687,31 @@ export async function POST(request: NextRequest) {
               } catch { /* skip malformed SSE line */ }
             }
           }
+          // Process any remaining data in buffer
+          if (lineBuffer.startsWith("data: ")) {
+            const raw = lineBuffer.slice(6).trim();
+            if (raw && raw !== "[DONE]") {
+              try {
+                const evt = JSON.parse(raw);
+                const delta = evt.choices?.[0]?.delta?.content ?? "";
+                if (delta) fullContent += delta;
+              } catch { /* skip */ }
+            }
+          }
         } finally {
           reader.releaseLock();
         }
 
         // Parse full content, cache, send done event
         try {
-          console.log("[AUDIT] OpenAI raw response:", fullContent.substring(0, 500));
+          console.log("[AUDIT] OpenAI response length:", fullContent.length, "| sample:", fullContent.substring(0, 200));
           const parsed = JSON.parse(fullContent);
-          console.log("[AUDIT] Parsed output:", JSON.stringify({ titre: parsed.titre, domainesActives: parsed.domainesActives }));
+          console.log("[AUDIT] Parsed OK — titre:", parsed.titre);
           const result = buildResult(parsed);
           cacheDelineation(bHash, cacheId, pHash, result);
           controller.enqueue(encoder.encode(`event: done\ndata: ${JSON.stringify(result)}\n\n`));
-        } catch {
+        } catch (err) {
+          console.error("[AUDIT] JSON.parse FAILED — length:", fullContent.length, "| err:", err instanceof Error ? err.message : String(err), "| content:", fullContent.substring(0, 300));
           controller.enqueue(encoder.encode(`event: error\ndata: {}\n\n`));
         }
 
