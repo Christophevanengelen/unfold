@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-
-import { suggestCities } from "@/lib/birth-data";
+import { searchCities, type GeoResult } from "@/lib/geocode";
 
 export interface OnboardingFormData {
   nickname: string;
   dob: string;
   timeOfBirth: string;
   placeOfBirth: string;
+  /** Resolved coordinates from geocoding — stored when user picks a city */
+  resolvedCoords?: { lat: number; lng: number; timezone: string };
 }
 
 interface StepInputProps {
@@ -48,8 +49,8 @@ const fields = [
 ];
 
 /**
- * Screen 6 — Configure Your Signal: All fields feel expected, none marked optional.
- * Configuration tone, not bureaucratic. All 4 fields required.
+ * Screen 6 — Configure Your Signal.
+ * Place of birth uses live Nominatim geocoding via Open-Meteo.
  */
 export function StepInput({
   formData,
@@ -57,9 +58,11 @@ export function StepInput({
   onNext,
   onBack,
 }: StepInputProps) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const placeRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isValid =
     formData.nickname.trim() !== "" &&
@@ -68,19 +71,42 @@ export function StepInput({
     formData.placeOfBirth.trim() !== "";
 
   const handleChange = (key: keyof OnboardingFormData, value: string) => {
-    onChange({ ...formData, [key]: value });
     if (key === "placeOfBirth") {
-      const results = suggestCities(value);
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0 && value.length >= 2);
+      // Clear stored coords when user edits the city field manually
+      onChange({ ...formData, [key]: value, resolvedCoords: undefined });
+      // Debounced geocode search
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (value.trim().length >= 2) {
+        setIsSearching(true);
+        debounceRef.current = setTimeout(async () => {
+          const results = await searchCities(value);
+          setSuggestions(results);
+          setShowSuggestions(results.length > 0);
+          setIsSearching(false);
+        }, 300);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        setIsSearching(false);
+      }
+    } else {
+      onChange({ ...formData, [key]: value });
     }
   };
 
-  const selectCity = (city: string) => {
-    onChange({ ...formData, placeOfBirth: city });
+  const selectCity = useCallback((city: GeoResult) => {
+    onChange({
+      ...formData,
+      placeOfBirth: city.displayName,
+      resolvedCoords: {
+        lat: city.latitude,
+        lng: city.longitude,
+        timezone: city.timezone,
+      },
+    });
     setSuggestions([]);
     setShowSuggestions(false);
-  };
+  }, [formData, onChange]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -94,9 +120,7 @@ export function StepInput({
   }, []);
 
   return (
-    <motion.div
-      className="flex h-full flex-col"
-    >
+    <motion.div className="flex h-full flex-col">
 
       {/* Back */}
       <motion.button
@@ -168,10 +192,15 @@ export function StepInput({
                   }}
                 >
                   {field.label}
+                  {isPlaceField && isSearching && (
+                    <span className="ml-2 normal-case" style={{ opacity: 0.4 }}>
+                      searching…
+                    </span>
+                  )}
                 </span>
                 <input
                   type={field.type}
-                  value={formData[field.key]}
+                  value={formData[field.key] as string}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   onFocus={() => {
                     if (isPlaceField && suggestions.length > 0) setShowSuggestions(true);
@@ -190,6 +219,7 @@ export function StepInput({
                   {field.helper}
                 </p>
               )}
+
               {/* City autocomplete dropdown */}
               {isPlaceField && (
                 <AnimatePresence>
@@ -208,13 +238,18 @@ export function StepInput({
                     >
                       {suggestions.map((city) => (
                         <button
-                          key={city}
+                          key={city.id}
                           type="button"
                           onClick={() => selectCity(city)}
-                          className="w-full px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-brand-3/30"
+                          className="w-full px-4 py-2.5 text-left transition-colors hover:bg-brand-3/30"
                           style={{ color: "var(--accent-purple)" }}
                         >
-                          {city}
+                          <span className="text-sm font-medium">{city.name}</span>
+                          {city.admin1 || city.country ? (
+                            <span className="ml-1.5 text-xs" style={{ opacity: 0.5 }}>
+                              {[city.admin1, city.country].filter(Boolean).join(", ")}
+                            </span>
+                          ) : null}
                         </button>
                       ))}
                     </motion.div>

@@ -232,7 +232,11 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
     async function run() {
       setVisible([0]);
 
-      const coords = resolveCity(formData?.placeOfBirth || "Brussels");
+      // Use live geocoded coords if available, fall back to hardcoded lookup
+      const resolved = formData?.resolvedCoords;
+      const coords = resolved
+        ? { lat: resolved.lat, lng: resolved.lng, tz: resolved.timezone }
+        : resolveCity(formData?.placeOfBirth || "Brussels");
       const birthData: BirthData = {
         nickname: formData?.nickname || "You",
         birthDate: formData?.dob || "1990-01-15",

@@ -1,58 +1,74 @@
 "use client";
 
-import { useParams } from "next/navigation";
+/**
+ * /demo/compatibility/test
+ * Live demo of connection-brief + LLM delineation.
+ * personA = 24-10-1980 01:41 Brussels
+ * personB = 02-09-1982 02:15 Antwerp · partner
+ */
+
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { getConnection, type RealConnection } from "@/lib/connections-store";
-import { PageHeader, PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitives";
-import { useMomentum } from "@/lib/momentum-store";
+import Link from "next/link";
+import { ArrowLeft } from "flowbite-react-icons/outline";
+import { PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitives";
 import { fetchConnectionBrief, type ActivePeriod } from "@/lib/connection-brief-api";
 import { getConnectionDelineation, type ConnectionDelineation } from "@/lib/connection-delineation";
+import type { MatchingWindow } from "@/lib/matching-narratives";
 
-import type { MatchingWindow, RelationshipType } from "@/lib/matching-narratives";
+// ─── Test birth data ─────────────────────────────────────
 
-// ─── Relationship colors ─────────────────────────────────
-
-const relationshipColors: Record<string, string> = {
-  partner: "#D89EA0",
-  friend: "#50C4D6",
-  family: "#6BA89A",
-  colleague: "#9585CC",
+const PERSON_A = {
+  nickname: "Moi",
+  birthDate: "1980-10-24",
+  birthTime: "01:41",
+  latitude: 50.8503,
+  longitude: 4.3517,
+  timezone: "Europe/Brussels",
+  placeOfBirth: "Brussels",
 };
 
-// ─── Window card ─────────────────────────────────────────
+const PERSON_B = {
+  nickname: "Partenaire",
+  birthDate: "1982-09-02",
+  birthTime: "02:15",
+  latitude: 51.2213,
+  longitude: 4.4051,
+  timezone: "Europe/Brussels",
+  placeOfBirth: "Antwerp",
+};
+
+const REL_COLOR = "#D89EA0";
+
+// ─── Card with delineation ───────────────────────────────
 
 function WindowCard({
   w,
   period,
   i,
-  relColor,
-  theirName,
-  myBirthDate,
-  theirBirthDate,
 }: {
   w: MatchingWindow;
   period: ActivePeriod;
   i: number;
-  relColor: string;
-  theirName: string;
-  myBirthDate: string;
-  theirBirthDate: string;
 }) {
   const [del, setDel] = useState<ConnectionDelineation | null>(null);
   const [delLoading, setDelLoading] = useState(true);
 
   useEffect(() => {
-    getConnectionDelineation(period, w.relationship, myBirthDate, theirBirthDate)
+    getConnectionDelineation(
+      period,
+      "partner",
+      PERSON_A.birthDate,
+      PERSON_B.birthDate,
+    )
       .then(setDel)
       .finally(() => setDelLoading(false));
-  }, [period, w.relationship, myBirthDate, theirBirthDate]);
+  }, [period]);
 
   const isActive = w.status === "active";
 
   return (
     <motion.div
-      key={`${w.monthKey}-${i}`}
       className="rounded-2xl overflow-hidden"
       style={{
         background: "var(--surface-subtle)",
@@ -60,23 +76,18 @@ function WindowCard({
       }}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + i * 0.1 }}
+      transition={{ delay: i * 0.1 }}
     >
       {/* Status bar */}
       <div className="flex items-center justify-between px-4 pt-3 pb-1">
         <div className="flex items-center gap-2">
           <div
             className="h-2 w-2 rounded-full"
-            style={{
-              backgroundColor: isActive ? w.tierColor : "var(--text-body-subtle)",
-              opacity: isActive ? 1 : 0.4,
-            }}
+            style={{ backgroundColor: isActive ? w.tierColor : "var(--text-body-subtle)", opacity: isActive ? 1 : 0.4 }}
           />
-          <span
-            className="text-[10px] font-bold uppercase tracking-widest"
-            style={{ color: isActive ? w.tierColor : "var(--text-body-subtle)" }}
-          >
-            {isActive ? "Actif maintenant" : w.status === "past" ? "Passé" : "À venir"}
+          <span className="text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: isActive ? w.tierColor : "var(--text-body-subtle)" }}>
+            {isActive ? "Actif" : w.status === "past" ? "Passé" : "À venir"}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -88,19 +99,18 @@ function WindowCard({
       </div>
 
       <div className="px-4 pb-4">
-        {/* Title */}
         <h3 className="text-base font-bold text-text-heading mt-1">
           {del ? del.ensemble.titre : w.title}
+          {delLoading && <span className="ml-2 text-[10px] font-normal text-text-body-subtle">délinéation…</span>}
         </h3>
         <p className="text-[11px] text-text-body-subtle mt-0.5">{w.dateRange}</p>
 
-        {/* Shared theme / pourquoiCeMois */}
-        <div
-          className="mt-3 rounded-xl px-3.5 py-2.5"
-          style={{ background: `color-mix(in srgb, ${w.tierColor} 8%, transparent)` }}
-        >
+        {/* Shared theme */}
+        <div className="mt-3 rounded-xl px-3.5 py-2.5"
+          style={{ background: `color-mix(in srgb, ${w.tierColor} 8%, transparent)` }}>
           {delLoading ? (
-            <div className="h-3 rounded animate-pulse w-3/4" style={{ background: `color-mix(in srgb, ${w.tierColor} 20%, transparent)` }} />
+            <div className="h-3 rounded animate-pulse w-3/4"
+              style={{ background: `color-mix(in srgb, ${w.tierColor} 20%, transparent)` }} />
           ) : (
             <p className="text-xs font-semibold text-text-heading">
               {del ? del.ensemble.pourquoiCeMois : w.sharedTheme}
@@ -108,19 +118,19 @@ function WindowCard({
           )}
         </div>
 
-        {/* Dynamique (only when delineated) */}
         {del && (
           <p className="mt-2 text-[11px] italic text-text-body-subtle leading-relaxed">
             {del.ensemble.dynamique}
           </p>
         )}
 
-        {/* You + Them */}
+        {/* People */}
         <div className="mt-3 space-y-2">
-          {/* Person A */}
           <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
             <div className="flex items-start justify-between gap-2">
-              <EyebrowLabel color="var(--accent-purple)" className="mb-1">Vous</EyebrowLabel>
+              <EyebrowLabel color="var(--accent-purple)" className="mb-1">
+                24-10-1980 Brussels
+              </EyebrowLabel>
               {del && (
                 <span className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
                   style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
@@ -148,13 +158,14 @@ function WindowCard({
             <PlanetPill planet={w.you.planet} className="mt-1.5" />
           </div>
 
-          {/* Person B */}
           <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
             <div className="flex items-start justify-between gap-2">
-              <EyebrowLabel color={relColor} className="mb-1">{theirName}</EyebrowLabel>
+              <EyebrowLabel color={REL_COLOR} className="mb-1">
+                02-09-1982 Antwerp
+              </EyebrowLabel>
               {del && (
                 <span className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
-                  style={{ color: relColor, opacity: 0.5 }}>
+                  style={{ color: REL_COLOR, opacity: 0.5 }}>
                   {del.personB.titre}
                 </span>
               )}
@@ -180,21 +191,21 @@ function WindowCard({
           </div>
         </div>
 
-        {/* À faire ensemble */}
-        <div
-          className="mt-2 rounded-xl px-3.5 py-2.5"
+        {/* Action */}
+        <div className="mt-2 rounded-xl px-3.5 py-2.5"
           style={{
             background: `color-mix(in srgb, ${w.tierColor} 10%, transparent)`,
             border: `1px solid color-mix(in srgb, ${w.tierColor} 15%, transparent)`,
-          }}
-        >
+          }}>
           <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: w.tierColor }}>
             À faire ensemble
           </p>
           {delLoading ? (
             <div className="space-y-1">
-              <div className="h-2.5 rounded animate-pulse w-full" style={{ background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)` }} />
-              <div className="h-2.5 rounded animate-pulse w-3/5" style={{ background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)` }} />
+              <div className="h-2.5 rounded animate-pulse w-full"
+                style={{ background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)` }} />
+              <div className="h-2.5 rounded animate-pulse w-3/5"
+                style={{ background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)` }} />
             </div>
           ) : (
             <p className="text-xs text-text-heading font-medium leading-relaxed">
@@ -209,121 +220,81 @@ function WindowCard({
 
 // ─── Page ────────────────────────────────────────────────
 
-export default function ConnectionDetailPage() {
-  const params = useParams();
-  const connectionId = params.connectionId as string;
-  const [connection, setConnection] = useState<RealConnection | null>(null);
-
-  useEffect(() => {
-    setConnection(getConnection(connectionId));
-  }, [connectionId]);
-
-  const { birthData: myBirthData } = useMomentum();
-
+export default function ConnectionBriefTestPage() {
   const [windows, setWindows] = useState<MatchingWindow[]>([]);
   const [periods, setPeriods] = useState<ActivePeriod[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isLive, setIsLive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!connection) return;
-
-    async function loadComparison() {
-      setLoading(true);
-      if (myBirthData && connection!.birthData) {
-        try {
-          const result = await fetchConnectionBrief(
-            myBirthData,
-            connection!.birthData,
-            connection!.relationship as RelationshipType,
-            connection!.name,
-          );
-          if (result.windows.length > 0) {
-            setWindows(result.windows);
-            setPeriods(result.periods);
-            setIsLive(true);
-            setLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.error("[Compatibility] connection-brief error:", err);
-        }
-      }
-      setWindows([]);
-      setPeriods([]);
-      setIsLive(false);
-      setLoading(false);
-    }
-
-    loadComparison();
-  }, [connection, myBirthData]);
-
-  if (!connection) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-text-body-subtle">Connexion introuvable</p>
-      </div>
-    );
-  }
-
-  const relColor = relationshipColors[connection.relationship] ?? "#9585CC";
+    const t0 = Date.now();
+    fetchConnectionBrief(PERSON_A, PERSON_B, "partner", "Partenaire", 3)
+      .then((result) => {
+        setWindows(result.windows);
+        setPeriods(result.periods);
+        setElapsed(Date.now() - t0);
+      })
+      .catch((err) => setError(String(err)))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="flex min-h-0 flex-col">
-      <PageHeader
-        backHref="/demo/compatibility"
-        title={`Vous & ${connection.name}`}
-        subtitle={
-          loading
-            ? "Analyse en cours..."
-            : isLive
-              ? `${windows.length} fenêtre${windows.length !== 1 ? "s" : ""} de timing`
-              : "Données insuffisantes"
-        }
-        leadingSlot={
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
-            style={{ backgroundColor: relColor }}
-          >
-            {connection.initial}
-          </div>
-        }
-      />
+      {/* Header */}
+      <div className="mb-4 flex items-center gap-3">
+        <Link href="/demo/compatibility"
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={{ background: "var(--surface-medium)" }}>
+          <ArrowLeft size={16} style={{ color: "var(--text-body-subtle)" }} />
+        </Link>
+        <div>
+          <h1 className="font-display text-lg font-bold text-text-heading">
+            Test connection-brief
+          </h1>
+          <p className="text-[11px] text-text-body-subtle">
+            24-10-1980 Brussels · 02-09-1982 Antwerp · partner
+          </p>
+        </div>
+      </div>
+
+      {/* API badge */}
+      <div className="mb-4 rounded-xl px-3 py-2 text-[10px] font-mono"
+        style={{ background: "var(--surface-subtle)", color: "var(--text-body-subtle)" }}>
+        connection-brief → OpenAI delineation
+        {elapsed !== null && (
+          <span className="ml-2" style={{ color: "var(--accent-purple)" }}>
+            {(elapsed / 1000).toFixed(1)}s
+          </span>
+        )}
+      </div>
 
       {loading && (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 items-center justify-center gap-3 py-12">
           <motion.div
             className="h-5 w-5 rounded-full border-2 border-transparent"
             style={{ borderTopColor: "var(--accent-purple)", borderRightColor: "var(--accent-purple)" }}
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
+          <span className="text-sm text-text-body-subtle">Appel à l&apos;API…</span>
         </div>
       )}
 
-      {!loading && windows.length === 0 && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="text-sm text-text-body">
-            {connection.birthData
-              ? "Pas assez de données pour comparer vos rythmes."
-              : `${connection.name} n'a pas encore partagé ses données de naissance.`}
-          </p>
+      {error && (
+        <div className="rounded-xl px-4 py-3 text-sm"
+          style={{ background: "color-mix(in srgb, #D89EA0 15%, transparent)", color: "#D89EA0" }}>
+          {error}
         </div>
       )}
 
       {!loading && windows.length > 0 && (
         <div className="space-y-4">
+          <p className="text-[11px] text-text-body-subtle">
+            {windows.length} période{windows.length !== 1 ? "s" : ""} · délinéation en cours…
+          </p>
           {windows.map((w, i) => (
-            <WindowCard
-              key={w.monthKey}
-              w={w}
-              period={periods[i]}
-              i={i}
-              relColor={relColor}
-              theirName={connection.name}
-              myBirthDate={myBirthData?.birthDate ?? ""}
-              theirBirthDate={connection.birthData?.birthDate ?? ""}
-            />
+            <WindowCard key={w.monthKey} w={w} period={periods[i]} i={i} />
           ))}
         </div>
       )}

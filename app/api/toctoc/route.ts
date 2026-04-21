@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
       "toctoc-app-short",
       "toctoc-year",
       "toctoc-timeline",
+      "connection-brief",
     ];
     if (!allowedEndpoints.includes(endpoint)) {
       return NextResponse.json(
