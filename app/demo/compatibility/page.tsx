@@ -8,6 +8,7 @@ import { ShareNodes } from "flowbite-react-icons/outline";
 import {
   getConnections,
   getMyInviteCode,
+  addConnection,
   type RealConnection,
 } from "@/lib/connections-store";
 import { getBirthDataSync, type BirthData } from "@/lib/birth-data";
@@ -23,6 +24,8 @@ export default function ConnectionsPage() {
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [myCode, setMyCode] = useState("...");
   const [showHint, setShowHint] = useState(false);
+  const [codeSubmitting, setCodeSubmitting] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   useEffect(() => {
     const list = getConnections();
@@ -40,12 +43,61 @@ export default function ConnectionsPage() {
     try { localStorage.setItem(LONG_PRESS_HINT_KEY, "1"); } catch {}
   };
 
-  const handleCodeSubmit = () => {
-    const trimmed = code.trim();
+  const handleCodeSubmit = async () => {
+    const trimmed = code.trim().toUpperCase();
     if (trimmed.length < 4) return;
-    router.push(
-      `/demo/invite/connected?name=${encodeURIComponent(trimmed.slice(-4))}&code=${encodeURIComponent(trimmed)}`,
-    );
+
+    // Prevent adding yourself
+    if (trimmed === myCode) {
+      setCodeError("C'est votre propre code.");
+      return;
+    }
+    // Prevent duplicate
+    if (connections.some((c) => c.inviteCode === trimmed)) {
+      setCodeError("Déjà connecté avec ce code.");
+      return;
+    }
+
+    setCodeSubmitting(true);
+    setCodeError(null);
+    try {
+      const res = await fetch("/api/invite/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: trimmed }),
+      });
+
+      if (res.status === 404) {
+        setCodeError("Code introuvable. Demande à la personne de rouvrir Unfold une fois pour synchroniser son code.");
+        return;
+      }
+      if (!res.ok) {
+        setCodeError("Erreur de connexion. Réessaie dans un instant.");
+        return;
+      }
+
+      const { name, birthData } = (await res.json()) as {
+        name: string;
+        birthData: BirthData;
+      };
+
+      // Create the connection locally + on Supabase (relationship default: friend,
+      // user can change it via the long-press sheet)
+      const newConn = addConnection({
+        name,
+        relationship: "friend",
+        birthData,
+        inviteCode: trimmed,
+      });
+      setConnections(getConnections());
+      setCode("");
+      setShowCodeInput(false);
+      router.push(`/demo/compatibility/${newConn.id}`);
+    } catch {
+      setCodeError("Erreur réseau. Réessaie dans un instant.");
+    } finally {
+      setCodeSubmitting(false);
+    }
   };
 
   const handleDeleted = (id: string) => {
@@ -145,23 +197,34 @@ export default function ConnectionsPage() {
               <input
                 type="text"
                 value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                onChange={(e) => {
+                  setCode(e.target.value.toUpperCase());
+                  if (codeError) setCodeError(null);
+                }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !codeSubmitting) handleCodeSubmit(); }}
                 placeholder="UNFOLD-XXXX"
                 className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-mono tracking-wider text-white placeholder:text-white/20 focus:border-accent-purple/40 focus:outline-none"
                 maxLength={12}
+                disabled={codeSubmitting}
               />
               <button
                 onClick={handleCodeSubmit}
-                disabled={code.trim().length < 4}
+                disabled={code.trim().length < 4 || codeSubmitting}
                 className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all disabled:opacity-30"
                 style={{ background: "var(--accent-purple)" }}
               >
-                Connecter
+                {codeSubmitting ? "…" : "Connecter"}
               </button>
             </div>
-            <p className="mt-2 text-[10px] text-text-body-subtle">
-              Demandez le lien d&apos;invitation complet pour une connexion automatique.
-            </p>
+            {codeError ? (
+              <p className="mt-2 text-[11px] leading-snug" style={{ color: "var(--danger, #E07A7C)" }}>
+                {codeError}
+              </p>
+            ) : (
+              <p className="mt-2 text-[10px] text-text-body-subtle">
+                Ou demande le lien d&apos;invitation complet pour une connexion sans code.
+              </p>
+            )}
           </motion.div>
         )}
       </div>
