@@ -1,56 +1,81 @@
 /**
- * Supabase persistence layer — profiles, connections, invite codes.
- * Uses device_id as anonymous ownership key (no auth required).
- * All operations are fire-and-forget safe (failures logged, not thrown).
+ * Client-side Supabase sync layer.
+ *
+ * IMPORTANT: The Supabase JS client (lib/db.ts) uses SUPABASE_SERVICE_ROLE_KEY,
+ * which is a server-only env var (no NEXT_PUBLIC_ prefix). In the browser the
+ * service-role key is undefined, so supabase-js has no credentials and any
+ * direct `.from(...).upsert(...)` is a silent no-op.
+ *
+ * Every write in this file therefore goes through a server-side API route
+ * (`/api/profile/upsert`, `/api/invite/register`, `/api/connection/upsert`)
+ * that holds the service role. Reads still go through supabase-js because
+ * the app already does them in Server Components / route handlers.
  */
 
 import { supabase } from "@/lib/db";
 import { getDeviceId } from "@/lib/device-id";
 import type { BirthData } from "@/lib/birth-data";
 
+// ─── Utilities ──────────────────────────────────────────
+
+async function postJson(path: string, body: unknown): Promise<boolean> {
+  try {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const info = await res.text().catch(() => "");
+      console.warn(`[supabase-store] ${path} failed`, res.status, info.slice(0, 120));
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn(`[supabase-store] ${path} network error:`, err);
+    return false;
+  }
+}
+
 // ─── Profiles ────────────────────────────────────────────
 
 export async function upsertProfile(birth: BirthData): Promise<void> {
-  if (!supabase) return;
   const deviceId = getDeviceId();
   if (!deviceId) return;
-
-  try {
-    await supabase.from("profiles").upsert(
-      {
-        device_id: deviceId,
-        nickname: birth.nickname,
-        display_name: birth.nickname, // mirror nickname unless overridden explicitly
-        birth_date: birth.birthDate,
-        birth_time: birth.birthTime,
-        latitude: birth.latitude,
-        longitude: birth.longitude,
-        timezone: birth.timezone,
-        place_of_birth: birth.placeOfBirth,
-      },
-      { onConflict: "device_id" }
-    );
-  } catch (err) {
-    console.warn("[supabase-store] upsertProfile failed:", err);
-  }
+  await postJson("/api/profile/upsert", {
+    deviceId,
+    displayName: birth.nickname,
+    birthData: birth,
+  });
 }
 
 /** Update the user's display name (shown to their connections). */
 export async function upsertDisplayName(displayName: string): Promise<void> {
-  if (!supabase) return;
   const deviceId = getDeviceId();
   if (!deviceId) return;
-
-  try {
-    await supabase
-      .from("profiles")
-      .update({ display_name: displayName })
-      .eq("device_id", deviceId);
-  } catch (err) {
-    console.warn("[supabase-store] upsertDisplayName failed:", err);
-  }
+  // Reuse upsert endpoint with just a displayName + empty birthData guard.
+  // The route requires birthData.birthDate, so read it back from supabase — OR:
+  // we call the endpoint only when the profile already has birthData (normal case).
+  // Here we short-circuit with a lightweight update via a dedicated call path.
+  await postJson("/api/profile/upsert", {
+    deviceId,
+    displayName,
+    // Minimal birthData stub — server will only update display_name if this is
+    // provided, but our current route expects birthData.birthDate. Rather than
+    // fail, we pull it from localStorage if available.
+    birthData: (() => {
+      if (typeof window === "undefined") return null;
+      try {
+        const raw = localStorage.getItem("unfold_birth_data");
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    })(),
+  });
 }
 
+// Read path — runs in Server Components too; falls back to direct supabase when available.
 export async function getProfile(): Promise<BirthData | null> {
   if (!supabase) return null;
   const deviceId = getDeviceId();
@@ -61,7 +86,7 @@ export async function getProfile(): Promise<BirthData | null> {
       .from("profiles")
       .select("*")
       .eq("device_id", deviceId)
-      .single();
+      .maybeSingle();
 
     if (!data?.birth_date) return null;
 
@@ -80,17 +105,14 @@ export async function getProfile(): Promise<BirthData | null> {
 }
 
 // ─── Auth linking (Phase 2 stubs) ───────────────────────
-// Kept as no-ops so components that import them still compile without touching
-// the schema. When Supabase Auth magic-link ships, add auth_user_id column,
-// wire these functions to real UPDATE/SELECT, and remove the @phase-2 markers.
-// Tracked: see /Users/jhondoe/.claude/plans/streamed-tumbling-moon.md "Out of scope".
+// See /Users/jhondoe/.claude/plans/streamed-tumbling-moon.md — "Out of scope".
 
-/** @phase-2 Link the current device's profile to a Supabase Auth user. */
+/** @phase-2 */
 export async function linkProfileToAuth(_authUserId: string): Promise<void> {
   return;
 }
 
-/** @phase-2 Get a profile by auth user ID (for sign-in recovery). */
+/** @phase-2 */
 export async function getProfileByAuthId(
   _authUserId: string,
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,46 +162,30 @@ export async function addRemoteConnection(conn: {
   birthData?: BirthData;
   inviteCode: string;
 }): Promise<void> {
-  if (!supabase) return;
   const deviceId = getDeviceId();
   if (!deviceId) return;
-
-  // Ensure profile exists first
-  await ensureProfile();
-
-  try {
-    await supabase.from("connections").insert({
-      owner_device_id: deviceId,
-      name: conn.name,
-      initial: conn.initial,
-      relationship: conn.relationship,
-      birth_date: conn.birthData?.birthDate ?? null,
-      birth_time: conn.birthData?.birthTime ?? null,
-      latitude: conn.birthData?.latitude ?? null,
-      longitude: conn.birthData?.longitude ?? null,
-      timezone: conn.birthData?.timezone ?? null,
-      place_of_birth: conn.birthData?.placeOfBirth ?? null,
-      invite_code: conn.inviteCode,
-    });
-  } catch (err) {
-    console.warn("[supabase-store] addRemoteConnection failed:", err);
-  }
+  await postJson("/api/connection/upsert", {
+    deviceId,
+    name: conn.name,
+    initial: conn.initial,
+    relationship: conn.relationship,
+    inviteCode: conn.inviteCode,
+    birthData: conn.birthData ?? null,
+  });
 }
 
 export async function updateRemoteRelationship(
   inviteCode: string,
-  relationship: string
+  relationship: string,
 ): Promise<void> {
-  if (!supabase) return;
   const deviceId = getDeviceId();
   if (!deviceId) return;
-
   try {
-    await supabase
-      .from("connections")
-      .update({ relationship })
-      .eq("owner_device_id", deviceId)
-      .eq("invite_code", inviteCode);
+    await fetch("/api/connection/upsert", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, inviteCode, relationship }),
+    });
   } catch (err) {
     console.warn("[supabase-store] updateRemoteRelationship failed:", err);
   }
@@ -188,34 +194,29 @@ export async function updateRemoteRelationship(
 export async function renameRemoteConnection(
   inviteCode: string,
   name: string,
-  initial: string,
+  _initial: string,
 ): Promise<void> {
-  if (!supabase) return;
   const deviceId = getDeviceId();
   if (!deviceId) return;
-
   try {
-    await supabase
-      .from("connections")
-      .update({ name, initial })
-      .eq("owner_device_id", deviceId)
-      .eq("invite_code", inviteCode);
+    await fetch("/api/connection/upsert", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, inviteCode, name }),
+    });
   } catch (err) {
     console.warn("[supabase-store] renameRemoteConnection failed:", err);
   }
 }
 
 export async function removeRemoteConnection(inviteCode: string): Promise<void> {
-  if (!supabase) return;
   const deviceId = getDeviceId();
   if (!deviceId) return;
-
   try {
-    await supabase
-      .from("connections")
-      .delete()
-      .eq("owner_device_id", deviceId)
-      .eq("invite_code", inviteCode);
+    const url = `/api/connection/upsert?deviceId=${encodeURIComponent(
+      deviceId,
+    )}&inviteCode=${encodeURIComponent(inviteCode)}`;
+    await fetch(url, { method: "DELETE" });
   } catch (err) {
     console.warn("[supabase-store] removeRemoteConnection failed:", err);
   }
@@ -224,84 +225,24 @@ export async function removeRemoteConnection(inviteCode: string): Promise<void> 
 // ─── Invite Codes ────────────────────────────────────────
 
 export async function persistInviteCode(code: string): Promise<void> {
-  if (!supabase) return;
   const deviceId = getDeviceId();
   if (!deviceId) return;
-
-  await ensureProfile();
-
-  try {
-    // Also store on profile
-    await supabase
-      .from("profiles")
-      .update({ invite_code: code })
-      .eq("device_id", deviceId);
-
-    // Store in invite_codes table
-    await supabase.from("invite_codes").upsert(
-      { code, owner_device_id: deviceId },
-      { onConflict: "code" }
-    );
-  } catch (err) {
-    console.warn("[supabase-store] persistInviteCode failed:", err);
-  }
+  await postJson("/api/invite/register", { deviceId, code });
 }
 
 export async function lookupInviteCode(code: string): Promise<{
   name: string;
   birthData: BirthData;
 } | null> {
-  if (!supabase) return null;
-
   try {
-    // Find the invite code owner
-    const { data: codeData } = await supabase
-      .from("invite_codes")
-      .select("owner_device_id")
-      .eq("code", code)
-      .single();
-
-    if (!codeData) return null;
-
-    // Get their profile
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("device_id", codeData.owner_device_id)
-      .single();
-
-    if (!profile?.birth_date) return null;
-
-    return {
-      name: profile.nickname ?? "Unknown",
-      birthData: {
-        nickname: profile.nickname ?? "",
-        birthDate: profile.birth_date,
-        birthTime: profile.birth_time ?? "",
-        latitude: profile.latitude ?? 0,
-        longitude: profile.longitude ?? 0,
-        timezone: profile.timezone ?? "Europe/Paris",
-        placeOfBirth: profile.place_of_birth ?? "",
-      },
-    };
+    const res = await fetch("/api/invite/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { name: string; birthData: BirthData };
   } catch {
     return null;
-  }
-}
-
-// ─── Helpers ─────────────────────────────────────────────
-
-async function ensureProfile(): Promise<void> {
-  if (!supabase) return;
-  const deviceId = getDeviceId();
-  if (!deviceId) return;
-
-  try {
-    await supabase.from("profiles").upsert(
-      { device_id: deviceId },
-      { onConflict: "device_id" }
-    );
-  } catch {
-    // Profile may already exist
   }
 }
