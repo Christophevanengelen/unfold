@@ -1,264 +1,48 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { getConnection, type RealConnection } from "@/lib/connections-store";
-import { PageHeader, PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitives";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
+import { PageHeader } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
-import { fetchConnectionBrief, type ActivePeriod } from "@/lib/connection-brief-api";
-import { getConnectionDelineation, type ConnectionDelineation } from "@/lib/connection-delineation";
-
-import type { MatchingWindow, RelationshipType } from "@/lib/matching-narratives";
-
-// ─── Relationship colors ─────────────────────────────────
-
-const relationshipColors: Record<string, string> = {
-  partner: "#D89EA0",
-  friend: "#50C4D6",
-  family: "#6BA89A",
-  colleague: "#9585CC",
-};
-
-// ─── Window card ─────────────────────────────────────────
-
-function WindowCard({
-  w,
-  period,
-  i,
-  relColor,
-  theirName,
-  myBirthDate,
-  theirBirthDate,
-}: {
-  w: MatchingWindow;
-  period: ActivePeriod;
-  i: number;
-  relColor: string;
-  theirName: string;
-  myBirthDate: string;
-  theirBirthDate: string;
-}) {
-  const [del, setDel] = useState<ConnectionDelineation | null>(null);
-  const [delLoading, setDelLoading] = useState(true);
-
-  useEffect(() => {
-    getConnectionDelineation(period, w.relationship, myBirthDate, theirBirthDate)
-      .then(setDel)
-      .finally(() => setDelLoading(false));
-  }, [period, w.relationship, myBirthDate, theirBirthDate]);
-
-  const isActive = w.status === "active";
-
-  return (
-    <motion.div
-      key={`${w.monthKey}-${i}`}
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: "var(--surface-subtle)",
-        border: `1px solid color-mix(in srgb, ${w.tierColor} ${isActive ? "25" : "12"}%, transparent)`,
-      }}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + i * 0.1 }}
-    >
-      {/* Status bar */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-1">
-        <div className="flex items-center gap-2">
-          <div
-            className="h-2 w-2 rounded-full"
-            style={{
-              backgroundColor: isActive ? w.tierColor : "var(--text-body-subtle)",
-              opacity: isActive ? 1 : 0.4,
-            }}
-          />
-          <span
-            className="text-[10px] font-bold uppercase tracking-widest"
-            style={{ color: isActive ? w.tierColor : "var(--text-body-subtle)" }}
-          >
-            {isActive ? "Actif maintenant" : w.status === "past" ? "Passé" : "À venir"}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <TierBadge tier={w.tier} color={w.tierColor} />
-          <span className="text-[10px] text-text-body-subtle">
-            {isActive ? `${w.daysLeft}j restants` : w.status === "past" ? "" : `dans ${w.daysLeft}j`}
-          </span>
-        </div>
-      </div>
-
-      <div className="px-4 pb-4">
-        {/* Title */}
-        <h3 className="text-base font-bold text-text-heading mt-1">
-          {del ? del.ensemble.titre : w.title}
-        </h3>
-        <p className="text-[11px] text-text-body-subtle mt-0.5">{w.dateRange}</p>
-
-        {/* Shared theme / pourquoiCeMois */}
-        <div
-          className="mt-3 rounded-xl px-3.5 py-2.5"
-          style={{ background: `color-mix(in srgb, ${w.tierColor} 8%, transparent)` }}
-        >
-          {delLoading ? (
-            <div className="h-3 rounded animate-pulse w-3/4" style={{ background: `color-mix(in srgb, ${w.tierColor} 20%, transparent)` }} />
-          ) : (
-            <p className="text-xs font-semibold text-text-heading">
-              {del ? del.ensemble.pourquoiCeMois : w.sharedTheme}
-            </p>
-          )}
-        </div>
-
-        {/* Dynamique (only when delineated) */}
-        {del && (
-          <p className="mt-2 text-[11px] italic text-text-body-subtle leading-relaxed">
-            {del.ensemble.dynamique}
-          </p>
-        )}
-
-        {/* You + Them */}
-        <div className="mt-3 space-y-2">
-          {/* Person A */}
-          <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
-            <div className="flex items-start justify-between gap-2">
-              <EyebrowLabel color="var(--accent-purple)" className="mb-1">Vous</EyebrowLabel>
-              {del && (
-                <span className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
-                  style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
-                  {del.personA.titre}
-                </span>
-              )}
-            </div>
-            {delLoading ? (
-              <div className="space-y-1">
-                <div className="h-2.5 rounded animate-pulse w-full" style={{ background: "var(--surface-medium)" }} />
-                <div className="h-2.5 rounded animate-pulse w-4/5" style={{ background: "var(--surface-medium)" }} />
-              </div>
-            ) : (
-              <>
-                <p className="text-xs text-text-body leading-relaxed">
-                  {del ? del.personA.corps : w.you.description}
-                </p>
-                {del && (
-                  <p className="mt-1.5 text-[10px] text-text-body-subtle italic leading-snug">
-                    {del.personA.defi}
-                  </p>
-                )}
-              </>
-            )}
-            <PlanetPill planet={w.you.planet} className="mt-1.5" />
-          </div>
-
-          {/* Person B */}
-          <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
-            <div className="flex items-start justify-between gap-2">
-              <EyebrowLabel color={relColor} className="mb-1">{theirName}</EyebrowLabel>
-              {del && (
-                <span className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
-                  style={{ color: relColor, opacity: 0.5 }}>
-                  {del.personB.titre}
-                </span>
-              )}
-            </div>
-            {delLoading ? (
-              <div className="space-y-1">
-                <div className="h-2.5 rounded animate-pulse w-full" style={{ background: "var(--surface-medium)" }} />
-                <div className="h-2.5 rounded animate-pulse w-4/5" style={{ background: "var(--surface-medium)" }} />
-              </div>
-            ) : (
-              <>
-                <p className="text-xs text-text-body leading-relaxed">
-                  {del ? del.personB.corps : w.them.description}
-                </p>
-                {del && (
-                  <p className="mt-1.5 text-[10px] text-text-body-subtle italic leading-snug">
-                    {del.personB.defi}
-                  </p>
-                )}
-              </>
-            )}
-            <PlanetPill planet={w.them.planet} className="mt-1.5" />
-          </div>
-        </div>
-
-        {/* À faire ensemble */}
-        <div
-          className="mt-2 rounded-xl px-3.5 py-2.5"
-          style={{
-            background: `color-mix(in srgb, ${w.tierColor} 10%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${w.tierColor} 15%, transparent)`,
-          }}
-        >
-          <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: w.tierColor }}>
-            À faire ensemble
-          </p>
-          {delLoading ? (
-            <div className="space-y-1">
-              <div className="h-2.5 rounded animate-pulse w-full" style={{ background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)` }} />
-              <div className="h-2.5 rounded animate-pulse w-3/5" style={{ background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)` }} />
-            </div>
-          ) : (
-            <p className="text-xs text-text-heading font-medium leading-relaxed">
-              {del ? del.ensemble.aFaireEnsemble : w.action}
-            </p>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Page ────────────────────────────────────────────────
+import { getConnections, type RealConnection } from "@/lib/connections-store";
+import { ConnectionStrip } from "@/components/demo/compat/ConnectionStrip";
+import { ConnectionCarousel } from "@/components/demo/compat/ConnectionCarousel";
+import { ConnectionReport } from "@/components/demo/compat/ConnectionReport";
+import { relationshipConfig } from "@/components/demo/compat/relationshipConfig";
 
 export default function ConnectionDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const connectionId = params.connectionId as string;
-  const [connection, setConnection] = useState<RealConnection | null>(null);
 
+  const [connections, setConnections] = useState<RealConnection[]>([]);
   useEffect(() => {
-    setConnection(getConnection(connectionId));
-  }, [connectionId]);
+    setConnections(getConnections());
+  }, []);
 
   const { birthData: myBirthData } = useMomentum();
 
-  const [windows, setWindows] = useState<MatchingWindow[]>([]);
-  const [periods, setPeriods] = useState<ActivePeriod[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isLive, setIsLive] = useState(false);
+  const currentIndex = useMemo(
+    () => connections.findIndex((c) => c.id === connectionId),
+    [connections, connectionId],
+  );
 
-  useEffect(() => {
-    if (!connection) return;
+  const current = currentIndex >= 0 ? connections[currentIndex] : null;
 
-    async function loadComparison() {
-      setLoading(true);
-      if (myBirthData && connection!.birthData) {
-        try {
-          const result = await fetchConnectionBrief(
-            myBirthData,
-            connection!.birthData,
-            connection!.relationship as RelationshipType,
-            connection!.name,
-          );
-          if (result.windows.length > 0) {
-            setWindows(result.windows);
-            setPeriods(result.periods);
-            setIsLive(true);
-            setLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.error("[Compatibility] connection-brief error:", err);
-        }
-      }
-      setWindows([]);
-      setPeriods([]);
-      setIsLive(false);
-      setLoading(false);
+  // Keep URL in sync when user swipes/taps to another connection
+  const handleIndexChange = (newIndex: number) => {
+    const next = connections[newIndex];
+    if (next && next.id !== connectionId) {
+      router.replace(`/demo/compatibility/${next.id}`, { scroll: false });
     }
+  };
 
-    loadComparison();
-  }, [connection, myBirthData]);
+  const handleSelect = (id: string) => {
+    const idx = connections.findIndex((c) => c.id === id);
+    if (idx >= 0) handleIndexChange(idx);
+  };
 
-  if (!connection) {
+  if (connections.length === 0 || !current) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-sm text-text-body-subtle">Connexion introuvable</p>
@@ -266,69 +50,40 @@ export default function ConnectionDetailPage() {
     );
   }
 
-  const relColor = relationshipColors[connection.relationship] ?? "#9585CC";
+  const rel = relationshipConfig[current.relationship];
 
   return (
     <div className="flex min-h-0 flex-col">
       <PageHeader
         backHref="/demo/compatibility"
-        title={`Vous & ${connection.name}`}
-        subtitle={
-          loading
-            ? "Analyse en cours..."
-            : isLive
-              ? `${windows.length} fenêtre${windows.length !== 1 ? "s" : ""} de timing`
-              : "Données insuffisantes"
-        }
+        title={`Vous & ${current.name}`}
+        subtitle={rel.labelFR}
         leadingSlot={
           <div
             className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
-            style={{ backgroundColor: relColor }}
+            style={{ backgroundColor: rel.color }}
           >
-            {connection.initial}
+            {current.initial}
           </div>
         }
       />
 
-      {loading && (
-        <div className="flex flex-1 items-center justify-center">
-          <motion.div
-            className="h-5 w-5 rounded-full border-2 border-transparent"
-            style={{ borderTopColor: "var(--accent-purple)", borderRightColor: "var(--accent-purple)" }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          />
-        </div>
-      )}
+      <ConnectionStrip
+        connections={connections}
+        currentId={current.id}
+        onSelect={handleSelect}
+      />
 
-      {!loading && windows.length === 0 && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="text-sm text-text-body">
-            {connection.birthData
-              ? "Pas assez de données pour comparer vos rythmes."
-              : `${connection.name} n'a pas encore partagé ses données de naissance.`}
-          </p>
-        </div>
+      {connections.length > 1 ? (
+        <ConnectionCarousel
+          connections={connections}
+          currentIndex={currentIndex}
+          myBirthData={myBirthData}
+          onIndexChange={handleIndexChange}
+        />
+      ) : (
+        <ConnectionReport connection={current} myBirthData={myBirthData} embedded />
       )}
-
-      {!loading && windows.length > 0 && (
-        <div className="space-y-4">
-          {windows.map((w, i) => (
-            <WindowCard
-              key={w.monthKey}
-              w={w}
-              period={periods[i]}
-              i={i}
-              relColor={relColor}
-              theirName={connection.name}
-              myBirthDate={myBirthData?.birthDate ?? ""}
-              theirBirthDate={connection.birthData?.birthDate ?? ""}
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="h-4" />
     </div>
   );
 }

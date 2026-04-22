@@ -27,6 +27,7 @@ import { getBirthData, getBirthDataSync, saveBirthData, type BirthData } from "@
 import { migrateFromLocalStorage, storage } from "@/lib/storage";
 import { fetchYearData, fetchAppData } from "@/lib/momentum-api";
 import { yearDataToPhases, appDataToPhases } from "@/lib/momentum-adapter";
+import { syncConnections } from "@/lib/connections-store";
 import type { MomentumPhase } from "@/types/momentum";
 
 // ─── Cache layer — dual-write (IndexedDB + localStorage) ──────
@@ -101,6 +102,9 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
       const bd = await getBirthData();
       if (bd) {
         setBirthData(bd);
+        // Once we know who the user is, pull their remote connections
+        // into local (cross-device merge). Fire-and-forget — never blocks UI.
+        syncConnections().catch(() => {});
       } else {
         setNeedsOnboarding(true);
       }

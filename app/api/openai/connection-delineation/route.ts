@@ -5,12 +5,20 @@
  * connection-prompt.md as the system prompt.
  * Returns structured ConnectionDelineation JSON.
  *
- * Cache: client-side (IndexedDB, 7 days) — see lib/connection-delineation.ts
+ * Two-tier cache:
+ *   L1 = client IndexedDB (7d TTL)      — see lib/connection-delineation.ts
+ *   L2 = Supabase delineation_cache     — shared across devices/users
+ *
+ * Cache key (order-independent for the pair):
+ *   birth_hash   = sorted(md5(A|time|lat|lng), md5(B|time|lat|lng)).join("_")
+ *   boudin_id    = "couple_{relationship}_{monthKey}_v{PROMPT_VERSION}"
+ *   profile_hash = "v1" (reserved for mood/priorities injection)
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { supabase } from "@/lib/db";
 
 // ─── Load system prompt ────────────────────────────────────
 // Extract just the "SYSTEM PROMPT" code block from the markdown file.
@@ -20,24 +28,112 @@ function loadSystemPrompt(): string {
     join(process.cwd(), "connection-prompt.md"),
     "utf-8",
   );
-  // Extract the content of the ```...``` block that follows "## SYSTEM PROMPT"
   const match = raw.match(/## SYSTEM PROMPT\s*\n```[^\n]*\n([\s\S]*?)\n```/);
   if (match?.[1]) return match[1].trim();
-  // Fallback: strip markdown headings and code fences
   return raw
     .replace(/^#+\s.*$/gm, "")
     .replace(/```[\s\S]*?```/gm, "")
     .trim();
 }
 
-// NOTE: prompt is loaded on every request so that changes to
-// connection-prompt.md take effect without a server restart.
-
-// ─── OpenAI config ─────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────
 
 const OPENAI_MODEL = "gpt-4o";
 
+/** Bump when connection-prompt.md rules change meaningfully (invalidates all cached couple delineations). */
+const PROMPT_VERSION = "v1";
+
+// ─── L2 Cache helpers ─────────────────────────────────────
+
+interface PayloadPerson {
+  birthDate: string;
+  primarySignal?: unknown;
+  rawData?: {
+    events?: Array<{ date?: string | null }>;
+  };
+}
+
+function normalizeTime(t: string | undefined): string {
+  if (!t) return "00:00";
+  // Accept "HH:mm" or "HH:mm:ss" — collapse to HH:mm
+  return t.slice(0, 5);
+}
+
+/**
+ * Make a per-person identity hash. We avoid md5 deps and rely on a stable
+ * string — cheaper and enough for hash-key equality across devices.
+ */
+function personHash(bd: { birthDate: string; birthTime: string }, lat?: number, lng?: number): string {
+  const latStr = typeof lat === "number" ? lat.toFixed(2) : "??";
+  const lngStr = typeof lng === "number" ? lng.toFixed(2) : "??";
+  return `${bd.birthDate}_${normalizeTime(bd.birthTime)}_${latStr}_${lngStr}`;
+}
+
+/** Compose the order-independent pair hash. Sorted so (A,B) === (B,A). */
+function pairHash(a: string, b: string): string {
+  return [a, b].sort().join("|");
+}
+
+function boudinIdFor(relationship: string, monthKey: string): string {
+  return `couple_${relationship}_${monthKey}_${PROMPT_VERSION}`;
+}
+
+async function getCachedDelineation(
+  birthHash: string,
+  boudinId: string,
+  profileHash: string,
+) {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("delineation_cache")
+      .select("delineation")
+      .eq("birth_hash", birthHash)
+      .eq("boudin_id", boudinId)
+      .eq("profile_hash", profileHash)
+      .single();
+    if (error || !data) return null;
+    console.log("[connection-delineation] CACHE HIT", boudinId);
+    return data.delineation as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function cacheDelineation(
+  birthHash: string,
+  boudinId: string,
+  profileHash: string,
+  delineation: Record<string, unknown>,
+): void {
+  if (!supabase) return;
+  supabase
+    .from("delineation_cache")
+    .upsert(
+      {
+        birth_hash: birthHash,
+        boudin_id: boudinId,
+        profile_hash: profileHash,
+        delineation,
+        model: OPENAI_MODEL,
+      },
+      { onConflict: "birth_hash,boudin_id,profile_hash" },
+    )
+    .then(({ error }) => {
+      if (error) console.warn("[connection-delineation] CACHE WRITE failed:", error.message);
+      else console.log("[connection-delineation] CACHE WRITE ok", boudinId);
+    });
+}
+
 // ─── Route handler ─────────────────────────────────────────
+
+interface RequestBody {
+  relationship?: string;
+  monthKey?: string;
+  personA?: PayloadPerson & { latitude?: number; longitude?: number };
+  personB?: PayloadPerson & { latitude?: number; longitude?: number };
+  [k: string]: unknown;
+}
 
 export async function POST(req: NextRequest) {
   const SYSTEM_PROMPT = loadSystemPrompt();
@@ -49,13 +145,43 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let body: unknown;
+  let body: RequestBody;
   try {
-    body = await req.json();
+    body = (await req.json()) as RequestBody;
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
+  // ── L2 Cache check ──
+  // We hash the pair using lat/lng from the caller's payload if present.
+  // The client (lib/connection-delineation.ts) doesn't send lat/lng today — we
+  // fall back to birthDate+birthTime only, which is a weaker but still correct
+  // identity for cache (same birth chart = same delineation).
+  const relationship = body.relationship ?? "partner";
+  const monthKey = body.monthKey ?? "0000-00";
+  let birthHash: string | null = null;
+  if (body.personA?.birthDate && body.personB?.birthDate) {
+    const a = personHash(
+      { birthDate: body.personA.birthDate, birthTime: String(body.personA.birthTime ?? "") },
+      body.personA.latitude,
+      body.personA.longitude,
+    );
+    const b = personHash(
+      { birthDate: body.personB.birthDate, birthTime: String(body.personB.birthTime ?? "") },
+      body.personB.latitude,
+      body.personB.longitude,
+    );
+    birthHash = pairHash(a, b);
+  }
+  const boudinId = boudinIdFor(relationship, monthKey);
+  const profileHash = "v1"; // reserved for future mood injection
+
+  if (birthHash) {
+    const cached = await getCachedDelineation(birthHash, boudinId, profileHash);
+    if (cached) return NextResponse.json(cached);
+  }
+
+  // ── OpenAI call (cache miss) ──
   const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -87,9 +213,15 @@ export async function POST(req: NextRequest) {
   const text = result.choices?.[0]?.message?.content ?? "{}";
 
   try {
-    return NextResponse.json(JSON.parse(text));
+    const parsed = JSON.parse(text) as Record<string, unknown>;
+    // Fire-and-forget cache write (doesn't block response)
+    if (birthHash) cacheDelineation(birthHash, boudinId, profileHash, parsed);
+    return NextResponse.json(parsed);
   } catch {
-    console.error("[connection-delineation] Failed to parse OpenAI response:", text.slice(0, 200));
+    console.error(
+      "[connection-delineation] Failed to parse OpenAI response:",
+      text.slice(0, 200),
+    );
     return NextResponse.json(
       { error: "Invalid LLM response" },
       { status: 500 },

@@ -20,18 +20,34 @@ export async function upsertProfile(birth: BirthData): Promise<void> {
       {
         device_id: deviceId,
         nickname: birth.nickname,
+        display_name: birth.nickname, // mirror nickname unless overridden explicitly
         birth_date: birth.birthDate,
         birth_time: birth.birthTime,
         latitude: birth.latitude,
         longitude: birth.longitude,
         timezone: birth.timezone,
         place_of_birth: birth.placeOfBirth,
-        updated_at: new Date().toISOString(),
       },
       { onConflict: "device_id" }
     );
   } catch (err) {
     console.warn("[supabase-store] upsertProfile failed:", err);
+  }
+}
+
+/** Update the user's display name (shown to their connections). */
+export async function upsertDisplayName(displayName: string): Promise<void> {
+  if (!supabase) return;
+  const deviceId = getDeviceId();
+  if (!deviceId) return;
+
+  try {
+    await supabase
+      .from("profiles")
+      .update({ display_name: displayName })
+      .eq("device_id", deviceId);
+  } catch (err) {
+    console.warn("[supabase-store] upsertDisplayName failed:", err);
   }
 }
 
@@ -63,39 +79,23 @@ export async function getProfile(): Promise<BirthData | null> {
   }
 }
 
-// ─── Auth linking ───────────────────────────────────────
+// ─── Auth linking (Phase 2 stubs) ───────────────────────
+// Kept as no-ops so components that import them still compile without touching
+// the schema. When Supabase Auth magic-link ships, add auth_user_id column,
+// wire these functions to real UPDATE/SELECT, and remove the @phase-2 markers.
+// Tracked: see /Users/jhondoe/.claude/plans/streamed-tumbling-moon.md "Out of scope".
 
-/** Link the current device's profile to a Supabase Auth user */
-export async function linkProfileToAuth(authUserId: string): Promise<void> {
-  if (!supabase) return;
-  const deviceId = getDeviceId();
-  if (!deviceId) return;
-
-  try {
-    await supabase
-      .from("profiles")
-      .update({ auth_user_id: authUserId, updated_at: new Date().toISOString() })
-      .eq("device_id", deviceId);
-  } catch (err) {
-    console.warn("[supabase-store] linkProfileToAuth failed:", err);
-  }
+/** @phase-2 Link the current device's profile to a Supabase Auth user. */
+export async function linkProfileToAuth(_authUserId: string): Promise<void> {
+  return;
 }
 
-/** Get a profile by auth user ID (for sign-in recovery) */
+/** @phase-2 Get a profile by auth user ID (for sign-in recovery). */
+export async function getProfileByAuthId(
+  _authUserId: string,
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getProfileByAuthId(authUserId: string): Promise<Record<string, any> | null> {
-  if (!supabase) return null;
-
-  try {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("auth_user_id", authUserId)
-      .single();
-    return data;
-  } catch {
-    return null;
-  }
+): Promise<Record<string, any> | null> {
+  return null;
 }
 
 // ─── Connections ─────────────────────────────────────────
@@ -182,6 +182,26 @@ export async function updateRemoteRelationship(
       .eq("invite_code", inviteCode);
   } catch (err) {
     console.warn("[supabase-store] updateRemoteRelationship failed:", err);
+  }
+}
+
+export async function renameRemoteConnection(
+  inviteCode: string,
+  name: string,
+  initial: string,
+): Promise<void> {
+  if (!supabase) return;
+  const deviceId = getDeviceId();
+  if (!deviceId) return;
+
+  try {
+    await supabase
+      .from("connections")
+      .update({ name, initial })
+      .eq("owner_device_id", deviceId)
+      .eq("invite_code", inviteCode);
+  } catch (err) {
+    console.warn("[supabase-store] renameRemoteConnection failed:", err);
   }
 }
 

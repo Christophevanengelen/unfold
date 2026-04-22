@@ -48,22 +48,45 @@ function cacheKey(
 
 // ─── Main function ────────────────────────────────────────
 
+/**
+ * Per-person identity payload for delineation. Includes coords so the
+ * server-side cache can key on chart identity, not just birth date.
+ */
+interface PersonIdentity {
+  birthDate: string;
+  birthTime?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+/** Backwards-compatible: accepts either `string` (birthDate only) or full identity. */
+type PersonArg = string | PersonIdentity;
+
+function toIdentity(arg: PersonArg): PersonIdentity {
+  return typeof arg === "string" ? { birthDate: arg } : arg;
+}
+
 export async function getConnectionDelineation(
   period: ActivePeriod,
   relationship: RelationshipType,
-  birthDateA: string,
-  birthDateB: string,
+  personAArg: PersonArg,
+  personBArg: PersonArg,
 ): Promise<ConnectionDelineation | null> {
-  const key = cacheKey(birthDateA, birthDateB, relationship, period.monthKey);
+  const idA = toIdentity(personAArg);
+  const idB = toIdentity(personBArg);
+  const key = cacheKey(idA.birthDate, idB.birthDate, relationship, period.monthKey);
 
-  // Check cache first
+  // L1 check — IndexedDB (offline-capable, per-device)
   const cached = await storage.get<ConnectionDelineation>(key, CACHE_TTL_MS);
   if (cached) return cached;
 
   // Build payload — include rawData (profection + event list) so the LLM
   // can reason from actual transit labels, scores, and ZR details.
-  const buildPersonPayload = (focus: typeof period.personAFocus, birthDate: string) => ({
-    birthDate,
+  const buildPersonPayload = (focus: typeof period.personAFocus, id: PersonIdentity) => ({
+    birthDate: id.birthDate,
+    birthTime: id.birthTime,
+    latitude: id.latitude,
+    longitude: id.longitude,
     primarySignal: focus.primarySignal,
     dominantDomains: focus.dominantDomains,
     profection: focus.rawData?.profection ?? {
@@ -83,8 +106,8 @@ export async function getConnectionDelineation(
     sharedTheme: period.sharedTheme,
     sharedInsight: period.sharedInsight,
     apiSuggestedAction: period.actionTogether,
-    personA: buildPersonPayload(period.personAFocus, birthDateA),
-    personB: buildPersonPayload(period.personBFocus, birthDateB),
+    personA: buildPersonPayload(period.personAFocus, idA),
+    personB: buildPersonPayload(period.personBFocus, idB),
   };
 
   try {

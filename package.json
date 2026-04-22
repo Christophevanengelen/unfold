@@ -6,7 +6,9 @@
     "dev": "next dev --port 3333",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "node supabase/migrate.mjs",
+    "db:verify": "node supabase/verify.mjs"
   },
   "dependencies": {
     "@next/bundle-analyzer": "^16.2.1",
@@ -27,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",

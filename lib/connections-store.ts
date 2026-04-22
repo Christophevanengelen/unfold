@@ -7,6 +7,7 @@ import type { BirthData } from "@/lib/birth-data";
 import {
   addRemoteConnection,
   updateRemoteRelationship,
+  renameRemoteConnection,
   removeRemoteConnection,
   getRemoteConnections,
   persistInviteCode,
@@ -92,6 +93,19 @@ export function updateRelationship(id: string, relationship: RelationshipType): 
     // Dual-write
     updateRemoteRelationship(conn.inviteCode, relationship).catch(() => {});
   }
+}
+
+export function renameConnection(id: string, name: string): void {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  const all = readAll();
+  const conn = all.find((c) => c.id === id);
+  if (!conn) return;
+  conn.name = trimmed;
+  conn.initial = trimmed.charAt(0).toUpperCase();
+  writeAll(all);
+  // Dual-write to Supabase (fire-and-forget)
+  renameRemoteConnection(conn.inviteCode, trimmed, conn.initial).catch(() => {});
 }
 
 export function removeConnection(id: string): void {

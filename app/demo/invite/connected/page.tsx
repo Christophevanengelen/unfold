@@ -10,6 +10,7 @@ import {
   parseInviteParams,
   type RelationshipType,
 } from "@/lib/connections-store";
+import { relationshipConfig, relationshipOrder } from "@/components/demo/compat/relationshipConfig";
 
 const CONFETTI_COLORS = [
   "#B07CC2", "#D89EA0", "#6BA89A", "#9585CC", "#50C4D6", "#C4A86B",
@@ -26,13 +27,6 @@ const PARTICLES = Array.from({ length: 16 }, (_, i) => {
     delay: i * 0.03,
   };
 });
-
-const RELATIONSHIP_OPTIONS: { key: RelationshipType; label: string; icon: string; color: string }[] = [
-  { key: "partner", label: "Partenaire", icon: "♡", color: "#D89EA0" },
-  { key: "friend", label: "Ami·e", icon: "☆", color: "#50C4D6" },
-  { key: "family", label: "Famille", icon: "⌂", color: "#6BA89A" },
-  { key: "colleague", label: "Collègue", icon: "◈", color: "#9585CC" },
-];
 
 function ConnectedContent() {
   const searchParams = useSearchParams();
@@ -127,8 +121,10 @@ function ConnectedContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
       >
-        {RELATIONSHIP_OPTIONS.map((rel) => {
+        {relationshipOrder.map((key) => {
+          const rel = relationshipConfig[key];
           const isSelected = selectedRelation === rel.key;
+          const Icon = rel.Icon;
           return (
             <button
               key={rel.key}
@@ -142,8 +138,8 @@ function ConnectedContent() {
                 color: isSelected ? rel.color : "var(--text-body)",
               }}
             >
-              <span className="text-base">{rel.icon}</span>
-              {rel.label}
+              <Icon width={14} height={14} style={{ color: rel.color }} />
+              {rel.labelFR}
             </button>
           );
         })}
