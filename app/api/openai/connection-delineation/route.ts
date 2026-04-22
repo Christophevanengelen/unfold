@@ -47,6 +47,9 @@ const PROMPT_VERSION = "v1";
 
 interface PayloadPerson {
   birthDate: string;
+  birthTime?: string;
+  latitude?: number;
+  longitude?: number;
   primarySignal?: unknown;
   rawData?: {
     events?: Array<{ date?: string | null }>;
@@ -130,8 +133,8 @@ function cacheDelineation(
 interface RequestBody {
   relationship?: string;
   monthKey?: string;
-  personA?: PayloadPerson & { latitude?: number; longitude?: number };
-  personB?: PayloadPerson & { latitude?: number; longitude?: number };
+  personA?: PayloadPerson;
+  personB?: PayloadPerson;
   [k: string]: unknown;
 }
 

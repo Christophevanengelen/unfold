@@ -639,7 +639,9 @@ export function CapsuleDetailSheet({
               {cyclePasses.allHits.map((hit, i) => {
                 const d = new Date(hit.date);
                 const label = `${MONTH_NAMES[d.getMonth()]} ${d.getDate().toString().padStart(2, "0")} '${String(d.getFullYear()).slice(2)}`;
-                const isCurrent = hit.isCurrent || hit.hitNumber === cyclePasses?.hitNumber;
+                const isCurrent =
+                  ("isCurrent" in hit && hit.isCurrent) ||
+                  hit.hitNumber === cyclePasses?.hitNumber;
                 const today = new Date();
                 const isPast = !isCurrent && d < today;
                 const isFuture = !isCurrent && d >= today;
