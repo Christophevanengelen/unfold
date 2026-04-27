@@ -174,9 +174,9 @@ const TIMELINE_PAD = 80;
 // ─── Shared glass pill style (matches ViewToggle glass effect) ──────────────
 // Uses a semi-opaque dark base so small buttons stay readable over capsules
 const PILL_STYLE: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--accent-purple) 20%, rgba(27, 21, 53, 0.75))",
+  background: "var(--glass-pill)",
   color: "var(--accent-purple)",
-  border: "1px solid color-mix(in srgb, var(--accent-purple) 30%, transparent)",
+  border: "1px solid var(--glass-border)",
   backdropFilter: "blur(12px)",
   WebkitBackdropFilter: "blur(12px)",
 };
@@ -1367,8 +1367,8 @@ export function MomentumTimelineV2() {
               height: 28,
               padding: "0 10px",
               background: isToday
-                ? "color-mix(in srgb, var(--accent-purple) 25%, rgba(27, 21, 53, 0.85))"
-                : "color-mix(in srgb, var(--accent-purple) 15%, rgba(27, 21, 53, 0.8))",
+                ? "var(--glass-pill-strong)"
+                : "var(--glass-pill)",
               border: `1px solid ${isToday
                 ? "color-mix(in srgb, var(--accent-purple) 40%, transparent)"
                 : "color-mix(in srgb, var(--accent-purple) 30%, transparent)"}`,

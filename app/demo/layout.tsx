@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { BottomNav } from "@/components/demo/BottomNav";
 import { ProfileDrawer } from "@/components/demo/ProfileDrawer";
@@ -53,6 +54,7 @@ export default function DemoLayout({
 }) {
   const pathname = usePathname();
   const isNative = useIsNative();
+  const { resolvedTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
 
@@ -63,21 +65,26 @@ export default function DemoLayout({
     setMounted(true);
     setStreak(checkAndUpdateStreak());
 
-    // Native-only: hide splash screen after React renders + set status bar style
+    // Native-only: hide splash screen on first render
     if (typeof window !== "undefined" && window.Capacitor) {
-      // Dynamically import to avoid bundling native plugins on web
-      Promise.all([
-        import("@capacitor/splash-screen"),
-        import("@capacitor/status-bar"),
-      ]).then(([{ SplashScreen }, { StatusBar, Style }]) => {
+      import("@capacitor/splash-screen").then(({ SplashScreen }) => {
         // Fade out splash (launchAutoHide:false means we control this)
         SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
-        // Force light (white) text in status bar — correct for dark #1B1535 background
-        StatusBar.setStyle({ style: Style.Light }).catch(() => {});
-        StatusBar.setBackgroundColor({ color: "#1B1535" }).catch(() => {});
       });
     }
   }, []);
+
+  // Native-only: sync iOS StatusBar style with current theme
+  // Runs on mount and whenever user toggles Appearance
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.Capacitor) return;
+    import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
+      const isDark = resolvedTheme !== "light";
+      // Dark mode → white text/icons on dark bg; Light mode → dark text/icons on light bg
+      StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: isDark ? "#1B1535" : "#F5F1FA" }).catch(() => {});
+    });
+  }, [resolvedTheme]);
 
   // Listen for custom events
   useEffect(() => {

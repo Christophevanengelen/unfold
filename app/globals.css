@@ -258,6 +258,15 @@ button, a, [role="button"], [role="link"],
   --gradient-right: rgba(62, 99, 221, 0.14);
   --gradient-bottom: rgba(124, 107, 191, 0.18);
 
+  /* Glass surfaces — light mode overrides (header, bottom nav, pills) */
+  --glass-bg:           color-mix(in srgb, var(--accent-purple) 12%, rgba(245, 241, 250, 0.92));
+  --glass-border:       color-mix(in srgb, var(--accent-purple) 22%, rgba(200, 191, 220, 0.6));
+  --glass-pill:         color-mix(in srgb, var(--accent-purple) 16%, rgba(245, 241, 250, 0.88));
+  --glass-pill-strong:  color-mix(in srgb, var(--accent-purple) 24%, rgba(236, 231, 245, 0.94));
+
+  /* Premium blur overlay — light mode */
+  --premium-overlay: linear-gradient(160deg, rgba(245, 241, 250, 0.82) 0%, rgba(236, 231, 245, 0.65) 50%, rgba(124, 107, 191, 0.10) 100%);
+
 }
 
 /* ==============================================
@@ -357,6 +366,15 @@ button, a, [role="button"], [role="link"],
   --gradient-left: rgba(124, 107, 191, 0.05);
   --gradient-right: rgba(124, 107, 191, 0.05);
   --gradient-bottom: rgba(124, 107, 191, 0.08);
+
+  /* Glass surfaces — dark mode overrides (header, bottom nav, pills) */
+  --glass-bg:           color-mix(in srgb, var(--accent-purple) 6%, rgba(27, 21, 53, 0.88));
+  --glass-border:       color-mix(in srgb, var(--accent-purple) 12%, rgba(0, 0, 0, 0.25));
+  --glass-pill:         color-mix(in srgb, var(--accent-purple) 20%, rgba(27, 21, 53, 0.78));
+  --glass-pill-strong:  color-mix(in srgb, var(--accent-purple) 26%, rgba(27, 21, 53, 0.88));
+
+  /* Premium blur overlay — dark mode */
+  --premium-overlay: linear-gradient(160deg, rgba(27, 21, 53, 0.78) 0%, rgba(27, 21, 53, 0.58) 50%, rgba(124, 107, 191, 0.14) 100%);
 
 }
 

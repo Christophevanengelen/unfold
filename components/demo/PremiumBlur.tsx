@@ -60,7 +60,7 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 px-4 text-center"
         style={{
-          background: "linear-gradient(160deg, rgba(27, 21, 53, 0.75) 0%, rgba(27, 21, 53, 0.55) 50%, rgba(124, 107, 191, 0.15) 100%)",
+          background: "var(--premium-overlay)",
           backdropFilter: "blur(4px)",
         }}
       >
