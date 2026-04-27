@@ -1,24 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Lock } from "flowbite-react-icons/outline";
 import { isIOSBundle } from "@/lib/platform";
-
-// ─── Feature-specific CTA text ──────────────────────────
-const FEATURE_TEXT: Record<string, { headline: string; sub: string }> = {
-  future: {
-    headline: "Déverrouille ton futur",
-    sub: "Accède à tes capsules futures et anticipe tes moments clés",
-  },
-  ai: {
-    headline: "Personnalisation premium",
-    sub: "Des analyses IA illimitées, taillées pour ton profil",
-  },
-  default: {
-    headline: "Fonctionnalité premium",
-    sub: "Passe au niveau supérieur pour débloquer cette fonctionnalité",
-  },
-};
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 interface PremiumBlurProps {
   children: React.ReactNode;
@@ -29,7 +15,22 @@ interface PremiumBlurProps {
 }
 
 export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurProps) {
-  const text = FEATURE_TEXT[feature ?? ""] ?? FEATURE_TEXT.default;
+  const [locale, setLocaleState] = useState<Locale>("en");
+  useEffect(() => {
+    setLocaleState(detectLocale());
+    const onLocaleChange = (e: Event) => {
+      const detail = (e as CustomEvent<Locale>).detail;
+      if (detail) setLocaleState(detail);
+    };
+    window.addEventListener("unfold:locale-changed", onLocaleChange);
+    return () => window.removeEventListener("unfold:locale-changed", onLocaleChange);
+  }, []);
+
+  const featureKey = feature === "future" ? "future" : feature === "ai" ? "ai" : "default";
+  const text = {
+    headline: t(`blur.headline_${featureKey}`, locale),
+    sub: t(`blur.sub_${featureKey}`, locale),
+  };
 
   const handleUpgrade = () => {
     // Haptic feedback — medium impact for upgrade CTA
@@ -109,7 +110,7 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
             letterSpacing: "0.01em",
           }}
         >
-          {isIOSBundle() ? "Débloque dans la version Pro" : "Voir les plans"}
+          {isIOSBundle() ? t("premium.cta_ios", locale) : t("premium.cta_web", locale)}
         </motion.button>
       </motion.div>
     </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BottomSheet } from "./primitives/BottomSheet";
 import { signInWithMagicLink } from "@/lib/supabase-auth";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 interface AuthSheetProps {
   open: boolean;
@@ -13,6 +14,11 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
   const [email, setEmail] = useState("");
   const [phase, setPhase] = useState<"idle" | "loading" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [locale, setLocaleState] = useState<Locale>("en");
+
+  useEffect(() => {
+    setLocaleState(detectLocale());
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +30,7 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
       await signInWithMagicLink(email.trim());
       setPhase("sent");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Une erreur est survenue";
+      const msg = err instanceof Error ? err.message : t("auth.error_generic", locale);
       setError(msg);
       setPhase("idle");
     }
@@ -52,41 +58,35 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
               </svg>
             </div>
             <h3 className="mb-2 text-[17px] font-semibold" style={{ color: "var(--text-heading)" }}>
-              Vérifie ta boîte mail
+              {t("auth.sent_title", locale)}
             </h3>
-            <p className="mb-1 text-[13px]" style={{ color: "var(--text-body-subtle)" }}>
-              Un lien de connexion a été envoyé à
-            </p>
             <p className="mb-6 text-[13px] font-medium" style={{ color: "var(--text-heading)" }}>
               {email}
             </p>
             <p className="text-[12px]" style={{ color: "var(--text-body-subtle)" }}>
-              Clique sur le lien dans le mail — tu seras connecté automatiquement.
+              {t("auth.sent_sub", locale)}
             </p>
             <button
               onClick={handleClose}
               className="mt-8 text-[12px] underline"
               style={{ color: "var(--text-body-subtle)" }}
             >
-              Fermer
+              {t("common.close", locale)}
             </button>
           </div>
         ) : (
           <>
             <div className="mb-6 text-center">
               <p className="text-[13px] font-semibold" style={{ color: "var(--text-heading)" }}>
-                Connexion / Inscription
+                {t("auth.title", locale)}
               </p>
               <p className="mt-1 text-[12px]" style={{ color: "var(--text-body-subtle)" }}>
-                Entre ton email — tu recevras un lien magique.
+                {t("auth.sub", locale)}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="mb-1 block text-[11px] font-medium" style={{ color: "var(--text-body-subtle)" }}>
-                  Email
-                </label>
                 <input
                   type="email"
                   value={email}
@@ -99,7 +99,7 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
                     borderColor: "color-mix(in srgb, var(--accent-purple) 20%, transparent)",
                     color: "var(--text-heading)",
                   }}
-                  placeholder="ton@email.com"
+                  placeholder={t("auth.email_placeholder", locale)}
                 />
               </div>
 
@@ -115,7 +115,7 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
                 className="w-full rounded-lg py-3 text-[14px] font-semibold transition-opacity disabled:opacity-50"
                 style={{ background: "var(--accent-purple)", color: "#fff" }}
               >
-                {phase === "loading" ? "Envoi..." : "Recevoir le lien magique"}
+                {phase === "loading" ? "..." : t("auth.send_link", locale)}
               </button>
             </form>
           </>

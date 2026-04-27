@@ -6,13 +6,22 @@ import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { Heart, Clock } from "flowbite-react-icons/outline";
 import { getConnections } from "@/lib/connections-store";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 export function BottomNav() {
   const pathname = usePathname();
   const [connectionCount, setConnectionCount] = useState(0);
+  const [locale, setLocaleState] = useState<Locale>("en");
 
   useEffect(() => {
     setConnectionCount(getConnections().length);
+    setLocaleState(detectLocale());
+    const onLocaleChange = (e: Event) => {
+      const detail = (e as CustomEvent<Locale>).detail;
+      if (detail) setLocaleState(detail);
+    };
+    window.addEventListener("unfold:locale-changed", onLocaleChange);
+    return () => window.removeEventListener("unfold:locale-changed", onLocaleChange);
   }, []);
 
   const navItems = [
@@ -20,13 +29,13 @@ export function BottomNav() {
       key: "timeline" as const,
       href: "/demo/timeline",
       icon: Clock,
-      label: "Timeline",
+      label: t("nav.timeline", locale),
     },
     {
       key: "match" as const,
       href: "/demo/compatibility",
       icon: Heart,
-      label: "Match",
+      label: t("nav.match", locale),
       badge: connectionCount,
     },
   ];

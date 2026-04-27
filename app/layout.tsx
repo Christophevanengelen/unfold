@@ -5,8 +5,25 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Unfold — Know When Life Moves in Your Favor",
-  description: "Your personal momentum engine. Understand your daily rhythms across Love, Health, and Work.",
+  title: "Unfold — Premium Astrology Timing & Personal Momentum",
+  description: "Pro-level astrological timing for modern life. See your peak windows, understand transits across love, work, and growth — without the horoscope cringe. 7-day free trial.",
+  keywords: [
+    "astrology", "horoscope", "astrology app", "transits", "natal chart",
+    "personal timing", "astrology timing", "momentum", "compatibility",
+    "astrology premium", "best astrology app", "co-star alternative",
+    "astrologie", "astrología", "astrologia",
+  ],
+  openGraph: {
+    title: "Unfold — Premium Astrology Timing",
+    description: "Pro-level astrological timing for modern life. See your peak windows before they arrive.",
+    type: "website",
+    images: [{ url: "/logo/icon-mark.svg" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Unfold — Premium Astrology Timing",
+    description: "See your peak windows before they arrive. 7-day free trial.",
+  },
   icons: {
     icon: "/logo/logo-dark.svg",
     apple: "/logo/icon-mark.svg",

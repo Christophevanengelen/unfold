@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit } from "flowbite-react-icons/outline";
+import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe } from "flowbite-react-icons/outline";
 import { BottomSheet } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { PersonalizeFlow } from "@/components/demo/PersonalizeFlow";
@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import { signOut } from "@/lib/supabase-auth";
 import { clearBirthData } from "@/lib/birth-data";
 import { AuthSheet } from "@/components/demo/AuthSheet";
+import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -28,12 +29,15 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
+  const [locale, setLocaleState] = useState<Locale>("en");
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
 
-  const userName = birthData?.nickname || "You";
+  const userName = birthData?.nickname || (locale === "fr" ? "Toi" : locale === "es" ? "Tú" : locale === "pt" ? "Você" : "You");
 
   useEffect(() => {
     const p = getUserProfileSync();
     setHasProfile(isProfileComplete(p));
+    setLocaleState(detectLocale());
   }, [open]);
 
   const handlePersonalizeComplete = async (profile: UserProfile) => {
@@ -55,8 +59,8 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               <p className="text-sm font-semibold text-text-heading">
                 {userName}
               </p>
-              <p className="text-xs text-text-body-subtle capitalize">
-                free plan
+              <p className="text-xs text-text-body-subtle">
+                {t("profile.free_plan", locale)}
               </p>
             </div>
           </div>
@@ -66,7 +70,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
 
           {/* Settings */}
           <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-text-body-subtle">
-            Settings
+            {t("profile.settings", locale)}
           </p>
 
           {/* Personalize */}
@@ -77,10 +81,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           >
             <span className="flex items-center gap-2.5">
               <AdjustmentsHorizontal size={16} className="text-accent-purple" />
-              Personnaliser
+              {t("profile.personalize", locale)}
             </span>
             <span className="text-xs text-text-body-subtle">
-              {hasProfile ? "Modifier" : "Configurer"}
+              {hasProfile ? t("profile.edit", locale) : t("profile.configure", locale)}
             </span>
           </button>
 
@@ -92,10 +96,25 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           >
             <span className="flex items-center gap-2.5">
               <CalendarEdit size={16} className="text-accent-purple" />
-              Ma naissance
+              {t("profile.edit_birth", locale)}
             </span>
             <span className="text-xs text-text-body-subtle">
-              {birthData?.birthDate ? "Modifier" : "Configurer"}
+              {birthData?.birthDate ? t("profile.edit", locale) : t("profile.configure", locale)}
+            </span>
+          </button>
+
+          {/* Language picker */}
+          <button
+            type="button"
+            onClick={() => setLangPickerOpen(true)}
+            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+          >
+            <span className="flex items-center gap-2.5">
+              <Globe size={16} className="text-text-body-subtle" />
+              {t("profile.language", locale)}
+            </span>
+            <span className="text-xs text-text-body-subtle">
+              {LOCALE_LABELS[locale]}
             </span>
           </button>
 
@@ -111,10 +130,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               ) : (
                 <Sun size={16} className="text-text-body-subtle" />
               )}
-              Appearance
+              {t("profile.appearance", locale)}
             </span>
             <span className="text-xs text-text-body-subtle">
-              {isDark ? "Dark" : "Light"}
+              {isDark ? t("profile.dark", locale) : t("profile.light", locale)}
             </span>
           </button>
 
@@ -123,7 +142,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
 
           {/* Auth section */}
           <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-text-body-subtle">
-            Compte
+            {t("profile.account", locale)}
           </p>
 
           {isAuthenticated ? (
@@ -142,7 +161,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                 className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
               >
                 <ArrowLeftToBracket size={16} className="text-text-body-subtle" />
-                Se déconnecter
+                {t("profile.sign_out", locale)}
               </button>
             </>
           ) : (
@@ -152,9 +171,40 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
             >
               <ArrowRightToBracket size={16} className="text-accent-purple" />
-              Se connecter
+              {t("profile.sign_in", locale)}
             </button>
           )}
+        </div>
+      </BottomSheet>
+
+      {/* Language picker bottom sheet */}
+      <BottomSheet open={langPickerOpen} onClose={() => setLangPickerOpen(false)} maxHeight="60%">
+        <div className="px-6 pb-8">
+          <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-text-body-subtle">
+            {t("profile.language", locale)}
+          </p>
+          <div className="space-y-1">
+            {SUPPORTED_LOCALES.map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                onClick={() => {
+                  setLocale(loc);
+                  setLocaleState(loc);
+                  setLangPickerOpen(false);
+                }}
+                className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+                style={{
+                  background: loc === locale ? "color-mix(in srgb, var(--accent-purple) 10%, transparent)" : undefined,
+                }}
+              >
+                <span>{LOCALE_LABELS[loc]}</span>
+                {loc === locale && (
+                  <span className="text-xs font-bold" style={{ color: "var(--accent-purple)" }}>✓</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </BottomSheet>
 
