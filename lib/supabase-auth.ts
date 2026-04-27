@@ -13,18 +13,16 @@ export const supabaseAuth = url && anonKey && anonKey !== "PASTE_YOUR_ANON_KEY_H
   ? createClient(url, anonKey)
   : null;
 
-export async function signUp(email: string, password: string) {
+export async function signInWithMagicLink(email: string, redirectTo?: string) {
   if (!supabaseAuth) throw new Error("Supabase not configured");
-  const { data, error } = await supabaseAuth.auth.signUp({ email, password });
+  const destination = redirectTo ?? (typeof window !== "undefined"
+    ? `${window.location.origin}/auth/callback`
+    : "https://unfold-nine.vercel.app/auth/callback");
+  const { error } = await supabaseAuth.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: destination },
+  });
   if (error) throw error;
-  return data;
-}
-
-export async function signIn(email: string, password: string) {
-  if (!supabaseAuth) throw new Error("Supabase not configured");
-  const { data, error } = await supabaseAuth.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data;
 }
 
 export async function signOut() {

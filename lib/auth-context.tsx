@@ -39,9 +39,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh();
 
     // Listen for auth state changes (sign in, sign out, token refresh)
-    const { data } = onAuthStateChange((_event, session) => {
+    const { data } = onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
+
+      // On first sign-in, link the local device profile to this auth account
+      if (event === "SIGNED_IN" && session?.access_token) {
+        const deviceId =
+          typeof window !== "undefined" ? localStorage.getItem("unfold_device_id") : null;
+        if (deviceId) {
+          fetch("/api/profile/link-auth", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ deviceId }),
+          }).catch(() => {});
+        }
+      }
     });
 
     return () => {
