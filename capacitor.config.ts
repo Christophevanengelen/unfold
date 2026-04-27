@@ -39,8 +39,7 @@ const config: CapacitorConfig = {
       launchAutoHide: false,
       backgroundColor: "#1B1535",
       showSpinner: false,
-      fadeInDuration: 200,
-      fadeOutDuration: 300,
+      launchFadeOutDuration: 300,
     },
     StatusBar: {
       // LIGHT = white text/icons — correct for Unfold's dark #1B1535 background
