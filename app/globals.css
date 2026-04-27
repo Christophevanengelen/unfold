@@ -1,6 +1,43 @@
 @import "tailwindcss";
 
 /* ==============================================
+   NATIVE-FEEL BASELINE — iOS WebView polish
+   ──────────────────────────────────────────────
+   These rules eliminate the "website in a shell" feel.
+   Required for a 5-star Capacitor iOS experience.
+   ============================================== */
+
+/* Prevent rubber-band bounce on root — shows native app boundaries */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Remove grey tap flash (default WKWebView behavior) */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none; /* long-press callout (copy/open link) */
+}
+
+/* Prevent accidental text selection outside inputs */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Re-enable selection where users expect it */
+input, textarea, [contenteditable], p, span.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Eliminate 300ms tap delay on interactive elements */
+button, a, [role="button"], [role="link"],
+[tabindex], label, select {
+  touch-action: manipulation;
+}
+
+/* ==============================================
    UNFOLD DESIGN SYSTEM v2
    ──────────────────────────────────────────────
    Built on Radix color methodology:

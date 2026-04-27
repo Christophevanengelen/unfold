@@ -34,14 +34,27 @@ const config: CapacitorConfig = {
     // Pattern: unfold://auth/callback?code=...
     App: {},
     SplashScreen: {
-      launchShowDuration: 500,
+      // Keep splash up until React renders — hide programmatically in demo/layout.tsx
+      launchShowDuration: 0,
+      launchAutoHide: false,
       backgroundColor: "#1B1535",
       showSpinner: false,
+      fadeInDuration: 200,
+      fadeOutDuration: 300,
     },
     StatusBar: {
-      style: "dark",
+      // LIGHT = white text/icons — correct for Unfold's dark #1B1535 background
+      style: "LIGHT",
       backgroundColor: "#1B1535",
+      overlaysWebView: true,
     },
+    Keyboard: {
+      // Prevent viewport resize on keyboard open (keeps 100dvh stable)
+      resize: "none",
+      style: "DARK",
+      resizeOnFullScreen: true,
+    },
+    Haptics: {},
   },
 };
 

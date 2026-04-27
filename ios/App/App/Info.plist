@@ -35,15 +35,11 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
@@ -62,5 +58,7 @@
 	<string>Unfold uses your camera to personalize your profile photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Unfold uses your photo library to personalize your profile photo.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Unfold may use anonymous usage data to improve your experience.</string>
 </dict>
 </plist>

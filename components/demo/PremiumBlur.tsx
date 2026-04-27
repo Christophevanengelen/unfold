@@ -32,6 +32,12 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
   const text = FEATURE_TEXT[feature ?? ""] ?? FEATURE_TEXT.default;
 
   const handleUpgrade = () => {
+    // Haptic feedback — medium impact for upgrade CTA
+    if (typeof window !== "undefined" && window.Capacitor) {
+      import("@capacitor/haptics").then(({ Haptics, ImpactStyle }) => {
+        Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
+      });
+    }
     // Dispatch custom event — PremiumTeaser in demo layout listens
     window.dispatchEvent(new CustomEvent("unfold:show-premium"));
   };

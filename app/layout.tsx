@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { uniformRounded } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -12,6 +12,16 @@ export const metadata: Metadata = {
     apple: "/logo/icon-mark.svg",
   },
   manifest: "/site.webmanifest",
+};
+
+// viewport-fit=cover is required for CSS env(safe-area-inset-*) to resolve correctly
+// on iPhone notch / Dynamic Island / home indicator. Without this, safe-area values = 0.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({

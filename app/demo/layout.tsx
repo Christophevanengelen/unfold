@@ -62,6 +62,21 @@ export default function DemoLayout({
   useEffect(() => {
     setMounted(true);
     setStreak(checkAndUpdateStreak());
+
+    // Native-only: hide splash screen after React renders + set status bar style
+    if (typeof window !== "undefined" && window.Capacitor) {
+      // Dynamically import to avoid bundling native plugins on web
+      Promise.all([
+        import("@capacitor/splash-screen"),
+        import("@capacitor/status-bar"),
+      ]).then(([{ SplashScreen }, { StatusBar, Style }]) => {
+        // Fade out splash (launchAutoHide:false means we control this)
+        SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
+        // Force light (white) text in status bar — correct for dark #1B1535 background
+        StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: "#1B1535" }).catch(() => {});
+      });
+    }
   }, []);
 
   // Listen for custom events

@@ -1203,6 +1203,12 @@ export function MomentumTimelineV2() {
   }, [allCapsules]);
 
   const handleTapCapsule = useCallback((capsule: CapsuleData) => {
+    // Native haptic feedback on capsule tap
+    if (typeof window !== "undefined" && window.Capacitor) {
+      import("@capacitor/haptics").then(({ Haptics, ImpactStyle }) => {
+        Haptics.impact({ style: capsule.isFuture ? ImpactStyle.Medium : ImpactStyle.Light }).catch(() => {});
+      });
+    }
     if (capsule.isFuture && !isPremium()) {
       openPremium();
       return;
