@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { PricingCheckout } from "@/components/landing/PricingCheckout";
 
+export function generateStaticParams() {
+  if (process.env.NEXT_PUBLIC_NATIVE !== "true") return [];
+  return [{ locale: "fr" }, { locale: "en" }, { locale: "es" }];
+}
+
 export const metadata: Metadata = {
   title: "Plans — Unfold",
   description: "Commence gratuitement. Passe en Pro pour débloquer ton momentum complet.",

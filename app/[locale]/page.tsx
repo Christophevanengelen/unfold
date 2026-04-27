@@ -1,5 +1,12 @@
+import { redirect } from "next/navigation";
 import { generateLandingMetadata } from "@/lib/metadata";
 import { getTranslations, t } from "@/lib/i18n";
+
+// Native build: expose static params so Next.js knows which locales to pre-render
+export function generateStaticParams() {
+  if (process.env.NEXT_PUBLIC_NATIVE !== "true") return [];
+  return [{ locale: "fr" }, { locale: "en" }, { locale: "es" }];
+}
 import { Hero } from "@/components/landing/Hero";
 import { FreeAwareness } from "@/components/landing/FreeAwareness";
 import { LifeDomains } from "@/components/landing/LifeDomains";
@@ -27,6 +34,11 @@ export default async function LandingPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // In native builds there's no landing page — go straight to the app
+  if (process.env.NEXT_PUBLIC_NATIVE === "true") {
+    redirect("/demo");
+  }
+
   const { locale } = await params;
   const translations = await getTranslations(locale, "landing");
   const tr = (key: string, fallback?: string) => t(translations, key, fallback);

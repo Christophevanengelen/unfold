@@ -3,28 +3,44 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.unfold.app",
   appName: "Unfold",
-  // The /demo routes are pure "use client" — no SSR. We export them statically
-  // for the native bundle via NEXT_PUBLIC_NATIVE=true next build --output export.
-  webDir: "out",
+  // Live server URL: the native WebView loads directly from Vercel.
+  // This is the standard Capacitor hybrid pattern — the app has real native
+  // integration (deep links, safe areas, IAP, push notifications) so it
+  // satisfies App Store / Play Store requirements.
+  webDir: "out", // fallback for offline / dev builds
   server: {
-    // Allow the native WebView to navigate to our Vercel API for auth callback.
-    // All data API calls use fetch() pointing to NEXT_PUBLIC_API_BASE directly.
-    allowNavigation: ["unfold-nine.vercel.app", "*.supabase.co"],
+    url: "https://unfold-nine.vercel.app/demo",
+    cleartext: false,
+    allowNavigation: [
+      "unfold-nine.vercel.app",
+      "*.supabase.co",
+      "checkout.stripe.com",
+      "js.stripe.com",
+    ],
   },
   ios: {
     // Safe-area handling via CSS env() — do NOT set scrollEnabled here.
     contentInset: "automatic",
     backgroundColor: "#1B1535",
+    scheme: "unfold",
   },
   android: {
     backgroundColor: "#1B1535",
     allowMixedContent: false,
+    captureInput: true,
   },
   plugins: {
     // App plugin handles deep links (magic-link callbacks)
-    App: {
-      // Scheme registered in Info.plist (iOS) + AndroidManifest.xml (Android)
-      // Pattern: unfold://auth/callback?code=...
+    // Pattern: unfold://auth/callback?code=...
+    App: {},
+    SplashScreen: {
+      launchShowDuration: 500,
+      backgroundColor: "#1B1535",
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: "dark",
+      backgroundColor: "#1B1535",
     },
   },
 };

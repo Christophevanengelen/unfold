@@ -1,0 +1,9 @@
+[    1450ms] [LOG] Supabase Studio is running commit b4a6897b1bd306d8d6c4fe504f47bafb5f7eee34 deployed at 2026-04-27 15:22:02 +02:00. @ https://frontend-assets.supabase.com/studio/b4a6897b1bd3/_next/static/chunks/0zw05ig0va5cn.js?dpl=dpl_9E1tH7ojyUzvcyzUVs7Bq1A4noiX:12
+[    1667ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://api.supabase.com/v1/projects/ykrequspwobhnlbcldam/network-bans/retrieve:0
+[    1680ms] [WARNING] ConfigCat - WARN - [3000] There is an existing client instance for the specified SDK Key. No new client instance will be created and the specified options are ignored. Returning the existing client instance. SDK Key: 'configcat-proxy/frontend-v2'. @ https://frontend-assets.supabase.com/studio/b4a6897b1bd3/_next/static/chunks/0zw05ig0va5cn.js?dpl=dpl_9E1tH7ojyUzvcyzUVs7Bq1A4noiX:12
+[    2597ms] [WARNING] [Warning] Please install/enable Redux devtools extension @ https://frontend-assets.supabase.com/studio/b4a6897b1bd3/_next/static/chunks/0zw05ig0va5cn.js?dpl=dpl_9E1tH7ojyUzvcyzUVs7Bq1A4noiX:12
+[   43332ms] [ERROR] Failed to load resource: the server responded with a status of 503 () @ https://collector.github.com/github/collect:0
+[   45257ms] [ERROR] Failed to load resource: the server responded with a status of 503 () @ https://collector.github.com/github/collect:0
+[   48859ms] [ERROR] Failed to load resource: the server responded with a status of 503 () @ https://collector.github.com/github/collect:0
+[   86515ms] [LOG] Supabase Studio is running commit b4a6897b1bd306d8d6c4fe504f47bafb5f7eee34 deployed at 2026-04-27 15:22:02 +02:00. @ https://frontend-assets.supabase.com/studio/b4a6897b1bd3/_next/static/chunks/0zw05ig0va5cn.js?dpl=dpl_9E1tH7ojyUzvcyzUVs7Bq1A4noiX:12
+[   86823ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://api.supabase.com/platform/notifications?offset=0&limit=20&status=new%2Cseen:0

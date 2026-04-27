@@ -1,0 +1,97 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic:
+        - generic:
+          - img
+      - link [ref=e9] [cursor=pointer]:
+        - /url: https://stripe.com/
+        - img [ref=e10]
+      - generic [ref=e14]:
+        - main [ref=e21]:
+          - generic [ref=e23]:
+            - generic [ref=e25]: Connectez-vous à votre compte
+            - generic [ref=e27]:
+              - generic:
+                - generic:
+                  - generic [ref=e28]:
+                    - generic:
+                      - generic:
+                        - generic [ref=e33] [cursor=pointer]: E-mail
+                        - generic [ref=e36]:
+                          - generic [ref=e37]: email input
+                          - textbox "email input" [active] [ref=e39]
+                  - generic [ref=e42]:
+                    - generic [ref=e44]:
+                      - generic:
+                        - generic:
+                          - generic [ref=e47] [cursor=pointer]:
+                            - generic:
+                              - generic:
+                                - generic [ref=e48]: Mot de passe
+                                - link "Mot de passe oublié ?" [ref=e50]:
+                                  - /url: /reset
+                                  - generic [ref=e53]: Mot de passe oublié ?
+                          - generic [ref=e56]:
+                            - generic [ref=e57]: password input
+                            - textbox "password input" [ref=e59]
+                    - generic [ref=e65]:
+                      - generic [ref=e67]: Se souvenir de moi sur cet appareil
+                      - generic [ref=e69]:
+                        - checkbox "Se souvenir de moi sur cet appareil" [checked] [ref=e70] [cursor=pointer]
+                        - img
+                  - generic [ref=e74]:
+                    - button "Connexion" [disabled] [ref=e75]:
+                      - generic [ref=e76]: Connexion
+                    - button "Submit" [disabled] [ref=e77]
+                  - generic [ref=e79]:
+                    - generic [ref=e80]:
+                      - separator [ref=e81]
+                      - generic [ref=e82]: Ou connectez-vous avec
+                    - generic [ref=e84]:
+                      - button "Google" [ref=e88] [cursor=pointer]:
+                        - img [ref=e89]
+                        - generic [ref=e94]: Google
+                      - button "Clé d'accès" [ref=e97] [cursor=pointer]:
+                        - img [ref=e98]
+                        - generic [ref=e101]: Clé d'accès
+                      - button "SSO" [ref=e104] [cursor=pointer]:
+                        - img [ref=e105]
+                        - generic [ref=e108]: SSO
+        - generic [ref=e110]:
+          - text: Vous découvrez Stripe ?
+          - link "Créez un compte" [ref=e111] [cursor=pointer]:
+            - /url: /register
+      - generic [ref=e116]:
+        - generic:
+          - generic:
+            - link "© Stripe" [ref=e118] [cursor=pointer]:
+              - /url: https://stripe.com/
+              - generic [ref=e121]: © Stripe
+            - link "Confidentialité et CGU" [ref=e124] [cursor=pointer]:
+              - /url: https://stripe.com/privacy
+              - generic [ref=e127]: Confidentialité et CGU
+    - dialog "Nous utilisons des cookies pour améliorer votre expérience, ainsi qu'à des fins de marketing. Pour en savoir plus, consultez notre Politique relative à l'utilisation des cookies ou gérez les cookies ." [ref=e128]:
+      - generic [ref=e130]:
+        - text: Nous utilisons des cookies pour améliorer votre expérience, ainsi qu'à des fins de marketing. Pour en savoir plus, consultez notre
+        - link "Politique relative à l'utilisation des cookies" [ref=e131] [cursor=pointer]:
+          - /url: https://stripe.com/cookies-policy/legal
+          - generic [ref=e134]: Politique relative à l'utilisation des cookies
+        - text: ou
+        - link "gérez les cookies" [ref=e135] [cursor=pointer]:
+          - /url: https://stripe.com/cookie-settings
+          - generic [ref=e138]: gérez les cookies
+        - text: .
+      - generic [ref=e139]:
+        - generic:
+          - generic:
+            - button "Tout accepter" [ref=e143] [cursor=pointer]:
+              - generic [ref=e146]: Tout accepter
+            - button "Tout rejeter" [ref=e150] [cursor=pointer]:
+              - generic [ref=e153]: Tout rejeter
+  - generic:
+    - iframe
+  - generic:
+    - iframe
+  - generic:
+    - iframe
