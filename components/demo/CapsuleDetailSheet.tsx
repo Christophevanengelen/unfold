@@ -13,7 +13,7 @@ import { getObservedProfileSync, trackCapsuleOpen, trackDomainClick, trackDomain
 import { buildEffectiveProfile, needsRefresh, getStaleFields } from "@/lib/effective-profile";
 import { FeedbackThumb } from "@/components/demo/FeedbackThumb";
 import { PremiumBlur } from "@/components/demo/PremiumBlur";
-import { isPremium } from "@/lib/premium-gate";
+import { usePremiumStatus } from "@/lib/premium-gate";
 import { MicroRefresh } from "@/components/demo/MicroRefresh";
 import {
   planetConfig,
@@ -115,8 +115,10 @@ export function CapsuleDetailSheet({
   isFuture?: boolean;
   onClose: () => void;
 }) {
-  // Gate: blur AI sections for free users on future capsules
-  const shouldBlurAi = (isFuture ?? capsule.isFuture) && !isPremium();
+  // Gate: blur AI sections for free users on future capsules.
+  // usePremiumStatus() fetches /api/billing/me on mount — not spoofable via localStorage.
+  const userIsPremium = usePremiumStatus();
+  const shouldBlurAi = (isFuture ?? capsule.isFuture) && !userIsPremium;
   const [showMore, setShowMore] = useState(false);
   const [aiText, setAiText] = useState<PersonalizedText | null>(null);
   const [aiLoading, setAiLoading] = useState(false);

@@ -62,6 +62,7 @@ type Strings = {
     dismiss: string;
     trial_pitch: string;
     fine_print: string;
+    success_toast: string;
   };
   profile: {
     free_plan: string;
@@ -123,6 +124,7 @@ const FR: Strings = {
     dismiss: "Plus tard",
     trial_pitch: "7 jours gratuits, sans carte bancaire",
     fine_print: "Renouvellement automatique. Annulable à tout moment.",
+    success_toast: "Bienvenue dans Unfold Pro ✦",
   },
   profile: {
     free_plan: "Gratuit",
@@ -184,6 +186,7 @@ const EN: Strings = {
     dismiss: "Maybe later",
     trial_pitch: "7 days free, no credit card",
     fine_print: "Auto-renews. Cancel anytime.",
+    success_toast: "Welcome to Unfold Pro ✦",
   },
   profile: {
     free_plan: "Free",
@@ -245,6 +248,7 @@ const ES: Strings = {
     dismiss: "Más tarde",
     trial_pitch: "7 días gratis, sin tarjeta",
     fine_print: "Renovación automática. Cancela cuando quieras.",
+    success_toast: "Bienvenido a Unfold Pro ✦",
   },
   profile: {
     free_plan: "Gratis",
@@ -306,6 +310,7 @@ const DE: Strings = {
     dismiss: "Später",
     trial_pitch: "7 Tage gratis, keine Kreditkarte",
     fine_print: "Automatische Verlängerung. Jederzeit kündbar.",
+    success_toast: "Willkommen bei Unfold Pro ✦",
   },
   profile: {
     free_plan: "Kostenlos",
@@ -367,6 +372,7 @@ const IT: Strings = {
     dismiss: "Più tardi",
     trial_pitch: "7 giorni gratis, senza carta",
     fine_print: "Rinnovo automatico. Annulla quando vuoi.",
+    success_toast: "Benvenuto in Unfold Pro ✦",
   },
   profile: {
     free_plan: "Gratuito",
@@ -428,6 +434,7 @@ const PT: Strings = {
     dismiss: "Mais tarde",
     trial_pitch: "7 dias grátis, sem cartão",
     fine_print: "Renovação automática. Cancele quando quiser.",
+    success_toast: "Bem-vindo ao Unfold Pro ✦",
   },
   profile: {
     free_plan: "Grátis",
@@ -489,6 +496,7 @@ const NL: Strings = {
     dismiss: "Later",
     trial_pitch: "7 dagen gratis, geen creditcard",
     fine_print: "Automatische verlenging. Altijd opzegbaar.",
+    success_toast: "Welkom bij Unfold Pro ✦",
   },
   profile: {
     free_plan: "Gratis",
@@ -550,6 +558,7 @@ const JA: Strings = {
     dismiss: "あとで",
     trial_pitch: "7日間無料、クレジットカード不要",
     fine_print: "自動更新。いつでもキャンセル可能。",
+    success_toast: "Unfold Proへようこそ ✦",
   },
   profile: {
     free_plan: "無料",
@@ -611,6 +620,7 @@ const ZH: Strings = {
     dismiss: "稍后",
     trial_pitch: "7天免费,无需信用卡",
     fine_print: "自动续订。随时取消。",
+    success_toast: "欢迎加入 Unfold Pro ✦",
   },
   profile: {
     free_plan: "免费",
@@ -672,6 +682,7 @@ const AR: Strings = {
     dismiss: "لاحقًا",
     trial_pitch: "7 أيام مجانية، بدون بطاقة ائتمان",
     fine_print: "تجديد تلقائي. إلغاء في أي وقت.",
+    success_toast: "مرحباً بك في Unfold Pro ✦",
   },
   profile: {
     free_plan: "مجاني",

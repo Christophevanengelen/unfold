@@ -44,11 +44,12 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
       onClose();
       return;
     }
-    // Web/Android: route to /pricing where the signed-in checkout flow lives.
-    // Pricing page will redirect to magic-link auth if not signed in.
+    // Web/Android: route to /demo/pricing where the in-app checkout flow lives.
+    // /demo/pricing is inside the demo layout (safe areas, theme) and handles
+    // all 10 languages via lib/i18n-demo.ts. It will prompt sign-in if needed.
     setLoading(true);
     onClose();
-    router.push("/fr/pricing");
+    router.push("/demo/pricing");
   };
 
   return (

@@ -12,7 +12,7 @@ import {
 import { useMomentum } from "@/lib/momentum-store";
 import { CapsuleDetailSheet } from "./CapsuleDetailSheet";
 import { DailyBriefing } from "./DailyBriefing";
-import { isPremium } from "@/lib/premium-gate";
+import { usePremiumStatus } from "@/lib/premium-gate";
 import { usePremiumTeaser } from "./PremiumTeaserContext";
 import { preGenerateForCapsules } from "@/lib/openai-personalize";
 import { getUserProfileSync } from "@/lib/user-profile";
@@ -1106,6 +1106,8 @@ function getSavedViewMode(): ViewMode {
 export function MomentumTimelineV2() {
   const { timelinePhases, phases, birthDateStr, state, isLoadingLifetime } = useMomentum();
   const openPremium = usePremiumTeaser();
+  // Verified premium status — fetches /api/billing/me on mount, never trusts localStorage alone
+  const userIsPremium = usePremiumStatus();
   const [viewMode, _setViewMode] = useState<ViewMode>(getSavedViewMode);
   const setViewMode = useCallback((mode: ViewMode) => {
     startTransition(() => _setViewMode(mode));
@@ -1153,7 +1155,7 @@ export function MomentumTimelineV2() {
 
     const tierOrder: Record<string, number> = { toctoctoc: 0, toctoc: 1, toc: 2 };
     const top = [...allCapsules]
-      .filter(c => c.isCurrent || (!c.isFuture || isPremium()))
+      .filter(c => c.isCurrent || (!c.isFuture || userIsPremium))
       .sort((a, b) => {
         if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
         return (tierOrder[a.tier] ?? 9) - (tierOrder[b.tier] ?? 9);
@@ -1209,12 +1211,12 @@ export function MomentumTimelineV2() {
         Haptics.impact({ style: capsule.isFuture ? ImpactStyle.Medium : ImpactStyle.Light }).catch(() => {});
       });
     }
-    if (capsule.isFuture && !isPremium()) {
+    if (capsule.isFuture && !userIsPremium) {
       openPremium();
       return;
     }
     setSelectedCapsule(capsule);
-  }, [openPremium]);
+  }, [openPremium, userIsPremium]);
 
   const handleAgeChange = useCallback((age: number) => {
     setVisibleAge(age);

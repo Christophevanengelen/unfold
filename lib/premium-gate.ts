@@ -1,9 +1,25 @@
 // ─── Premium Gate — Feature access management ──────────────
-// localStorage-first for instant sync checks.
-// Supabase sync when available (future).
+//
+// Architecture:
+//  - `usePremiumStatus()` hook is the canonical source for React components.
+//    It fetches /api/billing/me on mount for verified server-side state,
+//    and caches the result in memory + localStorage for instant UI.
+//  - `isPremium()` is a SYNCHRONOUS fallback for non-hook callsites (e.g.
+//    outside React). It reads the in-memory cache first, then localStorage.
+//    Never trust localStorage alone — always call the hook when in React.
+//  - `setPremiumStatus()` updates localStorage + memory cache + dispatches
+//    "unfold:plan-changed" so all mounted hooks re-render.
+
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 
 const PLAN_KEY = "unfold_plan";
 const AI_CALLS_KEY = "unfold_ai_calls";
+
+// In-memory cache — shared across all callsites on same page load.
+// Default: false (fail-closed). Updated by hook after /api/billing/me.
+let _cachedPremium: boolean | null = null;
 
 export type PlanType = "free" | "premium";
 
@@ -18,10 +34,12 @@ export const PREMIUM_FEATURES = {
 
 export type PremiumFeature = keyof typeof PREMIUM_FEATURES;
 
-// ─── Plan status ──────────────────────────────────────────
-
+// ─── Synchronous read (for non-React code) ───────────────
+// Returns the in-memory cache if populated, otherwise localStorage.
+// NEVER use this in React render — use usePremiumStatus() instead.
 export function isPremium(): boolean {
   if (typeof window === "undefined") return false;
+  if (_cachedPremium !== null) return _cachedPremium;
   try {
     return localStorage.getItem(PLAN_KEY) === "premium";
   } catch {
@@ -33,15 +51,71 @@ export function getPlan(): PlanType {
   return isPremium() ? "premium" : "free";
 }
 
+// Update status — called after billing API confirms plan change.
+// Dispatches event so all usePremiumStatus() hooks re-render immediately.
 export function setPremiumStatus(plan: PlanType): void {
   if (typeof window === "undefined") return;
+  const isPrem = plan === "premium";
+  _cachedPremium = isPrem;
   try {
     localStorage.setItem(PLAN_KEY, plan);
-    // Future: sync to Supabase if available
-    // const supabase = createClient(); supabase.from("users").update({ plan })...
   } catch {
-    // Storage full or blocked — silent fail
+    // Storage full or blocked — memory cache is still updated
   }
+  // Signal all mounted hooks to re-read
+  window.dispatchEvent(new CustomEvent("unfold:plan-changed", { detail: plan }));
+}
+
+// ─── React hook — canonical way to read premium status ───
+//
+// Lifecycle:
+//  1. Renders with `false` (safe default — shows paywall, never skips it)
+//  2. On mount: reads localStorage for instant pre-flight (avoids flicker if
+//     user legitimately has premium cached)
+//  3. On mount: fetches /api/billing/me for verified server state
+//  4. Re-runs when "unfold:plan-changed" event fires (e.g. post-purchase)
+export function usePremiumStatus(): boolean {
+  // Start false — never assume premium before verification
+  const [isPrem, setIsPrem] = useState(false);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    // Step 1: Instant pre-flight from memory or localStorage
+    const cached = isPremium();
+    setIsPrem(cached);
+
+    // Step 2: Verify via server (runs once per mount)
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetch("/api/billing/me", {
+        headers: { "Cache-Control": "no-store" },
+        credentials: "include",
+      })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data: { plan?: string } | null) => {
+          if (!data) return;
+          const serverPremium = data.plan === "premium";
+          // Update cache + localStorage with verified value
+          _cachedPremium = serverPremium;
+          try { localStorage.setItem(PLAN_KEY, serverPremium ? "premium" : "free"); } catch {}
+          setIsPrem(serverPremium);
+        })
+        .catch(() => {
+          // Network error — keep localStorage value as fallback
+          // (fail-open for existing premium users, fail-closed for new users)
+        });
+    }
+
+    // Step 3: React to plan changes (e.g. post-checkout success redirect)
+    const handleChange = (e: Event) => {
+      const plan = (e as CustomEvent<PlanType>).detail;
+      setIsPrem(plan === "premium");
+    };
+    window.addEventListener("unfold:plan-changed", handleChange);
+    return () => window.removeEventListener("unfold:plan-changed", handleChange);
+  }, []);
+
+  return isPrem;
 }
 
 // ─── Feature access ───────────────────────────────────────
@@ -49,7 +123,6 @@ export function setPremiumStatus(plan: PlanType): void {
 export function canUseFeature(feature: PremiumFeature): boolean {
   if (isPremium()) return true;
 
-  // Free users: check per-feature limits
   const config = PREMIUM_FEATURES[feature];
   if (feature === "AI_UNLIMITED") {
     return canMakeAiCall();
@@ -78,7 +151,6 @@ function getAiCallData(): AiCallData {
     const raw = localStorage.getItem(AI_CALLS_KEY);
     if (!raw) return { count: 0, weekStart: getCurrentWeekStart() };
     const data: AiCallData = JSON.parse(raw);
-    // Reset if new week
     const currentWeek = getCurrentWeekStart();
     if (data.weekStart !== currentWeek) {
       return { count: 0, weekStart: currentWeek };
