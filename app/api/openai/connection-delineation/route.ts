@@ -21,8 +21,11 @@ import { join } from "path";
 import { supabase } from "@/lib/db";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { enforceFeature, enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
+import { corsPreflightResponse } from "@/lib/cors";
 
 export const runtime = "nodejs";
+
+export function OPTIONS(req: NextRequest) { return corsPreflightResponse(req); }
 
 // ─── Load system prompt ────────────────────────────────────
 // Extract just the "SYSTEM PROMPT" code block from the markdown file.

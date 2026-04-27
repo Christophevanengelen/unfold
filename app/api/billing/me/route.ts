@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { getEntitlement } from "@/lib/billing/entitlement";
+import { corsPreflightResponse } from "@/lib/cors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
+
+export function OPTIONS(req: NextRequest) { return corsPreflightResponse(req); }
 
 /**
  * GET /api/billing/me

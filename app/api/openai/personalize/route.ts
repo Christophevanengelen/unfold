@@ -15,8 +15,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
+import { corsPreflightResponse } from "@/lib/cors";
 
 export const runtime = "nodejs";                  // Stripe + raw fetch require Node, not Edge
+
+export function OPTIONS(req: NextRequest) { return corsPreflightResponse(req); }
 
 // ─── Config ──────────────────────────────────────────────
 

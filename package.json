@@ -11,6 +11,10 @@
     "db:verify": "node supabase/verify.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/ios": "^8.3.1",
     "@next/bundle-analyzer": "^16.2.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.99.3",
