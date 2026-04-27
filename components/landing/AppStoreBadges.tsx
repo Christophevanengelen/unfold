@@ -1,18 +1,78 @@
-// TODO: Replace placeholder App Store IDs before launch
-// iOS: "id0000000000" → real App Store ID from Marie Ange
-// Android: "app.unfold.momentum" → verify package name with Marie Ange
+"use client";
+
+import { useEffect, useState } from "react";
+
+/**
+ * Smart App Store + Play Store badges with regional URLs.
+ *
+ * The user's country is detected client-side from navigator.language; the
+ * App Store badge points to the regional storefront so search ranking,
+ * pricing display, and install attribution all work right.
+ *
+ * Apple App Store regional URL pattern:
+ *   apps.apple.com/{country-code}/app/{slug}/{id}
+ * Google Play uses one URL — Play auto-detects locale + currency.
+ */
+
+// Map browser locale → Apple App Store country code (ISO 3166-1 alpha-2 lower)
+// Default = us. Add more as we ship to new markets.
+const LOCALE_TO_COUNTRY: Record<string, string> = {
+  // English
+  "en":     "us", "en-us": "us", "en-gb": "gb", "en-ca": "ca", "en-au": "au",
+  // Romance
+  "fr":     "fr", "fr-fr": "fr", "fr-be": "be", "fr-ca": "ca", "fr-ch": "ch",
+  "es":     "es", "es-es": "es", "es-mx": "mx", "es-ar": "ar", "es-co": "co", "es-cl": "cl", "es-pe": "pe",
+  "pt":     "br", "pt-br": "br", "pt-pt": "pt",
+  "it":     "it",
+  // Germanic
+  "de":     "de", "de-de": "de", "de-at": "at", "de-ch": "ch",
+  "nl":     "nl", "nl-nl": "nl", "nl-be": "be",
+  // Asian
+  "ja":     "jp", "ja-jp": "jp",
+  "zh":     "cn", "zh-cn": "cn", "zh-tw": "tw", "zh-hk": "hk",
+  // Arabic
+  "ar":     "ae", "ar-ae": "ae", "ar-sa": "sa", "ar-eg": "eg",
+};
+
+// PLACEHOLDER IDs — replace these with real App Store ID + Play package once
+// Christophe completes Apple Dev enrollment + creates listings.
+// Use ?token=&mt=8 to enable Smart App Banner attribution if needed.
+const APPLE_APP_ID = "id6740000000";              // ← replace with real ID
+const APPLE_APP_SLUG = "unfold-astrology";        // ← replace with App Store slug
+const PLAY_PACKAGE_NAME = "com.zebrapad.unfold";  // ← matches Capacitor android appId
+
+function detectCountry(): string {
+  if (typeof navigator === "undefined") return "us";
+  const langs = navigator.languages?.length ? navigator.languages : [navigator.language || "en"];
+  for (const raw of langs) {
+    const lang = raw.toLowerCase();
+    if (LOCALE_TO_COUNTRY[lang]) return LOCALE_TO_COUNTRY[lang];
+    const short = lang.slice(0, 2);
+    if (LOCALE_TO_COUNTRY[short]) return LOCALE_TO_COUNTRY[short];
+  }
+  return "us";
+}
+
 export function AppStoreBadges() {
+  const [country, setCountry] = useState("us");
+
+  useEffect(() => {
+    setCountry(detectCountry());
+  }, []);
+
+  const appleUrl = `https://apps.apple.com/${country}/app/${APPLE_APP_SLUG}/${APPLE_APP_ID}`;
+  const playUrl = `https://play.google.com/store/apps/details?id=${PLAY_PACKAGE_NAME}&hl=${country}`;
+
   return (
     <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
       {/* App Store badge */}
       <a
-        href="https://apps.apple.com/app/unfold-personal-timing/id0000000000"
+        href={appleUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="group flex h-[52px] w-[168px] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-4 text-white backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
         aria-label="Download Unfold on the App Store"
       >
-        {/* Apple logo — clean, standard mark */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 384 512"
@@ -29,13 +89,12 @@ export function AppStoreBadges() {
 
       {/* Google Play badge */}
       <a
-        href="https://play.google.com/store/apps/details?id=app.unfold.momentum"
+        href={playUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="group flex h-[52px] w-[168px] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-4 text-white backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
         aria-label="Get Unfold on Google Play"
       >
-        {/* Google Play triangle — clean, geometric */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"
