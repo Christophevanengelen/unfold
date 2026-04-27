@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AppStoreBadges } from "./AppStoreBadges";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { planetConfig, houseConfig } from "@/lib/domain-config";
-import { Lightbulb, ArrowRight, Fire } from "flowbite-react-icons/outline";
+import { HeroForm, type HeroFormPayload } from "./HeroForm";
+import { LoadingNarrator } from "./LoadingNarrator";
+import { HeroSignalCard, type RealSignal } from "./HeroSignalCard";
 import { generateSignalFromDate } from "@/lib/signal-generator";
-import type { GeneratedSignal } from "@/lib/signal-generator";
+import { buildMockRealSignal } from "@/lib/landing-mock";
 import type { TranslationMap } from "@/lib/i18n";
 
 interface HeroProps {
@@ -18,8 +19,7 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
   return translations[key] ?? fallback ?? key;
 }
 
-// ─── Background Boudins (subtle, decorative) ────────────────
-// Same visual language as onboarding step 2 — life scroll feel
+// Background floating boudins — purely decorative
 const BG_BOUDINS = [
   { x: "8%",  y: "15%", w: 12, h: 20, color: "#8B7FC2", opacity: 0.08 },
   { x: "85%", y: "10%", w: 16, h: 28, color: "#6BA89A", opacity: 0.06 },
@@ -31,259 +31,133 @@ const BG_BOUDINS = [
   { x: "75%", y: "85%", w: 14, h: 22, color: "#6BA89A", opacity: 0.07 },
 ];
 
-// ─── Tier helpers ───────────────────────────────────────────
-function tierDisplayLabel(tier: string): string {
-  if (tier === "toctoctoc") return "Moment fort";
-  if (tier === "toctoc") return "Signal clair";
-  return "Signal subtil";
+const REAL_SIGNAL_ENABLED = process.env.NEXT_PUBLIC_LANDING_REAL_SIGNAL !== "false";
+
+// Lightweight analytics emitter — DNT-respecting, no PII.
+function trackEvent(name: string, props?: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  if (navigator.doNotTrack === "1") return;
+  // Future: GA / Plausible. For now, surface in console for verification.
+  console.log("[hero-event]", name, props ?? {});
 }
 
-// ─── Signal Result — Premium mini detail sheet ──────────────
-function SignalResult({ signal }: { signal: GeneratedSignal }) {
-  const hm = houseConfig[signal.house];
-  const houseColor = hm.color;
-  const secondaryHm = signal.secondaryHouse ? houseConfig[signal.secondaryHouse] : null;
+// ─── Main Hero ──────────────────────────────────────────────
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 200, damping: 25 }}
-      className="mx-auto mt-10 max-w-md"
-    >
-      <div
-        className="landing-glass relative overflow-hidden rounded-3xl"
-        style={{
-          border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)",
-          boxShadow: "0 0 60px color-mix(in srgb, var(--accent-purple) 15%, transparent)",
-        }}
-      >
-        {/* ── Header: context banner ── */}
-        <div className="px-6 pt-6 pb-0 md:px-8 md:pt-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15, type: "spring", stiffness: 300 }}
-            className="flex items-center gap-2"
-          >
-            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-              style={{
-                background: `color-mix(in srgb, ${houseColor} 12%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${houseColor} 25%, transparent)`,
-              }}>
-              <div className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: houseColor }} />
-              <Fire size={10} style={{ color: houseColor }} />
-              <span className="text-[10px] font-semibold" style={{ color: houseColor }}>
-                Signal actif
-              </span>
-            </div>
-            <span className="rounded-full px-2 py-0.5 text-[9px] font-bold"
-              style={{
-                background: "color-mix(in srgb, var(--accent-purple) 15%, transparent)",
-                color: "var(--accent-purple)",
-              }}>
-              {signal.score}/4
-            </span>
-          </motion.div>
-        </div>
+type Phase = "idle" | "loading" | "revealed";
 
-        {/* ── Tier + title ── */}
-        <div className="px-6 pt-3 md:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.15em]"
-              style={{ color: "var(--accent-purple)" }}>
-              {tierDisplayLabel(signal.tier)}
-            </p>
-            <p className="mt-1 font-display text-xl font-bold text-white" style={{ letterSpacing: "-0.01em" }}>
-              Votre signal actuel
-            </p>
-          </motion.div>
-
-          {/* Date + duration */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-1.5 flex items-center gap-2"
-          >
-            <span className="text-[11px] text-brand-10/50">
-              {`~${signal.durationWeeks} semaines restantes`}
-            </span>
-          </motion.div>
-        </div>
-
-        {/* ── House topic pills ── */}
-        <div className="px-6 pt-4 md:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.35 }}
-            className="flex flex-wrap gap-2"
-          >
-            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-              style={{
-                background: `color-mix(in srgb, ${houseColor} 10%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${houseColor} 20%, transparent)`,
-              }}>
-              <div className="h-2 w-2 rounded-full" style={{ background: houseColor }} />
-              <span className="text-[11px] font-medium" style={{ color: houseColor }}>{hm.label}</span>
-            </div>
-            {secondaryHm && (
-              <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-                style={{
-                  background: `color-mix(in srgb, ${secondaryHm.color} 10%, transparent)`,
-                  border: `1px solid color-mix(in srgb, ${secondaryHm.color} 20%, transparent)`,
-                }}>
-                <div className="h-2 w-2 rounded-full" style={{ background: secondaryHm.color }} />
-                <span className="text-[11px] font-medium" style={{ color: secondaryHm.color }}>{secondaryHm.label}</span>
-              </div>
-            )}
-          </motion.div>
-        </div>
-
-        {/* ── Planet pills (staggered) ── */}
-        <div className="px-6 pt-3 md:px-8">
-          <div className="flex flex-wrap gap-2">
-            {signal.planets.map((key, i) => {
-              const pc = planetConfig[key];
-              return (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.4 + i * 0.08, type: "spring", stiffness: 300 }}
-                  className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-                  style={{
-                    background: `color-mix(in srgb, ${pc.color} 12%, transparent)`,
-                    border: `1px solid color-mix(in srgb, ${pc.color} 25%, transparent)`,
-                  }}
-                >
-                  <div className="h-2 w-2 rounded-full"
-                    style={{ background: pc.color, boxShadow: `0 0 6px ${pc.color}` }} />
-                  <span className="text-[11px] font-medium" style={{ color: pc.color }}>{pc.label}</span>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── Narrative ── */}
-        <div className="px-6 pt-5 md:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-          >
-            <p className="text-[12px] leading-relaxed text-brand-10/70">
-              {signal.narrative}
-            </p>
-          </motion.div>
-        </div>
-
-        {/* ── Insight card ── */}
-        <div className="px-6 pt-4 md:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.75, duration: 0.4 }}
-            className="rounded-xl px-4 py-3"
-            style={{
-              background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
-            }}
-          >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Lightbulb size={11} style={{ color: "var(--accent-purple)" }} />
-              <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                En pratique
-              </span>
-            </div>
-            <p className="text-[11px] leading-relaxed text-brand-10/70">
-              {signal.action}
-            </p>
-          </motion.div>
-        </div>
-
-        {/* ── Divider ── */}
-        <div className="mx-6 my-4 h-px md:mx-8" style={{ background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)" }} />
-
-        {/* ── Teaser CTA ── */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="px-6 pb-6 md:px-8 md:pb-8 flex items-center gap-3"
-        >
-          <ArrowRight size={14} style={{ color: "var(--accent-purple)", opacity: 0.6 }} />
-          <p className="text-[11px] text-brand-10/40">
-            {"Ceci est un aper\u00e7u. L\u2019app r\u00e9v\u00e8le votre timeline compl\u00e8te, vos fen\u00eatres cl\u00e9s et vos domaines de vie."}
-          </p>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Birthday Input ──────────────────────────────────────────
-function BirthdayInput({
-  onSubmit,
-  ctaLabel,
-}: {
-  onSubmit: (date: string) => void;
-  ctaLabel: string;
-}) {
-  const [date, setDate] = useState("");
-
-  const handleSubmit = () => {
-    if (date) onSubmit(date);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.5 }}
-      className="mx-auto mt-8 flex max-w-md items-center gap-3"
-    >
-      <div className="relative flex-1">
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white backdrop-blur-sm transition-colors placeholder:text-brand-10/40 focus:border-logo-lavender/40 focus:outline-none focus:ring-1 focus:ring-logo-lavender/20"
-          max={new Date().toISOString().split("T")[0]}
-          min="1920-01-01"
-        />
-      </div>
-      <button
-        onClick={handleSubmit}
-        disabled={!date}
-        className="rounded-xl px-6 py-3.5 text-sm font-semibold text-white transition-all disabled:opacity-30"
-        style={{
-          background: "var(--accent-purple)",
-          boxShadow: date ? "0 0 20px color-mix(in srgb, var(--accent-purple) 30%, transparent)" : "none",
-        }}
-      >
-        {ctaLabel}
-      </button>
-    </motion.div>
-  );
-}
-
-// ─── Main Hero ───────────────────────────────────────────────
 export function Hero({ translations }: HeroProps) {
-  const [signal, setSignal] = useState<GeneratedSignal | null>(null);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [signal, setSignal] = useState<RealSignal | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const handleDateSubmit = (dateString: string) => {
-    setSignal(generateSignalFromDate(dateString));
+  const cardCopy = {
+    eyebrow: t(translations, "hero.signal.eyebrow", "Signal actif"),
+    activeTitle: t(translations, "hero.signal.activeTitle", "Ton mois actuel"),
+    teaserTitle: t(translations, "hero.signal.teaserTitle", "Tes 12 prochains mois"),
+    teaserBody: t(
+      translations,
+      "hero.signal.teaserBody",
+      "Débloque la timeline complète, les pics à venir et tes recommandations quotidiennes dans l'app.",
+    ),
+    appStoreCta: t(translations, "hero.signal.appCta", "Télécharge Unfold pour la suite"),
+    nextWindow: t(translations, "hero.signal.nextWindow", "Ta prochaine fenêtre forte"),
+    lifetimeLine: t(translations, "hero.signal.lifetimeLine", "Tes moments forts dans le temps"),
   };
+
+  const handleSubmit = useCallback(async (payload: HeroFormPayload) => {
+    setErrorMessage(null);
+    trackEvent("hero_form_submit", {
+      birthMonth: payload.birthDate.slice(0, 7),
+      hasTime: Boolean(payload.birthTime),
+      country: payload.city.country,
+    });
+
+    // Cancel any in-flight request
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
+    if (!REAL_SIGNAL_ENABLED) {
+      setSignal(buildMockRealSignal(payload.birthDate));
+      setPhase("revealed");
+      trackEvent("hero_signal_revealed", { kind: "mock", reason: "flag-off" });
+      return;
+    }
+
+    setPhase("loading");
+
+    try {
+      const res = await fetch("/api/landing/signal", {
+        method: "POST",
+        signal: ctrl.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          birthDate: payload.birthDate,
+          birthTime: payload.birthTime,
+          latitude: payload.city.latitude,
+          longitude: payload.city.longitude,
+          timezone: payload.city.timezone,
+        }),
+      });
+
+      if (res.status === 429) {
+        const data = await res.json().catch(() => ({}));
+        setErrorMessage(data.message ?? "Trop de tentatives. Réessaie dans une minute.");
+        setPhase("idle");
+        trackEvent("hero_signal_failed", { status: 429 });
+        return;
+      }
+
+      if (!res.ok) {
+        // Soft fallback to mock so the visitor still sees something
+        const data = await res.json().catch(() => ({}));
+        if (data?.fallback === "mock") {
+          setSignal(buildMockRealSignal(payload.birthDate));
+          setPhase("revealed");
+          trackEvent("hero_signal_revealed", { kind: "mock", reason: "fallback" });
+          return;
+        }
+        setErrorMessage("Connexion instable. Réessaie dans un instant.");
+        setPhase("idle");
+        trackEvent("hero_signal_failed", { status: res.status });
+        return;
+      }
+
+      const data = (await res.json()) as {
+        active: Omit<RealSignal, "futureMonths" | "nextMajor" | "lifetime" | "fromCache">;
+        nextMajor: RealSignal["nextMajor"];
+        lifetime: RealSignal["lifetime"];
+        futureMonths: RealSignal["futureMonths"];
+        fromCache: boolean;
+      };
+      const real: RealSignal = {
+        ...data.active,
+        nextMajor: data.nextMajor ?? null,
+        lifetime: data.lifetime ?? null,
+        futureMonths: data.futureMonths ?? [],
+        fromCache: data.fromCache,
+      };
+      setSignal(real);
+      setPhase("revealed");
+      trackEvent("hero_signal_revealed", {
+        kind: "real",
+        tier: real.tier,
+        cached: real.fromCache,
+      });
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      console.error("[hero] signal fetch failed", err);
+      // Fallback to mock so the page never feels broken
+      setSignal(buildMockRealSignal(payload.birthDate));
+      setPhase("revealed");
+      trackEvent("hero_signal_revealed", { kind: "mock", reason: "exception" });
+    }
+  }, []);
 
   return (
     <section className="relative overflow-hidden py-28 md:py-36 lg:py-44">
-      {/* Background boudins — subtle, floating */}
+      {/* Decorative background boudins */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         {BG_BOUDINS.map((b, i) => (
           <motion.div
@@ -306,7 +180,6 @@ export function Hero({ translations }: HeroProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6">
-        {/* Headline block */}
         <ScrollReveal variant="fadeUp" className="mx-auto max-w-3xl text-center" threshold={0.05}>
           <p className="mb-4 font-display text-sm font-medium uppercase tracking-widest text-logo-lavender">
             {t(translations, "hero.v2.eyebrow", "Personal timing engine")}
@@ -319,30 +192,52 @@ export function Hero({ translations }: HeroProps) {
           </p>
         </ScrollReveal>
 
-        {/* Interactive birthday input or signal reveal */}
         <AnimatePresence mode="wait">
-          {!signal ? (
-            <BirthdayInput
-              key="input"
-              onSubmit={handleDateSubmit}
-              ctaLabel={t(translations, "hero.cta", "See my signal")}
-            />
-          ) : (
-            <SignalResult key="result" signal={signal} />
+          {phase === "idle" && (
+            <div key="form">
+              <HeroForm
+                onSubmit={handleSubmit}
+                ctaLabel={t(translations, "hero.cta", "Voir mon signal")}
+                privacyNotice={t(
+                  translations,
+                  "hero.privacy",
+                  "Tes données ne sont jamais conservées sans ton accord. Cache anonyme 7 jours, suppression à la demande.",
+                )}
+              />
+              {errorMessage && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  role="alert"
+                  className="mx-auto mt-3 max-w-md text-center text-[12px] text-rose-300"
+                >
+                  {errorMessage}
+                </motion.p>
+              )}
+            </div>
+          )}
+
+          {phase === "loading" && <LoadingNarrator key="loader" />}
+
+          {phase === "revealed" && signal && (
+            <HeroSignalCard key="real" signal={signal} copy={cardCopy} />
           )}
         </AnimatePresence>
 
-        {/* Micro social proof */}
-        <ScrollReveal variant="fadeUp" className="mt-8 text-center" threshold={0.05}>
-          <p className="text-sm text-brand-10/40">
-            {t(translations, "hero.social", "Trusted by 2,400+ people who value clarity")}
-          </p>
-        </ScrollReveal>
+        {phase === "idle" && (
+          <ScrollReveal variant="fadeUp" className="mt-8 text-center" threshold={0.05}>
+            <p className="text-sm text-brand-10/40">
+              {t(translations, "hero.social", "Trusted by 2,400+ people who value clarity")}
+            </p>
+          </ScrollReveal>
+        )}
 
-        {/* App Store badges */}
-        <ScrollReveal variant="fadeUp" className="mt-6 flex flex-col items-center gap-4" threshold={0.05}>
-          <AppStoreBadges />
-        </ScrollReveal>
+        {/* Fallback App Store badges — visible only at idle */}
+        {phase === "idle" && (
+          <ScrollReveal variant="fadeUp" className="mt-6 flex flex-col items-center gap-4" threshold={0.05}>
+            <AppStoreBadges />
+          </ScrollReveal>
+        )}
       </div>
     </section>
   );
