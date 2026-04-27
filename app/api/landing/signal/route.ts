@@ -190,6 +190,61 @@ function buildLifetimeStats(boudins: ShortBoudin[], todayISO: string): {
   };
 }
 
+/**
+ * Top 3 past peaks — recognizable memory hooks.
+ * Returns year + planet + house so the visitor can recognize SPECIFIC
+ * past periods (validation: "ah oui, 2019, j'ai changé de boulot").
+ */
+function findPastPeaks(boudins: ShortBoudin[], todayISO: string, count = 3): Array<{
+  year: number;
+  monthKey: string;
+  planet: string;
+  house: number | null;
+  label: string;
+  tier: "PEAK";
+}> {
+  const past = boudins
+    .filter((b) => (b.past || (b.e ?? b.s) < todayISO) && b.sc >= 3)
+    .sort((a, b) => {
+      // Prioritize most recent + highest score
+      if (b.sc !== a.sc) return b.sc - a.sc;
+      return b.s.localeCompare(a.s);
+    });
+
+  // Pick 3 with year diversity (don't show 3 from the same year)
+  const picked: typeof past = [];
+  const usedYears = new Set<number>();
+  for (const b of past) {
+    const year = parseInt(b.s.slice(0, 4), 10);
+    if (!usedYears.has(year)) {
+      picked.push(b);
+      usedYears.add(year);
+      if (picked.length >= count) break;
+    }
+  }
+  // Fill if we ran out of unique years
+  if (picked.length < count) {
+    for (const b of past) {
+      if (!picked.includes(b)) {
+        picked.push(b);
+        if (picked.length >= count) break;
+      }
+    }
+  }
+
+  // Sort chronologically (oldest first → reads as a journey)
+  picked.sort((a, b) => a.s.localeCompare(b.s));
+
+  return picked.map((b) => ({
+    year: parseInt(b.s.slice(0, 4), 10),
+    monthKey: b.s.slice(0, 7),
+    planet: planetKeyFromBoudin(b),
+    house: typeof b.nh === "number" ? b.nh : null,
+    label: b.lbl,
+    tier: "PEAK" as const,
+  }));
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Promise<Response> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
@@ -338,10 +393,11 @@ export async function POST(req: NextRequest) {
     // Soft-fail — return the card without LLM text
   }
 
-  // ── Step 4: build future blur data + lifetime tease ──
+  // ── Step 4: build narrative payload (past hooks + present + future tease) ──
   const futureMonths = buildFutureMonths(boudins, todayISO, 12);
   const nextMajor = findNextMajorWindow(boudins, todayISO);
   const lifetime = buildLifetimeStats(boudins, todayISO);
+  const pastPeaks = findPastPeaks(boudins, todayISO, 3);
 
   return NextResponse.json(
     {
@@ -360,6 +416,7 @@ export async function POST(req: NextRequest) {
       },
       nextMajor,
       lifetime,
+      pastPeaks,
       futureMonths,
       fromCache: personalizeFromCache,
     },

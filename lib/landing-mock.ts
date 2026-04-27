@@ -51,10 +51,42 @@ export function buildMockRealSignal(birthDate: string): RealSignal {
     base.tier === "toctoctoc" ? "PEAK" : base.tier === "toctoc" ? "CLEAR" : "SUBTLE";
   const houseColor = houseConfig[base.house]?.color ?? "#9585CC";
   const primaryPlanet = base.planets[0] ?? "jupiter";
-
-  // Future months — 12 deterministic capsules
   const today = new Date();
   const todayMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  const birthYear = parseInt(birthDate.slice(0, 4), 10);
+  const ageYears = Math.max(1, today.getFullYear() - birthYear);
+
+  // Past peaks — 3 deterministic past major windows distributed across user's life
+  // We pick 3 years roughly spaced (recent / mid-life / earlier).
+  const slotYears: number[] = [];
+  if (ageYears >= 12) {
+    slotYears.push(today.getFullYear() - Math.max(2, Math.floor(ageYears * 0.15)));
+    slotYears.push(today.getFullYear() - Math.max(5, Math.floor(ageYears * 0.45)));
+    slotYears.push(today.getFullYear() - Math.max(9, Math.floor(ageYears * 0.75)));
+  } else {
+    // Young user — show only 1-2 past peaks
+    slotYears.push(today.getFullYear() - 2);
+    if (ageYears >= 6) slotYears.push(today.getFullYear() - Math.floor(ageYears * 0.6));
+  }
+
+  const pastPeaks = slotYears
+    .map((y) => {
+      const r = rand();
+      const planet = MAJOR_PLANETS[Math.floor(r * MAJOR_PLANETS.length)];
+      const house = (Math.floor(rand() * 12) + 1) as HouseNumber;
+      const month = Math.floor(rand() * 12) + 1;
+      return {
+        year: y,
+        monthKey: `${y}-${String(month).padStart(2, "0")}`,
+        planet: planet as string,
+        house: house as number,
+        label: `${planetConfig[planet].label} en ${houseConfig[house].label}`,
+        tier: "PEAK" as const,
+      };
+    })
+    .sort((a, b) => a.year - b.year); // chronological — oldest first
+
+  // Future months — 12 deterministic capsules
   const futureMonths = Array.from({ length: 12 }, (_, i) => {
     const monthKey = addMonths(todayMonth, i + 1);
     const r = rand();
@@ -76,8 +108,6 @@ export function buildMockRealSignal(birthDate: string): RealSignal {
     : null;
 
   // Lifetime stats — calibrate from age (ish)
-  const birthYear = parseInt(birthDate.slice(0, 4), 10);
-  const ageYears = Math.max(1, today.getFullYear() - birthYear);
   const yearsAhead = Math.max(40, 90 - ageYears);
 
   // Realistic ratios: ~1 PEAK every 18 months, ~1 CLEAR every 8 months
@@ -105,6 +135,7 @@ export function buildMockRealSignal(birthDate: string): RealSignal {
     },
     futureMonths,
     nextMajor,
+    pastPeaks,
     lifetime: {
       pastPeak,
       pastClear,

@@ -52,17 +52,44 @@ export function Hero({ translations }: HeroProps) {
   const abortRef = useRef<AbortController | null>(null);
 
   const cardCopy = {
-    eyebrow: t(translations, "hero.signal.eyebrow", "Signal actif"),
-    activeTitle: t(translations, "hero.signal.activeTitle", "Ton mois actuel"),
+    actI: t(translations, "hero.signal.actI", "Comprends ton passé"),
+    actII: t(translations, "hero.signal.actII", "Ton signal d'aujourd'hui"),
+    actIII: t(translations, "hero.signal.actIII", "Prépare ce qui arrive"),
+    pastIntro: t(
+      translations,
+      "hero.signal.pastIntro",
+      "Avant d'éclairer ton aujourd'hui, voici les fenêtres majeures qui t'ont façonné. Reconnaître son passé, c'est comprendre sa dynamique du jour.",
+    ),
+    pastQuestion: t(
+      translations,
+      "hero.signal.pastQuestion",
+      "Touche une année pour voir comment elle résonne encore aujourd'hui.",
+    ),
+    presentEyebrow: t(translations, "hero.signal.eyebrow", "Signal actif"),
+    activeNowBadge: t(translations, "hero.signal.activeNow", "Actif maintenant"),
+    futureIntro: t(
+      translations,
+      "hero.signal.futureIntro",
+      "Ton chemin n'est pas un point. Voici ce qui s'aligne devant toi — anticipe les pics, désamorce les tensions, traverse les transitions.",
+    ),
+    futureBody: t(
+      translations,
+      "hero.signal.futureBody",
+      "Le jour exact, l'angle natal et les actions à poser sont dans l'app.",
+    ),
+    nextWindow: t(translations, "hero.signal.nextWindow", "Ta prochaine fenêtre forte"),
     teaserTitle: t(translations, "hero.signal.teaserTitle", "Tes 12 prochains mois"),
     teaserBody: t(
       translations,
       "hero.signal.teaserBody",
-      "Débloque la timeline complète, les pics à venir et tes recommandations quotidiennes dans l'app.",
+      "Chaque pic appelle une attitude différente. Sache laquelle, à l'avance.",
     ),
-    appStoreCta: t(translations, "hero.signal.appCta", "Télécharge Unfold pour la suite"),
-    nextWindow: t(translations, "hero.signal.nextWindow", "Ta prochaine fenêtre forte"),
-    lifetimeLine: t(translations, "hero.signal.lifetimeLine", "Tes moments forts dans le temps"),
+    appStoreCta: t(translations, "hero.signal.appCta", "Active ta préparation dans l'app"),
+    finalPitch: t(
+      translations,
+      "hero.signal.finalPitch",
+      "Comprends d'où tu viens, vis ce qui se passe, prépare ce qui arrive.",
+    ),
   };
 
   const handleSubmit = useCallback(async (payload: HeroFormPayload) => {
