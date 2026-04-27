@@ -14,6 +14,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { useAuth } from "@/lib/auth-context";
 import { SAFE_TOP, SAFE_BOTTOM } from "@/lib/layout-constants";
 import { checkAndUpdateStreak } from "@/lib/streak";
+import { detectLocale, isRTL, type Locale } from "@/lib/i18n-demo";
 
 function AvatarButton({ onClick }: { onClick: () => void }) {
   const { user, isAuthenticated } = useAuth();
@@ -85,6 +86,23 @@ export default function DemoLayout({
       StatusBar.setBackgroundColor({ color: isDark ? "#1B1535" : "#F5F1FA" }).catch(() => {});
     });
   }, [resolvedTheme]);
+
+  // Sync HTML lang + dir attributes with detected/picked user locale.
+  // Runs on mount and whenever the language picker emits a change event.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const apply = (loc: Locale) => {
+      document.documentElement.lang = loc;
+      document.documentElement.dir = isRTL(loc) ? "rtl" : "ltr";
+    };
+    apply(detectLocale());
+    const onLocaleChange = (e: Event) => {
+      const detail = (e as CustomEvent<Locale>).detail;
+      if (detail) apply(detail);
+    };
+    window.addEventListener("unfold:locale-changed", onLocaleChange);
+    return () => window.removeEventListener("unfold:locale-changed", onLocaleChange);
+  }, []);
 
   // Listen for custom events
   useEffect(() => {

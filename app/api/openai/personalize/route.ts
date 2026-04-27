@@ -387,6 +387,38 @@ if (typeof globalThis !== "undefined") {
   }, 5 * 60 * 1000);
 }
 
+// ─── Locale instruction (multi-language GPT output) ────────────
+// Appended to Marie Ange's French systemPrompt so GPT generates the
+// personalized text directly in the user's language. Astrological terms
+// (Foyer→Home, Carrière→Career, etc.) are translated by GPT in-context.
+
+const LOCALE_NAMES: Record<string, string> = {
+  fr: "français",
+  en: "English",
+  es: "español",
+  pt: "português brasileiro",
+  de: "Deutsch",
+  it: "italiano",
+  nl: "Nederlands",
+  ja: "日本語",
+  zh: "中文",
+  ar: "العربية",
+};
+
+function buildLocaleInstruction(locale: string): string {
+  const lang = LOCALE_NAMES[locale];
+  if (!lang || locale === "fr") return "";                // French = source content, no instruction
+  return `
+
+--- LANGUE DE SORTIE ---
+**IMPORTANT**: Génère TOUS les champs de la sortie JSON (titre, sousTitre, corps, avecLeRecul, hitInfo, lifetimeInfo, convergenceNote, domainesActives) directement en ${lang}.
+Traduis tous les termes astrologiques: les noms de domaines (Foyer→Home/Hogar/Lar/Heim, Carrière→Career/Carrera/Carreira/Karriere, etc.), les noms de capsules ("Brouillard créatif"→"Creative Fog", "Pivot majeur"→"Major Pivot", etc.), et les phrases d'insight.
+Garde les noms de planètes (Neptune, Lune, Vénus, Mars, etc.) et les aspects techniques (square, opposition, conjunction) en standard astrologique.
+NE traduis PAS les valeurs des champs JSON (clés en français comme "titre" restent), seulement le CONTENU des chaînes.
+--- FIN LANGUE ---
+`;
+}
+
 // ─── User profile injection (GPT-validated rules) ───────
 
 function buildUserProfileContext(
@@ -480,10 +512,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { birthData, boudinIndex, userProfile } = body;
+    const { birthData, boudinIndex, userProfile, locale: rawLocale } = body;
     // boudinId is the exact sausage ID from toctoc-app-short (e.g. "transit_abc_h3" for hit 3)
     // The detail API uses calculateTocTocApp which creates the same _h{n} IDs — pass as-is
     const boudinId = body.boudinId;
+    // User locale for GPT output language. Defaults to FR (Marie Ange's source content).
+    const locale: string = (typeof rawLocale === "string" ? rawLocale : "fr").slice(0, 2).toLowerCase();
 
     if (!birthData || (boudinId === undefined && boudinIndex === undefined)) {
       return NextResponse.json({ error: "Missing birthData or boudinId/boudinIndex" }, { status: 400 });
@@ -522,7 +556,9 @@ export async function POST(request: NextRequest) {
     // ── L2 Cache check (Supabase) ──
     const bHash = makeBirthHash(birthData);
     const pHash = makeProfileHash(userProfile);
-    const cacheId = boudinId ?? `idx_${boudinIndex}`;
+    // Suffix locale to cache id so different languages get distinct cached outputs.
+    const baseCacheId = boudinId ?? `idx_${boudinIndex}`;
+    const cacheId = locale === "fr" ? baseCacheId : `${baseCacheId}_${locale}`;
 
     const cached = await getCachedDelineation(bHash, cacheId, pHash);
     if (cached) {
@@ -605,10 +641,11 @@ export async function POST(request: NextRequest) {
 
     // ── Step 2: Build system prompt ──
     // Use Marie Ange's category-specific systemPrompt from the detail endpoint.
-    // Append: our JSON output format spec + optional user profile context.
+    // Append: our JSON output format spec + optional user profile context + locale instruction.
     const apiSystemPrompt = systemPrompt ?? "Tu es un astrologue expert. Génère une délinéation personnalisée en français.";
     const userContext = buildUserProfileContext(userProfile);
-    const fullSystemPrompt = apiSystemPrompt + JSON_OUTPUT_FORMAT + userContext;
+    const localeInstruction = buildLocaleInstruction(locale);
+    const fullSystemPrompt = apiSystemPrompt + JSON_OUTPUT_FORMAT + userContext + localeInstruction;
 
     // ── Step 3: Call OpenAI with streaming ──
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {

@@ -6,6 +6,7 @@ import { Clock, Fire, CalendarMonth, Lightbulb, ChevronDown, ArrowRight, ShareNo
 import { ShareSignalCard } from "./ShareSignalCard";
 import { TypewriterText } from "./TypewriterText";
 import { getPersonalizedText, type PersonalizedText } from "@/lib/openai-personalize";
+import { detectLocale } from "@/lib/i18n-demo";
 import { getUserProfileSync } from "@/lib/user-profile";
 import { getBirthDataSync } from "@/lib/birth-data";
 import { getObservedProfileSync, trackCapsuleOpen, trackDomainClick, trackDomainReadTime } from "@/lib/observed-profile";
@@ -206,7 +207,7 @@ export function CapsuleDetailSheet({
         capsuleContext,
         userProfile,
         birthData.placeOfBirth ?? "",
-        "fr",
+        detectLocale(),                                  // GPT generates output in user's language
         phase?.boudinIndex,
         phase?.boudinId,
         ({ corps }) => setStreamingCorps(corps)

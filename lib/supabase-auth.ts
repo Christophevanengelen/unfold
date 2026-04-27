@@ -5,6 +5,7 @@
  */
 
 import { createClient, type User, type AuthChangeEvent, type Session } from "@supabase/supabase-js";
+import { detectLocale } from "@/lib/i18n-demo";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -13,14 +14,28 @@ export const supabaseAuth = url && anonKey && anonKey !== "PASTE_YOUR_ANON_KEY_H
   ? createClient(url, anonKey)
   : null;
 
+/**
+ * Send the magic-link sign-in email. Locale is auto-detected and stored in
+ * user metadata so:
+ *   - Future Supabase email templates can branch on `user.user_metadata.locale`
+ *   - Welcome emails (Resend) can render in the right language
+ *   - Stripe Customer preferred_locales picks it up on first checkout
+ *
+ * Supabase's built-in OTP email is not yet locale-templated by us — needs
+ * dashboard-side template per locale (see launch-playbook.md).
+ */
 export async function signInWithMagicLink(email: string, redirectTo?: string) {
   if (!supabaseAuth) throw new Error("Supabase not configured");
+  const locale = detectLocale();
   const destination = redirectTo ?? (typeof window !== "undefined"
-    ? `${window.location.origin}/auth/callback`
-    : "https://unfold-nine.vercel.app/auth/callback");
+    ? `${window.location.origin}/auth/callback?locale=${locale}`
+    : `https://unfold-nine.vercel.app/auth/callback?locale=${locale}`);
   const { error } = await supabaseAuth.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: destination },
+    options: {
+      emailRedirectTo: destination,
+      data: { locale },                                 // attached to user metadata
+    },
   });
   if (error) throw error;
 }
