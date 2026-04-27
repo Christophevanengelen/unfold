@@ -368,7 +368,12 @@ export async function POST(req: NextRequest) {
       `${baseUrl}/api/openai/personalize`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // Loopback marker — bypasses auth-required gate on personalize
+          // since landing is intentionally anonymous (visitors not signed in).
+          "x-unfold-internal": "1",
+        },
         body: JSON.stringify({
           birthData: { birthDate, birthTime, latitude, longitude, timezone },
           boudinId: active.id,

@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Lock } from "flowbite-react-icons/outline";
+import { isIOSBundle } from "@/lib/platform";
 
 // ─── Feature-specific CTA text ──────────────────────────
 const FEATURE_TEXT: Record<string, { headline: string; sub: string }> = {
@@ -102,7 +103,7 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
             letterSpacing: "0.01em",
           }}
         >
-          Voir les plans — 9,99/mois
+          {isIOSBundle() ? "Débloque dans la version Pro" : "Voir les plans"}
         </motion.button>
       </motion.div>
     </div>

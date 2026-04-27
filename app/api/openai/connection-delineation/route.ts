@@ -19,6 +19,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { supabase } from "@/lib/db";
+import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
+import { enforceFeature, enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
+
+export const runtime = "nodejs";
 
 // ─── Load system prompt ────────────────────────────────────
 // Extract just the "SYSTEM PROMPT" code block from the markdown file.
@@ -153,6 +157,38 @@ export async function POST(req: NextRequest) {
     body = (await req.json()) as RequestBody;
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  // ── BILLING GATE: must run BEFORE cache return AND BEFORE OpenAI call.
+  //    Connection delineation is gated on:
+  //      1) future months (FUTURE_CAPSULES feature, premium-only)
+  //      2) AI quota (1/week free, unlimited paid)
+  const userId = await getUserIdFromRequest(req);
+  const isInternalLandingCall = req.headers.get("x-unfold-internal") === "1";
+  if (!userId && !isInternalLandingCall) {
+    return NextResponse.json(
+      { error: "auth_required", message: "Connecte-toi pour accéder à la délinéation IA." },
+      { status: 401 },
+    );
+  }
+  if (userId) {
+    const monthKeyStr = String(body.monthKey ?? "");
+    const todayMonth = new Date().toISOString().slice(0, 7);
+    const isFuture = monthKeyStr > todayMonth;
+    try {
+      if (isFuture) {
+        await enforceFeature(userId, "FUTURE_CAPSULES");
+      }
+      await enforceQuota(userId, "AI_DELINEATION");
+    } catch (err) {
+      if (err instanceof RequiresPlanError) {
+        return NextResponse.json(err.toJSON(), { status: err.status });
+      }
+      if (err instanceof QuotaExceededError) {
+        return NextResponse.json(err.toJSON(), { status: err.status });
+      }
+      throw err;
+    }
   }
 
   // ── L2 Cache check ──

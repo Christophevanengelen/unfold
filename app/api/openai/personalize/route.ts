@@ -13,6 +13,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
+import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
+import { enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
+
+export const runtime = "nodejs";                  // Stripe + raw fetch require Node, not Edge
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -480,6 +484,36 @@ export async function POST(request: NextRequest) {
 
     if (!birthData || (boudinId === undefined && boudinIndex === undefined)) {
       return NextResponse.json({ error: "Missing birthData or boudinId/boudinIndex" }, { status: 400 });
+    }
+
+    // ── BILLING GATE: must run BEFORE cache return (otherwise free users
+    //    see paid-cached responses for free) and BEFORE the SSE stream
+    //    response (mid-stream throws can't write structured 402 JSON).
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
+      // Free unauthenticated requests still allowed for landing /api/landing/signal
+      // path which calls this internally — but require sign-in for direct
+      // personalize calls. The internal landing route bypasses auth via
+      // a server-side flag (see app/api/landing/signal/route.ts).
+      const isInternalLandingCall = request.headers.get("x-unfold-internal") === "1";
+      if (!isInternalLandingCall) {
+        return NextResponse.json(
+          { error: "auth_required", message: "Connecte-toi pour accéder à l'IA personnalisée." },
+          { status: 401 },
+        );
+      }
+    } else {
+      try {
+        await enforceQuota(userId, "AI_DELINEATION");
+      } catch (err) {
+        if (err instanceof RequiresPlanError) {
+          return NextResponse.json(err.toJSON(), { status: err.status });
+        }
+        if (err instanceof QuotaExceededError) {
+          return NextResponse.json(err.toJSON(), { status: err.status });
+        }
+        throw err;
+      }
     }
 
     // ── L2 Cache check (Supabase) ──
