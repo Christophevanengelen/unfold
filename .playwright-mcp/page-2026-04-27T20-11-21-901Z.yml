@@ -1,0 +1,314 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e31]:
+        - generic [ref=e192]:
+          - img [ref=e193]
+          - generic [ref=e195]:
+            - paragraph [ref=e196]: You are here.
+            - paragraph [ref=e197]: This line marks today. Above is your future, below is your past.
+            - button "Got it" [ref=e198]
+            - button "Skip" [ref=e199]
+        - generic [ref=e37]:
+          - generic [ref=e39]:
+            - generic [ref=e41]: Sep
+            - generic [ref=e43]: Oct
+            - generic [ref=e45]: Nov
+            - generic [ref=e47]: Dec
+            - generic [ref=e49]: "2026"
+            - generic [ref=e51]: Feb
+            - generic [ref=e53]: Mar
+            - generic [ref=e55]: Apr
+            - generic [ref=e57]: May
+            - generic [ref=e59]: Jun
+            - generic [ref=e61]: Jul
+            - generic [ref=e63]: Aug
+            - generic [ref=e65]: Sep
+            - generic [ref=e67]: Oct
+            - generic [ref=e69]: Nov
+            - button [ref=e70]
+            - button [ref=e74]
+            - button [ref=e77]
+            - button [ref=e81]
+            - button [ref=e85]
+            - button [ref=e89]
+            - button [ref=e92]
+            - button [ref=e95]
+            - button [ref=e98]
+            - button [ref=e101]
+            - button [ref=e105]
+            - button [ref=e109]
+            - button [ref=e112]
+            - button [ref=e116]
+            - button [ref=e119]
+            - button [ref=e122]
+            - button [ref=e125]
+            - button [ref=e128]
+            - button [ref=e131]
+            - button [ref=e134]
+            - button [ref=e137]
+            - button [ref=e141]
+            - button [ref=e144]
+            - button [ref=e147]
+            - button [ref=e150]
+            - button [ref=e153]
+            - button [ref=e156]
+            - button [ref=e159]
+            - button [ref=e163]
+            - button [ref=e166]
+            - button [ref=e169]
+            - button [ref=e172]
+            - button [ref=e175]
+            - generic [ref=e178]:
+              - paragraph [ref=e179]:
+                - text: You weren't even crawling yet.
+                - text: But the planets were already busy.
+              - paragraph [ref=e181]: September 25, 1982
+          - generic [ref=e182]:
+            - button [ref=e183]:
+              - img [ref=e184]
+            - button [ref=e186]:
+              - img [ref=e187]
+        - generic:
+          - generic:
+            - generic:
+              - button:
+                - img
+              - button:
+                - img
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - button "Fenêtre d'expansion 24 Sep '27 — 23 Dec '27 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Fenêtre d'expansion
+                        - generic: 24 Sep '27 — 23 Dec '27
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - button "Pic de circonstances 1 Sep '27 — 31 Dec '27 CLEAR 56":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                        - generic: 1 Sep '27 — 31 Dec '27
+                        - generic:
+                          - generic: CLEAR
+                      - generic: "56"
+                  - generic:
+                    - generic: Aug 2027
+                  - generic:
+                    - button "Pic de circonstances 1 Aug '27 — 31 Dec '27 PEAK 73":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                        - generic: 1 Aug '27 — 31 Dec '27
+                        - generic:
+                          - generic: PEAK
+                      - generic: "73"
+                  - generic:
+                    - generic: Apr 2027
+                  - generic:
+                    - button "Pic de circonstances 1 Apr '27 — 31 May '27 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                        - generic: 1 Apr '27 — 31 May '27
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - button "Heure des comptes 1 Apr '27 — 30 Jun '27 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Heure des comptes
+                        - generic: 1 Apr '27 — 30 Jun '27
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Mar 2027
+                  - generic:
+                    - button "Pic de circonstances 1 Mar '27 — 31 May '27 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                        - generic: 1 Mar '27 — 31 May '27
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Feb 2027
+                  - generic:
+                    - button "Heure des comptes 4 Feb '27 — 5 May '27 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Heure des comptes
+                        - generic: 4 Feb '27 — 5 May '27
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Sep 2026
+                  - generic:
+                    - button "Pic de circonstances 1 Sep '26 — 31 Dec '27 PEAK 73":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                        - generic: 1 Sep '26 — 31 Dec '27
+                        - generic:
+                          - generic: PEAK
+                      - generic: "73"
+                  - generic:
+                    - generic: May 2026
+                  - generic:
+                    - button "Croissance exigeante 21 May '26 — 19 Aug '26 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Croissance exigeante
+                        - generic: 21 May '26 — 19 Aug '26
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - button "Appel à la liberté 14 May '26 — 12 Aug '26 CLEAR 45":
+                      - generic:
+                        - generic:
+                          - generic: Appel à la liberté
+                        - generic: 14 May '26 — 12 Aug '26
+                        - generic:
+                          - generic: CLEAR
+                      - generic: "45"
+                  - generic:
+                    - generic: Apr 2026
+                  - generic:
+                    - button "Heure des comptes NOW 4 Apr '26 — now SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Heure des comptes
+                          - generic: NOW
+                        - generic: 4 Apr '26 — now
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Mar 2026
+                  - generic:
+                    - button "Brouillard créatif NOW 7 Mar '26 — now SUBTLE 37":
+                      - generic:
+                        - generic:
+                          - generic: Brouillard créatif
+                          - generic: NOW
+                        - generic: 7 Mar '26 — now
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "37"
+                  - generic:
+                    - generic: Jan 2026
+                  - generic:
+                    - button "Croissance exigeante 25 Jan '26 — 25 Apr '26 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Croissance exigeante
+                        - generic: 25 Jan '26 — 25 Apr '26
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Dec 2025
+                  - generic:
+                    - button "Pic de circonstances 1 Dec '25 — 31 Dec '25 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                        - generic: 1 Dec '25 — 31 Dec '25
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - button "Pic de circonstances NOW 1 Dec '25 — now SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                          - generic: NOW
+                        - generic: 1 Dec '25 — now
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Nov 2025
+                  - generic:
+                    - button "Pic de circonstances NOW 1 Nov '25 — now SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                          - generic: NOW
+                        - generic: 1 Nov '25 — now
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Oct 2025
+                  - generic:
+                    - button "Pic de circonstances 1 Oct '25 — 31 Oct '25 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                        - generic: 1 Oct '25 — 31 Oct '25
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Sep 2025
+                  - generic:
+                    - button "Pic de circonstances NOW 1 Sep '25 — now SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                          - generic: NOW
+                        - generic: 1 Sep '25 — now
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Aug 2025
+                  - generic:
+                    - button "Pic de circonstances NOW 1 Aug '25 — now SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Pic de circonstances
+                          - generic: NOW
+                        - generic: 1 Aug '25 — now
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+                  - generic:
+                    - generic: Jul 2025
+                  - generic:
+                    - button "Appel à la liberté 23 Jul '25 — 21 Oct '25 SUBTLE 30":
+                      - generic:
+                        - generic:
+                          - generic: Appel à la liberté
+                        - generic: 23 Jul '25 — 21 Oct '25
+                        - generic:
+                          - generic: SUBTLE
+                      - generic: "30"
+        - generic:
+          - generic:
+            - generic: "44"
+      - generic [ref=e8]:
+        - generic [ref=e9]: 9:41
+        - img [ref=e10]
+        - button "Profile" [ref=e18]: A
+      - navigation [ref=e20]:
+        - link "Timeline" [ref=e21] [cursor=pointer]:
+          - /url: /demo/timeline
+          - img [ref=e23]
+        - link "Match" [ref=e26] [cursor=pointer]:
+          - /url: /demo/compatibility
+          - img [ref=e28]
+    - link "unfold.app" [ref=e30] [cursor=pointer]:
+      - /url: /en#pricing

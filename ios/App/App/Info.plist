@@ -47,7 +47,7 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.unfold.app</string>
+			<string>com.zebrapad.unfold</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>unfold</string>
@@ -60,5 +60,7 @@
 	<string>Unfold uses your photo library to personalize your profile photo.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Unfold may use anonymous usage data to improve your experience.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

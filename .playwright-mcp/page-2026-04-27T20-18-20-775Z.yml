@@ -1,0 +1,17 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: 9:41
+        - img [ref=e8]
+        - button "Profile" [ref=e16]: A
+      - navigation [ref=e18]:
+        - link "Timeline" [ref=e19] [cursor=pointer]:
+          - /url: /demo/timeline
+          - img [ref=e21]
+        - link "Match" [ref=e23] [cursor=pointer]:
+          - /url: /demo/compatibility
+          - img [ref=e25]
+    - link "unfold.app" [ref=e27] [cursor=pointer]:
+      - /url: /en#pricing

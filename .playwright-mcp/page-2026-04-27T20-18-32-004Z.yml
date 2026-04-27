@@ -1,0 +1,13 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - generic [ref=e8]:
+      - img "Unfold" [ref=e11]
+      - generic [ref=e12]:
+        - heading "Some periods of your life feel more intense." [level=1] [ref=e13]:
+          - text: Some periods of your life
+          - text: feel more intense.
+        - paragraph [ref=e14]: There is a reason.
+        - button "Show me" [ref=e16]
+    - link "unfold.app" [ref=e17] [cursor=pointer]:
+      - /url: /en#pricing

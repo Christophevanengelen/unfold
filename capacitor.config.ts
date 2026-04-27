@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.unfold.app",
+  appId: "com.zebrapad.unfold",
   appName: "Unfold",
   // Live server URL: the native WebView loads directly from Vercel.
   // This is the standard Capacitor hybrid pattern — the app has real native
