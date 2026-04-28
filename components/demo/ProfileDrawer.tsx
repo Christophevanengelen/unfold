@@ -14,6 +14,8 @@ import { signOut } from "@/lib/supabase-auth";
 import { clearBirthData } from "@/lib/birth-data";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
+import { useBillingState } from "@/lib/premium-gate";
+import { isNative, getPlatform } from "@/lib/platform";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -31,6 +33,9 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const [hasProfile, setHasProfile] = useState(false);
   const [locale, setLocaleState] = useState<Locale>("en");
   const [langPickerOpen, setLangPickerOpen] = useState(false);
+  const billing = useBillingState();
+  const native = isNative();
+  const platform = getPlatform();
 
   const userName = birthData?.nickname || (locale === "fr" ? "Toi" : locale === "es" ? "Tú" : locale === "pt" ? "Você" : "You");
 
@@ -60,7 +65,17 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                 {userName}
               </p>
               <p className="text-xs text-text-body-subtle">
-                {t("profile.free_plan", locale)}
+                {billing.isPremium
+                  ? t("profile.premium_plan", locale)
+                  : t("profile.free_plan", locale)}
+                {billing.status === "trialing" && (
+                  <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+                    style={{
+                      background: "color-mix(in srgb, var(--accent-purple) 15%, transparent)",
+                      color: "var(--accent-purple)",
+                    }}
+                  >Trial</span>
+                )}
               </p>
             </div>
           </div>
@@ -136,6 +151,68 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               {isDark ? t("profile.dark", locale) : t("profile.light", locale)}
             </span>
           </button>
+
+          {/* Subscription management — only when authenticated */}
+          {isAuthenticated && (
+            <>
+              <div className="my-4 h-px bg-brand-3" />
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-text-body-subtle">
+                {t("profile.your_plan", locale)}
+              </p>
+
+              {/* Manage subscription */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (native) {
+                    // Native iOS → Apple subscriptions page
+                    // Native Android → Google Play subscriptions
+                    const url = platform === "ios"
+                      ? "https://apps.apple.com/account/subscriptions"
+                      : "https://play.google.com/store/account/subscriptions";
+                    if (typeof window !== "undefined") {
+                      // "_system" opens in the native browser on iOS/Android
+                      window.open(url, "_system");
+                    }
+                  } else {
+                    // Web → Stripe Customer Portal
+                    fetch("/api/billing/portal", { method: "POST", credentials: "include" })
+                      .then((r) => r.ok ? r.json() : null)
+                      .then((data) => { if (data?.url) window.location.href = data.url; })
+                      .catch(() => {});
+                    onClose();
+                  }
+                }}
+                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+              >
+                <span className="flex items-center gap-2.5">
+                  <span className="flex h-4 w-4 items-center justify-center text-accent-purple text-xs">✦</span>
+                  {t("profile.manage_sub", locale)}
+                </span>
+                <span className="text-xs text-text-body-subtle">
+                  {billing.isPremium ? t("profile.premium_plan", locale) : t("profile.free_plan", locale)}
+                </span>
+              </button>
+
+              {/* Restore purchases — native only */}
+              {native && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    // Phase 4: will call Purchases.restorePurchases() via RC SDK
+                    // For now, just refetch /api/billing/me to sync state
+                    await fetch("/api/billing/me", { credentials: "include" });
+                    window.dispatchEvent(new CustomEvent("unfold:plan-changed", { detail: billing.isPremium ? "premium" : "free" }));
+                    onClose();
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+                >
+                  <span className="flex h-4 w-4 items-center justify-center text-text-body-subtle text-xs">↩</span>
+                  {t("profile.restore_purchases", locale)}
+                </button>
+              )}
+            </>
+          )}
 
           {/* Divider */}
           <div className="my-4 h-px bg-brand-3" />
