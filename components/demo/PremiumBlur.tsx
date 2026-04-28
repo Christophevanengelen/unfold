@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Lock } from "flowbite-react-icons/outline";
 import { isIOSBundle } from "@/lib/platform";
+import { usePremiumStatus } from "@/lib/premium-gate";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 interface PremiumBlurProps {
@@ -15,6 +16,7 @@ interface PremiumBlurProps {
 }
 
 export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurProps) {
+  const isPrem = usePremiumStatus();
   const [locale, setLocaleState] = useState<Locale>("en");
   useEffect(() => {
     setLocaleState(detectLocale());
@@ -43,6 +45,21 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
     window.dispatchEvent(new CustomEvent("unfold:show-premium"));
   };
 
+  // If user just upgraded, cascade-unblur: animate children from blur→clear,
+  // then remove the overlay entirely. AnimatePresence handles the exit.
+  if (isPrem) {
+    return (
+      <motion.div
+        className="relative overflow-hidden rounded-xl"
+        initial={{ filter: `blur(${blurAmount}px)` }}
+        animate={{ filter: "blur(0px)" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        {children}
+      </motion.div>
+    );
+  }
+
   return (
     <div className="relative overflow-hidden rounded-xl">
       {/* Blurred children */}
@@ -55,9 +72,11 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
       </div>
 
       {/* Premium overlay — glass morphism with gradient */}
+      <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 px-4 text-center"
         style={{
@@ -113,6 +132,7 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
           {isIOSBundle() ? t("premium.cta_ios", locale) : t("premium.cta_web", locale)}
         </motion.button>
       </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
