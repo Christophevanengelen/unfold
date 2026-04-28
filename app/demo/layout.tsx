@@ -92,6 +92,7 @@ export default function DemoLayout({
   const { resolvedTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
+  const [locale, setLocaleState] = useState<Locale>("en");
   const billing = useBillingState();
   const ios = isIOSBundle();
 
@@ -131,10 +132,12 @@ export default function DemoLayout({
       document.documentElement.lang = loc;
       document.documentElement.dir = isRTL(loc) ? "rtl" : "ltr";
     };
-    apply(detectLocale());
+    const current = detectLocale();
+    apply(current);
+    setLocaleState(current);
     const onLocaleChange = (e: Event) => {
       const detail = (e as CustomEvent<Locale>).detail;
-      if (detail) apply(detail);
+      if (detail) { apply(detail); setLocaleState(detail); }
     };
     window.addEventListener("unfold:locale-changed", onLocaleChange);
     return () => window.removeEventListener("unfold:locale-changed", onLocaleChange);
@@ -239,7 +242,7 @@ export default function DemoLayout({
                   className="text-[9px] font-semibold tabular-nums"
                   style={{ color: "var(--accent-purple)", opacity: 0.6 }}
                 >
-                  Jour {streak}
+                  {t("profile.streak_day", locale).replace("{n}", String(streak))}
                 </span>
               )}
               <AvatarButton onClick={() => setDrawerOpen(true)} />

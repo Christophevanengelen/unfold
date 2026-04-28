@@ -84,6 +84,7 @@ type Strings = {
     restore_purchases: string;
     trial_ends_in: string;
     delete_account: string;
+    streak_day: string;       // "Day {n}" — status bar streak counter
   };
   auth: {
     title: string;
@@ -151,6 +152,7 @@ const FR: Strings = {
     restore_purchases: "Restaurer mes achats",
     trial_ends_in: "Essai · J-{n}",
     delete_account: "Supprimer mon compte",
+    streak_day: "Jour {n}",
   },
   auth: {
     title: "Connexion",
@@ -218,6 +220,7 @@ const EN: Strings = {
     restore_purchases: "Restore purchases",
     trial_ends_in: "Trial · {n}d left",
     delete_account: "Delete account",
+    streak_day: "Day {n}",
   },
   auth: {
     title: "Sign in",
@@ -285,6 +288,7 @@ const ES: Strings = {
     restore_purchases: "Restaurar compras",
     trial_ends_in: "Prueba · {n}d restantes",
     delete_account: "Eliminar cuenta",
+    streak_day: "Día {n}",
   },
   auth: {
     title: "Iniciar sesión",
@@ -352,6 +356,7 @@ const DE: Strings = {
     restore_purchases: "Käufe wiederherstellen",
     trial_ends_in: "Test · noch {n} Tage",
     delete_account: "Konto löschen",
+    streak_day: "Tag {n}",
   },
   auth: {
     title: "Anmelden",
@@ -419,6 +424,7 @@ const IT: Strings = {
     restore_purchases: "Ripristina acquisti",
     trial_ends_in: "Prova · {n}g rimasti",
     delete_account: "Elimina account",
+    streak_day: "Giorno {n}",
   },
   auth: {
     title: "Accedi",
@@ -486,6 +492,7 @@ const PT: Strings = {
     restore_purchases: "Restaurar compras",
     trial_ends_in: "Teste · {n}d restantes",
     delete_account: "Eliminar conta",
+    streak_day: "Dia {n}",
   },
   auth: {
     title: "Entrar",
@@ -553,6 +560,7 @@ const NL: Strings = {
     restore_purchases: "Aankopen herstellen",
     trial_ends_in: "Proef · nog {n}d",
     delete_account: "Account verwijderen",
+    streak_day: "Dag {n}",
   },
   auth: {
     title: "Inloggen",
@@ -620,6 +628,7 @@ const JA: Strings = {
     restore_purchases: "購入を復元",
     trial_ends_in: "試用 · あと{n}日",
     delete_account: "アカウント削除",
+    streak_day: "{n}日目",
   },
   auth: {
     title: "サインイン",
@@ -687,6 +696,7 @@ const ZH: Strings = {
     restore_purchases: "恢复购买",
     trial_ends_in: "试用 · 剩{n}天",
     delete_account: "删除账户",
+    streak_day: "第{n}天",
   },
   auth: {
     title: "登录",
@@ -754,6 +764,7 @@ const AR: Strings = {
     restore_purchases: "استعادة المشتريات",
     trial_ends_in: "تجربة · {n} أيام",
     delete_account: "حذف الحساب",
+    streak_day: "اليوم {n}",
   },
   auth: {
     title: "تسجيل الدخول",
