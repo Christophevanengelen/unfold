@@ -14,7 +14,40 @@ import { AuthProvider } from "@/lib/auth-context";
 import { useAuth } from "@/lib/auth-context";
 import { SAFE_TOP, SAFE_BOTTOM } from "@/lib/layout-constants";
 import { checkAndUpdateStreak } from "@/lib/streak";
-import { detectLocale, isRTL, type Locale } from "@/lib/i18n-demo";
+import { detectLocale, isRTL, t, type Locale } from "@/lib/i18n-demo";
+import { useBillingState } from "@/lib/premium-gate";
+import { isIOSBundle } from "@/lib/platform";
+
+/** Shows "J-2" or "2d left" pill when trial ends within 3 days. Web + Android only. */
+function TrialCountdownPill({
+  trialEnd,
+  onClick,
+}: {
+  trialEnd: string;
+  onClick: () => void;
+}) {
+  const daysLeft = Math.ceil(
+    (new Date(trialEnd).getTime() - Date.now()) / 86_400_000
+  );
+  if (daysLeft < 0 || daysLeft > 3) return null;
+  const locale = detectLocale();
+  const label = t("profile.trial_ends_in", locale).replace("{n}", String(daysLeft));
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-full px-2 py-0.5 text-[9px] font-semibold"
+      style={{
+        background: "color-mix(in srgb, var(--accent-purple) 18%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--accent-purple) 30%, transparent)",
+        color: "var(--accent-purple)",
+        letterSpacing: "0.02em",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
 function AvatarButton({ onClick }: { onClick: () => void }) {
   const { user, isAuthenticated } = useAuth();
@@ -54,10 +87,13 @@ export default function DemoLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isNative = useIsNative();
   const { resolvedTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
+  const billing = useBillingState();
+  const ios = isIOSBundle();
 
   // Prevent SSR flash — demo is 100% client-side (API data, IndexedDB, etc.)
   const [mounted, setMounted] = useState(false);
@@ -191,6 +227,13 @@ export default function DemoLayout({
             </span>
             <UnfoldLogo size={22} />
             <div className="flex items-center gap-2">
+              {/* Trial countdown — web + Android only (anti-steering iOS) */}
+              {!ios && billing.status === "trialing" && billing.trialEnd && (
+                <TrialCountdownPill
+                  trialEnd={billing.trialEnd}
+                  onClick={() => router.push("/demo/pricing")}
+                />
+              )}
               {streak >= 2 && (
                 <span
                   className="text-[9px] font-semibold tabular-nums"
