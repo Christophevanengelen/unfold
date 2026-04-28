@@ -118,6 +118,74 @@ export function usePremiumStatus(): boolean {
   return isPrem;
 }
 
+// ─── Full billing state hook (plan + trial countdown + source) ───
+//
+// Use this instead of usePremiumStatus() when you need more than a boolean:
+// trial countdown, source (stripe/apple/google), period end, loading state.
+export interface BillingState {
+  isPremium: boolean;
+  status: "trialing" | "active" | "past_due" | "canceled" | "expired" | "none" | "unauthenticated";
+  trialEnd?: string;       // ISO date — only set when status==="trialing"
+  currentPeriodEnd?: string;
+  source?: "stripe" | "apple" | "google";
+  loading: boolean;
+}
+
+export function useBillingState(): BillingState {
+  const [state, setState] = useState<BillingState>({
+    isPremium: false,
+    status: "none",
+    loading: true,
+  });
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    const cached = isPremium();
+    setState((s) => ({ ...s, isPremium: cached }));
+
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetch("/api/billing/me", {
+        headers: { "Cache-Control": "no-store" },
+        credentials: "include",
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then(
+          (data: {
+            plan?: string;
+            status?: string;
+            trialEnd?: string;
+            currentPeriodEnd?: string;
+            source?: string;
+          } | null) => {
+            if (!data) { setState((s) => ({ ...s, loading: false })); return; }
+            const prem = data.plan === "premium";
+            _cachedPremium = prem;
+            try { localStorage.setItem(PLAN_KEY, prem ? "premium" : "free"); } catch {}
+            setState({
+              isPremium: prem,
+              status: (data.status ?? "none") as BillingState["status"],
+              trialEnd: data.trialEnd,
+              currentPeriodEnd: data.currentPeriodEnd,
+              source: data.source as BillingState["source"],
+              loading: false,
+            });
+          }
+        )
+        .catch(() => setState((s) => ({ ...s, loading: false })));
+    }
+
+    const handleChange = (e: Event) => {
+      const plan = (e as CustomEvent<PlanType>).detail;
+      setState((s) => ({ ...s, isPremium: plan === "premium" }));
+    };
+    window.addEventListener("unfold:plan-changed", handleChange);
+    return () => window.removeEventListener("unfold:plan-changed", handleChange);
+  }, []);
+
+  return state;
+}
+
 // ─── Feature access ───────────────────────────────────────
 
 export function canUseFeature(feature: PremiumFeature): boolean {
