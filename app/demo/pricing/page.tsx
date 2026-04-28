@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Check, ChevronLeft } from "flowbite-react-icons/outline";
 import { useAuth } from "@/lib/auth-context";
 import { AuthSheet } from "@/components/demo/AuthSheet";
@@ -419,12 +419,22 @@ export default function DemoPricingPage() {
         </div>
       )}
 
-      {/* Savings banner */}
-      {billing === "annual" && !ios && (
-        <p className="mb-5 text-center text-[12px] font-semibold" style={{ color: "#22c55e" }}>
-          {savingsLine}
-        </p>
-      )}
+      {/* Savings banner — animated entrance when toggling to Annual */}
+      <AnimatePresence mode="popLayout">
+        {billing === "annual" && !ios && (
+          <motion.p
+            key="savings-banner"
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="mb-5 text-center text-[12px] font-semibold"
+            style={{ color: "var(--success)" }}
+          >
+            {savingsLine}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {/* Cards */}
       <div className="space-y-3">
@@ -493,17 +503,35 @@ export default function DemoPricingPage() {
           </p>
 
           {/* Price — hidden on iOS */}
+          <AnimatePresence mode="popLayout" initial={false}>
           {ios ? (
-            <p className="mt-3 text-[15px] font-semibold text-white">
+            <motion.p
+              key="ios"
+              className="mt-3 text-[15px] font-semibold text-white"
+            >
               {t("premium.trial_pitch", locale)}
-            </p>
+            </motion.p>
           ) : billing === "monthly" ? (
-            <p className="mt-3 text-[24px] font-bold text-white">
+            <motion.p
+              key="monthly"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="mt-3 text-[24px] font-bold text-white"
+            >
               {PLANS.monthly.priceEUR.toFixed(2).replace(".", ",")} €
               <span className="text-[12px] font-normal text-white/75">{c.current_billing_month}</span>
-            </p>
+            </motion.p>
           ) : (
-            <div className="mt-3">
+            <motion.div
+              key="annual"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="mt-3"
+            >
               <p className="text-[24px] font-bold text-white">
                 {parseFloat(annualMonthly).toFixed(2).replace(".", ",")} €
                 <span className="text-[12px] font-normal text-white/75">{c.current_billing_month}</span>
@@ -511,8 +539,9 @@ export default function DemoPricingPage() {
               <p className="text-[11px] text-white/75">
                 {c.billed_annually.replace("{x}", PLANS.annual.priceEUR.toFixed(2).replace(".", ","))}
               </p>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
 
           <ul className="mt-4 space-y-1.5">
             {c.features.pro.map((f) => (
