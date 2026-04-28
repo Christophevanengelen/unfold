@@ -79,6 +79,11 @@ type Strings = {
     configure: string;
     edit: string;
     language: string;
+    your_plan: string;
+    manage_sub: string;
+    restore_purchases: string;
+    trial_ends_in: string;
+    delete_account: string;
   };
   auth: {
     title: string;
@@ -141,6 +146,11 @@ const FR: Strings = {
     configure: "Configurer",
     edit: "Modifier",
     language: "Langue",
+    your_plan: "Ton abonnement",
+    manage_sub: "Gérer",
+    restore_purchases: "Restaurer mes achats",
+    trial_ends_in: "Essai · J-{n}",
+    delete_account: "Supprimer mon compte",
   },
   auth: {
     title: "Connexion",
@@ -203,6 +213,11 @@ const EN: Strings = {
     configure: "Configure",
     edit: "Edit",
     language: "Language",
+    your_plan: "Your plan",
+    manage_sub: "Manage",
+    restore_purchases: "Restore purchases",
+    trial_ends_in: "Trial · {n}d left",
+    delete_account: "Delete account",
   },
   auth: {
     title: "Sign in",
@@ -265,6 +280,11 @@ const ES: Strings = {
     configure: "Configurar",
     edit: "Editar",
     language: "Idioma",
+    your_plan: "Tu plan",
+    manage_sub: "Gestionar",
+    restore_purchases: "Restaurar compras",
+    trial_ends_in: "Prueba · {n}d restantes",
+    delete_account: "Eliminar cuenta",
   },
   auth: {
     title: "Iniciar sesión",
@@ -327,6 +347,11 @@ const DE: Strings = {
     configure: "Konfigurieren",
     edit: "Bearbeiten",
     language: "Sprache",
+    your_plan: "Dein Abo",
+    manage_sub: "Verwalten",
+    restore_purchases: "Käufe wiederherstellen",
+    trial_ends_in: "Test · noch {n} Tage",
+    delete_account: "Konto löschen",
   },
   auth: {
     title: "Anmelden",
@@ -389,6 +414,11 @@ const IT: Strings = {
     configure: "Configura",
     edit: "Modifica",
     language: "Lingua",
+    your_plan: "Il tuo piano",
+    manage_sub: "Gestisci",
+    restore_purchases: "Ripristina acquisti",
+    trial_ends_in: "Prova · {n}g rimasti",
+    delete_account: "Elimina account",
   },
   auth: {
     title: "Accedi",
@@ -451,6 +481,11 @@ const PT: Strings = {
     configure: "Configurar",
     edit: "Editar",
     language: "Idioma",
+    your_plan: "Teu plano",
+    manage_sub: "Gerir",
+    restore_purchases: "Restaurar compras",
+    trial_ends_in: "Teste · {n}d restantes",
+    delete_account: "Eliminar conta",
   },
   auth: {
     title: "Entrar",
@@ -513,6 +548,11 @@ const NL: Strings = {
     configure: "Instellen",
     edit: "Bewerken",
     language: "Taal",
+    your_plan: "Jouw abonnement",
+    manage_sub: "Beheren",
+    restore_purchases: "Aankopen herstellen",
+    trial_ends_in: "Proef · nog {n}d",
+    delete_account: "Account verwijderen",
   },
   auth: {
     title: "Inloggen",
@@ -575,6 +615,11 @@ const JA: Strings = {
     configure: "設定する",
     edit: "編集",
     language: "言語",
+    your_plan: "プラン",
+    manage_sub: "管理",
+    restore_purchases: "購入を復元",
+    trial_ends_in: "試用 · あと{n}日",
+    delete_account: "アカウント削除",
   },
   auth: {
     title: "サインイン",
@@ -637,6 +682,11 @@ const ZH: Strings = {
     configure: "配置",
     edit: "编辑",
     language: "语言",
+    your_plan: "我的计划",
+    manage_sub: "管理",
+    restore_purchases: "恢复购买",
+    trial_ends_in: "试用 · 剩{n}天",
+    delete_account: "删除账户",
   },
   auth: {
     title: "登录",
@@ -699,6 +749,11 @@ const AR: Strings = {
     configure: "تكوين",
     edit: "تعديل",
     language: "اللغة",
+    your_plan: "اشتراكك",
+    manage_sub: "إدارة",
+    restore_purchases: "استعادة المشتريات",
+    trial_ends_in: "تجربة · {n} أيام",
+    delete_account: "حذف الحساب",
   },
   auth: {
     title: "تسجيل الدخول",
