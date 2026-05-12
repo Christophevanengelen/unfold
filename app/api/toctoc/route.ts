@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
       "toctoc-app-short",
       "toctoc-year",
       "toctoc-timeline",
+      "toctoc-highlights", // yearly summary + biggestYear, no monthly array (~50 KB)
       "connection-brief",
     ];
     if (!allowedEndpoints.includes(endpoint)) {

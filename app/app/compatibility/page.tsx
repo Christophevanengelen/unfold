@@ -148,7 +148,7 @@ export default function ConnectionsPage() {
       {/* Share + enter code */}
       <div className="space-y-3">
         <Link
-          href="/demo/invite/share"
+          href="/app/invite/share"
           className="flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-colors"
           style={{ background: "var(--surface-light)", border: "1px solid var(--border-tint-light)" }}
         >

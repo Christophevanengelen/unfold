@@ -83,6 +83,13 @@ export const PLANS = {
     savingsEUR: 30.88,
     savingsPct: 26,
   },
+  // One-time payment — grants permanent premium access (period_end = 2099-12-31).
+  lifetime: {
+    id: "lifetime",
+    label: "À vie",
+    priceEUR: 49.0,
+    period: undefined as never,
+  },
 };
 
 /** ISO week start (Mon 00:00 UTC) for a given date. */

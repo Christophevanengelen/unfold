@@ -9,6 +9,7 @@ import { StepPriorities } from "@/components/demo/onboarding/StepPriorities";
 import { StepInput } from "@/components/demo/onboarding/StepInput";
 import type { OnboardingFormData } from "@/components/demo/onboarding/StepInput";
 import { StepPreparing } from "@/components/demo/onboarding/StepPreparing";
+import { OnboardingProgress } from "@/components/demo/onboarding/OnboardingProgress";
 import { saveUserProfile } from "@/lib/user-profile";
 import type { PriorityDomain } from "@/types/user-profile";
 
@@ -132,6 +133,12 @@ export default function OnboardingPage() {
 
   return (
     <div className="relative h-full overflow-hidden p-5">
+      {/* Progress dots — hidden on preparing screen (step 5) */}
+      {step < 5 && (
+        <div className="mb-4">
+          <OnboardingProgress current={step} total={5} />
+        </div>
+      )}
       <AnimatePresence mode="wait" custom={dir}>
         <motion.div
           key={step}

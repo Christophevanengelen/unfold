@@ -29,7 +29,7 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
       });
       if (res.status === 401) {
         // Not authenticated — redirect to demo to sign in
-        window.location.href = "/demo?auth_required=pricing";
+        window.location.href = "/app?auth_required=pricing";
         return;
       }
       if (!res.ok) throw new Error("Checkout non disponible");

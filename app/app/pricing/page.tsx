@@ -46,6 +46,8 @@ const PAGE_COPY: Record<Locale, {
   disclosure: string[];                // legal lines (web only)
   back: string;
   ios_blocked: string;                 // shown on iOS in place of CTA
+  lifetime_badge: string;
+  lifetime_cta: string;
 }> = {
   fr: {
     title: "Gratuit maintenant.\nPro quand tu es prêt.",
@@ -71,6 +73,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "Retour",
     ios_blocked: "Disponible dans la version Pro de l'app",
+    lifetime_badge: "À vie · Paiement unique",
+    lifetime_cta: "Obtenir l'accès à vie",
   },
   en: {
     title: "Free now.\nPro when you're ready.",
@@ -96,6 +100,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "Back",
     ios_blocked: "Available in the Pro version of the app",
+    lifetime_badge: "Lifetime · One-time",
+    lifetime_cta: "Get lifetime access",
   },
   es: {
     title: "Gratis ahora.\nPro cuando quieras.",
@@ -121,6 +127,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "Atrás",
     ios_blocked: "Disponible en la versión Pro de la app",
+    lifetime_badge: "De por vida · Pago único",
+    lifetime_cta: "Obtener acceso de por vida",
   },
   pt: {
     title: "Grátis agora.\nPro quando quiser.",
@@ -146,6 +154,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "Voltar",
     ios_blocked: "Disponível na versão Pro do app",
+    lifetime_badge: "Vitalício · Pagamento único",
+    lifetime_cta: "Obter acesso vitalício",
   },
   de: {
     title: "Jetzt kostenlos.\nPro wenn du bereit bist.",
@@ -171,6 +181,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "Zurück",
     ios_blocked: "Verfügbar in der Pro-Version der App",
+    lifetime_badge: "Lifetime · Einmalig",
+    lifetime_cta: "Lebenslangen Zugang erhalten",
   },
   it: {
     title: "Gratis ora.\nPro quando sei pronto.",
@@ -196,6 +208,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "Indietro",
     ios_blocked: "Disponibile nella versione Pro dell'app",
+    lifetime_badge: "A vita · Pagamento unico",
+    lifetime_cta: "Ottieni accesso a vita",
   },
   nl: {
     title: "Gratis nu.\nPro wanneer je klaar bent.",
@@ -221,6 +235,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "Terug",
     ios_blocked: "Beschikbaar in de Pro-versie van de app",
+    lifetime_badge: "Levenslang · Eenmalig",
+    lifetime_cta: "Levenslang toegang",
   },
   ja: {
     title: "今は無料。\n準備ができたらPro。",
@@ -246,6 +262,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "戻る",
     ios_blocked: "アプリのProバージョンで利用可能",
+    lifetime_badge: "生涯 · 一回限り",
+    lifetime_cta: "生涯アクセスを取得",
   },
   zh: {
     title: "现在免费。\n准备好了再升级Pro。",
@@ -271,6 +289,8 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "返回",
     ios_blocked: "在应用的Pro版本中可用",
+    lifetime_badge: "终身 · 一次性",
+    lifetime_cta: "获取终身访问权",
   },
   ar: {
     title: "مجاني الآن.\nPro عندما تكون مستعدًا.",
@@ -296,8 +316,17 @@ const PAGE_COPY: Record<Locale, {
     ],
     back: "رجوع",
     ios_blocked: "متاح في الإصدار Pro من التطبيق",
+    lifetime_badge: "مدى الحياة · دفعة واحدة",
+    lifetime_cta: "الحصول على وصول مدى الحياة",
   },
 };
+
+const COUPON_KEY = "unfold_chart_access";
+
+function getValidCoupons(): string[] {
+  const raw = process.env.NEXT_PUBLIC_CHART_COUPONS ?? "";
+  return raw.split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
+}
 
 export default function DemoPricingPage() {
   const router = useRouter();
@@ -308,6 +337,23 @@ export default function DemoPricingPage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [locale, setLocaleState] = useState<Locale>("en");
   const ios = isIOSBundle();
+
+  // Coupon state
+  const [showCoupon, setShowCoupon] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState(false);
+
+  const tryCoupon = () => {
+    const valid = getValidCoupons();
+    if (valid.includes(couponCode.trim().toUpperCase())) {
+      try { localStorage.setItem(COUPON_KEY, "true"); } catch {}
+      setCouponSuccess(true);
+      setTimeout(() => router.replace("/app/boudin"), 1000);
+    } else {
+      setCouponError("Invalid code — check spelling and try again.");
+    }
+  };
 
   useEffect(() => {
     setLocaleState(detectLocale());
@@ -325,7 +371,7 @@ export default function DemoPricingPage() {
   const savingsValue = (PLANS.monthly.priceEUR * 12 - PLANS.annual.priceEUR).toFixed(2);
   const savingsLine = c.savings.replace("{x}", savingsValue);
 
-  const handleCheckout = async (plan: "monthly" | "annual") => {
+  const handleCheckout = async (plan: "monthly" | "annual" | "lifetime") => {
     if (ios) return;                                  // no checkout on iOS
     if (!isAuthenticated) {
       // Need sign-in first — open AuthSheet, then user retries
@@ -571,6 +617,47 @@ export default function DemoPricingPage() {
             </button>
           )}
         </motion.div>
+
+        {/* Lifetime card — one-time payment, web only */}
+        {!ios && (
+          <motion.div
+            initial={{ y: 8, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="relative rounded-2xl border p-5"
+            style={{
+              background: "color-mix(in srgb, #b59a4a 8%, var(--bg-primary))",
+              borderColor: "color-mix(in srgb, #b59a4a 30%, transparent)",
+            }}
+          >
+            <span
+              className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-0.5 text-[10px] font-bold"
+              style={{ background: "#b59a4a", color: "#fff" }}
+            >
+              {c.lifetime_badge}
+            </span>
+
+            <div className="mt-1 flex items-end justify-between">
+              <div>
+                <p className="text-[24px] font-bold" style={{ color: "var(--text-heading)" }}>
+                  {PLANS.lifetime.priceEUR} €
+                </p>
+                <p className="text-[12px]" style={{ color: "var(--text-body-subtle)" }}>
+                  {c.features.pro.slice(0, 3).join(" · ")}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => handleCheckout("lifetime")}
+              disabled={loading}
+              className="mt-4 w-full rounded-xl py-3 text-[13px] font-bold transition-opacity disabled:opacity-60"
+              style={{ background: "#b59a4a", color: "#fff" }}
+            >
+              {loading ? "..." : c.lifetime_cta}
+            </button>
+          </motion.div>
+        )}
       </div>
 
       {/* Error */}
@@ -579,6 +666,73 @@ export default function DemoPricingPage() {
           {error}
         </p>
       )}
+
+      {/* Coupon code entry */}
+      <div className="mt-6 text-center">
+        {!showCoupon && !couponSuccess && (
+          <button
+            type="button"
+            onClick={() => setShowCoupon(true)}
+            className="text-[12px] transition-opacity hover:opacity-70"
+            style={{ color: "var(--text-body-subtle)", textDecoration: "underline", textUnderlineOffset: 3 }}
+          >
+            I have a coupon code
+          </button>
+        )}
+
+        <AnimatePresence>
+          {showCoupon && !couponSuccess && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              style={{ overflow: "hidden" }}
+            >
+              <div className="mx-auto mt-3 max-w-xs">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => { setCouponCode(e.target.value); setCouponError(""); }}
+                    onKeyDown={(e) => e.key === "Enter" && tryCoupon()}
+                    placeholder="COUPON CODE"
+                    autoFocus
+                    className="flex-1 rounded-xl px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wider outline-none"
+                    style={{
+                      background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)",
+                      color: "var(--accent-purple)",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={tryCoupon}
+                    className="rounded-xl px-4 py-2.5 text-[12px] font-bold"
+                    style={{ background: "var(--accent-purple)", color: "#fff" }}
+                  >
+                    Apply
+                  </button>
+                </div>
+                {couponError && (
+                  <p className="mt-2 text-[11px]" style={{ color: "#f17e7a" }}>{couponError}</p>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {couponSuccess && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-3 text-[13px] font-semibold"
+              style={{ color: "var(--accent-purple)" }}
+            >
+              ✦ Unlocked — opening your chart…
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* EU consumer law disclosures — web only */}
       {!ios && (

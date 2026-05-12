@@ -60,7 +60,7 @@ export default function InviteShare() {
     <div className="flex h-full flex-col px-4 py-2">
       {/* Header */}
       <div>
-        <Link href="/demo/compatibility" className="flex items-center gap-1 text-sm text-text-body-subtle">
+        <Link href="/app/compatibility" className="flex items-center gap-1 text-sm text-text-body-subtle">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
@@ -123,7 +123,7 @@ export default function InviteShare() {
       {/* Back */}
       <div className="mt-auto pt-6 pb-4">
         <Link
-          href="/demo/compatibility"
+          href="/app/compatibility"
           className="flex w-full items-center justify-center rounded-full py-3.5 text-sm font-semibold transition-transform active:scale-95"
           style={{ border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)", color: "var(--accent-purple)" }}
         >

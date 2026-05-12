@@ -49,7 +49,7 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
     // all 10 languages via lib/i18n-demo.ts. It will prompt sign-in if needed.
     setLoading(true);
     onClose();
-    router.push("/demo/pricing");
+    router.push("/app/pricing");
   };
 
   return (

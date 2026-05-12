@@ -109,8 +109,11 @@ function signColor(sign: string): string { return elementColor(signElement(sign)
 /**
  * Compute year score from the L2 period active at July 1 of that year.
  * Scoring:
- *   base 2 · peak period +3 · Cu ×1.2 · LB ×1.5 · pre-LB +1
- *   Angular house bonus: H1 +10 · H10 +8 · H7 +6 · H4 +4
+ *   base 2
+ *   Peak bonus by angular house FROM Lot of Fortune:
+ *     10th +6 (major) · 1st +5 · 7th +3 · 4th +1 (minor)
+ *   Cu +5 · LB +6 · pre-LB +2
+ *   Natal house bonus: H1 +10 · H10 +8 · H7 +6 · H4 +4 · H11/H5 +2
  */
 // The calculator sometimes returns housePlacement as {house:N} instead of N
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -122,28 +125,59 @@ function toHouseNum(hp: any): number {
   return Number(hp) || 0;
 }
 
-function computeYearScore(year: number, allL2: ZRL2Period[], isPreLb: (p: ZRL2Period) => boolean): number {
+interface PeakSigns { first: string; fourth: string; seventh: string; tenth: string }
+
+/** Score bonus for being an angular sign FROM the Lot of Fortune */
+function peakBonusFromFortune(sign: string, ps: PeakSigns | undefined): number {
+  if (!ps) return 0;
+  if (sign === ps.tenth)   return 6;  // 10th from Fortune — major peak
+  if (sign === ps.first)   return 5;  // 1st from Fortune
+  if (sign === ps.seventh) return 3;  // 7th from Fortune — moderate
+  if (sign === ps.fourth)  return 1;  // 4th from Fortune — minor peak
+  return 0;
+}
+
+function computeYearScore(
+  year: number,
+  allL2: ZRL2Period[],
+  isPreLb: (p: ZRL2Period) => boolean,
+  peakSigns: PeakSigns | undefined,
+): number {
   const midDate = `${year}-07-01T12:00:00.000Z`;
   const p = allL2.find(l2 => l2.startDate <= midDate && l2.endDate >= midDate);
   if (!p) return 0;
 
   let score = 2;
 
-  // Additive bonuses — all visible as distinct peaks on the chart
-  if (p.isPeakPeriod)                                  score += 4;  // angular peak sign
-  if (p.isCulmination || p.markers.includes("Cu"))     score += 5;  // culmination — major event
-  if (p.isLoosingOfBond || p.markers.includes("LB"))   score += 6;  // loosing of bond — pivotal
+  // Peak bonus scaled by which angular house from Fortune (not flat for all peaks)
+  score += peakBonusFromFortune(p.sign, peakSigns);
+
+  if (p.isCulmination || p.markers.includes("Cu"))     score += 5;   // culmination
+  if (p.isLoosingOfBond || p.markers.includes("LB"))   score += 14;  // LB — life-changing, always dominates
   if (isPreLb(p))                                      score += 2;  // foreshadowing
 
-  // Angular house bonus
+  // Natal house bonus (independent from Fortune angular bonus)
   const h = toHouseNum(p.housePlacement);
-  if (h === 1)  score += 10;
+  if (h === 1)       score += 10;
   else if (h === 10) score += 8;
   else if (h === 7)  score += 6;
   else if (h === 4)  score += 4;
   else if (h === 11 || h === 5) score += 2;
 
-  return Math.round(score * 10) / 10;
+  // Envelope: shapes the curve within each L2 period.
+  // - LB → flat 1.0: the entire loosing-of-bond period is equally life-changing.
+  //        Flowers appear at full height for every year of the period.
+  // - CU → sine bell: culmination builds and resolves around its midpoint.
+  // - All others → sine bell: peaks at midpoint, 0 at both edges.
+  const pStart = new Date(p.startDate).getTime();
+  const pEnd   = new Date(p.endDate).getTime();
+  const t = Math.max(0, Math.min(1, (new Date(midDate).getTime() - pStart) / (pEnd - pStart)));
+  const isLB = p.isLoosingOfBond || p.markers.includes("LB");
+  const envelope = isLB
+    ? 1.0                    // LB: flat — all years at full score
+    : Math.sin(Math.PI * t); // CU + others: sine bell peaking at midpoint
+
+  return Math.round(score * envelope * 10) / 10;
 }
 
 const QUOTES: Record<string, { text: string; author: string }> = {
@@ -176,47 +210,31 @@ function generateHtml(
   }
   allL2.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-  // ── Pre-LB (foreshadowing / pre-seed) computation ──────────────────────────
-  // Rule: any L2 period whose sign matches the LB sign AND starts BEFORE the
-  // actual LB date is a "pre-seed" — the same sign foreshadows the LB event.
-  // This overrides whatever `pre-LB` markers the API returns.
-  const lbPeriods = allL2.filter(l2 => l2.isLoosingOfBond || l2.markers.includes("LB"));
-  const lbSigns   = new Set(lbPeriods.map(l2 => l2.sign));
-  const firstLbDate = lbPeriods.length
-    ? lbPeriods[0].startDate   // already sorted chronologically
-    : "9999-01-01";
-  // Build a lookup key set: sign|startDate for every genuine pre-seed period
-  const preLbKeys = new Set(
-    allL2
-      .filter(l2 =>
-        lbSigns.has(l2.sign) &&                          // same sign as LB
-        !(l2.isLoosingOfBond || l2.markers.includes("LB")) && // not the LB itself
-        l2.startDate < firstLbDate                        // before the LB date
-      )
-      .map(l2 => `${l2.sign}|${l2.startDate}`)
-  );
-  // Helper: check pre-LB via API markers (trusted) OR local preLbKeys computation
+  // ── Pre-LB detection — trust API markers only ───────────────────────────────
+  // The API is authoritative. Local sign-matching was producing false positives
+  // (e.g. flagging Cu periods that share a sign with LB as pre-LB).
   const isPreLbPeriod = (p: ZRL2Period) =>
     (p.markers ?? []).includes("pre-LB") ||
-    (p.markers ?? []).includes("foreshadowing") ||
-    preLbKeys.has(`${p.sign}|${p.startDate}`);
+    (p.markers ?? []).includes("foreshadowing");
 
   const birthYear = parseInt(birthDate.split("-")[0], 10);
   const nowYear   = new Date().getFullYear();
   const NOW       = new Date().toISOString().slice(0, 10);
-  // Extend chart to show the next LB flower even if it falls after nowYear+3
-  const nextLbYear = allL2
-    .filter(l2 => l2.markers.includes("LB"))
-    .map(l2 => parseInt(l2.startDate.slice(0, 4), 10))
-    .find(y => y > nowYear) ?? (nowYear + 3);
-  const endYear = Math.max(nowYear + 3, nextLbYear + 1);
+  // Extend chart to fully show the next LB period (start + all years of the period)
+  const nextLbPeriod = allL2
+    .filter(l2 => l2.isLoosingOfBond || l2.markers.includes("LB"))
+    .find(l2 => parseInt(l2.startDate.slice(0, 4), 10) > nowYear);
+  const nextLbEndYear = nextLbPeriod
+    ? parseInt(nextLbPeriod.endDate.slice(0, 4), 10)
+    : nowYear + 3;
+  const endYear = Math.max(nowYear + 3, nextLbEndYear + 1);
 
   // Build year-by-year chart data
   const years: number[] = [];
   const scores: number[] = [];
   for (let y = birthYear; y <= endYear; y++) {
     years.push(y);
-    scores.push(computeYearScore(y, allL2, isPreLbPeriod));
+    scores.push(computeYearScore(y, allL2, isPreLbPeriod, peakPeriodSigns));
   }
 
   // Point colors and sizes (per year) — keyed to the L2 active at July 1
@@ -224,8 +242,8 @@ function generateHtml(
     const mid = `${y}-07-01T12:00:00.000Z`;
     const p = allL2.find(l2 => l2.startDate <= mid && l2.endDate >= mid);
     if (!p) return "#6b7280";
-    if (p.isCulmination || p.markers.includes("Cu"))   return "#ffffff";
     if (p.isLoosingOfBond || p.markers.includes("LB")) return "#ffffff";
+    if (p.isCulmination || p.markers.includes("Cu"))   return "#ffffff";
     if (isPreLbPeriod(p))                               return "#fbbf24"; // pre-seed
     return signColor(p.sign);
   });
@@ -234,19 +252,22 @@ function generateHtml(
     const p = allL2.find(l2 => l2.startDate <= mid && l2.endDate >= mid);
     if (!p) return 3;
     if (p.isLoosingOfBond || p.markers.includes("LB")) return 0; // hidden — flower drawn by plugin
+    if (p.isCulmination || p.markers.includes("Cu"))    return 0; // hidden — blue glossy drawn by plugin
     if (isPreLbPeriod(p))                               return 0; // hidden — glossy drawn by plugin
-    if (p.isCulmination || p.markers.includes("Cu"))    return 0; // hidden — dark glossy drawn by plugin
     return 3;
   });
 
-  // Per-year flags for the flower/glossy plugin
+  // Per-year flags for the flower/glossy plugin.
+  // Every year within a special period gets its marker.
+  // The cosine envelope (LB/CU) ensures the curve peaks at the period start, so the
+  // first flower/glossy naturally sits at the highest point.
   const yearFlags = years.map(y => {
     const mid = `${y}-07-01T12:00:00.000Z`;
     const p = allL2.find(l2 => l2.startDate <= mid && l2.endDate >= mid);
     if (!p) return 0;
-    if (p.isLoosingOfBond || p.markers.includes("LB")) return 2; // 2 = flower
-    if (isPreLbPeriod(p))                               return 1; // 1 = glossy purple
-    if (p.isCulmination || p.markers.includes("Cu"))    return 3; // 3 = dark glossy Cu
+    if (p.isLoosingOfBond || p.markers.includes("LB")) return 2; // flower
+    if (p.isCulmination   || p.markers.includes("Cu")) return 3; // blue glossy
+    if (isPreLbPeriod(p))                              return 1; // purple glossy
     return 0;
   });
 
@@ -272,6 +293,7 @@ function generateHtml(
   };
   const fromLotFr = lotNameFr[fromLot?.toLowerCase?.()] ?? fromLot;
 
+
   // Peak signs summary
   const peakSummary = peakPeriodSigns
     ? `Peak signs — 1st: ${peakPeriodSigns.first} · 4th: ${peakPeriodSigns.fourth} · 7th: ${peakPeriodSigns.seventh} · 10th: ${peakPeriodSigns.tenth}`
@@ -290,15 +312,19 @@ function generateHtml(
       const l2col    = signColor(l2.sign);
       const hasCu    = l2.isCulmination || l2.markers.includes("Cu");
       const hasLB    = l2.isLoosingOfBond || l2.markers.includes("LB");
-      // pre-LB: API markers are verified correct — trust them, supplement with local preLbKeys
-      const hasPreLB = (l2.markers ?? []).includes("pre-LB") ||
-                       (l2.markers ?? []).includes("foreshadowing") ||
-                       preLbKeys.has(`${l2.sign}|${l2.startDate}`);
+      const hasPreLB = isPreLbPeriod(l2);
       const dotCol   = hasCu ? "#fff" : hasLB ? "#fff" : l2col;
+      // Label the peak by its angular house from Fortune
+      const peakLabel = l2.isPeakPeriod
+        ? (l2.sign === peakPeriodSigns?.tenth   ? "Peak ★ 10th"
+        :  l2.sign === peakPeriodSigns?.first   ? "Peak 1st"
+        :  l2.sign === peakPeriodSigns?.seventh ? "Peak 7th"
+        :  l2.sign === peakPeriodSigns?.fourth  ? "Peak (minor) 4th"
+        :  "Peak")
+        : "";
       const markerStr = [...new Set([
-        // Keep API pre-LB markers (strip only "foreshadowing" alias)
         ...(l2.markers ?? []).filter(m => m !== "foreshadowing"),
-        l2.isPeakPeriod ? "Peak" : "",
+        peakLabel,
         l2.isCulmination ? "Cu" : "",
         l2.isLoosingOfBond ? "LB" : "",
       ])].filter(Boolean).join(", ");
@@ -333,7 +359,13 @@ function generateHtml(
             <span class="dot" style="background:${col};box-shadow:0 0 7px ${col}99;"></span>
             <strong>${l1.sign}</strong>
             <span class="age">${startY} – ${endY}</span>
-            ${l1.isPeakPeriod ? `<span class="peak-badge">Peak</span>` : ""}
+            ${l1.isPeakPeriod
+              ? (l1.sign === peakPeriodSigns?.tenth   ? `<span class="peak-badge">Peak ★ 10th</span>`
+              :  l1.sign === peakPeriodSigns?.first   ? `<span class="peak-badge">Peak 1st</span>`
+              :  l1.sign === peakPeriodSigns?.seventh ? `<span class="peak-badge">Peak 7th</span>`
+              :  l1.sign === peakPeriodSigns?.fourth  ? `<span class="peak-badge" style="opacity:.65">Peak (minor)</span>`
+              :  `<span class="peak-badge">Peak</span>`)
+              : ""}
             ${isActive ? '<span class="now-badge">NOW</span>' : ""}
           </div>
           <div class="badges">
@@ -358,6 +390,24 @@ function generateHtml(
     return `<div class="strip-pill${isNow ? " strip-active" : ""}" style="background:${col}22;border-color:${col}44;${isNow ? `box-shadow:0 0 8px ${col}88;` : ""}" title="${title}"><span style="background:${dotCol};"></span></div>`;
   }).join("");
 
+  // Per-year tooltip data: sign, L2 start, L2 end, markers
+  const yearMeta = years.map(y => {
+    const mid = `${y}-07-01T12:00:00.000Z`;
+    const p = allL2.find(l2 => l2.startDate <= mid && l2.endDate >= mid);
+    if (!p) return null;
+    return {
+      sign: p.sign,
+      start: p.startDate.slice(0, 10),
+      end:   p.endDate.slice(0, 10),
+      markers: [
+        p.isCulmination || p.markers.includes("Cu") ? "Cu" : "",
+        p.isLoosingOfBond || p.markers.includes("LB") ? "LB" : "",
+        isPreLbPeriod(p) ? "pre-LB" : "",
+        p.isPeakPeriod ? "Peak" : "",
+      ].filter(Boolean),
+    };
+  });
+
   // Serialise for client JS
   const jsYears  = JSON.stringify(years);
   const jsScores = JSON.stringify(scores);
@@ -367,6 +417,7 @@ function generateHtml(
   const jsBands  = JSON.stringify(l1Bands);
   const jsNow    = JSON.stringify(nowYear);
   const jsName   = JSON.stringify(name.replace(/[^a-z0-9]/gi, "-").toLowerCase());
+  const jsMeta   = JSON.stringify(yearMeta);
 
   // Strip canvas data — one entry per L2 period: [color, isNow, isCu, isLB, isPreLB]
   const jsStrip  = JSON.stringify(allL2.map(p => {
@@ -387,12 +438,11 @@ function generateHtml(
 <title>Part d'Esprit — ${name}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Satisfy&family=Caveat:wght@400;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#261860;color:#e8ecf4;font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+body{background:#1B1535;color:#E6E2F2;font-family:'Inter',system-ui,sans-serif;min-height:100vh}
 .container{max-width:1440px;margin:0 auto;padding:0 0 48px}
-#printable{background:#261860;width:100%;overflow:hidden}
+#printable{background:#1B1535;width:100%;overflow:hidden}
 .quote-bar{display:flex;justify-content:space-between;align-items:flex-start;padding:26px 36px 14px;gap:24px}
 .quote-left .q-text{font-family:'Satisfy',cursive;font-size:26px;color:rgba(255,255,255,.85);line-height:1.3;max-width:840px;display:block}
 .quote-left .q-text::before{content:'\u201C';font-size:34px;color:rgba(255,255,255,.4);margin-right:4px;vertical-align:-6px;font-family:'Satisfy',cursive}
@@ -400,30 +450,34 @@ body{background:#261860;color:#e8ecf4;font-family:'Inter',system-ui,sans-serif;m
 .logo-mark{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
 .logo-mark svg{width:34px;height:34px;opacity:.80}
 .logo-mark span{font-size:10px;color:#A397C0;letter-spacing:.18em;text-transform:uppercase;font-weight:600}
-.chart-wrap{padding:2px 36px 0;position:relative}
-#spiritChart{display:block;width:100%;height:420px}
+.chart-wrap{padding:2px 0 0;position:relative}
+.chart-scroll{overflow-x:auto;overflow-y:hidden;cursor:grab;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chart-scroll::-webkit-scrollbar{display:none}
+.chart-scroll:active{cursor:grabbing}
+#chartSizer{height:420px;padding:0 36px}
+#spiritChart{display:block;width:100%;height:100%}
 .strip-wrap{padding:6px 36px 10px;display:flex;gap:2px;overflow:hidden}
 .strip-pill{height:14px;flex:1;min-width:4px;border-radius:3px;border:1px solid;display:flex;align-items:center;justify-content:center;cursor:default;transition:filter .15s}
 .strip-pill span{width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .strip-pill:hover{filter:brightness(1.5)}
-.strip-active{outline:2px solid rgba(125,211,252,.55);outline-offset:1px}
+.strip-active{outline:2px solid rgba(149,133,204,.55);outline-offset:1px}
 .stat-row{display:flex;gap:10px;flex-wrap:wrap;padding:12px 36px;border-top:1px solid rgba(255,255,255,.04)}
-.stat-chip{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 16px;min-width:130px}
-.stat-chip .lbl{font-size:8px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.08em}
-.stat-chip .val{font-size:15px;font-weight:800;margin-top:3px;color:#7DD3FC}
-.stat-chip .note{font-size:9px;color:#374151;margin-top:1px}
-.save-btn-wrap{padding:12px 36px;display:flex;gap:12px;align-items:center;border-top:1px solid rgba(255,255,255,.04)}
-.save-btn{background:rgba(125,211,252,.1);border:1px solid rgba(125,211,252,.28);color:#7DD3FC;padding:8px 20px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
-.save-btn:hover{background:rgba(125,211,252,.2)}
+.stat-chip{background:rgba(149,133,204,.06);border:1px solid rgba(149,133,204,.14);border-radius:10px;padding:10px 16px;min-width:130px}
+.stat-chip .lbl{font-size:8px;font-weight:700;color:#8C7FAE;text-transform:uppercase;letter-spacing:.08em}
+.stat-chip .val{font-size:15px;font-weight:800;margin-top:3px;color:#9585CC}
+.stat-chip .note{font-size:9px;color:#8C7FAE;margin-top:1px}
+.save-btn-wrap{padding:12px 36px;display:flex;gap:12px;align-items:center;border-top:1px solid rgba(149,133,204,.08)}
+.save-btn{background:rgba(149,133,204,.12);border:1px solid rgba(149,133,204,.28);color:#9585CC;padding:8px 20px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.save-btn:hover{background:rgba(149,133,204,.22)}
 .save-btn:disabled{opacity:.5;cursor:not-allowed}
-.save-hint{font-size:10px;color:#374151}
-.peak-legend{font-size:9px;color:#374151;font-family:ui-monospace,monospace;padding:2px 0 0 1px}
+.save-hint{font-size:10px;color:#8C7FAE}
+.peak-legend{font-size:9px;color:#8C7FAE;font-family:ui-monospace,monospace;padding:2px 0 0 1px}
 .section-title{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#374151;margin:24px 36px 12px}
 .grid{display:grid;grid-template-columns:1fr;gap:10px;padding:0 36px}
 @media(min-width:860px){.grid{grid-template-columns:1fr 1fr}}
 @media(min-width:1200px){.grid{grid-template-columns:1fr 1fr 1fr}}
-.card{background:#0c1028;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px}
-.card-active{background:#0f1435;border-color:rgba(125,211,252,.18)}
+.card{background:#130F27;border:1px solid rgba(149,133,204,.10);border-radius:12px;padding:14px}
+.card-active{background:#1E1840;border-color:rgba(149,133,204,.22)}
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .year-label{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
@@ -433,14 +487,14 @@ body{background:#261860;color:#e8ecf4;font-family:'Inter',system-ui,sans-serif;m
 .badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .badge-white{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#e2e8f0}
 .badge-element{background:transparent;border:1px solid;font-weight:600}
-.badge-house{background:rgba(125,211,252,.1);border:1px solid rgba(125,211,252,.25);color:#7DD3FC}
-.now-badge{font-size:8px;font-weight:800;padding:2px 8px;border-radius:20px;background:rgba(125,211,252,.13);border:1px solid rgba(125,211,252,.35);color:#7DD3FC;white-space:nowrap}
+.badge-house{background:rgba(149,133,204,.10);border:1px solid rgba(149,133,204,.25);color:#9585CC}
+.now-badge{font-size:8px;font-weight:800;padding:2px 8px;border-radius:20px;background:rgba(149,133,204,.13);border:1px solid rgba(149,133,204,.35);color:#9585CC;white-space:nowrap}
 .peak-badge{font-size:8px;font-weight:800;padding:2px 8px;border-radius:20px;background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.35);color:#fbbf24;white-space:nowrap}
-.card-meta{font-size:11px;color:#4b5563;margin-bottom:8px}
-.card-meta b{color:#7DD3FC;font-weight:600}
+.card-meta{font-size:11px;color:#8C7FAE;margin-bottom:8px}
+.card-meta b{color:#9585CC;font-weight:600}
 .l2-list{display:flex;flex-direction:column;gap:2px}
 .l2-row{display:flex;align-items:center;gap:5px;padding:4px 8px;border-left:2px solid;border-radius:0 6px 6px 0;background:rgba(255,255,255,.02);font-size:10px;flex-wrap:nowrap}
-.active-l2{background:rgba(125,211,252,.06)!important}
+.active-l2{background:rgba(149,133,204,.06)!important}
 .l2-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .l2-flower{font-size:11px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 4px rgba(255,255,255,0.8));animation:lb-pulse 2s ease-in-out infinite;color:#fff!important}
 .l2-dot-prelb{animation:prelb-shimmer 2.4s ease-in-out infinite}
@@ -450,13 +504,13 @@ body{background:#261860;color:#e8ecf4;font-family:'Inter',system-ui,sans-serif;m
 .l2-sign{font-weight:600;color:#9ca3af;width:80px;flex-shrink:0}
 .l2-dates{color:#374151;font-family:ui-monospace,monospace;font-size:9px;flex:1;white-space:nowrap}
 .marker-badge{font-size:8px;font-weight:800;padding:1px 5px;border-radius:3px;border:1px solid;white-space:nowrap;flex-shrink:0}
-.house-badge{font-size:8px;color:#7DD3FC;background:rgba(125,211,252,.1);border:1px solid rgba(125,211,252,.2);padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0}
-.footer{font-size:9px;color:#1a2035;text-align:center;padding:14px 36px 0;margin-top:20px;border-top:1px solid #0c1028;line-height:1.7}
+.house-badge{font-size:8px;color:#9585CC;background:rgba(149,133,204,.10);border:1px solid rgba(149,133,204,.20);padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+.footer{font-size:9px;color:#5C4B9B;text-align:center;padding:14px 36px 0;margin-top:20px;border-top:1px solid rgba(149,133,204,.08);line-height:1.7}
 @media print{
   @page{size:A4 landscape;margin:0}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-  body{padding:0;background:#261860!important;color:#e8ecf4!important}
-  #printable{background:#261860!important;width:100%!important}
+  body{padding:0;background:#1B1535!important;color:#E6E2F2!important}
+  #printable{background:#1B1535!important;width:100%!important}
   .save-btn-wrap,.section-title,.grid,.footer,.stat-row{display:none!important}
   .chart-wrap{padding:2px 36px 20px}
   #spiritChart{height:480px!important}
@@ -483,7 +537,11 @@ body{background:#261860;color:#e8ecf4;font-family:'Inter',system-ui,sans-serif;m
       <span>unfold</span>
     </div>
   </div>
-  <div class="chart-wrap"><canvas id="spiritChart"></canvas></div>
+  <div class="chart-wrap">
+    <div class="chart-scroll" id="chartScroll">
+      <div id="chartSizer"><canvas id="spiritChart"></canvas></div>
+    </div>
+  </div>
 </div><!-- /#printable ends here — PNG export captures only quote + wave above -->
 
 <canvas id="stripCanvas" style="display:none;"></canvas>
@@ -514,7 +572,7 @@ body{background:#261860;color:#e8ecf4;font-family:'Inter',system-ui,sans-serif;m
     </div>` : ""}
     <div class="stat-chip">
       <div class="lbl">Scoring</div>
-      <div class="val" style="font-size:10px;margin-top:4px;line-height:1.5;color:#6b7280;">Cu +5 · LB +6 · Peak +4<br>H1 +10 · H10 +8<br>H7 +6 · H4 +4</div>
+      <div class="val" style="font-size:10px;margin-top:4px;line-height:1.5;color:#6b7280;">LB +14 · Cu +5 · pre-LB +2<br>Peak 10th +6 · 1st +5 · 7th +3 · 4th +1<br>H1 +10 · H10 +8 · H7 +6 · H4 +4</div>
     </div>
   </div>
   ${peakSummary ? `<div class="peak-legend" style="padding:0 36px 10px;">${peakSummary}</div>` : ""}
@@ -534,9 +592,10 @@ const years   = ${jsYears};
 const scores  = ${jsScores};
 const colors  = ${jsColors};
 const sizes   = ${jsSizes};
-const flags   = ${jsFlags};   // 0=normal 1=pre-LB glossy 2=LB flower
+const flags   = ${jsFlags};   // 0=normal 1=pre-LB glossy 2=LB flower 3=Cu blue
 const bands   = ${jsBands};
 const nowYear = ${jsNow};
+const meta    = ${jsMeta};    // per-year tooltip data: {sign, start, end, markers}
 const stripData = ${jsStrip};
 
 // ── Draw strip on canvas (works in both browser and PNG export) ──────────────
@@ -612,7 +671,7 @@ const stripData = ${jsStrip};
 
     // NOW outline
     if (isNow) {
-      ctx.strokeStyle = 'rgba(125,211,252,0.7)';
+      ctx.strokeStyle = 'rgba(149,133,204,0.7)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.roundRect(x - 1, yTop - 1, pillW + 2, pillH + 2, 4);
@@ -648,7 +707,7 @@ const nowPlugin = {
     const x = scales.x.getPixelForValue(nowYear);
     if (x < scales.x.left || x > scales.x.right) return;
     ctx.save();
-    ctx.strokeStyle = 'rgba(125,211,252,0.55)';
+    ctx.strokeStyle = 'rgba(149,133,204,0.55)';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -656,7 +715,7 @@ const nowPlugin = {
     ctx.lineTo(x, scales.y.bottom);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = '#7DD3FC';
+    ctx.fillStyle = '#9585CC';
     ctx.font = '9px Inter,sans-serif';
     ctx.globalAlpha = 0.7;
     ctx.fillText('now', x + 4, scales.y.top + 13);
@@ -778,6 +837,15 @@ const axisDotsPlugin = {
   }
 };
 
+// ── Size chart so 20 years are visible; full width available for PNG export ──
+(function() {
+  var YEARS_VISIBLE = 20;
+  var avail = (window.innerWidth || 1440) - 72; // 36px padding each side
+  var pxPerYear = Math.round(avail / YEARS_VISIBLE);
+  var fullW = Math.max(avail, years.length * pxPerYear);
+  document.getElementById('chartSizer').style.width = fullW + 'px';
+})();
+
 const ctx = document.getElementById('spiritChart').getContext('2d');
 const grad = ctx.createLinearGradient(0, 0, 0, 300);
 grad.addColorStop(0, 'rgba(124,107,191,0.22)');
@@ -792,7 +860,7 @@ new Chart(ctx, {
       data: scores,
       borderColor: 'rgba(255,255,255,0.82)',
       borderWidth: 1.5,
-      tension: 0.4,
+      tension: 0.5,
       fill: true,
       backgroundColor: grad,
       pointBackgroundColor: 'transparent',
@@ -810,15 +878,25 @@ new Chart(ctx, {
     plugins: {
       legend: {display: false},
       tooltip: {
-        backgroundColor: '#0c1028',
-        borderColor: 'rgba(125,211,252,0.18)',
+        backgroundColor: '#130F27',
+        borderColor: 'rgba(149,133,204,0.22)',
         borderWidth: 1,
-        titleColor: '#f1f5f9',
-        bodyColor: '#6b7280',
+        titleColor: '#E6E2F2',
+        bodyColor: '#8C7FAE',
         padding: 12,
         callbacks: {
           title(items) { return String(items[0]?.label ?? ''); },
-          label(item) { return 'Score: ' + item.raw; },
+          label(item) {
+            const i = item.dataIndex;
+            const m = meta[i];
+            if (!m) return 'Score: ' + item.raw;
+            const mk = m.markers.length ? '  · ' + m.markers.join(' · ') : '';
+            return [
+              m.sign + mk,
+              m.start + ' → ' + m.end,
+              'Score: ' + item.raw,
+            ];
+          },
         }
       }
     },
@@ -838,31 +916,103 @@ new Chart(ctx, {
   }
 });
 
+// ── Scroll to now−10yr so current data is centred on load ───────────────────
+(function() {
+  var scroller = document.getElementById('chartScroll');
+  if (!scroller) return;
+  var sizer = document.getElementById('chartSizer');
+  var pxPerYear = sizer.offsetWidth / years.length;
+  var nowIdx = years.indexOf(nowYear);
+  if (nowIdx < 0) nowIdx = years.length - 1;
+  scroller.scrollLeft = Math.max(0, (nowIdx - 10) * pxPerYear);
+
+  // Drag-to-scroll on desktop
+  var drag = false, startX = 0, scrollX = 0;
+  scroller.addEventListener('mousedown', function(e) {
+    drag = true; startX = e.pageX; scrollX = scroller.scrollLeft;
+    scroller.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mouseup',   function() { drag = false; scroller.style.cursor = 'grab'; });
+  window.addEventListener('mousemove', function(e) {
+    if (!drag) return;
+    e.preventDefault();
+    scroller.scrollLeft = scrollX - (e.pageX - startX);
+  });
+})();
+
 async function savePng() {
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
   btn.textContent = 'Saving\u2026';
   try {
-    const el = document.getElementById('printable');
-    const canvas = await html2canvas(el, {
-      backgroundColor: '#261860',
-      scale: 3,
-      useCORS: true,
-      allowTaint: true,
-      imageTimeout: 0,
-      logging: false,
-      width: el.scrollWidth,
-      height: el.scrollHeight,
-      onclone: (doc) => {
-        // Re-draw strip in the cloned document before rasterising
-        const sc = doc.getElementById('stripCanvas');
-        if (sc) sc.getContext('2d'); // keep existing canvas pixels
-      },
-    });
+    const chartCanvas = document.getElementById('spiritChart');
+    const quoteBar    = document.getElementById('printable').querySelector('.quote-bar');
+    const DPR = 3;
+
+    // Measure quote bar height
+    const qh = quoteBar ? quoteBar.getBoundingClientRect().height : 80;
+
+    // Use full sizer width (not scroll-clipped offsetWidth) for the full timeline PNG
+    const sizer = document.getElementById('chartSizer');
+    const cw = sizer ? sizer.offsetWidth : chartCanvas.offsetWidth;
+    const ch = chartCanvas.offsetHeight;
+    const totalH = Math.round((qh + ch) * DPR);
+    const totalW = Math.round(cw * DPR);
+
+    const out = document.createElement('canvas');
+    out.width  = totalW;
+    out.height = totalH;
+    const c = out.getContext('2d');
+
+    // Background
+    c.fillStyle = '#1B1535';
+    c.fillRect(0, 0, totalW, totalH);
+
+    // Quote text (drawn with canvas 2D — no html2canvas dependency)
+    const quoteEl = quoteBar ? quoteBar.querySelector('.q-text') : null;
+    const authorEl = quoteBar ? quoteBar.querySelector('.q-author') : null;
+    const qText   = quoteEl  ? quoteEl.textContent  : '';
+    const qAuthor = authorEl ? authorEl.textContent : '';
+    const PAD = 36 * DPR;
+    const maxW = totalW - PAD * 2;
+
+    c.save();
+    c.fillStyle = 'rgba(255,255,255,0.82)';
+    c.font = (22 * DPR) + 'px Georgia,serif';
+    c.textBaseline = 'top';
+    // Word-wrap the quote
+    const words = qText.split(' ');
+    let line = '';
+    let lineY = 24 * DPR;
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (c.measureText(test).width > maxW && line) {
+        c.fillText(line, PAD, lineY);
+        line = word;
+        lineY += 28 * DPR;
+      } else {
+        line = test;
+      }
+    }
+    if (line) c.fillText(line, PAD, lineY);
+    // Author
+    c.fillStyle = 'rgba(255,255,255,0.32)';
+    c.font = (11 * DPR) + 'px Inter,sans-serif';
+    c.fillText(qAuthor, PAD, lineY + 30 * DPR);
+    c.restore();
+
+    // Chart — copy the already-drawn Chart.js canvas
+    c.drawImage(chartCanvas, 0, Math.round(qh * DPR), totalW, Math.round(ch * DPR));
+
+    // Download
     const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
+    a.href = out.toDataURL('image/png');
     a.download = 'spirit-wave-' + ${jsName} + '.png';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+  } catch(e) {
+    alert('PNG export failed: ' + e.message);
   } finally {
     btn.disabled = false;
     btn.textContent = 'Save as PNG';

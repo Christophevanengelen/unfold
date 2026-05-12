@@ -457,6 +457,14 @@ function OverviewView({
       }
     }
 
+    // Clamp: future capsules must not cross the NOW line (overlap resolver can push them down)
+    const nowYLocal = dateToY(new Date());
+    for (const item of items) {
+      if (item.capsule.isFuture && item.topY + item.h > nowYLocal) {
+        item.topY = nowYLocal - item.h - CAPSULE_GAP;
+      }
+    }
+
     // Final clamp: remove any capsule pushed entirely below birth by overlap resolver
     return items.filter(it => it.topY < birthY);
   }, [capsules, adjustedOffsetX, laneWidth]);
@@ -833,13 +841,13 @@ function ListView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex]);
 
-  // Cache birth year once (avoid localStorage reads on every scroll)
-  const birthYearRef = useRef<number>(0);
+  // Cache birth date string once (avoid localStorage reads on every scroll)
+  const birthYearRef = useRef<string>("1985-01-01");
   useEffect(() => {
     try {
       const raw = localStorage.getItem('unfold_birth_data');
-      birthYearRef.current = raw ? parseInt(JSON.parse(raw).birthDate?.split('-')[0] || '1985') : 1985;
-    } catch { birthYearRef.current = 1985; }
+      birthYearRef.current = raw ? (JSON.parse(raw).birthDate || '1985-01-01') : '1985-01-01';
+    } catch { birthYearRef.current = '1985-01-01'; }
   }, []);
 
   // Track visible age from virtualizer scroll offset (no manual scroll listener needed)
@@ -867,7 +875,9 @@ function ListView({
       }
     }
     if (closestCapsule) {
-      onAgeChange(closestCapsule.startDate.getFullYear() - birthYearRef.current);
+      const bd = new Date(birthYearRef.current + "T00:00:00");
+      const diffMs = closestCapsule.startDate.getTime() - bd.getTime();
+      onAgeChange(Math.max(0, Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000))));
     }
     // Detect if we're away from "now"
     if (currentIndex >= 0) {
@@ -1222,6 +1232,15 @@ export function MomentumTimelineV2() {
     setVisibleAge(age);
   }, []);
 
+  const handleNavigateToCapsule = useCallback((date: Date) => {
+    const ts = date.getTime();
+    // Find capsule whose period contains this date, or closest start
+    const match = allCapsules
+      .map(c => ({ c, dist: Math.abs(c.startDate.getTime() - ts) }))
+      .sort((a, b) => a.dist - b.dist)[0]?.c;
+    if (match) setSelectedCapsule(match);
+  }, [allCapsules]);
+
   // Show spinner only when we have NO data at all.
   // If year data (phases) arrived, show timeline immediately — lifetime loads in background.
   const hasAnyData = phases.length > 0 || timelinePhases.length > 0;
@@ -1409,7 +1428,7 @@ export function MomentumTimelineV2() {
               style={{ background: "rgba(0,0,0,0.4)" }}
               onClick={() => setSelectedCapsule(null)}
             />
-            <CapsuleDetailSheet capsule={selectedCapsule} isFuture={selectedCapsule.isFuture} onClose={() => setSelectedCapsule(null)} />
+            <CapsuleDetailSheet capsule={selectedCapsule} isFuture={selectedCapsule.isFuture} onClose={() => setSelectedCapsule(null)} onNavigateToCapsule={handleNavigateToCapsule} />
           </>
         )}
       </AnimatePresence>

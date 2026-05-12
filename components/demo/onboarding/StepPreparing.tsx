@@ -168,7 +168,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   // Prefetch timeline chunk + route while user watches the reveal
   useEffect(() => {
     import("@/components/demo/MomentumTimelineV2").catch(() => {});
-    router.prefetch("/demo/timeline");
+    router.prefetch("/app/timeline");
   }, [router]);
   const [completed, setCompleted] = useState<number[]>([]);
   const [visible, setVisible] = useState<number[]>([0]);
@@ -593,11 +593,11 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
                         place: invite.birthData.placeOfBirth || "",
                       });
                       sessionStorage.removeItem("unfold_pending_invite");
-                      router.push(`/demo/invite/connected?${params.toString()}`);
+                      router.push(`/app/invite/connected?${params.toString()}`);
                       return;
                     } catch { /* ignore parse errors */ }
                   }
-                  router.push("/demo/timeline");
+                  router.push("/app/timeline");
                 }}
                 className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
               >

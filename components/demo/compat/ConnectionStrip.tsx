@@ -66,7 +66,7 @@ export function ConnectionStrip({ connections, currentId, onSelect }: Connection
 
         {/* Invite someone slot */}
         <Link
-          href="/demo/invite/share"
+          href="/app/invite/share"
           className="flex shrink-0 flex-col items-center gap-1"
           style={{ scrollSnapAlign: "center" }}
         >

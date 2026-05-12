@@ -324,10 +324,17 @@ export function getTransitNarrative(phase: any): string {
   }
 
   if (cat === "zr") {
+    const isPeak = phase.isPeakPeriod || (phase.markers as string[] | undefined)?.includes("Peak");
     const lotImpact: Record<string, string> = {
-      fortune: "Tes circonstances matérielles et ton quotidien sont amplifiés. Le timing favorise l'action concrète.",
-      spirit: "Ton sens du but se clarifie. Ce qui résonne avec ta mission mérite toute ton attention.",
-      eros: "L'attraction et le désir sont au premier plan. Tes relations gagnent en intensité et en profondeur.",
+      fortune: isPeak
+        ? "Ce chapitre compte davantage — les circonstances extérieures s'amplifient. Importance et activité accrues, pas nécessairement facile."
+        : "Tes circonstances matérielles et ton quotidien sont actifs. Ce qui se passe ici a du poids.",
+      spirit: isPeak
+        ? "Ce chapitre compte davantage — ta direction de vie s'intensifie. Période d'importance et d'activité accrues : ce que tu choisis ici laisse une trace."
+        : "Ta direction de vie est active. Les choix que tu poses dans cette fenêtre orientent la suite.",
+      eros: isPeak
+        ? "Ce chapitre compte davantage — l'attachement et le désir s'intensifient. Ce qui se joue dans tes liens proches a plus de poids qu'il n'y paraît."
+        : "L'attachement et le désir sont au premier plan. Tes relations profondes sont en mouvement.",
     };
     return lotImpact[phase.lotType] || "Une fenêtre de timing significative est ouverte pour toi.";
   }

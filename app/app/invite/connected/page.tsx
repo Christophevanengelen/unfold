@@ -153,7 +153,7 @@ function ConnectedContent() {
         transition={{ delay: 1.0 }}
       >
         <Link
-          href={connectionId ? `/demo/compatibility/${connectionId}` : "/demo/compatibility"}
+          href={connectionId ? `/app/compatibility/${connectionId}` : "/app/compatibility"}
           className="flex w-full items-center justify-center rounded-full py-3.5 text-sm font-semibold shadow-lg transition-all active:scale-95"
           style={{
             background: selectedRelation ? "var(--bg-brand)" : "var(--surface-medium)",
@@ -172,7 +172,7 @@ function ConnectedContent() {
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
       >
-        <Link href="/demo/compatibility" className="text-xs text-text-body-subtle">
+        <Link href="/app/compatibility" className="text-xs text-text-body-subtle">
           Retour aux connexions
         </Link>
       </motion.div>

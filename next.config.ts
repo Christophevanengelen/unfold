@@ -4,6 +4,13 @@ import withBundleAnalyzer from "@next/bundle-analyzer";
 const isNativeBuild = process.env.NEXT_PUBLIC_NATIVE === "true";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/demo", destination: "/app", permanent: true },
+      { source: "/demo/:path*", destination: "/app/:path*", permanent: true },
+    ];
+  },
+
   // Disable React Strict Mode to prevent Supabase auth lock warnings in dev
   // (Strict Mode causes double-mount which races on the navigator lock)
   reactStrictMode: false,

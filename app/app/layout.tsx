@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { BottomNav } from "@/components/demo/BottomNav";
@@ -51,14 +51,20 @@ function TrialCountdownPill({
 
 function AvatarButton({ onClick }: { onClick: () => void }) {
   const { user, isAuthenticated } = useAuth();
-  const initial = isAuthenticated && user?.email ? user.email[0].toUpperCase() : "A";
+  // Use first letter of email when logged in, otherwise a neutral person icon
+  const initial = isAuthenticated && user?.email ? user.email[0].toUpperCase() : null;
   return (
     <button
       onClick={onClick}
       className="relative flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
       aria-label="Profile"
     >
-      {initial}
+      {initial ?? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+        </svg>
+      )}
       {isAuthenticated && (
         <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-400 ring-1 ring-bg-primary" />
       )}
@@ -88,7 +94,9 @@ export default function DemoLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isNative = useIsNative();
+  const searchParams = useSearchParams();
+  const isDesktop = searchParams.get("desktop") === "1";
+  const isNative = useIsNative() || isDesktop;
   const { resolvedTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
@@ -156,11 +164,11 @@ export default function DemoLayout({
   }, []);
 
   // Hide bottom nav on onboarding/invite flows
-  const HIDDEN_NAV_ROUTES = ["/demo/onboarding", "/demo/invite"];
+  const HIDDEN_NAV_ROUTES = ["/app/onboarding", "/app/invite"];
   const hideNav = HIDDEN_NAV_ROUTES.some((r) => pathname.startsWith(r));
-  const isOnboarding = pathname.startsWith("/demo/onboarding");
-  const isHome = pathname === "/demo";
-  const isTimeline = pathname === "/demo/timeline";
+  const isOnboarding = pathname.startsWith("/app/onboarding");
+  const isHome = pathname === "/app";
+  const isTimeline = pathname === "/app/timeline";
   // Full-bleed routes manage their own padding and scroll
   const isFullBleed = isHome || isTimeline || isOnboarding;
 
@@ -168,6 +176,18 @@ export default function DemoLayout({
   // SSR: render only the dark background — no content, no flash
   if (!mounted) {
     return <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }} />;
+  }
+
+  // Full-screen standalone report pages — bypass phone chrome entirely
+  const REPORT_ROUTES = ["/app/birthday-graph", "/app/spirit-wave", "/app/lifetime-chart"];
+  if (REPORT_ROUTES.some((r) => pathname.startsWith(r))) {
+    return (
+      <AuthProvider>
+        <MomentumProvider>
+          {children}
+        </MomentumProvider>
+      </AuthProvider>
+    );
   }
 
   // Native: fullscreen, real safe areas
@@ -234,7 +254,7 @@ export default function DemoLayout({
               {!ios && billing.status === "trialing" && billing.trialEnd && (
                 <TrialCountdownPill
                   trialEnd={billing.trialEnd}
-                  onClick={() => router.push("/demo/pricing")}
+                  onClick={() => router.push("/app/pricing")}
                 />
               )}
               {streak >= 2 && (

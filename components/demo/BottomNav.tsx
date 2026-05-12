@@ -27,13 +27,13 @@ export function BottomNav() {
   const navItems = [
     {
       key: "timeline" as const,
-      href: "/demo/timeline",
+      href: "/app/timeline",
       icon: Clock,
       label: t("nav.timeline", locale),
     },
     {
       key: "match" as const,
-      href: "/demo/compatibility",
+      href: "/app/compatibility",
       icon: Heart,
       label: t("nav.match", locale),
       badge: connectionCount,

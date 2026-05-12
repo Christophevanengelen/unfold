@@ -20,7 +20,7 @@ export default function TimelinePage() {
     if (params.get("checkout") === "success") {
       setShowSuccessToast(true);
       // Clean URL without triggering a re-render loop
-      router.replace("/demo/timeline", { scroll: false });
+      router.replace("/app/timeline", { scroll: false });
       // Auto-hide after 4s
       const timer = setTimeout(() => setShowSuccessToast(false), 4000);
       return () => clearTimeout(timer);

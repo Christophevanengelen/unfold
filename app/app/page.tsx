@@ -8,7 +8,7 @@ import { setPremiumStatus } from "@/lib/premium-gate";
  * /demo — Root redirect.
  *
  * Also handles post-Stripe-checkout return:
- *   /demo?checkout=success  → set premium flag, redirect to /demo/timeline?checkout=success
+ *   /demo?checkout=success  → set premium flag, redirect to /app/timeline?checkout=success
  *   /demo?checkout=cancelled → redirect to /demo/pricing
  *   (default)               → redirect to /demo/timeline
  */
@@ -21,11 +21,11 @@ export default function DemoPage() {
     if (checkout === "success") {
       // Optimistically mark premium while webhook processes (server confirms on next /api/billing/me fetch)
       setPremiumStatus("premium");
-      router.replace("/demo/timeline?checkout=success");
+      router.replace("/app/timeline?checkout=success");
     } else if (checkout === "cancelled") {
-      router.replace("/demo/pricing?checkout=cancelled");
+      router.replace("/app/pricing?checkout=cancelled");
     } else {
-      router.replace("/demo/timeline");
+      router.replace("/app/timeline");
     }
   }, [router, params]);
 

@@ -55,7 +55,7 @@ export default function ConnectionDetailPage() {
   return (
     <div className="flex min-h-0 flex-col">
       <PageHeader
-        backHref="/demo/compatibility"
+        backHref="/app/compatibility"
         title={`Vous & ${current.name}`}
         subtitle={rel.labelFR}
         leadingSlot={

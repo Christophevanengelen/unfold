@@ -21,7 +21,7 @@ function JoinContent() {
     const parsed = parseInviteParams(searchParams);
     if (!parsed) {
       // Invalid link — go to compatibility
-      router.replace("/demo/compatibility");
+      router.replace("/app/compatibility");
       return;
     }
 
@@ -37,7 +37,7 @@ function JoinContent() {
     } else {
       // Needs onboarding first — redirect there
       // After onboarding, the app will check for pending invite
-      router.replace("/demo/onboarding");
+      router.replace("/app/onboarding");
     }
   }, [router, searchParams]);
 

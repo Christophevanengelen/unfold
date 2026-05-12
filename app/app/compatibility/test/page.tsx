@@ -243,7 +243,7 @@ export default function ConnectionBriefTestPage() {
     <div className="flex min-h-0 flex-col">
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
-        <Link href="/demo/compatibility"
+        <Link href="/app/compatibility"
           className="flex h-8 w-8 items-center justify-center rounded-full"
           style={{ background: "var(--surface-medium)" }}>
           <ArrowLeft size={16} style={{ color: "var(--text-body-subtle)" }} />

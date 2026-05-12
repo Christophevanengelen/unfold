@@ -16,7 +16,8 @@ export const runtime = "nodejs";
  *   customer.subscription.updated  → update (version_timestamp monotonic)
  *   customer.subscription.deleted  → status = 'canceled'
  *   invoice.payment_failed         → status = 'past_due'
- *   charge.refunded                → status = 'canceled'
+ *   charge.refunded                → status = 'canceled' (including lifetime)
+ *   checkout.session.completed     → insert lifetime subscription (one-time payment)
  */
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
@@ -123,7 +124,7 @@ async function dispatchEvent(event: Stripe.Event, db: SupabaseClient) {
       break;
     }
     case "charge.refunded": {
-      // Find subscription via customer and mark canceled
+      // Find subscription via customer and mark canceled (includes lifetime)
       const charge = event.data.object as Stripe.Charge;
       const customerId = typeof charge.customer === "string"
         ? charge.customer
@@ -138,8 +139,46 @@ async function dispatchEvent(event: Stripe.Event, db: SupabaseClient) {
           })
           .eq("source", "stripe")
           .eq("external_customer_id", customerId)
-          .in("status", ["active", "trialing"]);
+          .in("status", ["active", "trialing", "lifetime"]);
       }
+      break;
+    }
+    case "checkout.session.completed": {
+      // Handles lifetime one-time payments (mode: "payment").
+      // Subscription checkouts are already handled by customer.subscription.created.
+      const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.plan !== "lifetime") break;
+
+      const userId = session.metadata?.userId;
+      if (!userId) {
+        console.warn("[stripe/webhook] lifetime checkout missing userId metadata", session.id);
+        break;
+      }
+      const customerId = typeof session.customer === "string"
+        ? session.customer
+        : session.customer?.id ?? "";
+
+      await db
+        .from("subscriptions")
+        .upsert(
+          {
+            user_id: userId,
+            source: "stripe",
+            // Use checkout session ID as a pseudo subscription ID for idempotency
+            external_subscription_id: session.id,
+            external_customer_id: customerId,
+            product_id: "lifetime",
+            status: "lifetime",
+            current_period_start: new Date(event.created * 1000).toISOString(),
+            current_period_end: "2099-12-31T23:59:59.000Z",
+            trial_end: null,
+            cancel_at: null,
+            version_timestamp: new Date(event.created * 1000).toISOString(),
+            raw_payload: session as unknown as Record<string, unknown>,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "source,external_subscription_id" }
+        );
       break;
     }
     default:
