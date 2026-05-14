@@ -179,7 +179,7 @@ export default function DemoLayout({
   }
 
   // Full-screen standalone report pages — bypass phone chrome entirely
-  const REPORT_ROUTES = ["/app/birthday-graph", "/app/spirit-wave", "/app/lifetime-chart"];
+  const REPORT_ROUTES = ["/app/birthday-graph", "/app/spirit-wave", "/app/lifetime-chart", "/app/astro"];
   if (REPORT_ROUTES.some((r) => pathname.startsWith(r))) {
     return (
       <AuthProvider>

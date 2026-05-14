@@ -4,6 +4,67 @@ import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
 
+const FILTER_CSS = `
+#filter-bar{position:sticky;top:60px;z-index:40;display:flex;gap:6px;
+  padding:6px 12px;background:rgba(15,10,40,0.92);
+  backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.07);
+  overflow-x:auto;-webkit-overflow-scrolling:touch}
+#filter-bar::-webkit-scrollbar{display:none}
+.f-btn{flex-shrink:0;padding:4px 12px;border-radius:999px;
+  border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.10);
+  color:rgba(255,255,255,0.85);font-size:11px;font-weight:600;cursor:pointer;
+  letter-spacing:0.02em;transition:background 0.15s,border-color 0.15s,color 0.15s;
+  font-family:inherit}
+.f-btn.off{background:transparent;border-color:rgba(255,255,255,0.12);
+  color:rgba(255,255,255,0.28)}
+`;
+
+const FILTER_HTML = `
+<div id="filter-bar">
+  <button class="f-btn" data-cat="transit">Transit</button>
+  <button class="f-btn" data-cat="station">Retrograde</button>
+  <button class="f-btn" data-cat="eclipse">Eclipse</button>
+  <button class="f-btn" data-cat="zr">ZR</button>
+  <button class="f-btn" data-cat="anniversary">Birthday</button>
+</div>
+`;
+
+const FILTER_JS = `
+(function(){
+  const catMap = {};
+  sausages.forEach(s => { catMap[s.id] = s.category; });
+  const activeFilters = new Set(['transit','station','eclipse','zr','anniversary']);
+  function applyFilter() {
+    document.querySelectorAll('.sausage').forEach(el => {
+      const cat = catMap[el.dataset.id] || '';
+      el.style.display = activeFilters.has(cat) ? '' : 'none';
+    });
+  }
+  document.querySelectorAll('.f-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cat = btn.dataset.cat;
+      if (activeFilters.has(cat)) { activeFilters.delete(cat); btn.classList.add('off'); }
+      else { activeFilters.add(cat); btn.classList.remove('off'); }
+      applyFilter();
+      if (typeof clearConnections === 'function') clearConnections();
+      if (typeof close === 'function') close();
+    });
+  });
+})();
+`;
+
+function injectFilterBar(html: string): string {
+  return html
+    // 1. Inject CSS into <head>
+    .replace("</head>", `<style>${FILTER_CSS}</style></head>`)
+    // 2. Inject filter bar HTML before the fixed ruler (fallback: before #tl-wrap)
+    .replace("<!-- FIXED LEFT RULER -->", `${FILTER_HTML}<!-- FIXED LEFT RULER -->`)
+    // 3. Add top padding to timeline wrapper so content isn't hidden under filter bar
+    .replace("#tl-wrap{padding:0 24px 160px 120px", "#tl-wrap{padding:36px 24px 160px 120px")
+    // 4. Inject filter JS as a separate script before </body>
+    .replace("</body>", `<script>${FILTER_JS}</script></body>`);
+}
+
 const CALCULATOR_DIR = "D:\\51.full-suite-api";
 
 async function callCalculator(endpoint: string, input: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -66,7 +127,7 @@ export async function POST(request: NextRequest) {
       throw new Error("Calculator returned no HTML");
     }
 
-    return new Response(html, {
+    return new Response(injectFilterBar(html), {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store",

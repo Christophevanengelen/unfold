@@ -30,6 +30,18 @@ export function Header({ locale }: HeaderProps) {
           </span>
         </Link>
         <div className="flex items-center gap-3">
+          <Link
+            href="/app/astro"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
+            style={{
+              background: "rgba(124,107,191,0.15)",
+              border: "1px solid rgba(124,107,191,0.3)",
+              color: "#9585CC",
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#9585CC]" />
+            AstroLearn
+          </Link>
           <LanguageSwitcher currentLocale={locale} />
           <ThemeToggle />
         </div>
