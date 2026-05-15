@@ -377,22 +377,6 @@ export default async function LandingPage({
         }}
       />
 
-      {/* AstroLearn top-right link */}
-      <div className="absolute top-4 right-4 z-20">
-        <Link
-          href="/app/astro"
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
-          style={{
-            background: "rgba(149,133,204,0.15)",
-            border: "1px solid rgba(149,133,204,0.35)",
-            color: "#9585CC",
-          }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#9585CC]" />
-          AstroLearn
-        </Link>
-      </div>
-
       <div className="relative z-10 mx-auto max-w-3xl px-6 pt-20 pb-24 text-center">
         {/* Logo */}
         <div className="mb-10 flex items-center justify-center gap-3">

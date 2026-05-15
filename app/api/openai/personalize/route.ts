@@ -164,12 +164,10 @@ function buildSmartSystemPrompt(llmPayload: Record<string, any>): string {
         lines.push(`  Phase actuelle : « ${phaseInfo.name} » — ${phaseInfo.angle}.`);
       }
       if (cycle.allHits?.length) {
-        const dates = cycle.allHits.map((h: { date: string; hitNumber: number; isCurrent?: boolean }) =>
-          h.isCurrent ? `#${h.hitNumber}: ${h.date} [EN COURS]` : `#${h.hitNumber}: ${h.date}`
-        ).join(", ");
+        const dates = cycle.allHits.map((h: { date: string; hitNumber: number }) => `#${h.hitNumber}: ${h.date}`).join(", ");
         lines.push(`  Toutes les passes : ${dates}.`);
       }
-      lines.push("→ Commence le corps par la date de la passe marquée [EN COURS]. Mentionne la prochaine passe à venir (si disponible). Ne cite pas une date future comme si c'était la date actuelle.");
+      lines.push("→ Mentionne la passe actuelle et son angle. Cite 1 date passée + la prochaine (si future).");
     }
     lines.push("");
 

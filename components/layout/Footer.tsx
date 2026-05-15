@@ -10,7 +10,6 @@ const footerLabels: Record<string, {
   legal: string;
   pricing: string;
   demo: string;
-  astro: string;
   privacy: string;
   terms: string;
   contact: string;
@@ -21,7 +20,6 @@ const footerLabels: Record<string, {
     legal: "Legal",
     pricing: "Pricing",
     demo: "Try the demo",
-    astro: "Astro Lab",
     privacy: "Privacy Policy",
     terms: "Terms of Service",
     contact: "Contact",
@@ -32,7 +30,6 @@ const footerLabels: Record<string, {
     legal: "L\u00e9gal",
     pricing: "Tarifs",
     demo: "Essayer la d\u00e9mo",
-    astro: "Labo Astro",
     privacy: "Confidentialit\u00e9",
     terms: "Conditions d\u2019utilisation",
     contact: "Contact",
@@ -43,7 +40,6 @@ const footerLabels: Record<string, {
     legal: "Legal",
     pricing: "Precios",
     demo: "Probar la demo",
-    astro: "Lab Astro",
     privacy: "Privacidad",
     terms: "T\u00e9rminos de Servicio",
     contact: "Contacto",
@@ -103,14 +99,6 @@ export function Footer({ locale }: FooterProps) {
                   className="text-sm text-brand-11 transition-colors hover:text-white"
                 >
                   {l.demo}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/app/astro"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-violet-600/20 px-3 py-1 text-sm font-medium text-violet-300 ring-1 ring-violet-500/30 transition-colors hover:bg-violet-600/30 hover:text-violet-200"
-                >
-                  {l.astro}
                 </Link>
               </li>
             </ul>
