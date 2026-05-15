@@ -13,7 +13,6 @@ import { useMomentum } from "@/lib/momentum-store";
 import { CapsuleDetailSheet } from "./CapsuleDetailSheet";
 import { DailyBriefing } from "./DailyBriefing";
 import { usePremiumStatus } from "@/lib/premium-gate";
-import { formatEuropeanDisplayDate } from "@/lib/european-date";
 import { usePremiumTeaser } from "./PremiumTeaserContext";
 import { preGenerateForCapsules } from "@/lib/openai-personalize";
 import { getUserProfileSync } from "@/lib/user-profile";
@@ -735,7 +734,7 @@ function OverviewView({
                 letterSpacing: "-0.02em",
               }}
             >
-              {formatEuropeanDisplayDate(birthDate)}
+              {birthDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
             </p>
           </div>
         </div>

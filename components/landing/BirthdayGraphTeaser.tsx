@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { CelebPicker } from "@/components/landing/CelebPicker";
-import { DateInput } from "@/components/ui/DateInput";
 
 interface Props {
   eyebrow: string;
@@ -275,9 +274,10 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                   {/* Date */}
                   <div>
                     <label style={labelStyle}>Birth date</label>
-                    <DateInput
+                    <input
+                      type="date"
                       value={date}
-                      onChange={(value) => { setDate(value); setFormError(""); }}
+                      onChange={(e) => { setDate(e.target.value); setFormError(""); }}
                       style={inputStyle}
                     />
                   </div>

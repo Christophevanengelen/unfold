@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronLeft } from "flowbite-react-icons/outline";
-import { DateInput } from "@/components/ui/DateInput";
 import { searchCities, type GeoResult } from "@/lib/geocode";
 
 export interface OnboardingFormData {
@@ -32,7 +31,7 @@ const fields = [
   {
     key: "dob" as const,
     label: "Date of birth",
-    type: "date" as const,
+    type: "date",
     placeholder: "",
   },
   {
@@ -187,27 +186,18 @@ export function StepInput({
                     </span>
                   )}
                 </span>
-                {field.type === "date" ? (
-                  <DateInput
-                    value={formData.dob}
-                    onChange={(value) => handleChange("dob", value)}
-                    className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
-                    style={{ color: "var(--accent-purple)" }}
-                  />
-                ) : (
-                  <input
-                    type={field.type}
-                    value={formData[field.key] as string}
-                    onChange={(e) => handleChange(field.key, e.target.value)}
-                    onFocus={() => {
-                      if (isPlaceField && suggestions.length > 0) setShowSuggestions(true);
-                    }}
-                    placeholder={field.placeholder}
-                    autoComplete={isPlaceField ? "off" : undefined}
-                    className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
-                    style={{ color: "var(--accent-purple)" }}
-                  />
-                )}
+                <input
+                  type={field.type}
+                  value={formData[field.key] as string}
+                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  onFocus={() => {
+                    if (isPlaceField && suggestions.length > 0) setShowSuggestions(true);
+                  }}
+                  placeholder={field.placeholder}
+                  autoComplete={isPlaceField ? "off" : undefined}
+                  className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
+                  style={{ color: "var(--accent-purple)" }}
+                />
               </label>
               {"helper" in field && field.helper && (
                 <p

@@ -1,33 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  AstrologySubjectError,
-  getCalculatorRequest,
-  resolveAstrologySubject,
-} from "@/lib/astrology-subject";
-import { callCalculatorEndpoint } from "@/lib/astrolearn-calculator";
-import { normalizeTransitCyclesPayload } from "@/lib/transit-cycle-passes";
+import { cookies } from "next/headers";
+import { exec } from "child_process";
+import { promises as fs } from "fs";
+import path from "path";
+import os from "os";
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const CALCULATOR_DIR = "D:\\51.full-suite-api";
 
-function resolveTargetDate(request: NextRequest): string {
-  const requested = request.nextUrl.searchParams.get("date");
-  if (requested && DATE_RE.test(requested)) {
-    return requested;
-  }
-  return new Date().toISOString().split("T")[0];
+async function callCalculator(endpoint: string, input: Record<string, unknown>): Promise<unknown> {
+  const id = `transit_cycles_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const tmpDir = os.tmpdir();
+  const inputFile = path.join(tmpDir, `${id}_input.json`);
+  const outputFile = path.join(tmpDir, `${id}_output.json`);
+
+  await fs.writeFile(inputFile, JSON.stringify(input), "utf8");
+
+  await new Promise<void>((resolve, reject) => {
+    const cmd = `cd /d "${CALCULATOR_DIR}" && node calculator_wrapper.js "${endpoint}" "${inputFile}" "${outputFile}"`;
+    exec(cmd, { timeout: 180_000 }, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+  await fs.unlink(inputFile).catch(() => {});
+  const raw = await fs.readFile(outputFile, "utf8");
+  await fs.unlink(outputFile).catch(() => {});
+
+  return JSON.parse(raw);
 }
 
 export async function GET(request: NextRequest) {
+  const cookieStore = await cookies();
+  const username = cookieStore.get("astrolearn_session")?.value;
+
+  if (!username) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+
   try {
-    const subject = await resolveAstrologySubject();
-    const targetDate = resolveTargetDate(request);
-    const { endpoint, input } = getCalculatorRequest(subject, "transit-cycles");
-    const result = await callCalculatorEndpoint(endpoint, { ...input, targetDate });
-    return NextResponse.json(normalizeTransitCyclesPayload(result));
+    const result = await callCalculator(`/api/transit-cycles/${username}`, { targetDate: today });
+    return NextResponse.json(result);
   } catch (err) {
-    if (err instanceof AstrologySubjectError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
     console.error("[/api/astrolearn/transit-cycles]", err);
     return NextResponse.json({ error: "Failed to calculate transit cycles" }, { status: 500 });
   }

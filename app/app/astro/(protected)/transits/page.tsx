@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAstrolearnSubjectReload } from "@/lib/use-astrolearn-subject-reload";
-import { useAstrolearnSessionTime } from "@/lib/astrolearn-session-time";
-import { getHouseTransitWindow, parseNatalHouseNumber } from "@/lib/transit-cycle-passes";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,6 +37,17 @@ interface TransitCycle {
     exitDates: string[];
     durations: number[];
   };
+}
+
+interface SimpleEvent {
+  date?: string;
+  exactDate?: string;
+  transitPlanet?: string;
+  planet?: string;
+  aspect?: string;
+  natalPlanet?: string;
+  natal?: string;
+  orb?: number;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -90,29 +98,20 @@ function pColor(name: string) {
 }
 
 function parseDateParts(dateStr: string) {
-  const datePart = dateStr.trim().split(" ")[0].split("T")[0];
-  const [year, month, day] = datePart.split("-").map(Number);
+  const [year, month, day] = dateStr.split(" ")[0].split("-").map(Number);
   return new Date(year, month - 1, day);
 }
 
-function cycleNowDate(now: number) {
-  const d = new Date(now);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 function fmtMonthYear(dateStr: string) {
-  return parseDateParts(dateStr).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+  return parseDateParts(dateStr).toLocaleDateString("en", { month: "short", year: "numeric" });
 }
 
 function fmtShort(dateStr: string) {
-  return parseDateParts(dateStr).toLocaleDateString("en-GB", { month: "short", day: "numeric" });
+  return parseDateParts(dateStr).toLocaleDateString("en", { month: "short", day: "numeric" });
 }
 
 function fmtShortWithYear(dateStr: string) {
-  return parseDateParts(dateStr).toLocaleDateString("en-GB", {
+  return parseDateParts(dateStr).toLocaleDateString("en", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -174,111 +173,6 @@ function multiPassCount(cycle: TransitCycle) {
   );
 }
 
-function activePassMessage(periods: HitPeriod[], now: number, houseTransit: boolean) {
-  if (!periods.length) return null;
-
-  const entries = periods
-    .map((period, index) => ({ index, ts: dateToTs(period.bestHit.date) }))
-    .sort((a, b) => a.ts - b.ts);
-
-  const nowTs = dateToTs(cycleNowDate(now));
-  const first = entries[0];
-  const last = entries[entries.length - 1];
-
-  if (nowTs < first.ts) {
-    return `You are before the ${passLabel(first.index, houseTransit)}`;
-  }
-
-  if (nowTs >= last.ts) {
-    return `You are after the ${passLabel(last.index, houseTransit)}`;
-  }
-
-  for (let i = 0; i < entries.length - 1; i++) {
-    if (nowTs >= entries[i].ts && nowTs < entries[i + 1].ts) {
-      return `You are between the ${passLabel(entries[i].index, houseTransit)} and ${passLabel(
-        entries[i + 1].index,
-        houseTransit
-      )}`;
-    }
-  }
-
-  return null;
-}
-
-const TIMELINE_LABEL_WIDTH_PX = 84;
-const TIMELINE_TRACK_WIDTH_PX = 300;
-const TIMELINE_LABEL_ROW_HEIGHT = 34;
-
-type TimelineLabelPlacement = {
-  kind: "entry" | "today";
-  index?: number;
-  posPct: number;
-  lane: number;
-};
-
-function labelAnchorStyle(posPct: number): { left: string; transform: string } {
-  if (posPct <= 8) {
-    return { left: `${posPct}%`, transform: "translateX(0)" };
-  }
-  if (posPct >= 92) {
-    return { left: `${posPct}%`, transform: "translateX(-100%)" };
-  }
-  return { left: `${posPct}%`, transform: "translateX(-50%)" };
-}
-
-function labelExtentPct(posPct: number): [number, number] {
-  const widthPct = (TIMELINE_LABEL_WIDTH_PX / TIMELINE_TRACK_WIDTH_PX) * 100;
-  if (posPct <= 8) {
-    return [posPct, posPct + widthPct];
-  }
-  if (posPct >= 92) {
-    return [posPct - widthPct, posPct];
-  }
-  const halfWidthPct = widthPct / 2;
-  return [posPct - halfWidthPct, posPct + halfWidthPct];
-}
-
-function labelExtentsOverlap(posA: number, posB: number) {
-  const [startA, endA] = labelExtentPct(posA);
-  const [startB, endB] = labelExtentPct(posB);
-  return startA < endB && startB < endA;
-}
-
-function assignTimelineLabelLanes(
-  periods: HitPeriod[],
-  firstHit: string,
-  lastHit: string,
-  todayPosPct: number | null
-): TimelineLabelPlacement[] {
-  const labels: TimelineLabelPlacement[] = periods.map((period, index) => ({
-    kind: "entry",
-    index,
-    posPct: posInRange(period.bestHit.date, firstHit, lastHit) * 100,
-    lane: 0,
-  }));
-
-  if (todayPosPct !== null) {
-    labels.push({ kind: "today", posPct: todayPosPct, lane: 0 });
-  }
-
-  labels.sort((a, b) => a.posPct - b.posPct || (a.kind === "today" ? 1 : 0) - (b.kind === "today" ? 1 : 0));
-
-  const lanePositions: number[][] = [];
-
-  for (const label of labels) {
-    let lane = 0;
-    for (; lane < lanePositions.length; lane++) {
-      const overlaps = lanePositions[lane].some((pos) => labelExtentsOverlap(label.posPct, pos));
-      if (!overlaps) break;
-    }
-    if (lane === lanePositions.length) lanePositions.push([]);
-    lanePositions[lane].push(label.posPct);
-    label.lane = lane;
-  }
-
-  return labels;
-}
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function PlanetTag({ name }: { name: string }) {
@@ -325,24 +219,8 @@ function CycleTimeline({
   now: number;
   houseTransit?: boolean;
 }) {
-  const { firstHit, lastHit } = resolveCycleWindow(cycle);
-  const { periods, isInMiddleOfCycle } = cycle;
-  const todayPos = posInRange(cycleNowDate(now), firstHit, lastHit);
-  const todayTs = dateToTs(cycleNowDate(now));
-  const todayPosPct = todayPos * 100;
-  const timelineLabels = assignTimelineLabelLanes(
-    periods,
-    firstHit,
-    lastHit,
-    isInMiddleOfCycle ? todayPosPct : null
-  );
-  const entryLabels = timelineLabels.filter(
-    (label): label is TimelineLabelPlacement & { kind: "entry"; index: number } =>
-      label.kind === "entry" && label.index !== undefined
-  );
-  const todayLabel = timelineLabels.find((label) => label.kind === "today");
-  const labelLaneCount = timelineLabels.reduce((max, label) => Math.max(max, label.lane + 1), 0);
-  const labelAreaHeight = labelLaneCount * TIMELINE_LABEL_ROW_HEIGHT;
+  const { firstHit, lastHit, periods, isInMiddleOfCycle } = cycle;
+  const todayPos = posInRange(new Date(now).toISOString(), firstHit, lastHit);
 
   return (
     <div className="mt-4 select-none">
@@ -360,7 +238,7 @@ function CycleTimeline({
             className="absolute top-1/2 -translate-y-1/2 left-0 rounded-full"
             style={{
               height: "3px",
-              width: `${Math.min(100, todayPosPct)}%`,
+              width: `${Math.min(100, todayPos * 100)}%`,
               background:
                 "linear-gradient(90deg, rgba(149,133,204,0.4) 0%, rgba(149,133,204,0.85) 100%)",
             }}
@@ -370,7 +248,7 @@ function CycleTimeline({
         {/* Hit dots */}
         {periods.map((period, i) => {
           const pos = posInRange(period.bestHit.date, firstHit, lastHit);
-          const isPast = period.bestHit.date && todayTs > dateToTs(period.bestHit.date);
+          const isPast = period.bestHit.date && now > dateToTs(period.bestHit.date);
           return (
             <div
               key={i}
@@ -399,7 +277,7 @@ function CycleTimeline({
           <div
             className="absolute top-0 z-20 flex flex-col items-center"
             style={{
-              left: `${todayPosPct}%`,
+              left: `${Math.min(96, Math.max(4, todayPos * 100))}%`,
               transform: "translateX(-50%)",
             }}
           >
@@ -416,31 +294,31 @@ function CycleTimeline({
       </div>
 
       {/* Labels row */}
-      <div className="relative mt-2" style={{ height: `${labelAreaHeight}px` }}>
-        {entryLabels.map((label) => {
-          const period = periods[label.index];
-          const isPast = period.bestHit.date && todayTs > dateToTs(period.bestHit.date);
-          const anchor = labelAnchorStyle(label.posPct);
+      <div className="relative mt-1" style={{ height: "36px" }}>
+        {periods.map((period, i) => {
+          const pos = posInRange(period.bestHit.date, firstHit, lastHit);
+          const isPast = period.bestHit.date && now > dateToTs(period.bestHit.date);
+          // Clamp label to prevent overflow
+          const clampedPos = Math.min(90, Math.max(10, pos * 100));
           return (
             <div
-              key={label.index}
-              className="absolute text-center px-1.5 py-0.5 rounded-md"
+              key={i}
+              className="absolute text-center"
               style={{
-                ...anchor,
-                top: label.lane * TIMELINE_LABEL_ROW_HEIGHT,
-                width: `${TIMELINE_LABEL_WIDTH_PX}px`,
-                background: "rgba(19,15,39,0.72)",
+                left: `${clampedPos}%`,
+                transform: "translateX(-50%)",
+                width: "64px",
               }}
             >
               <div
-                className="text-[11px] font-semibold leading-tight whitespace-nowrap"
-                style={{ color: isPast ? "#C8B8F0" : "#8A7BC8" }}
+                className="text-[10px] font-semibold"
+                style={{ color: isPast ? "#9585CC" : "#6A5FAE" }}
               >
-                {passLabel(label.index, houseTransit)}
+                {passLabel(i, houseTransit)}
               </div>
               <div
-                className="text-[10px] leading-tight whitespace-nowrap"
-                style={{ color: isPast ? "#9A8FC0" : "#6A5FAE" }}
+                className="text-[9px] leading-tight"
+                style={{ color: isPast ? "#7A6FAE" : "#4A4070" }}
               >
                 {fmtMonthYear(period.bestHit.date)}
               </div>
@@ -448,17 +326,17 @@ function CycleTimeline({
           );
         })}
 
-        {todayLabel && (
+        {/* TODAY label */}
+        {isInMiddleOfCycle && (
           <div
-            className="absolute text-center px-1.5 py-0.5 rounded-md"
+            className="absolute text-center"
             style={{
-              ...labelAnchorStyle(todayLabel.posPct),
-              top: todayLabel.lane * TIMELINE_LABEL_ROW_HEIGHT,
-              width: `${TIMELINE_LABEL_WIDTH_PX}px`,
-              background: "rgba(240,234,255,0.12)",
+              left: `${Math.min(94, Math.max(6, todayPos * 100))}%`,
+              transform: "translateX(-50%)",
+              bottom: 0,
             }}
           >
-            <div className="text-[10px] font-bold leading-tight whitespace-nowrap" style={{ color: "#F0EAFF" }}>
+            <div className="text-[9px] font-bold" style={{ color: "#F0EAFF" }}>
               TODAY
             </div>
           </div>
@@ -473,6 +351,8 @@ function CycleCard({ cycle, now }: { cycle: TransitCycle; now: number }) {
     transitPlanet,
     natalPoint,
     aspect,
+    firstHit,
+    lastHit,
     isInMiddleOfCycle,
     status,
     hitsCount,
@@ -480,12 +360,9 @@ function CycleCard({ cycle, now }: { cycle: TransitCycle; now: number }) {
     daysToLastHit,
   } = cycle;
 
-  const { firstHit, lastHit } = resolveCycleWindow(cycle);
   const isHouse = isHouseTransit(cycle);
-  const hasDateRange = firstHit !== lastHit;
   const showTimeline = hasMultiPassTimeline(cycle);
   const passCount = multiPassCount(cycle);
-  const activeMessage = showTimeline ? activePassMessage(cycle.periods, now, isHouse) : null;
   const isSingle = !showTimeline;
   const isActive = isInMiddleOfCycle;
   const isUpcoming = !isInMiddleOfCycle && daysToFirstHit > 0;
@@ -565,13 +442,7 @@ function CycleCard({ cycle, now }: { cycle: TransitCycle; now: number }) {
             )}
           </>
         )}
-        {isHouse && hasDateRange && months > 0 && isSingle && (
-          <>
-            <span>·</span>
-            <span>{months} months</span>
-          </>
-        )}
-        {isSingle && isUpcoming && daysToFirstHit >= 0 && !hasDateRange && (
+        {isSingle && isUpcoming && daysToFirstHit >= 0 && (
           <>
             <span>·</span>
             <span>in {daysToFirstHit} days</span>
@@ -607,12 +478,52 @@ function CycleCard({ cycle, now }: { cycle: TransitCycle; now: number }) {
         </div>
       )}
 
-      {isActive && showTimeline && activeMessage && (
+      {isActive && showTimeline && (
         <div
           className="mt-3 text-[11px] px-3 py-1.5 rounded-xl"
           style={{ background: "rgba(149,133,204,0.08)", color: "#9585CC" }}
         >
-          {activeMessage}
+          {isHouse
+            ? `You are between the ${ordinalLabel(0)} and ${ordinalLabel(passCount - 1)} entry`
+            : `You are between the ${ordinalLabel(0)} and ${ordinalLabel(passCount - 1)} pass`}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Simple events list (secondary view) ─────────────────────────────────────
+
+function SimpleTransitRow({ ev }: { ev: SimpleEvent }) {
+  const date = (ev.exactDate || ev.date || "").slice(0, 10);
+  const tPlanet = ev.transitPlanet || ev.planet || "";
+  const aspect = ev.aspect || "";
+  const nPlanet = ev.natalPlanet || ev.natal || "";
+  const sym = ASPECT_SYMBOLS[aspect.toLowerCase()] ?? "";
+  const color = pColor(tPlanet);
+  return (
+    <div
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+      style={{ background: "rgba(19,15,39,0.6)", border: "1px solid rgba(46,38,84,0.4)" }}
+    >
+      <span
+        className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold flex-shrink-0"
+        style={{ background: `${color}1A`, color, border: `1px solid ${color}33` }}
+      >
+        {tPlanet.slice(0, 2)}
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm text-white font-medium">
+          <span style={{ color }}>{tPlanet}</span>
+          {sym && <span className="mx-1.5" style={{ color: "#8C7FAE" }}>{sym}</span>}
+          {!sym && aspect && <span className="mx-1.5 text-xs" style={{ color: "#8C7FAE" }}>{aspect}</span>}
+          {nPlanet && <span style={{ color: "#C0B0E0" }}>{nPlanet}</span>}
+        </div>
+        <div className="text-xs font-mono mt-0.5" style={{ color: "#4A4070" }}>{date}</div>
+      </div>
+      {ev.orb != null && (
+        <div className="text-xs flex-shrink-0 font-mono" style={{ color: "#4A4070" }}>
+          {Number(ev.orb).toFixed(1)}°
         </div>
       )}
     </div>
@@ -622,18 +533,7 @@ function CycleCard({ cycle, now }: { cycle: TransitCycle; now: number }) {
 // ─── Helpers for house transit display ───────────────────────────────────────
 
 function isHouseTransit(cycle: TransitCycle) {
-  if (cycle.aspect === "house_transit") return true;
-  const isNode =
-    cycle.transitPlanet === "North Node" || cycle.transitPlanet === "South Node";
-  return isNode && parseNatalHouseNumber(cycle.natalPoint) !== null;
-}
-
-function resolveCycleWindow(cycle: TransitCycle): { firstHit: string; lastHit: string } {
-  if (isHouseTransit(cycle)) {
-    const { start, end } = getHouseTransitWindow(cycle);
-    if (start && end) return { firstHit: start, lastHit: end };
-  }
-  return { firstHit: cycle.firstHit, lastHit: cycle.lastHit };
+  return cycle.aspect === "house_transit";
 }
 
 function houseLabel(natalPoint: string) {
@@ -648,27 +548,30 @@ function houseLabel(natalPoint: string) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+type MainView = "cycles" | "events";
 type CycleFilter = "active" | "upcoming" | "past";
 
 export default function TransitsPage() {
-  const reloadKey = useAstrolearnSubjectReload();
-  const { referenceInstantMs, referenceDate } = useAstrolearnSessionTime();
+  const [view, setView] = useState<MainView>("cycles");
   const [cycleFilter, setCycleFilter] = useState<CycleFilter>("active");
 
+  // Cycles state
   const [cycles, setCycles] = useState<TransitCycle[]>([]);
   const [cyclesLoading, setCyclesLoading] = useState(false);
   const [cyclesError, setCyclesError] = useState("");
   const [cyclesFetched, setCyclesFetched] = useState(false);
 
-  const now = referenceInstantMs;
+  // Events state
+  const [events, setEvents] = useState<SimpleEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState("");
+
+  const now = Date.now();
 
   // Load cycles on mount
   useEffect(() => {
     setCyclesLoading(true);
-    setCyclesError("");
-    setCycles([]);
-    setCyclesFetched(false);
-    fetch(`/api/astrolearn/transit-cycles?date=${referenceDate}`)
+    fetch("/api/astrolearn/transit-cycles")
       .then((r) => r.json())
       .then((d) => {
         if (d.error) {
@@ -681,8 +584,26 @@ export default function TransitsPage() {
       })
       .catch(() => setCyclesError("Failed to load transit cycles"))
       .finally(() => setCyclesLoading(false));
-  }, [reloadKey, referenceDate]);
+  }, []);
 
+  // Load events only when switching to events view
+  useEffect(() => {
+    if (view !== "events" || events.length > 0 || eventsLoading) return;
+    setEventsLoading(true);
+    fetch("/api/astrolearn/transits")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.error) setEventsError(d.error);
+        else {
+          const list: SimpleEvent[] = Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : [];
+          setEvents(list);
+        }
+      })
+      .catch(() => setEventsError("Failed to load transits"))
+      .finally(() => setEventsLoading(false));
+  }, [view, events.length, eventsLoading]);
+
+  // Filter cycles by bucket — strict criteria
   const activeCycles = cycles.filter((c) => c.isInMiddleOfCycle);
   const upcomingCycles = cycles.filter((c) => !c.isInMiddleOfCycle && c.daysToFirstHit > 0);
   const pastCycles = cycles.filter((c) => !c.isInMiddleOfCycle && c.daysToLastHit < 0);
@@ -691,6 +612,23 @@ export default function TransitsPage() {
     cycleFilter === "active" ? activeCycles :
     cycleFilter === "upcoming" ? upcomingCycles :
     pastCycles;
+
+  // Group events by month
+  function groupByMonth(evs: SimpleEvent[]) {
+    const g: Record<string, SimpleEvent[]> = {};
+    for (const ev of evs) {
+      const raw = ev.exactDate || ev.date || "";
+      const key = raw.slice(0, 7);
+      if (!g[key]) g[key] = [];
+      g[key].push(ev);
+    }
+    return g;
+  }
+
+  function monthLabel(key: string) {
+    const [y, m] = key.split("-");
+    return new Date(Number(y), Number(m) - 1, 1).toLocaleString("en", { month: "long", year: "numeric" });
+  }
 
   return (
     <div className="space-y-6">
@@ -702,7 +640,31 @@ export default function TransitsPage() {
         </p>
       </div>
 
-      {cyclesLoading && (
+      {/* View toggle */}
+      <div
+        className="flex rounded-xl p-1 gap-1"
+        style={{ background: "rgba(19,15,39,0.8)", border: "1px solid rgba(46,38,84,0.5)" }}
+      >
+        {(["cycles", "events"] as MainView[]).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            style={
+              view === v
+                ? { background: "rgba(149,133,204,0.2)", color: "#E0D8FF", border: "1px solid rgba(149,133,204,0.3)" }
+                : { color: "#4A4070" }
+            }
+          >
+            {v === "cycles" ? "Cycles" : "Events"}
+          </button>
+        ))}
+      </div>
+
+      {/* ── CYCLES VIEW ── */}
+      {view === "cycles" && (
+        <>
+          {cyclesLoading && (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <div
                 className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
@@ -777,6 +739,65 @@ export default function TransitsPage() {
               )}
             </>
           )}
+        </>
+      )}
+
+      {/* ── EVENTS VIEW ── */}
+      {view === "events" && (
+        <>
+          {eventsLoading && (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <div
+                className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+                style={{ borderColor: "#9585CC", borderTopColor: "transparent" }}
+              />
+              <p className="text-sm" style={{ color: "#8C7FAE" }}>
+                Loading transit events…
+              </p>
+            </div>
+          )}
+
+          {eventsError && !eventsLoading && (
+            <div
+              className="rounded-2xl p-5 text-center"
+              style={{ background: "rgba(224,96,96,0.08)", border: "1px solid rgba(224,96,96,0.2)" }}
+            >
+              <p className="text-sm" style={{ color: "#E06060" }}>{eventsError}</p>
+            </div>
+          )}
+
+          {!eventsLoading && !eventsError && (() => {
+            const groups = groupByMonth(events);
+            const months = Object.keys(groups).sort();
+            if (months.length === 0) {
+              return (
+                <p className="text-center py-12 text-sm" style={{ color: "#4A4070" }}>
+                  No events found.
+                </p>
+              );
+            }
+            return (
+              <div className="space-y-6">
+                {months.map((month) => (
+                  <div key={month}>
+                    <h2
+                      className="text-[10px] font-bold uppercase tracking-widest mb-3"
+                      style={{ color: "#4A4070" }}
+                    >
+                      {monthLabel(month)}
+                    </h2>
+                    <div className="space-y-2">
+                      {groups[month].map((ev, i) => (
+                        <SimpleTransitRow key={i} ev={ev} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </>
+      )}
     </div>
   );
 }
