@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { DateInput } from "@/components/ui/DateInput";
 import { searchCities, type GeoResult } from "@/lib/geocode";
 
 export interface HeroFormPayload {
@@ -109,11 +110,10 @@ export function HeroForm({ onSubmit, ctaLabel, privacyNotice, isSubmitting }: He
       <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm">
         {/* Row 1 — Date + time */}
         <div className="grid grid-cols-5 gap-2">
-          <input
-            type="date"
+          <DateInput
             aria-label="Date de naissance"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={setDate}
             required
             max={new Date().toISOString().split("T")[0]}
             min="1900-01-01"

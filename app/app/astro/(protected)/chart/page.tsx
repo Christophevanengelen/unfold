@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState, useCallback, type MutableRefObject } from "react";
 import Script from "next/script";
+import { useAstrolearnSubjectReload } from "@/lib/use-astrolearn-subject-reload";
+import { useAstrolearnSessionTime } from "@/lib/astrolearn-session-time";
+import { formatJumpEventDescription } from "@/lib/astrolearn-transit-jump";
+import { formatEuropeanDateInput } from "@/lib/european-date";
+import { personEventDateToIso, type PersonEvent } from "@/lib/person-events";
+import PersonEventSelector from "./PersonEventSelector";
 import TransitTimeControls, {
   addUtcDays,
   addUtcStep,
@@ -11,8 +17,8 @@ import TransitTimeControls, {
   getPrefetchDates,
   noonUtcMs,
   nowUtcMs,
+  setActiveTransitTimeZone,
   SPEED_OPTIONS,
-  todayUtcDate,
   type TransitSpeedPreset,
   type TransitStepUnit,
 } from "./TransitTimeControls";
@@ -20,6 +26,11 @@ import TransitTimeControls, {
 interface ChartData {
   planets: Record<string, number[]>;
   cusps: number[];
+  lots?: {
+    fortune?: { longitude?: number };
+    spirit?: { longitude?: number };
+    eros?: { longitude?: number };
+  };
 }
 
 interface PersonInfo {
@@ -27,13 +38,7 @@ interface PersonInfo {
   birthDate: string;
   birthTime: string;
   city: string;
-}
-
-interface ProfectionInfo {
-  annualHouse: number;
-  monthlyHouse: number;
-  annualSign: string;
-  startDate: string;
+  timezone?: string;
 }
 
 declare global {
@@ -90,6 +95,212 @@ function lonToSign(lon: number) {
   return { deg, name: SIGNS[idx] };
 }
 
+function formatPlanetLongitude(lon: number): string {
+  const normalized = ((lon % 360) + 360) % 360;
+  const sign = SIGNS[Math.floor(normalized / 30)];
+  const inSign = normalized % 30;
+  let degrees = Math.floor(inSign);
+  let minutes = Math.floor((inSign - degrees) * 60);
+  let seconds = Math.round(((inSign - degrees) * 60 - minutes) * 60);
+
+  if (seconds === 60) {
+    seconds = 0;
+    minutes += 1;
+  }
+  if (minutes === 60) {
+    minutes = 0;
+    degrees += 1;
+  }
+
+  const minuteText = String(minutes).padStart(2, "0");
+  if (seconds > 0) {
+    const secondText = String(seconds).padStart(2, "0");
+    return `${degrees}° ${minuteText}' ${secondText}" ${sign}`;
+  }
+  return `${degrees}° ${minuteText}' ${sign}`;
+}
+
+interface PlanetTooltipHandlers {
+  show: (label: string, clientX: number, clientY: number) => void;
+  hide: () => void;
+}
+
+function getNatalPlanetRadius(metrics: ChartMetrics): number {
+  const ringRadius = metrics.size / 2 - 50;
+  return ringRadius - ringRadius / 8 - 18 * 0.6;
+}
+
+const NATAL_PLANET_DOM_ALIASES: Record<string, string[]> = {
+  NNode: ["NNode", "North Node"],
+  SNode: ["SNode", "South Node"],
+};
+
+function findNatalPlanetGroup(svg: SVGSVGElement, planetName: string): SVGGElement | null {
+  const names = NATAL_PLANET_DOM_ALIASES[planetName] ?? [planetName];
+
+  for (const name of names) {
+    const selectors = [
+      `g[id$="-radix-planets-${name}"]`,
+      `g[id$="-radix-${name}"]`,
+      `g[id$="-${name}"]`,
+    ];
+
+    for (const selector of selectors) {
+      const match = svg.querySelector(selector);
+      if (match instanceof SVGGElement) {
+        return match;
+      }
+    }
+  }
+
+  return null;
+}
+
+function resolveNatalPlanetCenter(
+  svg: SVGSVGElement,
+  planetName: string,
+  lon: number,
+  metrics: ChartMetrics
+): { x: number; y: number } {
+  const radixGroup = findNatalPlanetGroup(svg, planetName);
+  if (radixGroup) {
+    try {
+      const bbox = radixGroup.getBBox();
+      if (bbox.width > 0 || bbox.height > 0) {
+        return {
+          x: bbox.x + bbox.width / 2,
+          y: bbox.y + bbox.height / 2,
+        };
+      }
+    } catch {
+      // Ignore missing layout boxes while the SVG is still rendering.
+    }
+  }
+
+  const radius = getNatalPlanetRadius(metrics);
+  const angle = lonToSVGAngle(lon, metrics.wheelCusp0);
+  return {
+    x: metrics.cx + radius * Math.cos(angle),
+    y: metrics.cy + radius * Math.sin(angle),
+  };
+}
+
+function bringNatalHoverLayerToFront(svg: SVGSVGElement) {
+  const layer = svg.querySelector("#natal-hover-layer");
+  if (layer) {
+    svg.appendChild(layer);
+  }
+}
+
+function attachPlanetHoverTarget(
+  group: SVGGElement,
+  lon: number,
+  handlers: PlanetTooltipHandlers,
+  center?: { x: number; y: number },
+  planetName?: string
+) {
+  group.setAttribute("data-lon", String(lon));
+  if (planetName) {
+    group.setAttribute("data-planet", planetName);
+  }
+
+  const svg = group.ownerSVGElement;
+  if (!svg) return;
+
+  let hit = group.querySelector('[data-role="hit"]') as SVGCircleElement | null;
+  if (!hit) {
+    hit = document.createElementNS(svg.namespaceURI, "circle") as SVGCircleElement;
+    hit.setAttribute("data-role", "hit");
+    hit.setAttribute("fill", "transparent");
+    hit.setAttribute("pointer-events", "all");
+    group.appendChild(hit);
+  }
+
+  hit.setAttribute("r", "22");
+
+  if (center) {
+    hit.setAttribute("cx", String(center.x));
+    hit.setAttribute("cy", String(center.y));
+  } else {
+    try {
+      const bbox = group.getBBox();
+      if (bbox.width > 0 || bbox.height > 0) {
+        hit.setAttribute("cx", String(bbox.x + bbox.width / 2));
+        hit.setAttribute("cy", String(bbox.y + bbox.height / 2));
+      }
+    } catch {
+      // Ignore missing layout boxes while the SVG is still rendering.
+    }
+  }
+
+  group.appendChild(hit);
+
+  if (hit.getAttribute("data-hover-bound") === "1") {
+    return;
+  }
+
+  hit.setAttribute("data-hover-bound", "1");
+  hit.style.cursor = "default";
+
+  const show = (event: MouseEvent) => {
+    const raw = group.getAttribute("data-lon");
+    if (!raw) return;
+    const label = formatPlanetLongitude(Number(raw));
+    const name = group.getAttribute("data-planet");
+    handlers.show(name ? `${name} · ${label}` : label, event.clientX, event.clientY);
+  };
+
+  hit.addEventListener("mouseenter", show);
+  hit.addEventListener("mousemove", show);
+  hit.addEventListener("mouseleave", () => handlers.hide());
+}
+
+function bindNatalPlanetHovers(
+  container: HTMLDivElement,
+  planets: Record<string, number[]>,
+  handlers: PlanetTooltipHandlers,
+  metrics: ChartMetrics
+) {
+  const svg = container.querySelector("svg");
+  if (!svg) return;
+
+  let layer = svg.querySelector("#natal-hover-layer") as SVGGElement | null;
+  if (!layer) {
+    layer = document.createElementNS(svg.namespaceURI, "g") as SVGGElement;
+    layer.setAttribute("id", "natal-hover-layer");
+    svg.appendChild(layer);
+  }
+
+  layer.replaceChildren();
+
+  for (const [name, values] of Object.entries(planets)) {
+    const lon = getPlanetLon(values);
+    const center = resolveNatalPlanetCenter(svg, name, lon, metrics);
+    const group = document.createElementNS(svg.namespaceURI, "g") as SVGGElement;
+    group.setAttribute("pointer-events", "all");
+    attachPlanetHoverTarget(group, lon, handlers, center, name);
+    layer.appendChild(group);
+  }
+
+  bringNatalHoverLayerToFront(svg);
+}
+
+function scheduleNatalPlanetHovers(
+  container: HTMLDivElement | null,
+  planets: Record<string, number[]> | undefined,
+  handlers: PlanetTooltipHandlers,
+  metrics: ChartMetrics | null
+) {
+  if (!container || !planets || !metrics) return;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (!container.isConnected) return;
+      bindNatalPlanetHovers(container, planets, handlers, metrics);
+    });
+  });
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Compute Whole Sign House cusps from ASC longitude (0–360). */
@@ -103,29 +314,6 @@ function lonToSVGAngle(lon: number, wheelCusp0: number): number {
   const shift = 360 - wheelCusp0;
   const deg = ((180 - (lon + shift)) % 360 + 360) % 360;
   return (deg * Math.PI) / 180;
-}
-
-/** Build an SVG donut-sector path for one house. */
-function houseSectorPath(
-  cusps: number[],
-  houseIdx: number, // 0-based
-  cx: number,
-  cy: number,
-  innerR: number,
-  outerR: number,
-  asc: number
-): string {
-  const lon1 = cusps[houseIdx];
-  const lon2 = cusps[(houseIdx + 1) % 12];
-  const a1 = lonToSVGAngle(lon1, asc);
-  const a2 = lonToSVGAngle(lon2, asc);
-  const span = ((lon2 - lon1) + 360) % 360;
-  const large = span > 180 ? 1 : 0;
-  const x1o = cx + outerR * Math.cos(a1), y1o = cy + outerR * Math.sin(a1);
-  const x2o = cx + outerR * Math.cos(a2), y2o = cy + outerR * Math.sin(a2);
-  const x1i = cx + innerR * Math.cos(a1), y1i = cy + innerR * Math.sin(a1);
-  const x2i = cx + innerR * Math.cos(a2), y2i = cy + innerR * Math.sin(a2);
-  return `M ${x1o} ${y1o} A ${outerR} ${outerR} 0 ${large} 0 ${x2o} ${y2o} L ${x2i} ${y2i} A ${innerR} ${innerR} 0 ${large} 1 ${x1i} ${y1i} Z`;
 }
 
 // ─── Transit overlay ─────────────────────────────────────────────────────────
@@ -144,10 +332,12 @@ interface ChartMetrics {
   baseR: number;
 }
 
+type RetroStatus = "R" | "SR" | "SD" | null;
+
 interface PlanetLayout {
   name: string;
   lon: number;
-  retro: boolean;
+  retroStatus: RetroStatus;
   angle: number;
   r: number;
   x: number;
@@ -160,6 +350,18 @@ function getPlanetLon(values: number[]): number {
 
 function getPlanetRetro(values: number[]): boolean {
   return values[1] === 1 || (values.length >= 3 && values[2] < 0);
+}
+
+const ALWAYS_RETROGRADE = new Set(["NNode", "SNode"]);
+
+function getRetroStatus(values: number[], name?: string): RetroStatus {
+  if (name && ALWAYS_RETROGRADE.has(name)) return null;
+  const apiFlag = values[1] === 1;
+  const speed = values.length >= 3 ? values[2] : 0;
+  if (apiFlag && speed < 0) return "R";
+  if (apiFlag && speed >= 0) return "SR";
+  if (!apiFlag && speed < 0) return "SD";
+  return null;
 }
 
 function normalizeTransitPlanets(
@@ -215,6 +417,56 @@ function lerpLon(from: number, to: number, t: number): number {
   return normalizeLon(from + delta * t);
 }
 
+function extrapolatePlanetsAcrossSegment(
+  anchorPlanets: Record<string, number[]>,
+  anchorInstant: number,
+  currentInstant: number
+): Record<string, number[]> {
+  const elapsedDays = (currentInstant - anchorInstant) / 86_400_000;
+  const moved: Record<string, number[]> = {};
+
+  for (const [name, values] of Object.entries(anchorPlanets)) {
+    const lon = getPlanetLon(values);
+    const speed = getPlanetSpeed(values);
+    const nextLon = normalizeLon(lon + speed * elapsedDays);
+    const retro = speed < 0 ? 1 : values[1] === 1 ? 1 : 0;
+    moved[name] = [nextLon, retro, speed];
+  }
+
+  return normalizeTransitPlanets(moved);
+}
+
+function blendPlanetsForSegmentInstant(
+  anchorPlanets: Record<string, number[]>,
+  anchorInstant: number,
+  targetPlanets: Record<string, number[]>,
+  targetInstant: number,
+  currentInstant: number
+): Record<string, number[]> {
+  const span = targetInstant - anchorInstant;
+  const progress = span === 0 ? 0 : (currentInstant - anchorInstant) / span;
+  const clamped = Math.min(1, Math.max(0, progress));
+  const blended: Record<string, number[]> = {};
+
+  for (const name of new Set([...Object.keys(anchorPlanets), ...Object.keys(targetPlanets)])) {
+    const from = anchorPlanets[name];
+    const to = targetPlanets[name];
+    if (!from || !to) continue;
+
+    const fromSpeed = getPlanetSpeed(from);
+    const toSpeed = getPlanetSpeed(to);
+    const speed = fromSpeed + (toSpeed - fromSpeed) * clamped;
+    const lon = lerpLon(getPlanetLon(from), getPlanetLon(to), clamped);
+    const retro = speed < 0 || (clamped < 0.5 ? getPlanetRetro(from) : getPlanetRetro(to));
+
+    blended[name] = [lon, retro ? 1 : 0, speed];
+  }
+
+  return normalizeTransitPlanets(blended);
+}
+
+
+
 function interpolateTransitPlanets(
   fromPlanets: Record<string, number[]>,
   toPlanets: Record<string, number[]>,
@@ -260,7 +512,7 @@ function computePlanetLayouts(
     .map(([name, data]) => ({
       name,
       lon: getPlanetLon(data),
-      retro: getPlanetRetro(data),
+      retroStatus: getRetroStatus(data, name),
     }))
     .sort((a, b) => a.lon - b.lon);
 
@@ -322,7 +574,8 @@ function updateTransitOverlay(
   planets: Record<string, number[]>,
   metrics: ChartMetrics,
   radiiRef: MutableRefObject<Map<string, number>>,
-  reposition = false
+  reposition = false,
+  tooltipHandlers?: PlanetTooltipHandlers
 ) {
   svg.style.overflow = "visible";
 
@@ -434,10 +687,26 @@ function updateTransitOverlay(
     }
 
     if (retroMark) {
+      const status = layout.retroStatus;
+      retroMark.textContent = status ?? "R";
       retroMark.setAttribute("x", String(layout.x));
       retroMark.setAttribute("y", String(layout.y + 10));
-      retroMark.setAttribute("fill", "#FF9B71");
-      retroMark.style.display = layout.retro ? "block" : "none";
+      retroMark.setAttribute("font-size", status && status !== "R" ? "8" : "10");
+      retroMark.setAttribute(
+        "fill",
+        status === "SD" ? "#7AB8FF" : status === "SR" ? "#FFD580" : "#FF9B71"
+      );
+      retroMark.style.display = status ? "block" : "none";
+    }
+
+    if (tooltipHandlers) {
+      attachPlanetHoverTarget(
+        planetGroup,
+        layout.lon,
+        tooltipHandlers,
+        { x: layout.x, y: layout.y },
+        layout.name
+      );
     }
   }
 }
@@ -447,7 +716,19 @@ function updateTransitOverlay(
 type ViewMode = "natal" | "transit";
 
 export default function BirthChartPage() {
+  const reloadKey = useAstrolearnSubjectReload();
+  const {
+    selectedEventId,
+    referenceInstantMs,
+    isLiveNow,
+    selectEvent,
+    goToLiveNow,
+    clearSelectedEvent,
+  } = useAstrolearnSessionTime();
+  const transitTimeZoneSyncedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const chartWrapperRef = useRef<HTMLDivElement>(null);
+  const planetTooltipRef = useRef<HTMLDivElement>(null);
   const transitCacheRef = useRef<Map<string, Record<string, number[]>>>(new Map());
   const transitAbortRef = useRef<AbortController | null>(null);
   const prefetchInFlightRef = useRef<Set<string>>(new Set());
@@ -455,7 +736,9 @@ export default function BirthChartPage() {
   const prefetchActiveRef = useRef(0);
   const transitRadiiRef = useRef<Map<string, number>>(new Map());
   const chartMetricsRef = useRef<ChartMetrics | null>(null);
+  const chartPlanetsRef = useRef<Record<string, number[]> | null>(null);
   const playbackRafRef = useRef<number | null>(null);
+  const lastKnownPlanetsRef = useRef<{ planets: Record<string, number[]>; instantMs: number } | null>(null);
   const playbackSegmentRef = useRef({
     anchorInstant: nowUtcMs(),
     targetInstant: nowUtcMs(),
@@ -466,58 +749,162 @@ export default function BirthChartPage() {
   const viewModeRef = useRef<ViewMode>("natal");
   const speedPresetRef = useRef<TransitSpeedPreset>("normal");
   const stepUnitRef = useRef<TransitStepUnit>("day");
+  const playbackDirectionRef = useRef<1 | -1>(1);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [person, setPerson] = useState<PersonInfo | null>(null);
   const [transitPlanets, setTransitPlanets] = useState<Record<string, number[]> | null>(null);
-  const [profection, setProfection] = useState<ProfectionInfo | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("natal");
-  const [transitDate, setTransitDate] = useState(todayUtcDate);
-  const [transitInstantMs, setTransitInstantMs] = useState(nowUtcMs);
+  const [transitDate, setTransitDate] = useState(() => dateKeyFromInstant(referenceInstantMs));
+  const [transitInstantMs, setTransitInstantMs] = useState(() => referenceInstantMs);
   const transitInstantRef = useRef(transitInstantMs);
   const [stepUnit, setStepUnit] = useState<TransitStepUnit>("day");
+  const [playbackDirection, setPlaybackDirection] = useState<1 | -1>(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speedPreset, setSpeedPreset] = useState<TransitSpeedPreset>("normal");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [transitLoading, setTransitLoading] = useState(false);
   const [transitError, setTransitError] = useState("");
+  const [positionJumpLoading, setPositionJumpLoading] = useState(false);
+  const [positionJumpNote, setPositionJumpNote] = useState("");
   const [scriptReady, setScriptReady] = useState(false);
+  const [personEvents, setPersonEvents] = useState<PersonEvent[]>([]);
 
-  // Fetch natal chart + profections in parallel on mount
+  const showPlanetTooltip = useCallback((label: string, clientX: number, clientY: number) => {
+    const tooltip = planetTooltipRef.current;
+    const wrapper = chartWrapperRef.current;
+    if (!tooltip || !wrapper) return;
+
+    const bounds = wrapper.getBoundingClientRect();
+    tooltip.textContent = label;
+    tooltip.style.left = `${clientX - bounds.left}px`;
+    tooltip.style.top = `${clientY - bounds.top}px`;
+    tooltip.style.opacity = "1";
+  }, []);
+
+  const hidePlanetTooltip = useCallback(() => {
+    const tooltip = planetTooltipRef.current;
+    if (!tooltip) return;
+    tooltip.style.opacity = "0";
+  }, []);
+
+  const planetTooltipHandlers = useRef<PlanetTooltipHandlers>({
+    show: () => {},
+    hide: () => {},
+  });
+
   useEffect(() => {
-    Promise.all([
-      fetch("/api/astrolearn/chart-data").then((r) => r.json()),
-      fetch("/api/astrolearn/profections").then((r) => r.json()),
-    ])
-      .then(([chartRes, profRes]) => {
-        if (chartRes.error) { setError(chartRes.error); return; }
+    planetTooltipHandlers.current = {
+      show: showPlanetTooltip,
+      hide: hidePlanetTooltip,
+    };
+  }, [showPlanetTooltip, hidePlanetTooltip]);
+
+  const handlePlaybackDirectionChange = useCallback((direction: 1 | -1) => {
+    playbackDirectionRef.current = direction;
+    setPlaybackDirection(direction);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    const startedAt = performance.now();
+    fetch("/api/astrolearn/chart-data")
+      .then((r) => r.json())
+      .then((chartRes) => {
+        if (chartRes.error) {
+          setError(chartRes.error);
+          return;
+        }
         setChartData(chartRes.data);
-        setPerson(chartRes.data?.person ?? null);
-
-        // Extract profection data
-        const pd = profRes.data || profRes;
-        const currentYear = pd?.currentYear ?? {};
-        const annualHouse: number = currentYear?.house ?? pd?.activatedHouse ?? 0;
-        const annualSign: string = currentYear?.sign ?? pd?.sign ?? "";
-        const startDateStr: string = currentYear?.startDate ?? "";
-
-        if (annualHouse) {
-          // Monthly profection: advances 1 house per month since last birthday
-          let monthlyHouse = annualHouse;
-          if (startDateStr) {
-            const start = new Date(startDateStr);
-            const now = new Date();
-            const monthsElapsed =
-              (now.getFullYear() - start.getFullYear()) * 12 +
-              (now.getMonth() - start.getMonth());
-            monthlyHouse = ((annualHouse - 1 + Math.max(0, monthsElapsed)) % 12) + 1;
-          }
-          setProfection({ annualHouse, monthlyHouse, annualSign, startDate: startDateStr });
+        const nextPerson = chartRes.data?.person ?? null;
+        setPerson(nextPerson);
+        if (nextPerson?.timezone) {
+          setActiveTransitTimeZone(nextPerson.timezone);
         }
       })
       .catch(() => setError("Failed to load chart data"))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => {
+        console.log("[AstroLearn birth chart] chart-data fetch", {
+          ms: Math.round(performance.now() - startedAt),
+        });
+        setLoading(false);
+      });
+  }, [reloadKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPersonEvents([]);
+
+    fetch("/api/astrolearn/events")
+      .then((response) => response.json())
+      .then((payload) => {
+        if (cancelled) return;
+        setPersonEvents(Array.isArray(payload.data) ? payload.data : []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPersonEvents([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
+
+  useEffect(() => {
+    if (!selectedEventId || personEvents.length === 0) return;
+
+    const selectedEvent = personEvents.find(
+      (event) => String(event.id_event) === selectedEventId
+    );
+    if (!selectedEvent) {
+      clearSelectedEvent();
+      return;
+    }
+
+    const eventIso = personEventDateToIso(selectedEvent.event_date);
+    if (!eventIso || clampTransitDate(eventIso) !== transitDate) {
+      clearSelectedEvent();
+    }
+  }, [clearSelectedEvent, personEvents, selectedEventId, transitDate]);
+
+  useEffect(() => {
+    if (!selectedEventId) return;
+
+    setViewMode("transit");
+    setTransitInstantMs(referenceInstantMs);
+    setTransitDate(dateKeyFromInstant(referenceInstantMs));
+  }, [referenceInstantMs, selectedEventId]);
+
+  useEffect(() => {
+    chartPlanetsRef.current = chartData?.planets ?? null;
+  }, [chartData]);
+
+  useEffect(() => {
+    transitTimeZoneSyncedRef.current = false;
+  }, [reloadKey]);
+
+  useEffect(() => {
+    if (!person?.timezone) {
+      return;
+    }
+
+    setActiveTransitTimeZone(person.timezone);
+
+    if (selectedEventId || !isLiveNow || transitTimeZoneSyncedRef.current) {
+      return;
+    }
+
+    transitTimeZoneSyncedRef.current = true;
+    const nowMs = nowUtcMs();
+    const nowDate = dateKeyFromInstant(nowMs);
+    transitInstantRef.current = nowMs;
+    setTransitInstantMs(nowMs);
+    setTransitDate(nowDate);
+    goToLiveNow();
+  }, [goToLiveNow, isLiveNow, person?.timezone, selectedEventId]);
 
   const applyPlanetsToOverlay = useCallback((
     planets: Record<string, number[]>,
@@ -530,7 +917,24 @@ export default function BirthChartPage() {
     const svg = container.querySelector("svg") as SVGSVGElement | null;
     if (!svg) return;
 
-    updateTransitOverlay(svg, planets, metrics, transitRadiiRef, reposition);
+    updateTransitOverlay(
+      svg,
+      planets,
+      metrics,
+      transitRadiiRef,
+      reposition,
+      planetTooltipHandlers.current
+    );
+
+    // Natal planets don't move — skip the expensive hover-target rebuild during playback.
+    if (!isPlayingRef.current) {
+      scheduleNatalPlanetHovers(
+        container,
+        chartPlanetsRef.current ?? undefined,
+        planetTooltipHandlers.current,
+        metrics
+      );
+    }
   }, []);
 
   const stopPlayback = useCallback(() => {
@@ -541,7 +945,11 @@ export default function BirthChartPage() {
     }
   }, []);
 
-  const prefetchTransitDate = useCallback((date: string, priorityDates: string[] = []) => {
+  const prefetchTransitDate = useCallback((
+    date: string,
+    priorityDates: string[] = [],
+    direction: 1 | -1 = playbackDirectionRef.current
+  ) => {
     const cache = transitCacheRef.current;
     const inFlight = prefetchInFlightRef.current;
     const preset = speedPresetRef.current;
@@ -549,7 +957,7 @@ export default function BirthChartPage() {
     const queued = new Set(prefetchQueueRef.current);
     const orderedDates = [
       ...priorityDates,
-      ...getPrefetchDates(date, unit, preset),
+      ...getPrefetchDates(date, unit, preset, direction),
     ];
 
     for (const target of orderedDates) {
@@ -662,8 +1070,9 @@ export default function BirthChartPage() {
 
   const startPlaybackSegment = useCallback((anchorInstant: number) => {
     const unit = stepUnitRef.current;
+    const direction = playbackDirectionRef.current;
     const preset = SPEED_OPTIONS.find((option) => option.id === speedPresetRef.current) ?? SPEED_OPTIONS[1];
-    const targetInstant = clampTransitInstant(addUtcStep(anchorInstant, unit, 1));
+    const targetInstant = clampTransitInstant(addUtcStep(anchorInstant, unit, direction));
     playbackSegmentRef.current = {
       anchorInstant,
       targetInstant,
@@ -672,7 +1081,10 @@ export default function BirthChartPage() {
     };
     const anchorDate = dateKeyFromInstant(anchorInstant);
     const targetDate = dateKeyFromInstant(targetInstant);
-    prefetchTransitDate(anchorDate, [targetDate]);
+    // Only prefetch anchor + target explicitly. getPrefetchDates queues step-sized lookahead.
+    // Intermediate daily dates between large steps (e.g. 365 dates for a year) would saturate
+    // the 3-slot concurrency for ~24 s and starve the next step's actual target.
+    prefetchTransitDate(anchorDate, [anchorDate, targetDate], direction);
   }, [prefetchTransitDate]);
 
   const runPlaybackFrame = useCallback(() => {
@@ -687,42 +1099,67 @@ export default function BirthChartPage() {
     const progress = Math.min(1, elapsed / segment.intervalMs);
     const currentInstant =
       segment.anchorInstant + (segment.targetInstant - segment.anchorInstant) * progress;
-    const currentDate = dateKeyFromInstant(currentInstant);
-    const dayPlanets = cache.get(currentDate);
+    const anchorDate = dateKeyFromInstant(segment.anchorInstant);
+    const targetDate = dateKeyFromInstant(segment.targetInstant);
+    const anchorPlanets = cache.get(anchorDate);
+    const targetPlanets = cache.get(targetDate);
+    const segmentSpansMultipleDays =
+      Math.abs(segment.targetInstant - segment.anchorInstant) > 86_400_000;
 
-    if (!dayPlanets) {
-      void loadTransitDate(currentDate, { silent: true, updateState: false });
-      const anchorDate = dateKeyFromInstant(segment.anchorInstant);
-      const anchorPlanets = cache.get(anchorDate);
-      if (anchorPlanets) {
+    if (!anchorPlanets) {
+      // Anchor still loading via prefetch — extrapolate from the last successfully rendered
+      // frame so the animation stays visually continuous instead of freezing.
+      const last = lastKnownPlanetsRef.current;
+      if (last) {
         applyPlanetsToOverlay(
-          extrapolatePlanetsForInstant(anchorPlanets, anchorDate, segment.anchorInstant)
+          extrapolatePlanetsAcrossSegment(last.planets, last.instantMs, currentInstant)
         );
       }
+      // Reset segment timer so the step plays at full duration once real data arrives.
+      playbackSegmentRef.current = { ...segment, startedAt: performance.now() };
       playbackRafRef.current = requestAnimationFrame(runPlaybackFrame);
       return;
     }
 
-    applyPlanetsToOverlay(
-      extrapolatePlanetsForInstant(dayPlanets, currentDate, currentInstant)
-    );
+    // Anchor is cached — compute this frame's positions from real data.
+    let displayPlanets: Record<string, number[]>;
+
+    if (segmentSpansMultipleDays) {
+      displayPlanets = targetPlanets
+        ? blendPlanetsForSegmentInstant(
+            anchorPlanets,
+            segment.anchorInstant,
+            targetPlanets,
+            segment.targetInstant,
+            currentInstant
+          )
+        : extrapolatePlanetsAcrossSegment(anchorPlanets, segment.anchorInstant, currentInstant);
+    } else {
+      const currentDate = dateKeyFromInstant(currentInstant);
+      const dayPlanets = cache.get(currentDate) ?? anchorPlanets;
+      displayPlanets = extrapolatePlanetsForInstant(dayPlanets, currentDate, currentInstant);
+    }
+
+    lastKnownPlanetsRef.current = { planets: displayPlanets, instantMs: currentInstant };
+    applyPlanetsToOverlay(displayPlanets);
 
     if (progress < 1) {
       playbackRafRef.current = requestAnimationFrame(runPlaybackFrame);
       return;
     }
 
-    const anchorDate = dateKeyFromInstant(segment.anchorInstant);
-    const targetDate = dateKeyFromInstant(segment.targetInstant);
     transitInstantRef.current = segment.targetInstant;
     setTransitInstantMs(segment.targetInstant);
     if (targetDate !== anchorDate) {
       setTransitDate(targetDate);
-      setTransitPlanets(dayPlanets);
+      if (targetPlanets) {
+        setTransitPlanets(targetPlanets);
+      }
     }
 
+    const direction = playbackDirectionRef.current;
     const nextTarget = clampTransitInstant(
-      addUtcStep(segment.targetInstant, stepUnitRef.current, 1)
+      addUtcStep(segment.targetInstant, stepUnitRef.current, direction)
     );
     if (nextTarget === segment.targetInstant) {
       isPlayingRef.current = false;
@@ -733,7 +1170,7 @@ export default function BirthChartPage() {
 
     startPlaybackSegment(segment.targetInstant);
     playbackRafRef.current = requestAnimationFrame(runPlaybackFrame);
-  }, [applyPlanetsToOverlay, loadTransitDate, startPlaybackSegment]);
+  }, [applyPlanetsToOverlay, startPlaybackSegment]);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -784,8 +1221,15 @@ export default function BirthChartPage() {
       const nowMs = nowUtcMs();
       setTransitInstantMs(nowMs);
       setTransitDate(dateKeyFromInstant(nowMs));
-      const svg = containerRef.current?.querySelector("svg") as SVGSVGElement | null;
+      const container = containerRef.current;
+      const svg = container?.querySelector("svg") as SVGSVGElement | null;
       removeTransitOverlay(svg);
+      scheduleNatalPlanetHovers(
+        container,
+        chartPlanetsRef.current ?? undefined,
+        planetTooltipHandlers.current,
+        chartMetricsRef.current
+      );
     }
     setViewMode(mode);
   }, [stopPlayback]);
@@ -793,27 +1237,144 @@ export default function BirthChartPage() {
   const handleGoToNow = useCallback(() => {
     setIsPlaying(false);
     stopPlayback();
+    handlePlaybackDirectionChange(1);
     transitRadiiRef.current = new Map();
+    goToLiveNow();
     const nowMs = nowUtcMs();
     const nowDate = dateKeyFromInstant(nowMs);
     setTransitInstantMs(nowMs);
     setTransitDate(nowDate);
     prefetchTransitDate(nowDate, [nowDate]);
-  }, [prefetchTransitDate, stopPlayback]);
+  }, [goToLiveNow, handlePlaybackDirectionChange, prefetchTransitDate, stopPlayback]);
+
+  const handlePersonEventSelect = useCallback((event: PersonEvent | null) => {
+    if (!event) {
+      handleGoToNow();
+      return;
+    }
+
+    const eventIso = personEventDateToIso(event.event_date);
+    if (!eventIso) return;
+
+    setIsPlaying(false);
+    stopPlayback();
+    transitRadiiRef.current = new Map();
+    setPositionJumpNote("");
+
+    const normalized = clampTransitDate(eventIso);
+    selectEvent(event);
+    setTransitDate(normalized);
+    setTransitInstantMs(noonUtcMs(normalized));
+    setViewMode("transit");
+    prefetchTransitDate(normalized, [normalized]);
+  }, [handleGoToNow, prefetchTransitDate, selectEvent, stopPlayback]);
 
   const handleTransitDateChange = useCallback((date: string) => {
     setIsPlaying(false);
     stopPlayback();
     transitRadiiRef.current = new Map();
+    setPositionJumpNote("");
     const normalized = clampTransitDate(date);
     setTransitDate(normalized);
     setTransitInstantMs(noonUtcMs(normalized));
   }, [stopPlayback]);
 
+  const handleTransitJump = useCallback(async (payload: {
+    degrees: Array<{
+      id: string;
+      planet: string;
+      degree: number;
+      minute: number;
+      sign: string;
+    }>;
+    aspects: Array<{
+      id: string;
+      planet: string;
+      aspect: string;
+      target: "transit" | "natal";
+      targetPlanet: string;
+    }>;
+    match: "all" | "any";
+    direction: "next" | "previous";
+  }) => {
+    setIsPlaying(false);
+    stopPlayback();
+    handlePlaybackDirectionChange(payload.direction === "previous" ? -1 : 1);
+    setPositionJumpLoading(true);
+    setPositionJumpNote("");
+    setTransitError("");
+
+    try {
+      const fromInstant = transitInstantRef.current;
+      const response = await fetch("/api/astrolearn/transit-jump", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          degrees: payload.degrees.map((row) => ({
+            planet: row.planet,
+            degree: row.degree,
+            minute: row.minute,
+            sign: row.sign,
+          })),
+          aspects: payload.aspects.map((row) => ({
+            planet: row.planet,
+            aspect: row.aspect,
+            target: row.target,
+            target_planet: row.targetPlanet,
+          })),
+          match: payload.match,
+          direction: payload.direction,
+          from_date: dateKeyFromInstant(fromInstant),
+          from_datetime: new Date(fromInstant).toISOString(),
+          timezone: person?.timezone,
+          natal_planets: chartData?.planets ?? {},
+          natal_lots: chartData?.lots,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error ?? "Failed to find the requested transit jump.");
+      }
+
+      const targetMs = Date.parse(result.data.datetime);
+      if (!Number.isFinite(targetMs)) {
+        throw new Error("The calculator returned an invalid date.");
+      }
+
+      const targetInstant = clampTransitInstant(targetMs);
+      const targetDate = dateKeyFromInstant(targetInstant);
+      transitInstantRef.current = targetInstant;
+      transitRadiiRef.current = new Map();
+      setTransitInstantMs(targetInstant);
+      setTransitDate(targetDate);
+      const fallbackNote =
+        payload.direction === "previous"
+          ? `Previous match on ${targetDate}.`
+          : `Next match on ${targetDate}.`;
+      setPositionJumpNote(
+        result.data.description
+          ? formatJumpEventDescription(result.data.description)
+          : fallbackNote
+      );
+      await loadTransitDate(targetDate);
+      prefetchTransitDate(targetDate, [targetDate], playbackDirectionRef.current);
+    } catch (err) {
+      setTransitError(
+        err instanceof Error ? err.message : "Failed to find the requested transit jump."
+      );
+    } finally {
+      setPositionJumpLoading(false);
+    }
+  }, [chartData?.planets, handlePlaybackDirectionChange, loadTransitDate, prefetchTransitDate, stopPlayback]);
+
   const handleStepUnitChange = useCallback((unit: TransitStepUnit) => {
     stepUnitRef.current = unit;
     setStepUnit(unit);
-  }, []);
+    prefetchQueueRef.current = [];
+    if (viewModeRef.current === "transit") {
+      prefetchTransitDate(dateKeyFromInstant(transitInstantRef.current), [], 1);
+    }
+  }, [prefetchTransitDate]);
 
   const handleTransitStep = useCallback((direction: 1 | -1) => {
     setIsPlaying(false);
@@ -828,21 +1389,23 @@ export default function BirthChartPage() {
     transitInstantRef.current = nextInstant;
     setTransitInstantMs(nextInstant);
 
-    if (unit === "day" || unit === "year") {
-      if (unit === "year") {
+    if (unit === "day" || unit === "week" || unit === "month" || unit === "year") {
+      if (unit === "year" || unit === "month") {
         transitRadiiRef.current = new Map();
       }
       setTransitDate(nextDate);
-      void loadTransitDate(nextDate);
-      prefetchTransitDate(nextDate, [nextDate]);
+      // loadTransitDate is triggered by the transitDate effect — no second call needed here.
+      // For manual steps, skip intermediate daily dates (those are only needed for
+      // smooth animation during playback); prefetch the next steps in direction instead.
+      prefetchTransitDate(nextDate, [], direction);
       return;
     }
 
     if (nextDate !== currentDate) {
       setTransitDate(nextDate);
-      prefetchTransitDate(nextDate, [nextDate]);
+      prefetchTransitDate(nextDate, [], direction);
     }
-  }, [loadTransitDate, prefetchTransitDate, stopPlayback]);
+  }, [prefetchTransitDate, stopPlayback]);
 
   const renderNatalChart = useCallback(() => {
     if (!chartData || !containerRef.current || !window.astrology) return;
@@ -876,42 +1439,21 @@ export default function BirthChartPage() {
 
     const svg = containerRef.current.querySelector("svg") as SVGSVGElement | null;
 
-    if (profection && svg) {
-      const pointsGroup = containerRef.current.querySelector('[id$="-radix-points"]');
-      const R = size / 2 - 50;
-      const innerR = R * 0.50;
-      const outerR = R * 0.88;
-
-      const overlayG = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      overlayG.setAttribute("id", "profection-overlay");
-
-      const layers: Array<{ house: number; color: string; opacity: string }> = [
-        { house: profection.annualHouse, color: "#9585CC", opacity: "0.22" },
-        { house: profection.monthlyHouse, color: "#7AE0D9", opacity: "0.16" },
-      ];
-
-      for (const { house, color, opacity } of layers) {
-        if (!house) continue;
-        const d = houseSectorPath(cusps, house - 1, cx, cy, innerR, outerR, cusps[0]);
-        const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        pathEl.setAttribute("d", d);
-        pathEl.setAttribute("fill", color);
-        pathEl.setAttribute("fill-opacity", opacity);
-        pathEl.setAttribute("pointer-events", "none");
-        overlayG.appendChild(pathEl);
-      }
-
-      if (pointsGroup) {
-        svg.insertBefore(overlayG, pointsGroup);
-      }
+    if (svg) {
+      scheduleNatalPlanetHovers(
+        containerRef.current,
+        chartData.planets,
+        planetTooltipHandlers.current,
+        metrics
+      );
     }
-  }, [chartData, profection]);
+  }, [chartData]);
 
   useEffect(() => {
     if (!scriptReady || !chartData) return;
     renderNatalChart();
     transitRadiiRef.current = new Map();
-  }, [scriptReady, chartData, profection, renderNatalChart]);
+  }, [scriptReady, chartData, renderNatalChart]);
 
   useEffect(() => {
     if (viewMode !== "transit" || !transitPlanets || isPlaying) return;
@@ -951,12 +1493,24 @@ export default function BirthChartPage() {
       <div className="space-y-5">
         {/* Person header */}
         {person && (
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-white">{person.name}</h2>
-            <p className="text-sm text-[#8C7FAE] mt-0.5">
-              {person.birthDate} {person.birthTime}
-              {person.city ? ` · ${person.city}` : ""}
-            </p>
+          <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-start">
+            <div className="text-center md:col-start-2">
+              <h2 className="text-2xl font-bold text-white">{person.name}</h2>
+              <p className="text-sm text-[#8C7FAE] mt-0.5">
+                {formatEuropeanDateInput(person.birthDate)} {person.birthTime}
+                {person.city ? ` · ${person.city}` : ""}
+              </p>
+            </div>
+            {personEvents.length > 0 ? (
+              <div className="w-full md:col-start-3 md:justify-self-end">
+                <PersonEventSelector
+                  events={personEvents}
+                  selectedEventId={selectedEventId}
+                  onSelect={handlePersonEventSelect}
+                  disabled={loading || transitLoading}
+                />
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -984,58 +1538,52 @@ export default function BirthChartPage() {
         </div>
 
         {/* Chart */}
-        <div className="flex justify-center relative">
+        <div ref={chartWrapperRef} className="flex justify-center relative">
           <div
             ref={containerRef}
             id="astro-chart-container"
             className="w-full max-w-[580px]"
             style={{ aspectRatio: "1/1" }}
           />
-          {transitLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#0F0C22]/60 rounded-xl">
-              <div className="w-6 h-6 rounded-full border-2 border-[#9585CC] border-t-transparent animate-spin" />
-            </div>
-          )}
+          <div
+            ref={planetTooltipRef}
+            className="pointer-events-none absolute z-50 rounded-lg border border-[#2E2654] bg-[#130F27]/95 px-2.5 py-1.5 text-xs font-semibold text-white shadow-lg"
+            style={{ opacity: 0, transform: "translate(-50%, calc(-100% - 8px))" }}
+          />
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-[#0F0C22]/60 rounded-xl transition-opacity duration-200"
+            style={{
+              opacity: transitLoading ? 1 : 0,
+              pointerEvents: transitLoading ? "auto" : "none",
+              transitionDelay: transitLoading ? "120ms" : "0ms",
+            }}
+          >
+            <div className="w-6 h-6 rounded-full border-2 border-[#9585CC] border-t-transparent animate-spin" />
+          </div>
         </div>
 
         {viewMode === "transit" ? (
           <TransitTimeControls
             instantMs={transitInstantMs}
+            timeZone={person?.timezone}
             stepUnit={stepUnit}
             playing={isPlaying}
+            playbackDirection={playbackDirection}
             speed={speedPreset}
             loading={transitLoading}
             error={transitError}
+            positionJumpLoading={positionJumpLoading}
+            positionJumpNote={positionJumpNote}
             onNow={handleGoToNow}
             onDateChange={handleTransitDateChange}
+            onPlaybackDirectionChange={handlePlaybackDirectionChange}
+            onTransitJump={handleTransitJump}
             onPlayingChange={setIsPlaying}
             onSpeedChange={setSpeedPreset}
             onStepUnitChange={handleStepUnitChange}
             onStep={handleTransitStep}
           />
         ) : null}
-
-        {/* Profection legend */}
-        {profection && (
-          <div
-            className="flex items-center justify-center gap-4 text-xs rounded-xl px-4 py-2.5 mx-auto"
-            style={{ background: "rgba(19,15,39,0.8)", border: "1px solid rgba(46,38,84,0.5)", maxWidth: 400 }}
-          >
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: "#9585CC" }} />
-              <span className="text-[#8C7FAE]">Year</span>
-              <span className="text-white font-semibold ml-0.5">H{profection.annualHouse}</span>
-              {(() => { const s = lonToSign((profection.annualHouse - 1) * 30); return <ZodiacIcon sign={s.name} size={12} />; })()}
-            </span>
-            <span className="text-[#2E2654]">·</span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: "#7AE0D9" }} />
-              <span className="text-[#8C7FAE]">Month</span>
-              <span className="text-white font-semibold ml-0.5">H{profection.monthlyHouse}</span>
-              {(() => { const s = lonToSign((profection.monthlyHouse - 1) * 30); return <ZodiacIcon sign={s.name} size={12} />; })()}
-            </span>
-          </div>
-        )}
 
         {/* Planet positions */}
         {chartData && (

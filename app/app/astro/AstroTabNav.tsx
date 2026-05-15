@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import AstroPeoplePicker from "./AstroPeoplePicker";
 
 const TABS = [
   { label: "Birth Chart", href: "/app/astro/chart" },
@@ -11,9 +13,27 @@ const TABS = [
   { label: "Eclipses", href: "/app/astro/eclipses" },
 ];
 
+type ViewSubject =
+  | { source: "astrolearn"; personId: string; label: string; username?: string }
+  | { source: "unfold"; deviceId: string; label: string };
+
 export default function AstroTabNav({ username }: { username: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [viewSubject, setViewSubject] = useState<ViewSubject | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/astrolearn/admin/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setIsAdmin(Boolean(data.isAdmin));
+        setViewSubject(data.viewSubject ?? null);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleLogout() {
     await fetch("/api/astrolearn/login", { method: "DELETE" });
@@ -21,6 +41,7 @@ export default function AstroTabNav({ username }: { username: string }) {
   }
 
   return (
+  <>
     <div
       className="sticky top-0 z-50"
       style={{
@@ -30,7 +51,6 @@ export default function AstroTabNav({ username }: { username: string }) {
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
       }}
     >
-      {/* Header row */}
       <div className="flex items-center justify-between px-4 pt-3 pb-1">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#9585CC] to-[#5B4A99]" />
@@ -47,7 +67,23 @@ export default function AstroTabNav({ username }: { username: string }) {
         </div>
       </div>
 
-      {/* Tab row */}
+      {isAdmin ? (
+        <div className="px-4 pb-2 flex items-center justify-between gap-3">
+          <p className="text-[10px] text-[#8C7FAE]">
+            {viewSubject
+              ? `Viewing: ${viewSubject.label} (${viewSubject.source === "astrolearn" ? "AstroLearn" : "Unfold"})`
+              : "Select a person to view their chart data"}
+          </p>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="text-[10px] font-semibold text-[#D8CFF0] hover:text-white transition-colors"
+          >
+            {viewSubject ? "Change person" : "People"}
+          </button>
+        </div>
+      ) : null}
+
       <div className="flex overflow-x-auto scrollbar-none">
         {TABS.map((tab) => {
           const active = pathname === tab.href || pathname.startsWith(tab.href + "/");
@@ -67,5 +103,12 @@ export default function AstroTabNav({ username }: { username: string }) {
         })}
       </div>
     </div>
+
+    <AstroPeoplePicker
+      open={pickerOpen}
+      onClose={() => setPickerOpen(false)}
+      onSelected={(subject) => setViewSubject(subject)}
+    />
+  </>
   );
 }

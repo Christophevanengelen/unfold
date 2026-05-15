@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Pool } from "pg";
 import bcrypt from "bcryptjs";
-
-const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  database: "astrolearn",
-  user: "postgres",
-  password: "L{3Agn/Ycr%[<~?XJ5zU",
-});
+import {
+  applyAstrolearnSessionCookies,
+  clearAstrolearnSessionCookies,
+  getAdminCredentials,
+  isAdminEmail,
+} from "@/lib/astrolearn-auth";
+import { getAstrolearnPool } from "@/lib/astrolearn-db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,12 +16,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Username and password required" }, { status: 400 });
     }
 
+    const trimmedUsername = username.trim();
+    const { email, password: adminPassword } = getAdminCredentials();
+    if (
+      trimmedUsername.toLowerCase() === email.toLowerCase() &&
+      password === adminPassword
+    ) {
+      const response = NextResponse.json({
+        ok: true,
+        username: email,
+        name: "Admin",
+        isAdmin: true,
+      });
+      applyAstrolearnSessionCookies(response, { sessionUser: email, isAdmin: true });
+      return response;
+    }
+
+    const pool = getAstrolearnPool();
     const { rows } = await pool.query(
       `SELECT username, login, first_name, last_name, userpassword
        FROM person
        WHERE (username = $1 OR login = $1)
        LIMIT 1`,
-      [username.trim()]
+      [trimmedUsername]
     );
 
     if (rows.length === 0) {
@@ -33,10 +48,12 @@ export async function POST(request: NextRequest) {
     const person = rows[0];
     const storedHash: string = person.userpassword ?? "";
 
-    // Support both plain text (legacy) and bcrypt ($2y$ PHP or $2b$ Node)
     let valid = false;
-    if (storedHash.startsWith("$2y$") || storedHash.startsWith("$2b$") || storedHash.startsWith("$2a$")) {
-      // Normalize PHP $2y$ → $2b$ for bcryptjs compatibility
+    if (
+      storedHash.startsWith("$2y$") ||
+      storedHash.startsWith("$2b$") ||
+      storedHash.startsWith("$2a$")
+    ) {
       const normalizedHash = storedHash.replace(/^\$2y\$/, "$2b$");
       valid = await bcrypt.compare(password, normalizedHash);
     } else {
@@ -47,16 +64,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // Use username field, fall back to login field
     const sessionUser = person.username || person.login;
-    const displayName = [person.first_name, person.last_name].filter(Boolean).join(" ") || sessionUser;
+    const displayName =
+      [person.first_name, person.last_name].filter(Boolean).join(" ") || sessionUser;
 
-    const response = NextResponse.json({ ok: true, username: sessionUser, name: displayName });
-    response.cookies.set("astrolearn_session", sessionUser, {
-      httpOnly: true,
-      path: "/",
-      maxAge: 86400, // 24h
-      sameSite: "lax",
+    const response = NextResponse.json({
+      ok: true,
+      username: sessionUser,
+      name: displayName,
+      isAdmin: isAdminEmail(sessionUser),
+    });
+    applyAstrolearnSessionCookies(response, {
+      sessionUser,
+      isAdmin: isAdminEmail(sessionUser),
     });
     return response;
   } catch (err) {
@@ -67,6 +87,6 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   const response = NextResponse.json({ ok: true });
-  response.cookies.set("astrolearn_session", "", { maxAge: 0, path: "/" });
+  clearAstrolearnSessionCookies(response);
   return response;
 }

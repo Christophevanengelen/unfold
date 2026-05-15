@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { callCalculatorEndpoint } from "@/lib/astrolearn-calculator";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -10,12 +11,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const url = `http://localhost:3001/api/transits-now${date ? `?date=${date}` : ""}`;
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      return NextResponse.json({ error: "Failed to calculate current transits" }, { status: 500 });
+    const endpoint = date ? `/api/transits-now?date=${date}` : "/api/transits-now";
+    const payload = await callCalculatorEndpoint(endpoint, date ? { date } : {});
+    if (payload.success === false) {
+      return NextResponse.json(
+        { error: typeof payload.error === "string" ? payload.error : "Failed to calculate current transits" },
+        { status: 500 }
+      );
     }
-    return NextResponse.json(await resp.json());
+
+    return NextResponse.json(payload);
   } catch (err) {
     console.error("[/api/astrolearn/transits-now]", err);
     return NextResponse.json({ error: "Failed to calculate current transits" }, { status: 500 });

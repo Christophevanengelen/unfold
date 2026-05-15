@@ -2,6 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
+import { DateInput } from "@/components/ui/DateInput";
+import {
+  parsePersonEventDate,
+  PERSON_EVENT_CATEGORIES,
+  toPersonEventCompactDate,
+  type PersonEvent,
+} from "@/lib/person-events";
+import { useAstrolearnSessionTime } from "@/lib/astrolearn-session-time";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,16 +40,8 @@ interface ChartYear {
   isBusy: boolean;     // peak year (big flower)
   isCulmination: boolean;
   isLB: boolean;
+  isPreLB: boolean;
   sign: string;        // dominant L2 sign
-}
-
-interface UserEvent {
-  id_event: string | number;
-  id_user: string;
-  event_date: string;
-  category: string;
-  subcategory: string;
-  detail: string;
 }
 
 // ── Sign base scores (angularity proxy — varies by sign quality) ─────────────
@@ -51,6 +51,11 @@ const SIGN_SCORE: Record<string, number> = {
   Leo: 150,   Virgo: 85,   Libra: 110,  Scorpio: 95,
   Sagittarius: 130, Capricorn: 75, Aquarius: 105, Pisces: 115,
 };
+
+function isPreLbPeriod(period: Pick<ZRPeriod, "markers">): boolean {
+  const markers = period.markers ?? [];
+  return markers.includes("pre-LB") || markers.includes("foreshadowing");
+}
 
 // ── Build yearly chart data from ZR periods (using L2 subPeriods) ─────────────
 
@@ -63,6 +68,7 @@ function buildChartData(l1Periods: ZRPeriod[]): ChartYear[] {
     isPeakPeriod: boolean;
     isCulmination: boolean;
     isLoosingOfBond: boolean;
+    isPreLB: boolean;
     score: number;
   }> = [];
 
@@ -82,6 +88,7 @@ function buildChartData(l1Periods: ZRPeriod[]): ChartYear[] {
         isPeakPeriod: !!sub.isPeakPeriod,
         isCulmination: !!sub.isCulmination,
         isLoosingOfBond: !!sub.isLoosingOfBond,
+        isPreLB: isPreLbPeriod(sub),
         score: Math.round(base * multiplier),
       });
     }
@@ -108,6 +115,7 @@ function buildChartData(l1Periods: ZRPeriod[]): ChartYear[] {
     let isBusy = false;
     let isCulmination = false;
     let isLB = false;
+    let isPreLB = false;
 
     for (const l2 of l2Periods) {
       // Months this L2 period overlaps with this year
@@ -125,7 +133,17 @@ function buildChartData(l1Periods: ZRPeriod[]): ChartYear[] {
         isBusy = isBusy || l2.isPeakPeriod;
         isCulmination = isCulmination || l2.isCulmination;
         isLB = isLB || l2.isLoosingOfBond;
+        isPreLB = isPreLB || l2.isPreLB;
       }
+    }
+
+    const yearMid = new Date(yr, 6, 1);
+    const activeL2 = l2Periods.find((l2) => l2.startDate <= yearMid && l2.endDate >= yearMid);
+    if (activeL2) {
+      isBusy = activeL2.isPeakPeriod;
+      isCulmination = activeL2.isCulmination;
+      isLB = activeL2.isLoosingOfBond;
+      isPreLB = activeL2.isPreLB;
     }
 
     chartYears.push({
@@ -135,6 +153,7 @@ function buildChartData(l1Periods: ZRPeriod[]): ChartYear[] {
       isBusy,
       isCulmination,
       isLB,
+      isPreLB,
       sign: dominantSign,
     });
   }
@@ -153,46 +172,64 @@ const COLORS = {
   eventOwnStroke: "rgba(245,134,203,0.2)",
 };
 
-const EVENT_CATEGORIES = ["WORK", "RELATIONSHIP", "BE CAREFUL"] as const;
-
-// ── Event date helpers ────────────────────────────────────────────────────────
-
-function parseEventDate(raw: string): Date | null {
-  const s = raw.replace(/-/g, "");
-  if (s.length !== 8) return null;
-  return new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8));
-}
-
-function toYYYYMMDD(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ZRPage() {
+  const { referenceInstantMs, referenceDate, selectedEventId } = useAstrolearnSessionTime();
   const [zrData, setZrData] = useState<ZRData | null>(null);
   const [chartYears, setChartYears] = useState<ChartYear[]>([]);
-  const [events, setEvents] = useState<UserEvent[]>([]);
+  const [events, setEvents] = useState<PersonEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ event_date: "", category: "WORK", subcategory: "", detail: "" });
   const [saving, setSaving] = useState(false);
+  const [eventsEnabled, setEventsEnabled] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const chartRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, startX: 0, scrollLeft: 0 });
   const [viewportTick, setViewportTick] = useState(0);
 
+  useEffect(() => {
+    function handleSubjectChanged() {
+      setReloadKey((value) => value + 1);
+    }
+
+    window.addEventListener("astrolearn:subject-changed", handleSubjectChanged);
+    return () => window.removeEventListener("astrolearn:subject-changed", handleSubjectChanged);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/astrolearn/admin/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) {
+          setEventsEnabled(true);
+          return;
+        }
+        const subject = data.viewSubject as { source?: string } | null;
+        setEventsEnabled(!subject || subject.source === "astrolearn");
+      })
+      .catch(() => setEventsEnabled(true));
+  }, [reloadKey]);
+
   // ── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    Promise.all([
-      fetch("/api/astrolearn/zr").then((r) => r.json()),
-      fetch("/api/astrolearn/events").then((r) => r.json()),
-    ])
-      .then(([zr, ev]) => {
+    setLoading(true);
+    setError("");
+
+    const requests = [fetch(`/api/astrolearn/zr?date=${referenceDate}`).then((r) => r.json())];
+    if (eventsEnabled) {
+      requests.push(fetch("/api/astrolearn/events").then((r) => r.json()));
+    }
+
+    Promise.all(requests)
+      .then((results) => {
+        const zr = results[0];
+        const ev = eventsEnabled ? results[1] : { data: [] };
         if (zr.error) { setError(zr.error); return; }
         const zrRaw = zr.data ?? zr;
         setZrData(zrRaw);
@@ -204,7 +241,7 @@ export default function ZRPage() {
       })
       .catch(() => setError("Failed to load ZR data"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [eventsEnabled, reloadKey, referenceDate]);
 
   // ── Draw D3 chart ──────────────────────────────────────────────────────────
   const drawChart = useCallback(() => {
@@ -213,8 +250,8 @@ export default function ZRPage() {
 
     // Stack events
     const cleanedEvents = events
-      .map((ev) => { const x = parseEventDate(ev.event_date); return x ? { ...ev, x } : null; })
-      .filter(Boolean) as (UserEvent & { x: Date })[];
+      .map((ev) => { const x = parsePersonEventDate(ev.event_date); return x ? { ...ev, x } : null; })
+      .filter(Boolean) as (PersonEvent & { x: Date })[];
 
     const yearCount: Record<number, number> = {};
     const stackedEvents = cleanedEvents.map((ev) => {
@@ -320,7 +357,12 @@ export default function ZRPage() {
     eventG.append("circle")
       .attr("r", 10).attr("cy", (d) => 55 * d.stackLevel)
       .attr("fill", COLORS.eventOwn)
-      .attr("stroke", COLORS.eventOwnStroke).attr("stroke-width", 14)
+      .attr("stroke", (d) =>
+        selectedEventId && String(d.id_event) === selectedEventId ? "#F4C430" : COLORS.eventOwnStroke
+      )
+      .attr("stroke-width", (d) =>
+        selectedEventId && String(d.id_event) === selectedEventId ? 6 : 14
+      )
       .style("cursor", "pointer")
       .on("click", function (_evt, d) {
         if (confirm(`Delete "${d.subcategory || d.detail}"?`)) {
@@ -350,13 +392,20 @@ export default function ZRPage() {
       .attr("transform", (d) => `translate(${x(d.x)},${y(d.y)})`)
       .style("cursor", "pointer");
 
-    // Flower — Loosing of Bond periods only
+    // Flower — LB and pre-LB periods
     pointG.filter((d) => d.isLB)
       .append("image")
       .attr("x", -50).attr("y", -54)
       .attr("width", 100).attr("height", 108)
       .attr("href", "/images/flower-cycle-plain-white.svg")
       .attr("opacity", 0.22);
+
+    pointG.filter((d) => d.isPreLB && !d.isLB)
+      .append("image")
+      .attr("x", -40).attr("y", -43)
+      .attr("width", 80).attr("height", 86)
+      .attr("href", "/images/flower-cycle-plain-white.svg")
+      .attr("opacity", 0.18);
 
     // Circle
     pointG.append("circle")
@@ -404,7 +453,7 @@ export default function ZRPage() {
 
     ttG.append("text").attr("x", 10).attr("y", 30)
       .attr("fill", "#8C7FAE").attr("font-size", "10px")
-      .text((d) => d.isBusy ? "Peak period" : d.isCulmination ? "Culmination" : d.isLB ? "Loosing of Bond" : "—");
+      .text((d) => d.isBusy ? "Peak period" : d.isCulmination ? "Culmination" : d.isLB ? "Loosing of Bond" : d.isPreLB ? "Pre-LB" : "—");
 
     pointG
       .on("mouseover", function () {
@@ -419,14 +468,14 @@ export default function ZRPage() {
 
     // Scroll to today
     if (containerRef.current) {
-      const today = new Date();
-      const todayX = x(today) + margin.left;
+      const focusDate = new Date(referenceInstantMs);
+      const focusX = x(focusDate) + margin.left;
       const viewW = containerRef.current.clientWidth;
-      if (todayX > viewW / 2) {
-        containerRef.current.scrollLeft = todayX - viewW / 2;
+      if (focusX > viewW / 2) {
+        containerRef.current.scrollLeft = focusX - viewW / 2;
       }
     }
-  }, [chartYears, events, viewportTick]);
+  }, [chartYears, events, referenceInstantMs, selectedEventId, viewportTick]);
 
   useEffect(() => {
     if (!loading && chartYears.length > 0) drawChart();
@@ -476,7 +525,7 @@ export default function ZRPage() {
       const res = await fetch("/api/astrolearn/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, event_date: toYYYYMMDD(form.event_date) }),
+        body: JSON.stringify({ ...form, event_date: toPersonEventCompactDate(form.event_date) }),
       });
       const json = await res.json();
       if (json.data) {
@@ -526,7 +575,13 @@ export default function ZRPage() {
               {releasing.startingSign && ` · starting ${releasing.startingSign}`}
             </p>
           )}
+          {!eventsEnabled ? (
+            <p className="text-xs text-[#8C7FAE] mt-2">
+              Life events are available for AstroLearn users only.
+            </p>
+          ) : null}
         </div>
+        {eventsEnabled ? (
         <button
           onClick={() => setShowModal(true)}
           className="flex-shrink-0 text-xs font-bold px-4 py-2 rounded-full"
@@ -534,6 +589,7 @@ export default function ZRPage() {
         >
           + Add Event
           </button>
+        ) : null}
         </div>
 
         {(L1 || L2) && (
@@ -592,10 +648,10 @@ export default function ZRPage() {
             <form onSubmit={handleAddEvent} className="space-y-4">
               <div>
                 <label className="block text-xs text-[#8C7FAE] mb-1 font-semibold uppercase tracking-wide">Date</label>
-                <input
-                  type="date" required
+                <DateInput
+                  required
                   value={form.event_date}
-                  onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
+                  onChange={(value) => setForm((f) => ({ ...f, event_date: value }))}
                   className="w-full rounded-xl px-4 py-3 text-sm text-white outline-none"
                   style={{ background: "rgba(46,38,84,0.4)", border: "1px solid rgba(149,133,204,0.3)" }}
                 />
@@ -603,7 +659,7 @@ export default function ZRPage() {
               <div>
                 <label className="block text-xs text-[#8C7FAE] mb-2 font-semibold uppercase tracking-wide">Category</label>
                 <div className="flex gap-2">
-                  {EVENT_CATEGORIES.map((cat) => (
+                  {PERSON_EVENT_CATEGORIES.map((cat) => (
                     <button key={cat} type="button"
                       onClick={() => setForm((f) => ({ ...f, category: cat }))}
                       className="flex-1 text-xs py-2.5 rounded-xl font-bold transition-all"

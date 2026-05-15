@@ -1,17 +1,9 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
-
-// Direct connection to the astrolearn DB — credentials confirmed working
-const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  database: "astrolearn",
-  user: "postgres",
-  password: "L{3Agn/Ycr%[<~?XJ5zU",
-});
+import { getAstrolearnPool } from "@/lib/astrolearn-db";
 
 export async function GET() {
   try {
+    const pool = getAstrolearnPool();
     const { rows } = await pool.query(`
       SELECT
         id_person,
@@ -28,13 +20,11 @@ export async function GET() {
     `);
 
     const celebs = rows.map((r) => {
-      // birthdate is a JS Date from pg driver → format as YYYY-MM-DD
       const date =
         r.birthdate instanceof Date
           ? r.birthdate.toISOString().split("T")[0]
           : String(r.birthdate ?? "").split("T")[0];
 
-      // birthtime is "HH:mm:ss" → keep HH:mm
       const time = String(r.birthtime ?? "").slice(0, 5);
 
       return {

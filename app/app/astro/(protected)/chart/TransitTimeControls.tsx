@@ -1,18 +1,71 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import {
+  CalendarMonth,
   ChevronDoubleLeft,
   ChevronDoubleRight,
   Clock,
+  Close,
   Pause,
   Play,
+  Plus,
 } from "flowbite-react-icons/outline";
+import {
+  EU_DATE_PLACEHOLDER,
+  formatEuropeanDateDraft,
+  formatEuropeanDateInput,
+  parseEuropeanDateInput,
+} from "@/lib/european-date";
+import {
+  createAspectCriterion,
+  createDegreeCriterion,
+  JUMP_ASPECT_NAMES,
+  JUMP_MOVING_PLANET_NAMES,
+  JUMP_NATAL_POINT_NAMES,
+  JUMP_SIGN_NAMES,
+  type AspectJumpCriterion,
+  type DegreeJumpCriterion,
+  type JumpMatchMode,
+} from "@/lib/astrolearn-transit-jump";
+import {
+  addTransitCalendarDays,
+  addTransitStep,
+  clampTransitDate,
+  clampTransitInstant,
+  dateKeyFromInstant,
+  formatTransitDateKey,
+  formatTransitInstantLabel,
+  getDefaultTransitTimeZone,
+  noonOnDateMs,
+  nowUtcMs,
+  resolveTransitTimeZone,
+  setActiveTransitTimeZone,
+  todayTransitDate,
+  TRANSIT_MAX_DATE,
+  TRANSIT_MIN_DATE,
+  type TransitStepUnit,
+} from "@/lib/astrolearn-transit-time";
 
 export type TransitSpeedPreset = "slow" | "normal" | "fast" | "rapid";
-export type TransitStepUnit = "second" | "minute" | "day" | "year";
-
-export const TRANSIT_MIN_DATE = "1800-01-01";
-export const TRANSIT_MAX_DATE = "2200-12-31";
+export type { TransitStepUnit };
+export {
+  addTransitCalendarDays as addUtcDays,
+  addTransitStep as addUtcStep,
+  clampTransitDate,
+  clampTransitInstant,
+  dateKeyFromInstant,
+  formatTransitDateKey,
+  formatTransitInstantLabel,
+  getDefaultTransitTimeZone,
+  noonOnDateMs as noonUtcMs,
+  nowUtcMs,
+  resolveTransitTimeZone,
+  setActiveTransitTimeZone,
+  todayTransitDate as todayUtcDate,
+  TRANSIT_MAX_DATE,
+  TRANSIT_MIN_DATE,
+};
 
 export const SPEED_OPTIONS: Array<{
   id: TransitSpeedPreset;
@@ -29,8 +82,16 @@ export const STEP_UNIT_OPTIONS: Array<{ id: TransitStepUnit; label: string }> = 
   { id: "second", label: "Second" },
   { id: "minute", label: "Minute" },
   { id: "day", label: "Day" },
+  { id: "week", label: "Week" },
+  { id: "month", label: "Month" },
   { id: "year", label: "Year" },
 ];
+
+export type JumpMode = "date" | "degrees" | "aspects";
+
+export const JUMP_MOVING_PLANET_OPTIONS = [...JUMP_MOVING_PLANET_NAMES];
+export const JUMP_NATAL_POINT_OPTIONS = [...JUMP_NATAL_POINT_NAMES];
+export const JUMP_SIGN_OPTIONS = [...JUMP_SIGN_NAMES];
 
 export function getLookaheadDays(preset: TransitSpeedPreset): number {
   const option = SPEED_OPTIONS.find((entry) => entry.id === preset) ?? SPEED_OPTIONS[1];
@@ -43,11 +104,27 @@ function getFutureStepDates(
   stepUnit: TransitStepUnit,
   count: number
 ): string[] {
-  let instant = noonUtcMs(fromDate);
+  let instant = noonOnDateMs(fromDate);
   const dates: string[] = [];
 
   for (let step = 1; step <= count; step += 1) {
-    instant = addUtcStep(instant, stepUnit, 1);
+    instant = addTransitStep(instant, stepUnit, 1);
+    dates.push(clampTransitDate(dateKeyFromInstant(instant)));
+  }
+
+  return dates;
+}
+
+function getPastStepDates(
+  fromDate: string,
+  stepUnit: TransitStepUnit,
+  count: number
+): string[] {
+  let instant = noonOnDateMs(fromDate);
+  const dates: string[] = [];
+
+  for (let step = 1; step <= count; step += 1) {
+    instant = addTransitStep(instant, stepUnit, -1);
     dates.push(clampTransitDate(dateKeyFromInstant(instant)));
   }
 
@@ -57,12 +134,45 @@ function getFutureStepDates(
 export function getPrefetchDates(
   fromDate: string,
   stepUnit: TransitStepUnit,
-  preset: TransitSpeedPreset
+  preset: TransitSpeedPreset,
+  direction: 1 | -1 = 1
 ): string[] {
   const lookaheadDays = getLookaheadDays(preset);
 
+  if (direction < 0) {
+    if (stepUnit === "year") {
+      return getPastStepDates(fromDate, stepUnit, Math.max(4, Math.ceil(lookaheadDays / 365)));
+    }
+
+    if (stepUnit === "month") {
+      return getPastStepDates(fromDate, stepUnit, Math.max(4, Math.ceil(lookaheadDays / 30)));
+    }
+
+    if (stepUnit === "week") {
+      return getPastStepDates(fromDate, stepUnit, Math.max(4, Math.ceil(lookaheadDays / 7)));
+    }
+
+    if (stepUnit === "day") {
+      return getPastStepDates(fromDate, stepUnit, lookaheadDays);
+    }
+
+    const stepsToCover = Math.max(
+      lookaheadDays,
+      Math.ceil(lookaheadDays * 86_400_000 / getStepMs(stepUnit))
+    );
+    return getPastStepDates(fromDate, stepUnit, Math.min(180, stepsToCover));
+  }
+
   if (stepUnit === "year") {
     return getFutureStepDates(fromDate, stepUnit, Math.max(4, Math.ceil(lookaheadDays / 365)));
+  }
+
+  if (stepUnit === "month") {
+    return getFutureStepDates(fromDate, stepUnit, Math.max(4, Math.ceil(lookaheadDays / 30)));
+  }
+
+  if (stepUnit === "week") {
+    return getFutureStepDates(fromDate, stepUnit, Math.max(4, Math.ceil(lookaheadDays / 7)));
   }
 
   if (stepUnit === "day") {
@@ -81,119 +191,45 @@ function getStepMs(unit: TransitStepUnit): number {
       return 60_000;
     case "day":
       return 86_400_000;
+    case "week":
+      return 7 * 86_400_000;
+    case "month":
+      return 30 * 86_400_000;
     case "year":
       return 365 * 86_400_000;
   }
 }
 
-export function nowUtcMs(): number {
-  return Date.now();
+export function formatTransitDateInput(isoDate: string): string {
+  return formatEuropeanDateInput(isoDate);
 }
 
-export function todayUtcDate(): string {
-  return formatUtcDate(new Date(nowUtcMs()));
+export function parseTransitDateInput(raw: string): string | null {
+  return parseEuropeanDateInput(raw);
 }
 
-export function formatUtcDate(date: Date): string {
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
-}
-
-export function dateKeyFromInstant(instantMs: number): string {
-  return formatUtcDate(new Date(instantMs));
-}
-
-export function noonUtcMs(dateStr: string): number {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return Date.UTC(year, month - 1, day, 12, 0, 0, 0);
-}
-
-export function clampTransitDate(dateStr: string): string {
-  if (dateStr < TRANSIT_MIN_DATE) return TRANSIT_MIN_DATE;
-  if (dateStr > TRANSIT_MAX_DATE) return TRANSIT_MAX_DATE;
-  return dateStr;
-}
-
-export function clampTransitInstant(instantMs: number): number {
-  const minMs = noonUtcMs(TRANSIT_MIN_DATE);
-  const maxMs = Date.UTC(2200, 11, 31, 23, 59, 59, 999);
-  return Math.min(maxMs, Math.max(minMs, instantMs));
-}
-
-export function addUtcDays(dateStr: string, days: number): string {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() + days);
-  return formatUtcDate(date);
-}
-
-export function addUtcStep(
-  instantMs: number,
-  unit: TransitStepUnit,
-  direction: 1 | -1
-): number {
-  const date = new Date(instantMs);
-
-  switch (unit) {
-    case "second":
-      return instantMs + direction * 1000;
-    case "minute":
-      return instantMs + direction * 60_000;
-    case "day":
-      return Date.UTC(
-        date.getUTCFullYear(),
-        date.getUTCMonth(),
-        date.getUTCDate() + direction,
-        date.getUTCHours(),
-        date.getUTCMinutes(),
-        date.getUTCSeconds(),
-        date.getUTCMilliseconds()
-      );
-    case "year":
-      return Date.UTC(
-        date.getUTCFullYear() + direction,
-        date.getUTCMonth(),
-        date.getUTCDate(),
-        date.getUTCHours(),
-        date.getUTCMinutes(),
-        date.getUTCSeconds(),
-        date.getUTCMilliseconds()
-      );
-  }
-}
-
-export function formatTransitInstantLabel(instantMs: number, stepUnit: TransitStepUnit): string {
-  const date = new Date(instantMs);
-  const options: Intl.DateTimeFormatOptions =
-    stepUnit === "second" || stepUnit === "minute"
-      ? {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          timeZone: "UTC",
-          hour12: false,
-        }
-      : {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          timeZone: "UTC",
-        };
-
-  return new Intl.DateTimeFormat("en-GB", options).format(date);
-}
+export type PositionJumpDirection = "next" | "previous";
 
 interface TransitTimeControlsProps {
   instantMs: number;
+  timeZone?: string;
   stepUnit: TransitStepUnit;
   playing: boolean;
+  playbackDirection: 1 | -1;
   speed: TransitSpeedPreset;
   loading: boolean;
   error?: string;
+  positionJumpLoading?: boolean;
+  positionJumpNote?: string;
   onNow: () => void;
   onDateChange: (date: string) => void;
+  onPlaybackDirectionChange: (direction: 1 | -1) => void;
+  onTransitJump: (payload: {
+    degrees: DegreeJumpCriterion[];
+    aspects: AspectJumpCriterion[];
+    match: JumpMatchMode;
+    direction: PositionJumpDirection;
+  }) => void;
   onPlayingChange: (playing: boolean) => void;
   onSpeedChange: (speed: TransitSpeedPreset) => void;
   onStepUnitChange: (unit: TransitStepUnit) => void;
@@ -202,26 +238,134 @@ interface TransitTimeControlsProps {
 
 export default function TransitTimeControls({
   instantMs,
+  timeZone,
   stepUnit,
   playing,
+  playbackDirection,
   speed,
   loading,
   error,
+  positionJumpLoading = false,
+  positionJumpNote,
   onNow,
   onDateChange,
+  onPlaybackDirectionChange,
+  onTransitJump,
   onPlayingChange,
   onSpeedChange,
   onStepUnitChange,
   onStep,
 }: TransitTimeControlsProps) {
-  const date = dateKeyFromInstant(instantMs);
+  const transitTz = resolveTransitTimeZone(timeZone);
+  const date = dateKeyFromInstant(instantMs, transitTz);
   const atMin = date <= TRANSIT_MIN_DATE;
   const atMax = date >= TRANSIT_MAX_DATE;
   const stepLabel = STEP_UNIT_OPTIONS.find((option) => option.id === stepUnit)?.label ?? "Day";
+  const [jumpMode, setJumpMode] = useState<JumpMode>("date");
+  const [jumpMatch, setJumpMatch] = useState<JumpMatchMode>("all");
+  const [degreeCriteria, setDegreeCriteria] = useState<DegreeJumpCriterion[]>([
+    createDegreeCriterion(),
+  ]);
+  const [aspectCriteria, setAspectCriteria] = useState<AspectJumpCriterion[]>([
+    createAspectCriterion(),
+  ]);
+  const [dateDraft, setDateDraft] = useState(() => formatTransitDateInput(date));
+  const [dateDraftFocused, setDateDraftFocused] = useState(false);
+  const calendarInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!dateDraftFocused) {
+      setDateDraft(formatTransitDateInput(date));
+    }
+  }, [date, dateDraftFocused]);
+
+  const commitDateDraft = () => {
+    const parsed = parseTransitDateInput(dateDraft);
+    if (parsed) {
+      const normalized = clampTransitDate(parsed);
+      onDateChange(normalized);
+      setDateDraft(formatTransitDateInput(normalized));
+      return;
+    }
+    setDateDraft(formatTransitDateInput(date));
+  };
+
+  const applyCalendarDate = (isoDate: string) => {
+    const normalized = clampTransitDate(isoDate);
+    onDateChange(normalized);
+    setDateDraft(formatTransitDateInput(normalized));
+    setDateDraftFocused(false);
+  };
+
+  const openCalendarPicker = () => {
+    const input = calendarInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+    input.click();
+  };
+
+  const submitTransitJump = (direction: PositionJumpDirection) => {
+    onPlaybackDirectionChange(direction === "previous" ? -1 : 1);
+    onTransitJump({
+      degrees: jumpMode === "degrees" ? degreeCriteria : [],
+      aspects: jumpMode === "aspects" ? aspectCriteria : [],
+      match: jumpMatch,
+      direction,
+    });
+  };
+
+  const handleStepBack = () => {
+    onPlaybackDirectionChange(-1);
+    if (jumpMode === "degrees" || jumpMode === "aspects") {
+      submitTransitJump("previous");
+      return;
+    }
+    onStep(-1);
+  };
+
+  const handleStepForward = () => {
+    onPlaybackDirectionChange(1);
+    if (jumpMode === "degrees" || jumpMode === "aspects") {
+      submitTransitJump("next");
+      return;
+    }
+    onStep(1);
+  };
+
+  const updateDegreeCriterion = (
+    id: string,
+    patch: Partial<DegreeJumpCriterion>
+  ) => {
+    setDegreeCriteria((rows) =>
+      rows.map((row) => (row.id === id ? { ...row, ...patch } : row))
+    );
+  };
+
+  const updateAspectCriterion = (
+    id: string,
+    patch: Partial<AspectJumpCriterion>
+  ) => {
+    setAspectCriteria((rows) =>
+      rows.map((row) => (row.id === id ? { ...row, ...patch } : row))
+    );
+  };
+
+  const fieldClass =
+    "rounded-lg border border-[#2E2654] bg-[#0F0C22] px-2 py-1.5 text-xs font-medium text-white outline-none";
+
+  const stepButtonClass = (active: boolean) =>
+    `inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+      active
+        ? "border-[#9585CC] bg-[#9585CC]/25 text-white"
+        : "border-[#2E2654] text-[#9585CC] hover:bg-[#2E2654]/40"
+    }`;
 
   return (
     <div
-      className="mx-auto w-full max-w-[580px] rounded-2xl px-4 py-3 space-y-3"
+      className="mx-auto w-full max-w-[720px] rounded-2xl px-4 py-3 space-y-3"
       style={{
         background: "rgba(19,15,39,0.9)",
         border: "1px solid rgba(46,38,84,0.8)",
@@ -232,7 +376,7 @@ export default function TransitTimeControls({
           Transit time
         </p>
         <p className="text-sm font-semibold text-white tabular-nums">
-          {formatTransitInstantLabel(instantMs, stepUnit)}
+          {formatTransitInstantLabel(instantMs, stepUnit, transitTz)}
           {loading ? <span className="ml-2 text-[#8C7FAE] font-normal">Updating…</span> : null}
         </p>
       </div>
@@ -240,10 +384,15 @@ export default function TransitTimeControls({
       <div className="flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"
-          onClick={() => onStep(-1)}
-          disabled={atMin}
-          aria-label={`Step back one ${stepLabel.toLowerCase()}`}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#2E2654] text-[#9585CC] transition-colors hover:bg-[#2E2654]/40 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={handleStepBack}
+          disabled={jumpMode === "date" && atMin}
+          aria-label={
+            jumpMode === "degrees" || jumpMode === "aspects"
+              ? "Find previous match for jump criteria"
+              : `Step back one ${stepLabel.toLowerCase()}`
+          }
+          aria-pressed={playbackDirection === -1}
+          className={stepButtonClass(playbackDirection === -1)}
         >
           <ChevronDoubleLeft className="h-4 w-4" />
         </button>
@@ -260,10 +409,15 @@ export default function TransitTimeControls({
 
         <button
           type="button"
-          onClick={() => onStep(1)}
-          disabled={atMax}
-          aria-label={`Step forward one ${stepLabel.toLowerCase()}`}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#2E2654] text-[#9585CC] transition-colors hover:bg-[#2E2654]/40 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={handleStepForward}
+          disabled={jumpMode === "date" && atMax}
+          aria-label={
+            jumpMode === "degrees" || jumpMode === "aspects"
+              ? "Find next match for jump criteria"
+              : `Step forward one ${stepLabel.toLowerCase()}`
+          }
+          aria-pressed={playbackDirection === 1}
+          className={stepButtonClass(playbackDirection === 1)}
         >
           <ChevronDoubleRight className="h-4 w-4" />
         </button>
@@ -307,20 +461,263 @@ export default function TransitTimeControls({
           </select>
         </label>
 
-        <label className="flex items-center gap-2 text-xs text-[#8C7FAE]">
-          <span className="font-semibold uppercase tracking-wider">Jump</span>
-          <input
-            type="date"
-            value={date}
-            min={TRANSIT_MIN_DATE}
-            max={TRANSIT_MAX_DATE}
-            onChange={(event) => onDateChange(clampTransitDate(event.target.value))}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#8C7FAE]">Jump</span>
+          <select
+            value={jumpMode}
+            onChange={(event) => setJumpMode(event.target.value as JumpMode)}
             className="rounded-lg border border-[#2E2654] bg-[#0F0C22] px-2 py-1.5 text-xs font-medium text-white outline-none"
-          />
-        </label>
+          >
+            <option value="date">Date</option>
+            <option value="degrees">Degrees</option>
+            <option value="aspects">Aspects</option>
+          </select>
+
+          {jumpMode === "date" ? (
+            <div className="flex items-stretch overflow-hidden rounded-lg border border-[#2E2654] bg-[#0F0C22]">
+              <input
+                type="text"
+                value={dateDraft}
+                onChange={(event) => setDateDraft(formatEuropeanDateDraft(event.target.value))}
+                onFocus={() => setDateDraftFocused(true)}
+                onBlur={() => {
+                  setDateDraftFocused(false);
+                  commitDateDraft();
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.currentTarget.blur();
+                  }
+                }}
+                inputMode="numeric"
+                placeholder={EU_DATE_PLACEHOLDER}
+                aria-label="Jump to date"
+                className="w-[9.5rem] border-0 bg-transparent px-2 py-1.5 text-xs font-medium text-white outline-none"
+              />
+              <button
+                type="button"
+                onClick={openCalendarPicker}
+                aria-label="Choose date from calendar"
+                className="inline-flex items-center border-l border-[#2E2654] px-2 text-[#9585CC] transition-colors hover:bg-[#2E2654]/40"
+              >
+                <CalendarMonth className="h-3.5 w-3.5" />
+              </button>
+              <input
+                ref={calendarInputRef}
+                type="date"
+                value={date}
+                min={TRANSIT_MIN_DATE}
+                max={TRANSIT_MAX_DATE}
+                onChange={(event) => applyCalendarDate(event.target.value)}
+                tabIndex={-1}
+                aria-hidden
+                className="sr-only"
+              />
+            </div>
+          ) : jumpMode === "degrees" || jumpMode === "aspects" ? (
+            <>
+              <select
+                value={jumpMatch}
+                onChange={(event) => setJumpMatch(event.target.value as JumpMatchMode)}
+                className={fieldClass}
+                aria-label="Jump match mode"
+              >
+                <option value="all">All criteria</option>
+                <option value="any">Any criterion</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => submitTransitJump("previous")}
+                disabled={positionJumpLoading}
+                className="rounded-lg border border-[#9585CC] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#9585CC]/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {positionJumpLoading ? "Finding…" : "Find previous"}
+              </button>
+              <button
+                type="button"
+                onClick={() => submitTransitJump("next")}
+                disabled={positionJumpLoading}
+                className="rounded-lg border border-[#9585CC] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#9585CC]/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {positionJumpLoading ? "Finding…" : "Find next"}
+              </button>
+            </>
+          ) : null}
+        </div>
+
+        {jumpMode === "degrees" ? (
+          <div className="space-y-2">
+            {degreeCriteria.map((row) => (
+              <div key={row.id} className="flex flex-wrap items-center gap-2">
+                <select
+                  value={row.planet}
+                  onChange={(event) =>
+                    updateDegreeCriterion(row.id, { planet: event.target.value })
+                  }
+                  className={fieldClass}
+                >
+                  {JUMP_MOVING_PLANET_OPTIONS.map((planet) => (
+                    <option key={planet} value={planet}>
+                      {planet}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min={0}
+                  max={29}
+                  value={row.degree}
+                  onChange={(event) =>
+                    updateDegreeCriterion(row.id, {
+                      degree: Number(event.target.value),
+                    })
+                  }
+                  className={`w-16 ${fieldClass}`}
+                  aria-label="Degree in sign"
+                />
+                <span className="text-xs font-semibold text-[#8C7FAE]">°</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={row.minute}
+                  onChange={(event) =>
+                    updateDegreeCriterion(row.id, {
+                      minute: Number(event.target.value),
+                    })
+                  }
+                  className={`w-16 ${fieldClass}`}
+                  aria-label="Minute in sign"
+                />
+                <span className="text-xs font-semibold text-[#8C7FAE]">'</span>
+                <select
+                  value={row.sign}
+                  onChange={(event) =>
+                    updateDegreeCriterion(row.id, { sign: event.target.value })
+                  }
+                  className={fieldClass}
+                >
+                  {JUMP_SIGN_OPTIONS.map((sign) => (
+                    <option key={sign} value={sign}>
+                      {sign}
+                    </option>
+                  ))}
+                </select>
+                {degreeCriteria.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDegreeCriteria((rows) => rows.filter((entry) => entry.id !== row.id))
+                    }
+                    aria-label="Remove degree criterion"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#2E2654] text-[#8C7FAE] transition-colors hover:bg-[#2E2654]/40"
+                  >
+                    <Close className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                setDegreeCriteria((rows) => [...rows, createDegreeCriterion()])
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#2E2654] px-3 py-1.5 text-xs font-semibold text-[#9585CC] transition-colors hover:bg-[#2E2654]/40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add degree
+            </button>
+          </div>
+        ) : null}
+
+        {jumpMode === "aspects" ? (
+          <div className="space-y-2">
+            {aspectCriteria.map((row) => (
+              <div key={row.id} className="flex flex-wrap items-center gap-2">
+                <select
+                  value={row.planet}
+                  onChange={(event) =>
+                    updateAspectCriterion(row.id, { planet: event.target.value })
+                  }
+                  className={fieldClass}
+                >
+                  {JUMP_MOVING_PLANET_OPTIONS.map((planet) => (
+                    <option key={planet} value={planet}>
+                      {planet}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={row.aspect}
+                  onChange={(event) =>
+                    updateAspectCriterion(row.id, { aspect: event.target.value })
+                  }
+                  className={fieldClass}
+                >
+                  {JUMP_ASPECT_NAMES.map((aspect) => (
+                    <option key={aspect} value={aspect}>
+                      {aspect}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={row.target}
+                  onChange={(event) =>
+                    updateAspectCriterion(row.id, {
+                      target: event.target.value as AspectJumpCriterion["target"],
+                    })
+                  }
+                  className={fieldClass}
+                >
+                  <option value="transit">Transit</option>
+                  <option value="natal">Natal</option>
+                </select>
+                <select
+                  value={row.targetPlanet}
+                  onChange={(event) =>
+                    updateAspectCriterion(row.id, { targetPlanet: event.target.value })
+                  }
+                  className={fieldClass}
+                >
+                  {(row.target === "natal"
+                    ? JUMP_NATAL_POINT_OPTIONS
+                    : JUMP_MOVING_PLANET_OPTIONS
+                  ).map((planet) => (
+                    <option key={planet} value={planet}>
+                      {planet}
+                    </option>
+                  ))}
+                </select>
+                {aspectCriteria.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAspectCriteria((rows) => rows.filter((entry) => entry.id !== row.id))
+                    }
+                    aria-label="Remove aspect criterion"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#2E2654] text-[#8C7FAE] transition-colors hover:bg-[#2E2654]/40"
+                  >
+                    <Close className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                setAspectCriteria((rows) => [...rows, createAspectCriterion()])
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#2E2654] px-3 py-1.5 text-xs font-semibold text-[#9585CC] transition-colors hover:bg-[#2E2654]/40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add aspect
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {error ? <p className="text-center text-xs text-red-400">{error}</p> : null}
+      {positionJumpNote ? <p className="text-center text-xs text-[#8C7FAE]">{positionJumpNote}</p> : null}
     </div>
   );
 }
