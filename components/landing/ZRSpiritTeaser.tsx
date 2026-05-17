@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { CelebPicker } from "@/components/landing/CelebPicker";
+import { DateInput } from "@/components/ui/DateInput";
 
 interface Props {
   eyebrow: string;
@@ -263,10 +264,9 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label style={labelStyle}>Birth date</label>
-                      <input
-                        type="date"
+                      <DateInput
                         value={date}
-                        onChange={(e) => { setDate(e.target.value); setFormError(""); }}
+                        onChange={(value) => { setDate(value); setFormError(""); }}
                         style={inputStyle}
                       />
                     </div>

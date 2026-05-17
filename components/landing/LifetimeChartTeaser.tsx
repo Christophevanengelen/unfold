@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { CelebPicker } from "@/components/landing/CelebPicker";
+import { DateInput } from "@/components/ui/DateInput";
 
 interface Props {
   chartCta: string;
@@ -344,10 +345,9 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                   {/* Date */}
                   <div>
                     <label style={labelStyle}>Birth date</label>
-                    <input
-                      type="date"
+                    <DateInput
                       value={date}
-                      onChange={(e) => { setDate(e.target.value); setFormError(""); }}
+                      onChange={(value) => { setDate(value); setFormError(""); }}
                       style={inputStyle}
                     />
                   </div>
