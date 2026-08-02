@@ -152,7 +152,7 @@ test("1. Free user: timeline page loads past the onboarding gate", async ({
   expect(page.url()).not.toContain("/onboarding");
 
   // Timeline container renders (not redirected away)
-  expect(page.url()).toContain("/demo/timeline");
+  expect(page.url()).toContain("/app/timeline");
 
   // Server gate: unauthenticated free tier
   const me = await page.request.get(`${BASE}/api/billing/me`);

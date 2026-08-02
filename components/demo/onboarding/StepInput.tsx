@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { ChevronLeft } from "flowbite-react-icons/outline";
+import { DateInput } from "@/components/ui/DateInput";
 import { searchCities, type GeoResult } from "@/lib/geocode";
 
 export interface OnboardingFormData {
@@ -30,7 +32,7 @@ const fields = [
   {
     key: "dob" as const,
     label: "Date of birth",
-    type: "date",
+    type: "date" as const,
     placeholder: "",
   },
   {
@@ -38,13 +40,14 @@ const fields = [
     label: "Time of birth",
     type: "time",
     placeholder: "HH:MM",
-    helper: "Precision sharpens your signal.",
+    helper: "Optional — sharpens your signal.",
   },
   {
     key: "placeOfBirth" as const,
     label: "Place of birth",
     type: "text",
     placeholder: "City, Country",
+    helper: "Optional — for local timing.",
   },
 ];
 
@@ -64,11 +67,9 @@ export function StepInput({
   const placeRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isValid =
-    formData.nickname.trim() !== "" &&
-    formData.dob !== "" &&
-    formData.timeOfBirth !== "" &&
-    formData.placeOfBirth.trim() !== "";
+  // Only nickname + date of birth are required — time and place sharpen the signal but are optional.
+  // StepPreparing defaults: time → "12:00", place → "Brussels" when not provided.
+  const isValid = formData.nickname.trim() !== "" && formData.dob !== "";
 
   const handleChange = (key: keyof OnboardingFormData, value: string) => {
     if (key === "placeOfBirth") {
@@ -126,25 +127,13 @@ export function StepInput({
       <motion.button
         type="button"
         onClick={onBack}
-        className="self-start text-xs font-medium"
+        className="inline-flex items-center gap-1 self-start text-xs font-medium"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="inline -mt-0.5 mr-1"
-        >
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
+        <ChevronLeft size={14} />
         Back
       </motion.button>
 
@@ -156,7 +145,7 @@ export function StepInput({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        Your timing is unique.
+        Your signal starts here.
       </motion.h1>
       <motion.p
         className="mt-1.5 text-sm"
@@ -165,7 +154,7 @@ export function StepInput({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        Configure yours.
+        Tell us when and where you were born.
       </motion.p>
 
       {/* Form fields */}
@@ -198,18 +187,27 @@ export function StepInput({
                     </span>
                   )}
                 </span>
-                <input
-                  type={field.type}
-                  value={formData[field.key] as string}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  onFocus={() => {
-                    if (isPlaceField && suggestions.length > 0) setShowSuggestions(true);
-                  }}
-                  placeholder={field.placeholder}
-                  autoComplete={isPlaceField ? "off" : undefined}
-                  className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
-                  style={{ color: "var(--accent-purple)" }}
-                />
+                {field.type === "date" ? (
+                  <DateInput
+                    value={formData.dob}
+                    onChange={(value) => handleChange("dob", value)}
+                    className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
+                    style={{ color: "var(--accent-purple)" }}
+                  />
+                ) : (
+                  <input
+                    type={field.type}
+                    value={formData[field.key] as string}
+                    onChange={(e) => handleChange(field.key, e.target.value)}
+                    onFocus={() => {
+                      if (isPlaceField && suggestions.length > 0) setShowSuggestions(true);
+                    }}
+                    placeholder={field.placeholder}
+                    autoComplete={isPlaceField ? "off" : undefined}
+                    className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
+                    style={{ color: "var(--accent-purple)" }}
+                  />
+                )}
               </label>
               {"helper" in field && field.helper && (
                 <p

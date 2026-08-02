@@ -194,51 +194,88 @@ function buildSmartSystemPrompt(llmPayload: Record<string, any>): string {
     lines.push("→ Ne pas prédire un événement unique ; parler de catalyseur et de fenêtre.");
 
   } else if (cat === "zr") {
-    lines.push("## CONTEXTE DE CE SIGNAL — Zodiacal Releasing (ZR)");
+    lines.push("## CONTEXTE — Zodiacal Releasing (ZR)");
+
+    // ── Lot identity ──
     const lotDescriptions: Record<string, string> = {
-      fortune: "circonstances extérieures : moyens de subsistance, corps, santé, ce qui arrive de l'extérieur",
-      spirit: "vocation : choix délibérés, direction, volonté, ce que tu construis",
-      eros: "désir : attachement, relations profondes, ce qui t'aimante",
+      fortune: "circonstances : corps, moyens de subsistance, ce qui t'arrive de l'extérieur",
+      spirit: "vocation : choix délibérés, direction, ce que tu construis activement",
+      eros: "désir : attachement profond, ce qui t'aimante",
     };
-    const levelDescriptions: Record<number, string> = {
-      2: "pic majeur (L2) — chapitre important et durable",
-      3: "pic secondaire (L3) — fenêtre notable, plus courte",
-    };
-    if (llmPayload.lotType) {
-      lines.push(`**Lot** : ${llmPayload.lotType} — ${lotDescriptions[llmPayload.lotType] ?? ""}.`);
+    const lotType: string = llmPayload.lotType ?? "";
+    if (lotType) {
+      lines.push(`**Lot** : ${lotType} — ${lotDescriptions[lotType] ?? ""}.`);
     }
+
+    // ── Level ──
+    const levelDescriptions: Record<number, string> = {
+      1: "L1 — grand chapitre (années)",
+      2: "L2 — chapitre actif (mois à quelques années)",
+      3: "L3 — fenêtre de détail (semaines à mois)",
+    };
     if (llmPayload.level) {
       lines.push(`**Niveau** : ${levelDescriptions[llmPayload.level] ?? `L${llmPayload.level}`}.`);
     }
+
+    // ── Markers ──
     const markers = llmPayload.markers as string[] | undefined;
     if (markers?.includes("LB")) {
-      lines.push("**Marqueur : Loosening of the Bond (LB)** = pivot majeur. La séquence saute — quelque chose initié dans un cycle précédent arrive à maturité. Ces moments sont souvent les plus marquants.");
+      lines.push("**LB (Loosening of the Bond)** = pivot structurant. La séquence saute vers un signe non adjacent — quelque chose initié dans un cycle plus ancien arrive à maturité. Souvent un des moments les plus marquants de la vie.");
     }
     if (markers?.includes("Cu")) {
-      lines.push("**Marqueur : Culmination (Cu)** = apogée du cycle en cours. Ce qui a été construit arrive à son point culminant.");
+      lines.push("**Cu (Culmination)** = apogée du cycle. Ce qui a été construit arrive à son point culminant — moment de visibilité ou de récolte.");
     }
-    // Quality matrix
-    if (llmPayload.periodRulerNatalCondition || llmPayload.periodRulerSectStatus) {
-      lines.push("**Qualité de la période :**");
-      if (llmPayload.periodRulerReceivedHelp && !llmPayload.periodRulerUnderStrain) {
-        lines.push("  → Soutenue : appui, alignement, avancée plus fluide si action consciente.");
-      } else if (llmPayload.periodRulerUnderStrain && !llmPayload.periodRulerReceivedHelp) {
-        lines.push("  → Sous tension : pression productive, nécessité de tri, maturité et limites.");
-      } else if (llmPayload.periodRulerReceivedHelp && llmPayload.periodRulerUnderStrain) {
-        lines.push("  → Mixte/intense : appui réel mais friction qui oblige à clarifier.");
-      } else {
-        lines.push("  → Neutre : fenêtre récurrente, contexte en évolution.");
+
+    // ── Peak period (CB/Leisa Schaim definition — TAP ep. 192) ──
+    const isPeak: boolean = !!(llmPayload.isPeakPeriod || markers?.includes("Peak"));
+    if (isPeak) {
+      // Angular angle from Fortune that triggers this peak (1, 4, 7, or 10)
+      const peakAngle: number = llmPayload.peakAngle ?? llmPayload.fortuneAngle ?? 0;
+      const PEAK_ANGLE_FLAVOR: Record<number, string> = {
+        1: "1er angle depuis Fortune (même signe) — le thème de vocation est directement au premier plan",
+        4: "4e angle depuis Fortune — la vocation passe par le foyer, les racines, la stabilité privée : construire la base qui soutient la direction",
+        7: "7e angle depuis Fortune — la vocation s'exprime via les partenariats, contrats, l'autre face à soi",
+        10: "10e angle depuis Fortune — la vocation entre dans la sphère publique, réputation, statut",
+      };
+
+      lines.push("");
+      lines.push("**PÉRIODE DE PIC — règle ABSOLUE :**");
+      lines.push("Pic = IMPORTANCE et ACTIVITÉ accrues, pas nécessairement bonnes. NE DIS JAMAIS que c'est une 'bonne période' ou que les choses iront bien.");
+      lines.push("La QUALITÉ dépend de l'état du seigneur de la période (voir ci-dessous), pas du pic lui-même.");
+      lines.push("Reformule : 'Ce chapitre compte davantage. Ce qui se passe ici laisse une trace durable.'");
+      if (peakAngle && PEAK_ANGLE_FLAVOR[peakAngle]) {
+        lines.push(`**Angle depuis Fortune** : ${PEAK_ANGLE_FLAVOR[peakAngle]}.`);
+        if (lotType === "spirit" && peakAngle === 4) {
+          lines.push("→ Pour Spirit au 4e angle : la direction de vie (Spirit) devient loudement active VIA le foyer/fondations (4e angle Fortune). C'est normal que 'carrière et foyer' soient tous les deux au centre — ce sont deux facettes du même pic.");
+        }
       }
     }
+
+    // ── Quality (ruler condition) ──
+    if (llmPayload.periodRulerNatalCondition || llmPayload.periodRulerSectStatus || llmPayload.periodRulerReceivedHelp !== undefined) {
+      lines.push("");
+      lines.push("**Qualité (état du seigneur) :**");
+      if (llmPayload.periodRulerReceivedHelp && !llmPayload.periodRulerUnderStrain) {
+        lines.push("→ Soutenu — appui actif, avancée plus fluide si action consciente.");
+      } else if (llmPayload.periodRulerUnderStrain && !llmPayload.periodRulerReceivedHelp) {
+        lines.push("→ Sous tension — pression productive, nécessite tri et maturité. Les avancées coûtent un effort réel.");
+      } else if (llmPayload.periodRulerReceivedHelp && llmPayload.periodRulerUnderStrain) {
+        lines.push("→ Mixte/intense — appui réel mais friction. Clarifier avant d'agir.");
+      } else {
+        lines.push("→ Neutre — fenêtre récurrente, contexte en évolution.");
+      }
+    }
+
     lines.push("");
     lines.push("## HIÉRARCHIE DE RÉDACTION ZR");
-    lines.push("1. Nomme le lot (Fortune/Spirit/Eros) et ce que ça signifie concrètement");
-    lines.push("2. Nomme le signe/maison de la période et les domaines activés");
-    lines.push("3. Qualifie le niveau (L2 = majeur / L3 = secondaire)");
-    lines.push("4. Si LB ou Cu : explique le pivot ou le sommet");
-    lines.push("5. Donne la durée (date → endDate) et le contexte récurrent (lifetimeNumber/lifetimeTotal)");
-    lines.push("6. Si lifetimeTotal élevé : dis que c'est un chapitre récurrent, pas rare");
-    lines.push("7. Termine : « voici comment utiliser ce chapitre » (1 action / 1 focus)");
+    lines.push("1. Nomme le lot et son thème concret (Fortune=circonstances / Spirit=direction / Eros=désir)");
+    lines.push("2. Nomme le signe actif et les domaines de vie activés (maisons)");
+    lines.push("3. Si PIC : dis que c'est un chapitre d'importance et d'activité accrues — NE DIS PAS 'bonne période'");
+    lines.push("4. Qualifie la QUALITÉ séparément via l'état du seigneur (soutenu/tendu/mixte/neutre)");
+    lines.push("5. Si LB : pivot structurant, quelque chose arrive à maturité");
+    lines.push("6. Si Cu : apogée, récolte ou visibilité");
+    lines.push("7. Durée (startDate → endDate) + contexte récurrent si lifetimeNumber/lifetimeTotal disponible");
+    lines.push("8. Termine par 1 action concrète calibrée à la qualité et au lot");
 
   } else if (cat === "station") {
     lines.push("## CONTEXTE DE CE SIGNAL — Station planétaire");
@@ -526,7 +563,8 @@ export async function POST(request: NextRequest) {
     // ── BILLING GATE: must run BEFORE cache return (otherwise free users
     //    see paid-cached responses for free) and BEFORE the SSE stream
     //    response (mid-stream throws can't write structured 402 JSON).
-    const userId = await getUserIdFromRequest(request);
+    const isDevBypass = process.env.NODE_ENV === "development" && process.env.DEV_BYPASS_AUTH === "true";
+    const userId = isDevBypass ? "dev" : await getUserIdFromRequest(request);
     if (!userId) {
       // Free unauthenticated requests still allowed for landing /api/landing/signal
       // path which calls this internally — but require sign-in for direct
@@ -539,7 +577,7 @@ export async function POST(request: NextRequest) {
           { status: 401 },
         );
       }
-    } else {
+    } else if (!isDevBypass) {
       try {
         await enforceQuota(userId, "AI_DELINEATION");
       } catch (err) {

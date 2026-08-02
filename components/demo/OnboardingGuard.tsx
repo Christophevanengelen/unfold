@@ -14,7 +14,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (needsOnboarding) {
-      router.replace("/demo/onboarding");
+      router.replace("/app/onboarding");
     }
   }, [needsOnboarding, router]);
 

@@ -21,12 +21,12 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handle = async () => {
       if (!supabaseAuth) {
-        router.replace("/demo?auth_error=config");
+        router.replace("/app?auth_error=config");
         return;
       }
 
       const params = new URLSearchParams(window.location.search);
-      const returnTo = params.get("returnTo") ?? "/demo/pricing";
+      const returnTo = params.get("returnTo") ?? "/app/pricing";
       const hash = window.location.hash;
 
       // --- Implicit flow: #access_token in URL fragment ---
@@ -37,7 +37,7 @@ export default function AuthCallbackPage() {
         const { data, error } = await supabaseAuth.auth.getSession();
         if (error || !data.session) {
           console.error("[auth/callback] implicit session error:", error?.message);
-          router.replace("/demo?auth_error=session");
+          router.replace("/app?auth_error=session");
           return;
         }
         router.replace(returnTo);
@@ -51,19 +51,19 @@ export default function AuthCallbackPage() {
           const { error } = await supabaseAuth.auth.exchangeCodeForSession(code);
           if (error) {
             console.error("[auth/callback] PKCE exchange error:", error.message);
-            router.replace("/demo?auth_error=exchange_failed");
+            router.replace("/app?auth_error=exchange_failed");
             return;
           }
           router.replace(returnTo);
         } catch (err) {
           console.error("[auth/callback] unexpected error:", err);
-          router.replace("/demo?auth_error=server");
+          router.replace("/app?auth_error=server");
         }
         return;
       }
 
       // Nothing to process
-      router.replace("/demo?auth_error=missing_code");
+      router.replace("/app?auth_error=missing_code");
     };
 
     handle();

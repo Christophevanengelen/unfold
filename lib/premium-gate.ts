@@ -34,10 +34,17 @@ export const PREMIUM_FEATURES = {
 
 export type PremiumFeature = keyof typeof PREMIUM_FEATURES;
 
+// ─── Dev bypass ──────────────────────────────────────────
+// Set NEXT_PUBLIC_DEV_FORCE_PREMIUM=true in .env to skip auth/Stripe
+// and get instant premium access for local testing.
+const DEV_FORCE_PREMIUM =
+  process.env.NEXT_PUBLIC_DEV_FORCE_PREMIUM === "true";
+
 // ─── Synchronous read (for non-React code) ───────────────
 // Returns the in-memory cache if populated, otherwise localStorage.
 // NEVER use this in React render — use usePremiumStatus() instead.
 export function isPremium(): boolean {
+  if (DEV_FORCE_PREMIUM) return true;
   if (typeof window === "undefined") return false;
   if (_cachedPremium !== null) return _cachedPremium;
   try {
@@ -75,6 +82,9 @@ export function setPremiumStatus(plan: PlanType): void {
 //  3. On mount: fetches /api/billing/me for verified server state
 //  4. Re-runs when "unfold:plan-changed" event fires (e.g. post-purchase)
 export function usePremiumStatus(): boolean {
+  // Dev bypass — instant premium, no API call
+  if (DEV_FORCE_PREMIUM) return true;
+
   // Start false — never assume premium before verification
   const [isPrem, setIsPrem] = useState(false);
   const fetchedRef = useRef(false);
@@ -124,7 +134,7 @@ export function usePremiumStatus(): boolean {
 // trial countdown, source (stripe/apple/google), period end, loading state.
 export interface BillingState {
   isPremium: boolean;
-  status: "trialing" | "active" | "past_due" | "canceled" | "expired" | "none" | "unauthenticated";
+  status: "trialing" | "active" | "lifetime" | "past_due" | "canceled" | "expired" | "none" | "unauthenticated";
   trialEnd?: string;       // ISO date — only set when status==="trialing"
   currentPeriodEnd?: string;
   source?: "stripe" | "apple" | "google";
@@ -132,6 +142,11 @@ export interface BillingState {
 }
 
 export function useBillingState(): BillingState {
+  // Dev bypass — instant premium, no API call
+  if (DEV_FORCE_PREMIUM) {
+    return { isPremium: true, status: "active", loading: false };
+  }
+
   const [state, setState] = useState<BillingState>({
     isPremium: false,
     status: "none",

@@ -14,7 +14,7 @@ import type { Plan } from "./features";
 
 export interface Entitlement {
   plan: Plan;
-  status: "trialing" | "active" | "past_due" | "canceled" | "expired" | "none";
+  status: "trialing" | "active" | "lifetime" | "past_due" | "canceled" | "expired" | "none";
   source?: "stripe" | "apple" | "google";
   productId?: string;
   trialEnd?: string;
@@ -41,7 +41,7 @@ export async function getEntitlement(userId: string | null | undefined): Promise
     .from("subscriptions")
     .select("status, source, product_id, trial_end, current_period_end, version_timestamp")
     .eq("user_id", userId)
-    .in("status", ["trialing", "active"])
+    .in("status", ["trialing", "active", "lifetime"])
     .order("version_timestamp", { ascending: false })
     .limit(1)
     .maybeSingle();

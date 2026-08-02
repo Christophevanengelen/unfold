@@ -9,7 +9,7 @@ const config: CapacitorConfig = {
   // satisfies App Store / Play Store requirements.
   webDir: "out", // fallback for offline / dev builds
   server: {
-    url: "https://unfold-nine.vercel.app/demo",
+    url: "https://unfold-nine.vercel.app/app",
     cleartext: false,
     allowNavigation: [
       "unfold-nine.vercel.app",

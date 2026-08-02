@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { generateLandingMetadata } from "@/lib/metadata";
+import { LifetimeChartTeaser } from "@/components/landing/LifetimeChartTeaser";
+import { BirthdayGraphTeaser } from "@/components/landing/BirthdayGraphTeaser";
+import { ZRSpiritTeaser } from "@/components/landing/ZRSpiritTeaser";
 
 // Native build: expose static params so Next.js knows which locales to pre-render
 export function generateStaticParams() {
@@ -35,6 +38,18 @@ const COPY: Record<LocaleCode, {
   feat1_title: string; feat1_body: string;
   feat2_title: string; feat2_body: string;
   feat3_title: string; feat3_body: string;
+  chart_eyebrow: string;
+  chart_title: string;
+  chart_sub: string;
+  chart_cta: string;
+  birthday_eyebrow: string;
+  birthday_title: string;
+  birthday_sub: string;
+  birthday_cta: string;
+  spirit_eyebrow: string;
+  spirit_title: string;
+  spirit_sub: string;
+  spirit_cta: string;
   pricing_title: string;
   pricing_sub: string;
   trial: string;
@@ -52,6 +67,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "Maison par maison : amour, carrière, foyer, finances, créativité, santé. Vois où l'énergie se concentre cette semaine.",
     feat3_title: "Compatibilité de timing",
     feat3_body: "Compare ton momentum avec celui de tes proches. Quand vos pics s'alignent, tout devient plus fluide.",
+    chart_eyebrow: "Rapport à vie · Premium",
+    chart_title: "Toute ta vie, déroulée.",
+    chart_sub: "Une chronologie visuelle de 100 ans de ton rythme astrologique — chaque pic, chaque cycle, chaque fenêtre. Générée depuis tes données de naissance.",
+    chart_cta: "Voir mon rapport",
+    birthday_eyebrow: "Graphe Anniversaire · Premium",
+    birthday_title: "Ton année, décodée.",
+    birthday_sub: "Chaque anniversaire ouvre un nouveau chapitre. Découvre quelles années sont pivots — et pourquoi.",
+    birthday_cta: "Voir mon graphe",
+    spirit_eyebrow: "Spirit Wave · ZR · Premium",
+    spirit_title: "Ton souffle de vie, en courbe.",
+    spirit_sub: "Le Lot de l'Esprit révèle tes grandes saisons de destin. Vois tes culminations, tes transitions, ton moment présent.",
+    spirit_cta: "Voir ma Spirit Wave",
     pricing_title: "Gratuit pour commencer",
     pricing_sub: "7 jours d'essai Pro sans carte bancaire. Annulable à tout moment.",
     trial: "Essai gratuit 7 jours",
@@ -69,6 +96,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "House by house: love, career, home, money, creativity, health. See where the energy is concentrating this week.",
     feat3_title: "Timing compatibility",
     feat3_body: "Compare your momentum with people you care about. When your peaks align, everything flows easier.",
+    chart_eyebrow: "Lifetime Report · Premium",
+    chart_title: "Your entire life, unrolled.",
+    chart_sub: "A 100-year visual timeline of your astrological rhythm — every peak, every cycle, every window. Generated from your birth data.",
+    chart_cta: "See my lifetime chart",
+    birthday_eyebrow: "Birthday Graph · Premium",
+    birthday_title: "Your year, decoded.",
+    birthday_sub: "Every birthday opens a new chapter. See which years are pivotal — and why.",
+    birthday_cta: "See my birthday graph",
+    spirit_eyebrow: "Spirit Wave · ZR · Premium",
+    spirit_title: "Your life's breath, as a wave.",
+    spirit_sub: "The Lot of Spirit reveals your great seasons of destiny. See your culminations, transitions, and where you are right now.",
+    spirit_cta: "See my Spirit Wave",
     pricing_title: "Free to start",
     pricing_sub: "7-day Pro trial, no credit card. Cancel anytime.",
     trial: "Free 7-day trial",
@@ -86,6 +125,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "Casa por casa: amor, carrera, hogar, dinero, creatividad, salud. Ve dónde se concentra la energía esta semana.",
     feat3_title: "Compatibilidad de timing",
     feat3_body: "Compara tu momentum con tus seres queridos. Cuando vuestros picos se alinean, todo fluye mejor.",
+    chart_eyebrow: "Informe de vida · Premium",
+    chart_title: "Tu vida entera, desplegada.",
+    chart_sub: "Una línea de tiempo visual de 100 años de tu ritmo astrológico — cada pico, cada ciclo, cada ventana. Generada desde tus datos de nacimiento.",
+    chart_cta: "Ver mi gráfico",
+    birthday_eyebrow: "Gráfico de Cumpleaños · Premium",
+    birthday_title: "Tu año, descifrado.",
+    birthday_sub: "Cada cumpleaños abre un nuevo capítulo. Descubre qué años son pivotales — y por qué.",
+    birthday_cta: "Ver mi gráfico de cumpleaños",
+    spirit_eyebrow: "Spirit Wave · ZR · Premium",
+    spirit_title: "El aliento de tu vida, en curva.",
+    spirit_sub: "El Lote del Espíritu revela tus grandes temporadas de destino. Ve tus culminaciones, transiciones y dónde estás ahora.",
+    spirit_cta: "Ver mi Spirit Wave",
     pricing_title: "Gratis para empezar",
     pricing_sub: "Prueba Pro de 7 días sin tarjeta. Cancela cuando quieras.",
     trial: "Prueba gratis 7 días",
@@ -103,6 +154,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "Casa por casa: amor, carreira, lar, dinheiro, criatividade, saúde. Veja onde a energia está concentrada esta semana.",
     feat3_title: "Compatibilidade de timing",
     feat3_body: "Compare seu momentum com pessoas próximas. Quando seus picos se alinham, tudo flui melhor.",
+    chart_eyebrow: "Relatório vitalício · Premium",
+    chart_title: "Toda a sua vida, desenrolada.",
+    chart_sub: "Uma linha do tempo visual de 100 anos do seu ritmo astrológico — cada pico, cada ciclo, cada janela. Gerada a partir dos seus dados de nascimento.",
+    chart_cta: "Ver meu gráfico",
+    birthday_eyebrow: "Gráfico de Aniversário · Premium",
+    birthday_title: "Seu ano, decodificado.",
+    birthday_sub: "Cada aniversário abre um novo capítulo. Veja quais anos são pivotais — e por quê.",
+    birthday_cta: "Ver meu gráfico de aniversário",
+    spirit_eyebrow: "Spirit Wave · ZR · Premium",
+    spirit_title: "O sopro da sua vida, em curva.",
+    spirit_sub: "O Lote do Espírito revela suas grandes temporadas de destino. Veja suas culminações, transições e onde você está agora.",
+    spirit_cta: "Ver minha Spirit Wave",
     pricing_title: "Grátis para começar",
     pricing_sub: "Teste Pro de 7 dias sem cartão. Cancele quando quiser.",
     trial: "Teste grátis 7 dias",
@@ -120,6 +183,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "Haus für Haus: Liebe, Karriere, Zuhause, Geld, Kreativität, Gesundheit. Sieh wo sich die Energie diese Woche konzentriert.",
     feat3_title: "Timing-Kompatibilität",
     feat3_body: "Vergleiche dein Momentum mit Menschen, die dir wichtig sind. Wenn eure Höhepunkte sich ausrichten, fließt alles leichter.",
+    chart_eyebrow: "Lebenslanger Report · Premium",
+    chart_title: "Dein ganzes Leben, entfaltet.",
+    chart_sub: "Eine visuelle 100-Jahres-Zeitleiste deines astrologischen Rhythmus — jeder Höhepunkt, jeder Zyklus, jedes Fenster. Aus deinen Geburtsdaten generiert.",
+    chart_cta: "Meinen Chart sehen",
+    birthday_eyebrow: "Geburtstags-Grafik · Premium",
+    birthday_title: "Dein Jahr, entschlüsselt.",
+    birthday_sub: "Jeder Geburtstag öffnet ein neues Kapitel. Sieh welche Jahre wegweisend sind — und warum.",
+    birthday_cta: "Meine Geburtstagsgrafik sehen",
+    spirit_eyebrow: "Spirit Wave · ZR · Premium",
+    spirit_title: "Der Atemzug deines Lebens, als Welle.",
+    spirit_sub: "Das Los des Geistes enthüllt deine großen Schicksalssaisonen. Sieh deine Höhepunkte, Übergänge und wo du jetzt stehst.",
+    spirit_cta: "Meine Spirit Wave sehen",
     pricing_title: "Kostenlos starten",
     pricing_sub: "7-Tage-Pro-Test, keine Kreditkarte. Jederzeit kündbar.",
     trial: "7 Tage kostenlos testen",
@@ -137,6 +212,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "Casa per casa: amore, carriera, casa, denaro, creatività, salute. Vedi dove si concentra l'energia questa settimana.",
     feat3_title: "Compatibilità di timing",
     feat3_body: "Confronta il tuo momentum con le persone a cui tieni. Quando i vostri picchi si allineano, tutto scorre meglio.",
+    chart_eyebrow: "Report a vita · Premium",
+    chart_title: "La tua intera vita, dispiegata.",
+    chart_sub: "Una cronologia visiva di 100 anni del tuo ritmo astrologico — ogni picco, ogni ciclo, ogni finestra. Generata dai tuoi dati di nascita.",
+    chart_cta: "Vedi il mio grafico",
+    birthday_eyebrow: "Grafico di Compleanno · Premium",
+    birthday_title: "Il tuo anno, decodificato.",
+    birthday_sub: "Ogni compleanno apre un nuovo capitolo. Scopri quali anni sono pivotali — e perché.",
+    birthday_cta: "Vedi il mio grafico di compleanno",
+    spirit_eyebrow: "Spirit Wave · ZR · Premium",
+    spirit_title: "Il respiro della tua vita, in curva.",
+    spirit_sub: "Il Lotto dello Spirito rivela le tue grandi stagioni di destino. Vedi le tue culminazioni, transizioni e dove sei ora.",
+    spirit_cta: "Vedi la mia Spirit Wave",
     pricing_title: "Gratis per iniziare",
     pricing_sub: "Prova Pro di 7 giorni senza carta. Annulla quando vuoi.",
     trial: "Prova gratis 7 giorni",
@@ -154,6 +241,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "Huis voor huis: liefde, carrière, thuis, geld, creativiteit, gezondheid. Zie waar de energie deze week zit.",
     feat3_title: "Timing-compatibiliteit",
     feat3_body: "Vergelijk je momentum met dierbaren. Wanneer jullie pieken samenvallen, gaat alles makkelijker.",
+    chart_eyebrow: "Levenslang rapport · Premium",
+    chart_title: "Jouw hele leven, uitgerold.",
+    chart_sub: "Een visuele tijdlijn van 100 jaar van jouw astrologische ritme — elke piek, elke cyclus, elk venster. Gegenereerd uit jouw geboortegegevens.",
+    chart_cta: "Bekijk mijn grafiek",
+    birthday_eyebrow: "Verjaardagsgrafiek · Premium",
+    birthday_title: "Jouw jaar, ontcijferd.",
+    birthday_sub: "Elke verjaardag opent een nieuw hoofdstuk. Zie welke jaren pivotaal zijn — en waarom.",
+    birthday_cta: "Bekijk mijn verjaardagsgrafiek",
+    spirit_eyebrow: "Spirit Wave · ZR · Premium",
+    spirit_title: "De adem van jouw leven, als golf.",
+    spirit_sub: "Het Lot van de Geest onthult jouw grote lotsbestemmingen. Zie jouw hoogtepunten, overgangen en waar je nu staat.",
+    spirit_cta: "Bekijk mijn Spirit Wave",
     pricing_title: "Gratis te starten",
     pricing_sub: "7-daagse Pro-proefperiode, geen creditcard. Altijd opzegbaar.",
     trial: "7 dagen gratis",
@@ -171,6 +270,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "ハウス毎: 愛、キャリア、家、お金、創造性、健康。今週どこにエネルギーが集中するかを見る。",
     feat3_title: "タイミングの相性",
     feat3_body: "大切な人とあなたのモメンタムを比較。ピークが揃うと、すべてがスムーズに。",
+    chart_eyebrow: "生涯レポート · プレミアム",
+    chart_title: "あなたの人生全体、展開。",
+    chart_sub: "あなたの星座リズムの100年ビジュアルタイムライン — すべてのピーク、サイクル、ウィンドウ。生年月日データから生成。",
+    chart_cta: "生涯チャートを見る",
+    birthday_eyebrow: "バースデーグラフ · プレミアム",
+    birthday_title: "あなたの1年、解読。",
+    birthday_sub: "誕生日ごとに新しい章が始まります。どの年が転換点か — そしてなぜかを見てください。",
+    birthday_cta: "バースデーグラフを見る",
+    spirit_eyebrow: "Spirit Wave · ZR · プレミアム",
+    spirit_title: "あなたの人生の息吹、波として。",
+    spirit_sub: "スピリットのロットはあなたの運命の大きな季節を明らかにします。頂点、転換点、そして今いる場所を見てください。",
+    spirit_cta: "Spirit Waveを見る",
     pricing_title: "無料で始める",
     pricing_sub: "7日間Proトライアル、クレジットカード不要。いつでもキャンセル。",
     trial: "7日間無料トライアル",
@@ -188,6 +299,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "宫位逐一: 爱情、事业、家庭、金钱、创造力、健康。看本周能量聚集在哪里。",
     feat3_title: "时机兼容性",
     feat3_body: "将您的动量与亲近的人比较。当您的高峰对齐时,一切更加顺畅。",
+    chart_eyebrow: "终身报告 · 高级",
+    chart_title: "您的整个人生，展开。",
+    chart_sub: "您星座节律的100年可视化时间线 — 每个高峰、每个周期、每个窗口。从您的出生数据生成。",
+    chart_cta: "查看我的图表",
+    birthday_eyebrow: "生日图表 · 高级",
+    birthday_title: "您的年份，解码。",
+    birthday_sub: "每个生日开启新篇章。看看哪些年份是关键转折点 — 以及为什么。",
+    birthday_cta: "查看我的生日图表",
+    spirit_eyebrow: "Spirit Wave · ZR · 高级",
+    spirit_title: "您生命的气息，化为波浪。",
+    spirit_sub: "精神之星揭示您命运的伟大季节。查看您的顶峰、过渡期以及您现在所处的位置。",
+    spirit_cta: "查看我的Spirit Wave",
     pricing_title: "免费开始",
     pricing_sub: "7天Pro试用,无需信用卡。随时取消。",
     trial: "免费7天试用",
@@ -205,6 +328,18 @@ const COPY: Record<LocaleCode, {
     feat2_body: "بيت بيت: الحب، المسيرة المهنية، المنزل، المال، الإبداع، الصحة. شاهد أين تتركز الطاقة هذا الأسبوع.",
     feat3_title: "توافق التوقيت",
     feat3_body: "قارن زخمك مع من تهتم بهم. عندما تتوافق ذروات، يتدفق كل شيء بسهولة أكبر.",
+    chart_eyebrow: "تقرير العمر · متميز",
+    chart_title: "حياتك بأكملها، منشورة.",
+    chart_sub: "جدول زمني مرئي لمدة 100 عام لإيقاعك الفلكي — كل ذروة، كل دورة، كل نافذة. مُنشأ من بيانات ميلادك.",
+    chart_cta: "انظر مخططي",
+    birthday_eyebrow: "مخطط عيد الميلاد · متميز",
+    birthday_title: "عامك، مُفكَّك.",
+    birthday_sub: "كل عيد ميلاد يفتح فصلاً جديداً. اكتشف أي السنوات محورية — ولماذا.",
+    birthday_cta: "انظر مخطط عيد ميلادي",
+    spirit_eyebrow: "Spirit Wave · ZR · متميز",
+    spirit_title: "نفس حياتك، كموجة.",
+    spirit_sub: "قرعة الروح تكشف مواسمك الكبرى في القدر. شاهد ذروتك وانتقالاتك وأين أنت الآن.",
+    spirit_cta: "انظر Spirit Wave الخاصة بي",
     pricing_title: "مجاني للبدء",
     pricing_sub: "تجربة Pro لمدة 7 أيام، بدون بطاقة ائتمان. إلغاء في أي وقت.",
     trial: "تجربة مجانية لمدة 7 أيام",
@@ -223,7 +358,7 @@ export default async function LandingPage({
 }) {
   // In native builds there's no landing page — go straight to the app
   if (process.env.NEXT_PUBLIC_NATIVE === "true") {
-    redirect("/demo");
+    redirect("/app");
   }
 
   const { locale } = await params;
@@ -268,7 +403,7 @@ export default async function LandingPage({
         {/* CTAs */}
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href="/demo"
+            href="/app"
             className="inline-flex items-center justify-center rounded-full px-7 py-3.5 text-[14px] font-semibold transition-transform hover:scale-105"
             style={{
               background: "var(--accent-purple, #9585CC)",
@@ -279,7 +414,7 @@ export default async function LandingPage({
             {c.cta_primary}
           </Link>
           <Link
-            href="/demo/pricing"
+            href="/app/pricing"
             className="inline-flex items-center justify-center rounded-full px-7 py-3.5 text-[14px] font-semibold transition-opacity hover:opacity-80"
             style={{
               border: "1px solid color-mix(in srgb, var(--accent-purple, #9585CC) 30%, transparent)",
@@ -318,6 +453,32 @@ export default async function LandingPage({
           ))}
         </div>
 
+        {/* Premium chart teasers — desktop only, side by side */}
+        <div className="mt-24 hidden md:grid md:grid-cols-2 md:gap-6">
+          <LifetimeChartTeaser
+            chartEyebrow={c.chart_eyebrow}
+            chartTitle={c.chart_title}
+            chartSub={c.chart_sub}
+            chartCta={c.chart_cta}
+          />
+          <BirthdayGraphTeaser
+            eyebrow={c.birthday_eyebrow}
+            title={c.birthday_title}
+            sub={c.birthday_sub}
+            cta={c.birthday_cta}
+          />
+        </div>
+
+        {/* Spirit Wave teaser — full width */}
+        <div className="mt-6 hidden md:block">
+          <ZRSpiritTeaser
+            eyebrow={c.spirit_eyebrow}
+            title={c.spirit_title}
+            sub={c.spirit_sub}
+            cta={c.spirit_cta}
+          />
+        </div>
+
         {/* Pricing teaser */}
         <div className="mt-20 text-center">
           <h2
@@ -330,7 +491,7 @@ export default async function LandingPage({
             {c.pricing_sub}
           </p>
           <Link
-            href="/demo/pricing"
+            href="/app/pricing"
             className="mt-6 inline-flex items-center justify-center rounded-full px-7 py-3.5 text-[14px] font-semibold transition-transform hover:scale-105"
             style={{
               background: "var(--accent-purple, #9585CC)",

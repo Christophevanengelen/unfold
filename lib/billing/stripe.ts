@@ -14,6 +14,8 @@ export function getStripe(): Stripe {
 export const STRIPE_PRICE_IDS = {
   monthly: process.env.STRIPE_PRICE_MONTHLY ?? "",
   annual: process.env.STRIPE_PRICE_ANNUAL ?? "",
+  // One-time payment — no subscription, no renewal. Uses mode: "payment" in checkout.
+  lifetime: process.env.STRIPE_PRICE_LIFETIME ?? "",
 };
 
 export const TRIAL_DAYS = 7;

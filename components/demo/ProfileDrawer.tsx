@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe } from "flowbite-react-icons/outline";
+import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye } from "flowbite-react-icons/outline";
 import { BottomSheet } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { PersonalizeFlow } from "@/components/demo/PersonalizeFlow";
@@ -106,7 +106,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           {/* Edit birth data */}
           <button
             type="button"
-            onClick={() => { onClose(); router.push("/demo/onboarding"); }}
+            onClick={() => { onClose(); router.push("/app/onboarding"); }}
             className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
           >
             <span className="flex items-center gap-2.5">
@@ -117,6 +117,23 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               {birthData?.birthDate ? t("profile.edit", locale) : t("profile.configure", locale)}
             </span>
           </button>
+
+          {/* Full timeline chart — premium only */}
+          {billing.isPremium && (
+            <button
+              type="button"
+              onClick={() => { onClose(); router.push("/app/boudin"); }}
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+            >
+              <span className="flex items-center gap-2.5">
+                <Eye size={16} className="text-accent-purple" />
+                Full timeline chart
+              </span>
+              <span className="text-[10px] font-semibold" style={{ color: "var(--accent-purple)", opacity: 0.7 }}>
+                Sausage
+              </span>
+            </button>
+          )}
 
           {/* Language picker */}
           <button
@@ -233,7 +250,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   await signOut();
                   clearBirthData();
                   onClose();
-                  router.push("/demo/onboarding");
+                  router.push("/app/onboarding");
                 }}
                 className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
               >

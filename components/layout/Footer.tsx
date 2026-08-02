@@ -95,7 +95,7 @@ export function Footer({ locale }: FooterProps) {
               </li>
               <li>
                 <Link
-                  href="/demo"
+                  href="/app"
                   className="text-sm text-brand-11 transition-colors hover:text-white"
                 >
                   {l.demo}

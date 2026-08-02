@@ -11,10 +11,13 @@ export const runtime = "nodejs";
  * Creates a Stripe Checkout Session with a 7-day free trial.
  * Returns { url } — client redirects to it.
  *
- * Body: { priceId: "monthly" | "annual", locale?: string }
+ * Body: { priceId: "monthly" | "annual" | "lifetime", locale?: string }
  *
  * The locale (FR/EN/PT/ES/DE/IT/NL/JA/ZH/AR) is forwarded to Stripe so the
  * Checkout page renders in the user's language. Defaults to "auto".
+ *
+ * "lifetime" uses mode: "payment" (one-time, no subscription_data).
+ * The checkout.session.completed webhook inserts the subscription row.
  */
 export async function POST(req: NextRequest) {
   const userId = await getUserIdFromRequest(req);
@@ -30,8 +33,8 @@ export async function POST(req: NextRequest) {
   }
 
   const { priceId: priceKey, locale: rawLocale } = body;
-  if (priceKey !== "monthly" && priceKey !== "annual") {
-    return NextResponse.json({ error: "priceId must be 'monthly' or 'annual'" }, { status: 400 });
+  if (priceKey !== "monthly" && priceKey !== "annual" && priceKey !== "lifetime") {
+    return NextResponse.json({ error: "priceId must be 'monthly', 'annual', or 'lifetime'" }, { status: 400 });
   }
 
   const stripeLocale = toStripeLocale(rawLocale);
@@ -73,30 +76,34 @@ export async function POST(req: NextRequest) {
   const customerLocale = toCustomerLocale(rawLocale);
 
   // If we already have a Stripe customer, refresh their preferred_locales so
-  // invoices/receipts come in the right language. Fire-and-forget — we don't
-  // block checkout creation on this.
+  // invoices/receipts come in the right language. Fire-and-forget.
   if (stripeCustomerId) {
     stripe.customers.update(stripeCustomerId, {
       preferred_locales: [customerLocale],
     }).catch(() => {});
   }
 
+  const isLifetime = priceKey === "lifetime";
+
   const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
+    mode: isLifetime ? "payment" : "subscription",
     payment_method_types: ["card"],
     customer: stripeCustomerId,
     customer_email: stripeCustomerId ? undefined : customerEmail,
     line_items: [{ price: stripePrice, quantity: 1 }],
-    subscription_data: {
-      trial_period_days: TRIAL_DAYS,
-      metadata: { userId, locale: rawLocale ?? "" },
-    },
-    metadata: { userId, locale: rawLocale ?? "" },
-    success_url: `${origin}/demo?checkout=success`,
-    cancel_url: `${origin}/demo/pricing?checkout=cancelled`,
+    // Subscription-only fields (omitted for lifetime one-time payment)
+    ...(isLifetime ? {} : {
+      subscription_data: {
+        trial_period_days: TRIAL_DAYS,
+        metadata: { userId, locale: rawLocale ?? "" },
+      },
+    }),
+    metadata: { userId, locale: rawLocale ?? "", plan: priceKey },
+    success_url: `${origin}/app?checkout=success`,
+    cancel_url: `${origin}/app/pricing?checkout=cancelled`,
     locale: stripeLocale,
     allow_promotion_codes: true,
-    automatic_tax: { enabled: true },                  // Stripe Tax → EU VAT auto
+    automatic_tax: { enabled: true },
     billing_address_collection: "auto",
     consent_collection: { terms_of_service: "none" },
   });

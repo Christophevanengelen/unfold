@@ -110,10 +110,12 @@ export function CapsuleDetailSheet({
   capsule,
   isFuture,
   onClose,
+  onNavigateToCapsule,
 }: {
   capsule: CapsuleData;
   isFuture?: boolean;
   onClose: () => void;
+  onNavigateToCapsule?: (date: Date) => void;
 }) {
   // Gate: blur AI sections for free users on future capsules.
   // usePremiumStatus() fetches /api/billing/me on mount — not spoofable via localStorage.
@@ -498,7 +500,8 @@ export function CapsuleDetailSheet({
               );
             })}
           </div>
-          {planetNarrative && (
+          {/* Hide static ZR description once AI story is loaded — AI corps already covers it */}
+          {planetNarrative && !(phase?.apiCategory === "zr" && aiText) && (
             <p className="mt-3 text-[12px] leading-relaxed italic" style={{ color: "var(--text-body-subtle)" }}>
               {planetNarrative}
             </p>
@@ -789,10 +792,13 @@ export function CapsuleDetailSheet({
                 const startLabel = `${MONTH_NAMES[start.getMonth()]} ${start.getDate().toString().padStart(2, "0")} '${String(start.getFullYear()).slice(2)}`;
                 const endLabel = `${MONTH_NAMES[end.getMonth()]} ${end.getDate().toString().padStart(2, "0")} '${String(end.getFullYear()).slice(2)}`;
                 const isCurrent = p.isCurrent;
+                const canNavigate = !isCurrent && !!onNavigateToCapsule;
                 return (
                   <div
                     key={i}
                     className="flex items-center gap-2"
+                    onClick={canNavigate ? () => { onClose(); onNavigateToCapsule!(start); } : undefined}
+                    style={{ cursor: canNavigate ? "pointer" : "default", opacity: isCurrent ? 1 : 0.75 }}
                   >
                     <span
                       className="flex-shrink-0 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold"
@@ -804,7 +810,7 @@ export function CapsuleDetailSheet({
                       {p.lifetimeNumber}
                     </span>
                     <span
-                      className="text-[11px] tabular-nums"
+                      className="text-[11px] tabular-nums flex-1"
                       style={{
                         color: isCurrent ? "var(--text-heading)" : "var(--text-body-subtle)",
                         fontWeight: isCurrent ? 600 : 400,
@@ -822,6 +828,9 @@ export function CapsuleDetailSheet({
                       >
                         ×{p.totalHits}
                       </span>
+                    )}
+                    {canNavigate && (
+                      <ArrowRight size={10} style={{ color: "var(--accent-purple)", opacity: 0.5, flexShrink: 0 }} />
                     )}
                   </div>
                 );

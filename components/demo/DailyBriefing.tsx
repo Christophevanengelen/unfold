@@ -35,8 +35,8 @@ const EASE = [0.4, 0, 0.2, 1] as const;
 
 // ─── Visual tokens ───────────────────────────────────────
 
-const CARD_BG = "rgba(124, 107, 191, 0.06)";
-const CARD_BORDER = "1px solid rgba(124, 107, 191, 0.12)";
+const CARD_BG = "var(--glass-bg)";
+const CARD_BORDER = "1px solid var(--glass-border)";
 const CARD_BLUR = "blur(24px)";
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
@@ -182,7 +182,7 @@ function BriefCard({
         style={{
           fontSize: 14,
           lineHeight: 1.7,
-          color: "rgba(255, 255, 255, 0.85)",
+          color: "var(--text-body)",
           marginBottom: S.md,
           paddingRight: S.sm,
         }}
