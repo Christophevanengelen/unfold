@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 /* eslint-disable @next/next/no-img-element */
 
 interface StepPromiseProps {
@@ -17,6 +19,9 @@ interface StepPromiseProps {
  * The user thinks "yes" and taps.
  */
 export function StepPromise({ onNext }: StepPromiseProps) {
+  const [locale, setLocale] = useState<Locale>("en");
+  useEffect(() => { setLocale(detectLocale()); }, []);
+
   return (
     <div className="flex h-full flex-col items-center text-center">
       {/* Subtle halo glow */}
@@ -64,9 +69,9 @@ export function StepPromise({ onNext }: StepPromiseProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
-          Some periods of your life
-          <br />
-          feel more intense.
+          {t("onboarding.p1_headline", locale).split("\n").map((line, i, arr) => (
+            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+          ))}
         </motion.h1>
 
         <motion.p
@@ -76,7 +81,7 @@ export function StepPromise({ onNext }: StepPromiseProps) {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.0, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
-          There is a reason.
+          {t("onboarding.p1_sub", locale)}
         </motion.p>
 
         {/* CTA */}
@@ -91,7 +96,7 @@ export function StepPromise({ onNext }: StepPromiseProps) {
             onClick={onNext}
             className="rounded-full bg-bg-brand px-8 py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
           >
-            Show me
+            {t("onboarding.p1_cta", locale)}
           </button>
         </motion.div>
       </motion.div>

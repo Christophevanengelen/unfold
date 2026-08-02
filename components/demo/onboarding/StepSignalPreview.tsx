@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 interface StepSignalPreviewProps {
   onNext: () => void;
@@ -69,6 +70,8 @@ const PHASE_BOUDIN_SPOTLIGHT = PHASE_NOW_HIGHLIGHT + 1.5; // 5.2s
 const PHASE_CTA_REVEAL = PHASE_BOUDIN_SPOTLIGHT + 1.5;    // 6.7s
 
 export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
+  const [locale, setLocale] = useState<Locale>("en");
+  useEffect(() => { setLocale(detectLocale()); }, []);
   // Year counter
   const [displayYear, setDisplayYear] = useState(1985);
   // Staged highlight phases
@@ -119,7 +122,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline -mt-0.5 mr-1">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        Back
+        {t("onboarding.back", locale)}
       </motion.button>
 
       <motion.div
@@ -130,7 +133,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
       >
         <h1 className="font-display text-2xl font-bold"
           style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}>
-          There is a pattern.
+          {t("onboarding.p2_headline", locale)}
         </h1>
       </motion.div>
 
@@ -298,7 +301,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                   border: "1px solid rgba(176, 124, 194, 0.5)",
                   backdropFilter: "blur(8px)",
                 }}>
-                Your signal is active
+                {t("onboarding.p2_signal_active", locale)}
               </span>
             </motion.div>
           )}
@@ -320,7 +323,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
           onClick={onNext}
           className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
         >
-          What does it mean?
+          {t("onboarding.p2_cta", locale)}
         </button>
       </motion.div>
     </motion.div>

@@ -114,6 +114,22 @@ type Strings = {
     next: string;
     back: string;
   };
+  onboarding: {
+    back: string;
+    p1_headline: string; p1_sub: string; p1_cta: string;
+    p2_headline: string; p2_signal_active: string; p2_cta: string;
+    p3_headline: string; p3_sub: string; p3_planet_active: string; p3_which_ones: string; p3_cta: string;
+    p4_headline: string; p4_sub: string; p4_selected: string; p4_cta: string;
+    p4_love: string; p4_career: string; p4_money: string; p4_family: string;
+    p4_health: string; p4_creativity: string; p4_home: string; p4_friends: string; p4_meaning: string;
+    p5_headline: string; p5_sub: string;
+    p5_nickname_label: string; p5_nickname_ph: string;
+    p5_dob_label: string; p5_time_label: string; p5_time_helper: string;
+    p5_place_label: string; p5_place_ph: string;
+    p5_privacy: string; p5_cta: string;
+    p6_scanning: string; p6_status1: string; p6_status2: string; p6_status3: string;
+    p6_error: string; p6_signal_active: string; p6_built_real: string; p6_built_sample: string;
+  };
 };
 
 const FR: Strings = {
@@ -181,6 +197,22 @@ const FR: Strings = {
     close: "Fermer",
     next: "Suivant",
     back: "Retour",
+  },
+  onboarding: {
+    back: "Retour",
+    p1_headline: "Certaines périodes sont plus intenses.", p1_sub: "Il y a une raison.", p1_cta: "Montre-moi",
+    p2_headline: "Il y a un schéma.", p2_signal_active: "Ton signal est actif", p2_cta: "Qu'est-ce que ça signifie ?",
+    p3_headline: "Les planètes façonnent\nton rythme.", p3_sub: "Chacune porte un signal. Certaines sont actives.", p3_planet_active: "{planet} est actif", p3_which_ones: "Lesquelles sont les tiennes ?", p3_cta: "Révèle mon signal",
+    p4_headline: "Ce qui compte le plus ?", p4_sub: "Choisis jusqu'à {n}. Cela façonne ton signal.", p4_selected: "{n} / {max} sélectionné(s)", p4_cta: "Continuer",
+    p4_love: "Amour", p4_career: "Carrière", p4_money: "Argent", p4_family: "Famille",
+    p4_health: "Santé", p4_creativity: "Créativité", p4_home: "Maison", p4_friends: "Amis", p4_meaning: "Sens",
+    p5_headline: "Ton rythme est unique.", p5_sub: "Configure le tien.",
+    p5_nickname_label: "Surnom", p5_nickname_ph: "Comment t'appelle-t-on ?",
+    p5_dob_label: "Date de naissance", p5_time_label: "Heure de naissance", p5_time_helper: "La précision affine ton signal.",
+    p5_place_label: "Lieu de naissance", p5_place_ph: "Ville, Pays",
+    p5_privacy: "Tes données servent uniquement à préparer ton rythme.", p5_cta: "Prépare mon signal",
+    p6_scanning: "Analyse de ton thème natal", p6_status1: "Lecture de tes signaux planétaires", p6_status2: "Construction de ta timeline", p6_status3: "Préparation de ta première capsule",
+    p6_error: "Problème de connexion. Données d'exemple utilisées.", p6_signal_active: "Ton signal est actif", p6_built_real: "Calculé depuis les données planétaires exactes de ta naissance.", p6_built_sample: "Explore avec des données d'exemple. Saisis ta naissance pour une lecture personnelle.",
   },
 };
 
@@ -250,6 +282,22 @@ const EN: Strings = {
     next: "Next",
     back: "Back",
   },
+  onboarding: {
+    back: "Back",
+    p1_headline: "Some periods of your life feel more intense.", p1_sub: "There is a reason.", p1_cta: "Show me",
+    p2_headline: "There is a pattern.", p2_signal_active: "Your signal is active", p2_cta: "What does it mean?",
+    p3_headline: "Planets shape\nyour timing.", p3_sub: "Each one carries a signal. Some are active right now.", p3_planet_active: "{planet} is active right now", p3_which_ones: "Which ones are yours?", p3_cta: "Reveal my signal",
+    p4_headline: "What matters most?", p4_sub: "Pick up to {n}. This shapes your signal.", p4_selected: "{n} / {max} selected", p4_cta: "Continue",
+    p4_love: "Love", p4_career: "Career", p4_money: "Money", p4_family: "Family",
+    p4_health: "Health", p4_creativity: "Creativity", p4_home: "Home", p4_friends: "Friends", p4_meaning: "Meaning",
+    p5_headline: "Your timing is unique.", p5_sub: "Configure yours.",
+    p5_nickname_label: "Nickname", p5_nickname_ph: "How should we call you?",
+    p5_dob_label: "Date of birth", p5_time_label: "Time of birth", p5_time_helper: "Precision sharpens your signal.",
+    p5_place_label: "Place of birth", p5_place_ph: "City, Country",
+    p5_privacy: "Your details are only used to prepare your personal rhythm.", p5_cta: "Prepare my signal",
+    p6_scanning: "Scanning your birth chart", p6_status1: "Reading your planetary signals", p6_status2: "Building your momentum timeline", p6_status3: "Preparing your first capsule",
+    p6_error: "Connection issue. Using sample data instead.", p6_signal_active: "Your signal is active", p6_built_real: "Built from real planetary data for your exact birth moment.", p6_built_sample: "Explore with sample data. Enter your birth info for a personal reading.",
+  },
 };
 
 const ES: Strings = {
@@ -317,6 +365,22 @@ const ES: Strings = {
     close: "Cerrar",
     next: "Siguiente",
     back: "Atrás",
+  },
+  onboarding: {
+    back: "Atrás",
+    p1_headline: "Algunos períodos de tu vida son más intensos.", p1_sub: "Hay una razón.", p1_cta: "Muéstrame",
+    p2_headline: "Hay un patrón.", p2_signal_active: "Tu señal está activa", p2_cta: "¿Qué significa?",
+    p3_headline: "Los planetas moldean\ntu timing.", p3_sub: "Cada uno lleva una señal. Algunos están activos ahora.", p3_planet_active: "{planet} está activo ahora", p3_which_ones: "¿Cuáles son los tuyos?", p3_cta: "Revela mi señal",
+    p4_headline: "¿Qué es lo más importante?", p4_sub: "Elige hasta {n}. Esto moldea tu señal.", p4_selected: "{n} / {max} seleccionados", p4_cta: "Continuar",
+    p4_love: "Amor", p4_career: "Carrera", p4_money: "Dinero", p4_family: "Familia",
+    p4_health: "Salud", p4_creativity: "Creatividad", p4_home: "Hogar", p4_friends: "Amigos", p4_meaning: "Sentido",
+    p5_headline: "Tu timing es único.", p5_sub: "Configura el tuyo.",
+    p5_nickname_label: "Apodo", p5_nickname_ph: "¿Cómo te llamamos?",
+    p5_dob_label: "Fecha de nacimiento", p5_time_label: "Hora de nacimiento", p5_time_helper: "La precisión afina tu señal.",
+    p5_place_label: "Lugar de nacimiento", p5_place_ph: "Ciudad, País",
+    p5_privacy: "Tus datos solo se usan para preparar tu ritmo personal.", p5_cta: "Prepara mi señal",
+    p6_scanning: "Escaneando tu carta natal", p6_status1: "Leyendo tus señales planetarias", p6_status2: "Construyendo tu línea de tiempo", p6_status3: "Preparando tu primera cápsula",
+    p6_error: "Problema de conexión. Usando datos de ejemplo.", p6_signal_active: "Tu señal está activa", p6_built_real: "Basado en datos planetarios reales de tu momento de nacimiento exacto.", p6_built_sample: "Explora con datos de ejemplo. Ingresa tus datos de nacimiento para una lectura personal.",
   },
 };
 
@@ -386,6 +450,22 @@ const DE: Strings = {
     next: "Weiter",
     back: "Zurück",
   },
+  onboarding: {
+    back: "Zurück",
+    p1_headline: "Manche Lebensabschnitte fühlen sich intensiver an.", p1_sub: "Es gibt einen Grund.", p1_cta: "Zeig mir",
+    p2_headline: "Es gibt ein Muster.", p2_signal_active: "Dein Signal ist aktiv", p2_cta: "Was bedeutet das?",
+    p3_headline: "Planeten formen\ndein Timing.", p3_sub: "Jeder trägt ein Signal. Einige sind gerade aktiv.", p3_planet_active: "{planet} ist gerade aktiv", p3_which_ones: "Welche sind deine?", p3_cta: "Enthülle mein Signal",
+    p4_headline: "Was ist am wichtigsten?", p4_sub: "Wähle bis zu {n}. Das formt dein Signal.", p4_selected: "{n} / {max} ausgewählt", p4_cta: "Weiter",
+    p4_love: "Liebe", p4_career: "Karriere", p4_money: "Geld", p4_family: "Familie",
+    p4_health: "Gesundheit", p4_creativity: "Kreativität", p4_home: "Zuhause", p4_friends: "Freunde", p4_meaning: "Sinn",
+    p5_headline: "Dein Timing ist einzigartig.", p5_sub: "Konfiguriere deins.",
+    p5_nickname_label: "Spitzname", p5_nickname_ph: "Wie sollen wir dich nennen?",
+    p5_dob_label: "Geburtsdatum", p5_time_label: "Geburtszeit", p5_time_helper: "Präzision schärft dein Signal.",
+    p5_place_label: "Geburtsort", p5_place_ph: "Stadt, Land",
+    p5_privacy: "Deine Daten werden nur zur Vorbereitung deines Rhythmus verwendet.", p5_cta: "Mein Signal vorbereiten",
+    p6_scanning: "Geburtshoroskop scannen", p6_status1: "Planetensignale lesen", p6_status2: "Momentum-Zeitleiste erstellen", p6_status3: "Erste Kapsel vorbereiten",
+    p6_error: "Verbindungsproblem. Beispieldaten werden verwendet.", p6_signal_active: "Dein Signal ist aktiv", p6_built_real: "Basiert auf echten Planetendaten für deinen genauen Geburtsmoment.", p6_built_sample: "Erkunde mit Beispieldaten. Gib deine Geburtsdaten für eine persönliche Lesung ein.",
+  },
 };
 
 const IT: Strings = {
@@ -453,6 +533,22 @@ const IT: Strings = {
     close: "Chiudi",
     next: "Avanti",
     back: "Indietro",
+  },
+  onboarding: {
+    back: "Indietro",
+    p1_headline: "Alcuni periodi della vita sono più intensi.", p1_sub: "C'è una ragione.", p1_cta: "Mostrami",
+    p2_headline: "C'è uno schema.", p2_signal_active: "Il tuo segnale è attivo", p2_cta: "Cosa significa?",
+    p3_headline: "I pianeti plasmano\nil tuo timing.", p3_sub: "Ognuno porta un segnale. Alcuni sono attivi ora.", p3_planet_active: "{planet} è attivo ora", p3_which_ones: "Quali sono i tuoi?", p3_cta: "Rivela il mio segnale",
+    p4_headline: "Cosa conta di più?", p4_sub: "Scegli fino a {n}. Questo plasma il tuo segnale.", p4_selected: "{n} / {max} selezionati", p4_cta: "Continua",
+    p4_love: "Amore", p4_career: "Carriera", p4_money: "Denaro", p4_family: "Famiglia",
+    p4_health: "Salute", p4_creativity: "Creatività", p4_home: "Casa", p4_friends: "Amici", p4_meaning: "Significato",
+    p5_headline: "Il tuo timing è unico.", p5_sub: "Configuralo.",
+    p5_nickname_label: "Soprannome", p5_nickname_ph: "Come ti chiamiamo?",
+    p5_dob_label: "Data di nascita", p5_time_label: "Ora di nascita", p5_time_helper: "La precisione affina il tuo segnale.",
+    p5_place_label: "Luogo di nascita", p5_place_ph: "Città, Paese",
+    p5_privacy: "I tuoi dati vengono usati solo per preparare il tuo ritmo.", p5_cta: "Prepara il mio segnale",
+    p6_scanning: "Analisi del tuo tema natale", p6_status1: "Lettura dei segnali planetari", p6_status2: "Costruzione della timeline", p6_status3: "Preparazione della prima capsula",
+    p6_error: "Problema di connessione. Uso dati di esempio.", p6_signal_active: "Il tuo segnale è attivo", p6_built_real: "Basato su dati planetari reali per il tuo esatto momento di nascita.", p6_built_sample: "Esplora con dati di esempio. Inserisci i tuoi dati di nascita per una lettura personale.",
   },
 };
 
@@ -522,6 +618,22 @@ const PT: Strings = {
     next: "Próximo",
     back: "Voltar",
   },
+  onboarding: {
+    back: "Voltar",
+    p1_headline: "Alguns períodos da vida são mais intensos.", p1_sub: "Há uma razão.", p1_cta: "Mostre-me",
+    p2_headline: "Há um padrão.", p2_signal_active: "Teu sinal está ativo", p2_cta: "O que isso significa?",
+    p3_headline: "Os planetas moldam\nteu timing.", p3_sub: "Cada um carrega um sinal. Alguns estão ativos agora.", p3_planet_active: "{planet} está ativo agora", p3_which_ones: "Quais são os seus?", p3_cta: "Revela meu sinal",
+    p4_headline: "O que mais importa?", p4_sub: "Escolha até {n}. Isso molda seu sinal.", p4_selected: "{n} / {max} selecionados", p4_cta: "Continuar",
+    p4_love: "Amor", p4_career: "Carreira", p4_money: "Dinheiro", p4_family: "Família",
+    p4_health: "Saúde", p4_creativity: "Criatividade", p4_home: "Casa", p4_friends: "Amigos", p4_meaning: "Sentido",
+    p5_headline: "Teu timing é único.", p5_sub: "Configure o seu.",
+    p5_nickname_label: "Apelido", p5_nickname_ph: "Como devemos te chamar?",
+    p5_dob_label: "Data de nascimento", p5_time_label: "Hora de nascimento", p5_time_helper: "A precisão aprimora teu sinal.",
+    p5_place_label: "Local de nascimento", p5_place_ph: "Cidade, País",
+    p5_privacy: "Seus dados são usados apenas para preparar teu ritmo.", p5_cta: "Prepara meu sinal",
+    p6_scanning: "Analisando teu mapa natal", p6_status1: "Lendo teus sinais planetários", p6_status2: "Construindo tua linha do tempo", p6_status3: "Preparando tua primeira cápsula",
+    p6_error: "Problema de conexão. Usando dados de exemplo.", p6_signal_active: "Teu sinal está ativo", p6_built_real: "Baseado em dados planetários reais para teu exato momento de nascimento.", p6_built_sample: "Explore com dados de exemplo. Insira seu nascimento para uma leitura pessoal.",
+  },
 };
 
 const NL: Strings = {
@@ -589,6 +701,22 @@ const NL: Strings = {
     close: "Sluiten",
     next: "Volgende",
     back: "Terug",
+  },
+  onboarding: {
+    back: "Terug",
+    p1_headline: "Sommige perioden in je leven voelen intenser aan.", p1_sub: "Er is een reden.", p1_cta: "Laat me zien",
+    p2_headline: "Er is een patroon.", p2_signal_active: "Jouw signaal is actief", p2_cta: "Wat betekent dit?",
+    p3_headline: "Planeten vormen\njouw timing.", p3_sub: "Elk draagt een signaal. Sommige zijn nu actief.", p3_planet_active: "{planet} is nu actief", p3_which_ones: "Welke zijn de jouwe?", p3_cta: "Onthul mijn signaal",
+    p4_headline: "Wat telt het meest?", p4_sub: "Kies tot {n}. Dit vormt jouw signaal.", p4_selected: "{n} / {max} geselecteerd", p4_cta: "Doorgaan",
+    p4_love: "Liefde", p4_career: "Carrière", p4_money: "Geld", p4_family: "Familie",
+    p4_health: "Gezondheid", p4_creativity: "Creativiteit", p4_home: "Thuis", p4_friends: "Vrienden", p4_meaning: "Zingeving",
+    p5_headline: "Jouw timing is uniek.", p5_sub: "Stel de jouwe in.",
+    p5_nickname_label: "Bijnaam", p5_nickname_ph: "Hoe moeten we je noemen?",
+    p5_dob_label: "Geboortedatum", p5_time_label: "Geboortetijd", p5_time_helper: "Precisie verscherpt jouw signaal.",
+    p5_place_label: "Geboorteplaats", p5_place_ph: "Stad, Land",
+    p5_privacy: "Jouw gegevens worden alleen gebruikt om jouw ritme te bepalen.", p5_cta: "Bereid mijn signaal voor",
+    p6_scanning: "Geboortehoroscoop scannen", p6_status1: "Planetaire signalen lezen", p6_status2: "Momentum-tijdlijn opbouwen", p6_status3: "Eerste capsule voorbereiden",
+    p6_error: "Verbindingsprobleem. Voorbeeldgegevens worden gebruikt.", p6_signal_active: "Jouw signaal is actief", p6_built_real: "Gebaseerd op echte planetaire gegevens voor jouw exacte geboortemoment.", p6_built_sample: "Verken met voorbeeldgegevens. Voer je geboortegegevens in voor een persoonlijke lezing.",
   },
 };
 
@@ -658,6 +786,22 @@ const JA: Strings = {
     next: "次へ",
     back: "戻る",
   },
+  onboarding: {
+    back: "戻る",
+    p1_headline: "人生のある時期はより強烈に感じる。", p1_sub: "理由がある。", p1_cta: "見せて",
+    p2_headline: "パターンがある。", p2_signal_active: "あなたのシグナルは活性化中", p2_cta: "それはどういう意味？",
+    p3_headline: "惑星があなたの\nタイミングを形作る。", p3_sub: "それぞれがシグナルを持つ。今活性化しているものもある。", p3_planet_active: "{planet}が今活性化中", p3_which_ones: "あなたのはどれ？", p3_cta: "シグナルを明かす",
+    p4_headline: "何が一番大切？", p4_sub: "最大{n}つ選ぶ。これがシグナルを形作る。", p4_selected: "{n} / {max} 選択", p4_cta: "続ける",
+    p4_love: "愛", p4_career: "キャリア", p4_money: "お金", p4_family: "家族",
+    p4_health: "健康", p4_creativity: "創造性", p4_home: "家", p4_friends: "友達", p4_meaning: "意味",
+    p5_headline: "あなたのタイミングは唯一無二。", p5_sub: "設定しよう。",
+    p5_nickname_label: "ニックネーム", p5_nickname_ph: "なんと呼べばいい？",
+    p5_dob_label: "生年月日", p5_time_label: "生まれた時間", p5_time_helper: "精度がシグナルを鋭くする。",
+    p5_place_label: "出生地", p5_place_ph: "都市、国",
+    p5_privacy: "あなたの情報はリズムの準備にのみ使用されます。", p5_cta: "シグナルを準備",
+    p6_scanning: "出生チャートをスキャン中", p6_status1: "惑星シグナルを読み取り中", p6_status2: "モメンタムタイムライン構築中", p6_status3: "最初のカプセルを準備中",
+    p6_error: "接続の問題。サンプルデータを使用中。", p6_signal_active: "あなたのシグナルは活性化中", p6_built_real: "あなたの正確な誕生時の惑星データから構築。", p6_built_sample: "サンプルデータで探索。個人的なリーディングのために誕生情報を入力してください。",
+  },
 };
 
 const ZH: Strings = {
@@ -726,6 +870,22 @@ const ZH: Strings = {
     next: "下一步",
     back: "返回",
   },
+  onboarding: {
+    back: "返回",
+    p1_headline: "生命中某些时期感觉更加强烈。", p1_sub: "这是有原因的。", p1_cta: "让我看看",
+    p2_headline: "有一个规律。", p2_signal_active: "您的信号正在激活", p2_cta: "这是什么意思？",
+    p3_headline: "行星塑造\n您的时机。", p3_sub: "每颗都携带信号。有些现在正在激活。", p3_planet_active: "{planet}现在正在激活", p3_which_ones: "哪些是您的？", p3_cta: "揭示我的信号",
+    p4_headline: "什么最重要？", p4_sub: "选择最多{n}个。这塑造您的信号。", p4_selected: "已选{n} / {max}", p4_cta: "继续",
+    p4_love: "爱情", p4_career: "事业", p4_money: "金钱", p4_family: "家庭",
+    p4_health: "健康", p4_creativity: "创意", p4_home: "家园", p4_friends: "友谊", p4_meaning: "意义",
+    p5_headline: "您的时机是独特的。", p5_sub: "配置您的信息。",
+    p5_nickname_label: "昵称", p5_nickname_ph: "我们该怎么称呼您？",
+    p5_dob_label: "出生日期", p5_time_label: "出生时间", p5_time_helper: "精确度可以增强您的信号。",
+    p5_place_label: "出生地", p5_place_ph: "城市，国家",
+    p5_privacy: "您的信息仅用于准备您的个人节律。", p5_cta: "准备我的信号",
+    p6_scanning: "扫描您的出生星图", p6_status1: "读取行星信号", p6_status2: "构建动量时间线", p6_status3: "准备第一个胶囊",
+    p6_error: "连接问题。使用示例数据。", p6_signal_active: "您的信号正在激活", p6_built_real: "基于您精确出生时刻的真实行星数据构建。", p6_built_sample: "用示例数据探索。输入您的出生信息以获得个人解读。",
+  },
 };
 
 const AR: Strings = {
@@ -793,6 +953,22 @@ const AR: Strings = {
     close: "إغلاق",
     next: "التالي",
     back: "رجوع",
+  },
+  onboarding: {
+    back: "رجوع",
+    p1_headline: "بعض فترات حياتك تبدو أكثر حدة.", p1_sub: "هناك سبب.", p1_cta: "أرني",
+    p2_headline: "هناك نمط.", p2_signal_active: "إشارتك نشطة", p2_cta: "ماذا يعني هذا؟",
+    p3_headline: "الكواكب تشكل\nتوقيتك.", p3_sub: "كل كوكب يحمل إشارة. بعضها نشط الآن.", p3_planet_active: "{planet} نشط الآن", p3_which_ones: "أيها ينتمي لك؟", p3_cta: "اكشف إشارتي",
+    p4_headline: "ما الأهم بالنسبة لك؟", p4_sub: "اختر حتى {n}. هذا يشكل إشارتك.", p4_selected: "{n} / {max} محدد", p4_cta: "متابعة",
+    p4_love: "الحب", p4_career: "المسيرة", p4_money: "المال", p4_family: "العائلة",
+    p4_health: "الصحة", p4_creativity: "الإبداع", p4_home: "المنزل", p4_friends: "الأصدقاء", p4_meaning: "المعنى",
+    p5_headline: "توقيتك فريد من نوعه.", p5_sub: "قم بتكوينه.",
+    p5_nickname_label: "اللقب", p5_nickname_ph: "كيف يجب أن نناديك؟",
+    p5_dob_label: "تاريخ الميلاد", p5_time_label: "وقت الميلاد", p5_time_helper: "الدقة تحدد إشارتك.",
+    p5_place_label: "مكان الميلاد", p5_place_ph: "المدينة، الدولة",
+    p5_privacy: "بياناتك تُستخدم فقط لإعداد إيقاعك الشخصي.", p5_cta: "جهز إشارتي",
+    p6_scanning: "مسح خريطة ميلادك", p6_status1: "قراءة إشاراتك الكوكبية", p6_status2: "بناء خط زمن الزخم", p6_status3: "تحضير أول كبسولة",
+    p6_error: "مشكلة في الاتصال. استخدام بيانات نموذجية.", p6_signal_active: "إشارتك نشطة", p6_built_real: "مبني من بيانات كوكبية حقيقية للحظة ميلادك الدقيقة.", p6_built_sample: "استكشف مع بيانات نموذجية. أدخل معلومات ميلادك للحصول على قراءة شخصية.",
   },
 };
 

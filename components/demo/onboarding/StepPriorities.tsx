@@ -10,11 +10,12 @@
  * Stored immediately in user-profile for the AI pipeline.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 
 import { S } from "@/lib/layout-constants";
 import type { PriorityDomain } from "@/types/user-profile";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 const EASE = [0.4, 0, 0.2, 1] as const;
 const MAX_PICKS = 3;
@@ -25,16 +26,16 @@ interface PriorityOption {
   color: string;
 }
 
-const OPTIONS: PriorityOption[] = [
-  { key: "love",                label: "Love",         color: "#BC7A96" },
-  { key: "career",              label: "Career",       color: "#7B8CC4" },
-  { key: "money",               label: "Money",        color: "#B8A472" },
-  { key: "family",              label: "Family",       color: "#C48A6A" },
-  { key: "health_energy",       label: "Health",       color: "#7BA88A" },
-  { key: "creativity",          label: "Creativity",   color: "#A07FBD" },
-  { key: "home",                label: "Home",         color: "#C4727A" },
-  { key: "friends_network",     label: "Friends",      color: "#6FA3A0" },
-  { key: "meaning_spirituality", label: "Meaning",     color: "#9B85C4" },
+const OPTIONS = (locale: Locale): PriorityOption[] => [
+  { key: "love",                label: t("onboarding.p4_love", locale),       color: "#BC7A96" },
+  { key: "career",              label: t("onboarding.p4_career", locale),     color: "#7B8CC4" },
+  { key: "money",               label: t("onboarding.p4_money", locale),      color: "#B8A472" },
+  { key: "family",              label: t("onboarding.p4_family", locale),     color: "#C48A6A" },
+  { key: "health_energy",       label: t("onboarding.p4_health", locale),     color: "#7BA88A" },
+  { key: "creativity",          label: t("onboarding.p4_creativity", locale), color: "#A07FBD" },
+  { key: "home",                label: t("onboarding.p4_home", locale),       color: "#C4727A" },
+  { key: "friends_network",     label: t("onboarding.p4_friends", locale),    color: "#6FA3A0" },
+  { key: "meaning_spirituality",label: t("onboarding.p4_meaning", locale),    color: "#9B85C4" },
 ];
 
 interface StepPrioritiesProps {

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 import { planetConfig, type PlanetKey } from "@/lib/domain-config";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 interface StepTimelineTeaserProps {
   onNext: () => void;
@@ -63,6 +64,8 @@ const SPOTLIGHT_START = SETTLE_DELAY + 0.8;  // 4.2s — first planet spotlight
 const SPOTLIGHT_INTERVAL = 1.2;               // 1.2s between each planet
 
 export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) {
+  const [locale, setLocale] = useState<Locale>("en");
+  useEffect(() => { setLocale(detectLocale()); }, []);
   // Which active planet is currently spotlighted (-1 = none, 0-N = index, N+1 = all done)
   const [spotlightIndex, setSpotlightIndex] = useState(-1);
 
@@ -94,7 +97,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline -mt-0.5 mr-1">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        Back
+        {t("onboarding.back", locale)}
       </motion.button>
 
       <motion.div
@@ -105,9 +108,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
       >
         <h1 className="font-display text-2xl font-bold"
           style={{ letterSpacing: -0.5, color: "var(--accent-purple)" }}>
-          Planets shape
-          <br />
-          your timing.
+          {t("onboarding.p3_headline", locale).split("\n").map((line, i, arr) => (
+            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+          ))}
         </h1>
       </motion.div>
 
@@ -118,7 +121,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         animate={{ opacity: 0.85 }}
         transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        Each one carries a signal. Some are active right now.
+        {t("onboarding.p3_sub", locale)}
       </motion.p>
 
       <div className="flex-1 relative overflow-hidden">
@@ -303,8 +306,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.3 }}
             >
-              <span className="font-semibold">{planetConfig[ACTIVE_PLANETS[spotlightIndex].key].label}</span>
-              {" "}is active right now
+              {t("onboarding.p3_planet_active", locale).replace("{planet}", planetConfig[ACTIVE_PLANETS[spotlightIndex].key].label)}
             </motion.p>
           )}
           {spotlightIndex >= ACTIVE_PLANETS.length && (
@@ -315,7 +317,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              Which ones are yours?
+              {t("onboarding.p3_which_ones", locale)}
             </motion.p>
           )}
         </AnimatePresence>
@@ -334,7 +336,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
           onClick={onNext}
           className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
         >
-          Reveal my signal
+          {t("onboarding.p3_cta", locale)}
         </button>
       </motion.div>
     </motion.div>
