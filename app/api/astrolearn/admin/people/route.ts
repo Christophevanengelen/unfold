@@ -84,7 +84,7 @@ async function searchAstrolearnPeople(
     [query, pattern, birthDate, limit, createdBy ?? null]
   );
 
-  return rows.map((row) => {
+  return rows.map((row: any) => {
     const username = row.username || row.login || "";
     const label =
       [row.first_name, row.last_name].filter(Boolean).join(" ").trim() ||
@@ -151,7 +151,7 @@ async function searchBubblePeople(query: string, limit: number): Promise<PersonR
     [query, pattern, birthDate, limit]
   );
 
-  return rows.map((row) => {
+  return rows.map((row: any) => {
     const login = String(row.login ?? "").trim();
     const label = String(row.name ?? "").trim() || login || String(row.id_person);
     const birthDateValue = formatDate(row.birthdate);

@@ -47,6 +47,9 @@ interface StepPrioritiesProps {
 
 export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrioritiesProps) {
   const [touched, setTouched] = useState(false);
+  const [locale, setLocale] = useState<Locale>("en");
+  useEffect(() => { setLocale(detectLocale()); }, []);
+  const options = OPTIONS(locale);
 
   const toggle = (key: PriorityDomain) => {
     setTouched(true);
@@ -111,7 +114,7 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.8, ease: EASE }}
       >
-        {OPTIONS.map((opt, i) => {
+        {options.map((opt, i) => {
           const isSelected = selected.includes(opt.key);
           const isDisabled = !isSelected && selected.length >= MAX_PICKS;
 
