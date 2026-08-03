@@ -15,7 +15,7 @@ import type { Plan } from "./features";
 export interface Entitlement {
   plan: Plan;
   status: "trialing" | "active" | "lifetime" | "past_due" | "canceled" | "expired" | "none";
-  source?: "stripe" | "apple" | "google";
+  source?: "stripe" | "apple" | "google" | "polar";
   productId?: string;
   trialEnd?: string;
   currentPeriodEnd?: string;
