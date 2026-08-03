@@ -1,15 +1,68 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence, useMotionValue } from "motion/react";
 import { StepPromise } from "@/components/demo/onboarding/StepPromise";
-import { StepSignalPreview } from "@/components/demo/onboarding/StepSignalPreview";
-import { StepTimelineTeaser } from "@/components/demo/onboarding/StepTimelineTeaser";
-import { StepPriorities } from "@/components/demo/onboarding/StepPriorities";
-import { StepInput } from "@/components/demo/onboarding/StepInput";
 import type { OnboardingFormData } from "@/components/demo/onboarding/StepInput";
-import { StepPreparing } from "@/components/demo/onboarding/StepPreparing";
 import { OnboardingProgress } from "@/components/demo/onboarding/OnboardingProgress";
+
+/**
+ * Perf: only StepPromise (screen 0) ships in the first-load bundle.
+ * The five later steps are split into their own chunks and warmed up
+ * in the background while the user reads the promise screen (~3 s) —
+ * so the first tap never waits on a chunk download + hydration burst.
+ * (Cold-visit INP measured at 3–8 s before this split; see audit pass 1.)
+ */
+const stepLoading = () => (
+  <div className="flex h-full items-center justify-center">
+    <div
+      className="h-5 w-5 animate-spin rounded-full border-2 border-transparent"
+      style={{
+        borderTopColor: "var(--accent-purple)",
+        borderRightColor: "var(--accent-purple)",
+        opacity: 0.5,
+      }}
+    />
+  </div>
+);
+
+const StepSignalPreview = dynamic(
+  () => import("@/components/demo/onboarding/StepSignalPreview").then((m) => m.StepSignalPreview),
+  { ssr: false, loading: stepLoading }
+);
+const StepTimelineTeaser = dynamic(
+  () => import("@/components/demo/onboarding/StepTimelineTeaser").then((m) => m.StepTimelineTeaser),
+  { ssr: false, loading: stepLoading }
+);
+const StepPriorities = dynamic(
+  () => import("@/components/demo/onboarding/StepPriorities").then((m) => m.StepPriorities),
+  { ssr: false, loading: stepLoading }
+);
+const StepInput = dynamic(
+  () => import("@/components/demo/onboarding/StepInput").then((m) => m.StepInput),
+  { ssr: false, loading: stepLoading }
+);
+const StepPreparing = dynamic(
+  () => import("@/components/demo/onboarding/StepPreparing").then((m) => m.StepPreparing),
+  { ssr: false, loading: stepLoading }
+);
+
+/** Warm the split chunks during idle time on screen 0 — order = user order. */
+function preloadLaterSteps() {
+  const load = () => {
+    import("@/components/demo/onboarding/StepSignalPreview").catch(() => {});
+    import("@/components/demo/onboarding/StepTimelineTeaser").catch(() => {});
+    import("@/components/demo/onboarding/StepPriorities").catch(() => {});
+    import("@/components/demo/onboarding/StepInput").catch(() => {});
+    import("@/components/demo/onboarding/StepPreparing").catch(() => {});
+  };
+  if ("requestIdleCallback" in window) {
+    (window as Window & typeof globalThis).requestIdleCallback(load, { timeout: 2000 });
+  } else {
+    setTimeout(load, 300);
+  }
+}
 import { saveUserProfile } from "@/lib/user-profile";
 import type { PriorityDomain } from "@/types/user-profile";
 
@@ -57,6 +110,11 @@ export default function OnboardingPage() {
     timeOfBirth: "",
     placeOfBirth: "",
   });
+
+  // Warm later-step chunks while the user reads the promise screen.
+  useEffect(() => {
+    preloadLaterSteps();
+  }, []);
 
   const next = useCallback(() => {
     setDir(1);

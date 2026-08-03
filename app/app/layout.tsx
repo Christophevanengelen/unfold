@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { BottomNav } from "@/components/demo/BottomNav";
@@ -94,8 +94,14 @@ export default function DemoLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const isDesktop = searchParams.get("desktop") === "1";
+  // Read ?desktop=1 client-side only: useSearchParams() in this layout
+  // forced the whole /app tree to bail out of SSR (blank first paint).
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    try {
+      setIsDesktop(new URLSearchParams(window.location.search).get("desktop") === "1");
+    } catch { /* noop */ }
+  }, []);
   const isNative = useIsNative() || isDesktop;
   const { resolvedTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -172,6 +178,52 @@ export default function DemoLayout({
   // Full-bleed routes manage their own padding and scroll
   const isFullBleed = isHome || isTimeline || isOnboarding;
 
+
+  // Onboarding funnel: render immediately, INCLUDING at SSR.
+  // A first-time visitor must see the promise screen at first paint — the
+  // previous mounted-gate shipped an empty dark div until the whole app
+  // bundle hydrated (37 s of black screen on cold 3G + mid CPU, measured).
+  // This branch is stable pre/post mount (no nav, no drawer on onboarding),
+  // so there is no hydration mismatch and no flash.
+  if (isOnboarding) {
+    const obFrameClasses = isNative
+      ? "relative flex h-[100dvh] w-full flex-col overflow-hidden bg-bg-primary"
+      : "relative flex h-[812px] w-[375px] flex-col overflow-hidden rounded-[2.5rem] border border-brand-6/40 bg-bg-primary";
+    const obSafeTop = isNative ? "env(safe-area-inset-top, 48px)" : `${SAFE_TOP}px`;
+    const obSafeBottom = isNative ? "env(safe-area-inset-bottom, 34px)" : `${SAFE_BOTTOM}px`;
+    return (
+      <AuthProvider>
+        <MomentumProvider>
+          <div
+            className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"}
+            style={{ backgroundColor: "#110D24" }}
+          >
+            <div className={obFrameClasses} style={{ transform: "translateZ(0)" }}>
+              <div
+                className="pointer-events-none absolute inset-0"
+                aria-hidden="true"
+                style={{
+                  background:
+                    "radial-gradient(ellipse 120% 40% at 50% 0%, rgba(124, 107, 191, 0.10) 0%, transparent 60%)",
+                }}
+              />
+              <PremiumTeaserContext.Provider value={() => setPremiumOpen(true)}>
+                <div
+                  className="relative flex-1 overflow-hidden"
+                  style={{
+                    "--safe-top": obSafeTop,
+                    "--safe-bottom": obSafeBottom,
+                  } as React.CSSProperties}
+                >
+                  {children}
+                </div>
+              </PremiumTeaserContext.Provider>
+            </div>
+          </div>
+        </MomentumProvider>
+      </AuthProvider>
+    );
+  }
 
   // SSR: render only the dark background — no content, no flash
   if (!mounted) {
