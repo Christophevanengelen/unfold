@@ -2,9 +2,19 @@
  * Detail Sheet Helpers — narrative generation for capsule detail panels
  * Personalizes content based on time context (past/current/future)
  * and life domain (12 houses).
+ *
+ * i18n: fr + en. Every public helper takes an optional ContentLocale;
+ * when omitted it resolves from the detected UI locale (fr stays fr,
+ * every other locale gets en) — so call sites need no changes.
  */
 
 import { houseConfig, planetConfig, type HouseNumber, type PlanetKey } from "@/lib/domain-config";
+import { toContentLocale, type ContentLocale } from "@/lib/event-labels";
+import { detectLocale } from "@/lib/i18n-demo";
+
+function resolveLocale(locale?: ContentLocale): ContentLocale {
+  return locale ?? toContentLocale(detectLocale());
+}
 
 // ─── Time Context ────────────────────────────────────────
 
@@ -18,36 +28,38 @@ export interface TimeContextMeta {
   insightLabel: string;
 }
 
-export function getTimeContext(isCurrent: boolean, isFuture: boolean): TimeContextMeta {
+export function getTimeContext(isCurrent: boolean, isFuture: boolean, locale?: ContentLocale): TimeContextMeta {
+  const fr = resolveLocale(locale) === "fr";
   if (isCurrent) return {
     context: "current",
-    bannerLabel: "En cours",
+    bannerLabel: fr ? "En cours" : "Happening now",
     bannerIcon: "bolt",
-    storyLabel: "Ce qui se déroule",
-    insightLabel: "Insight pour maintenant",
+    storyLabel: fr ? "Ce qui se déroule" : "What's unfolding",
+    insightLabel: fr ? "Insight pour maintenant" : "Insight for now",
   };
   if (isFuture) return {
     context: "future",
-    bannerLabel: "À venir",
+    bannerLabel: fr ? "À venir" : "Coming up",
     bannerIcon: "calendar",
-    storyLabel: "Ce qui t'attend",
-    insightLabel: "À anticiper",
+    storyLabel: fr ? "Ce qui t'attend" : "What's ahead",
+    insightLabel: fr ? "À anticiper" : "To anticipate",
   };
   return {
     context: "past",
-    bannerLabel: "Tu y étais",
+    bannerLabel: fr ? "Tu y étais" : "You were there",
     bannerIcon: "clock",
-    storyLabel: "Ce qui s'est passé",
-    insightLabel: "Insight clé",
+    storyLabel: fr ? "Ce qui s'est passé" : "What happened",
+    insightLabel: fr ? "Insight clé" : "Key insight",
   };
 }
 
 // ─── Tier Labels ─────────────────────────────────────────
 
-export function getTierLabel(tier: "toc" | "toctoc" | "toctoctoc"): string {
-  if (tier === "toctoctoc") return "Moment fort";
-  if (tier === "toctoc") return "Signal clair";
-  return "Signal subtil";
+export function getTierLabel(tier: "toc" | "toctoc" | "toctoctoc", locale?: ContentLocale): string {
+  const fr = resolveLocale(locale) === "fr";
+  if (tier === "toctoctoc") return fr ? "Moment fort" : "Peak moment";
+  if (tier === "toctoc") return fr ? "Signal clair" : "Clear signal";
+  return fr ? "Signal subtil" : "Subtle signal";
 }
 
 // ─── Domain Key → House Number bridge ────────────────────
@@ -75,7 +87,7 @@ export function domainKeyToHouse(domain: string): HouseNumber {
 
 // ─── Domain Narrative ────────────────────────────────────
 
-const DOMAIN_NARRATIVES: Record<TimeContext, Record<HouseNumber, string>> = {
+const DOMAIN_NARRATIVES_FR: Record<TimeContext, Record<HouseNumber, string>> = {
   past: {
     1: "Cette période a remué ton identité. C'est là que tu as changé ta manière de te présenter au monde.",
     2: "Ton rapport à l'argent et aux ressources a été activé. Les décisions financières de cette époque ont laissé des traces.",
@@ -120,14 +132,60 @@ const DOMAIN_NARRATIVES: Record<TimeContext, Record<HouseNumber, string>> = {
   },
 };
 
-export function getDomainNarrative(domain: string, context: TimeContext): string {
+const DOMAIN_NARRATIVES_EN: Record<TimeContext, Record<HouseNumber, string>> = {
+  past: {
+    1: "This period stirred your identity. That's when you changed how you show up in the world.",
+    2: "Your relationship with money and resources was activated. The financial decisions of that time left their mark.",
+    3: "Your exchanges and way of communicating took center stage. Important messages, travel, learning.",
+    4: "Your home and roots were shaken. A move, family, a need for grounding — something shifted deep down.",
+    5: "Your creativity and appetite for pleasure were at their peak. Romance, fun projects, self-expression.",
+    6: "Your daily life got reorganized. Health, routines, workload — your habits transformed.",
+    7: "Your close relationships were front and center. Partnership, commitments — an important counterpart.",
+    8: "You went through a zone of transformation. Crises, inheritances, taboos — what was hidden came up.",
+    9: "Your horizon widened. Travel, studies, a search for meaning — a call toward something bigger.",
+    10: "Your career and reputation were activated. Promotion, visibility, responsibilities — your place in the world.",
+    11: "Your network and collective projects were in motion. New alliances, communities, shared hopes.",
+    12: "A period of inwardness. Retreat, letting go, invisible work — foundations were being laid in silence.",
+  },
+  current: {
+    1: "Your identity is in motion. How you present yourself to the world is changing — let it surprise you.",
+    2: "Your financial life is active. Pay attention to your income, your spending, and what you truly value.",
+    3: "Your exchanges are amplified. A message, a conversation or a trip can change everything right now.",
+    4: "Your home is asking for attention. Housing, family, roots — something is moving at home, literally or figuratively.",
+    5: "Your creativity is in full swing. This is the moment to dare, to play, to create. Romance and pleasure are favored.",
+    6: "Your daily life is reorganizing. Health, routines, workload — adjust what no longer works.",
+    7: "Your relationships are at the center. The dialogue with the other — partner, associate, opponent — is essential now.",
+    8: "You're in a zone of transformation. Accept what emerges — crises, depth, hidden truths.",
+    9: "Your horizon is widening. Travel, studies, new perspectives — follow the call of what's far away.",
+    10: "Your career is in the spotlight. Reputation, status, visible decisions — this is the moment to act.",
+    11: "Your network is buzzing. Friends, projects, communities — the right connections are being made now.",
+    12: "A period of inwardness is settling in. Step back, listen to what's happening backstage. Silence carries.",
+  },
+  future: {
+    1: "A signal is coming for your identity. Get ready to rethink how you show yourself to the world.",
+    2: "A financial window opens soon. Income, investments, your relationship with value — stay alert.",
+    3: "Your exchanges will intensify. Communication, travel, learning — key messages are approaching.",
+    4: "Your home will be activated. Housing, family, roots — expect movement in your private life.",
+    5: "Creativity and pleasure are on their way. A window for romance, expression, projects that light you up.",
+    6: "Your daily life is about to be shaken up. Health, routines, organization — anticipate the needed adjustments.",
+    7: "Your relationships will be front and center. Partnership, commitments — a relational chapter is opening.",
+    8: "A zone of transformation is approaching. What's buried will surface — welcome deep change.",
+    9: "Your horizon is about to widen. Travel, studies, a search for meaning — an expansion is coming.",
+    10: "Your career is about to be activated. Visibility, responsibilities, recognition — position yourself now.",
+    11: "Your network is about to move. New alliances, collective projects — the right encounters are ahead of you.",
+    12: "A period of inwardness is approaching. Plan time to step back, reflect, and let go.",
+  },
+};
+
+export function getDomainNarrative(domain: string, context: TimeContext, locale?: ContentLocale): string {
   const house = domainKeyToHouse(domain);
-  return DOMAIN_NARRATIVES[context][house] ?? "";
+  const dict = resolveLocale(locale) === "fr" ? DOMAIN_NARRATIVES_FR : DOMAIN_NARRATIVES_EN;
+  return dict[context][house] ?? "";
 }
 
 // ─── Planet Narrative ────────────────────────────────────
 
-const PLANET_MEANINGS: Record<PlanetKey, string> = {
+const PLANET_MEANINGS_FR: Record<PlanetKey, string> = {
   sun: "met en lumière ce qui compte vraiment",
   moon: "remue les émotions et les besoins profonds",
   mercury: "accélère les échanges et les décisions",
@@ -144,33 +202,55 @@ const PLANET_MEANINGS: Record<PlanetKey, string> = {
   "lunar-eclipse": "ferme un chapitre et libère de l'espace",
 };
 
-export function getPlanetNarrative(planets: PlanetKey[]): string {
+const PLANET_MEANINGS_EN: Record<PlanetKey, string> = {
+  sun: "shines a light on what truly matters",
+  moon: "stirs emotions and deep needs",
+  mercury: "speeds up exchanges and decisions",
+  venus: "activates attraction, values and softness",
+  mars: "pushes toward action, sometimes conflict",
+  jupiter: "opens doors and widens what's possible",
+  saturn: "tests what's solid and demands rigor",
+  uranus: "brings surprises and liberating breaks",
+  neptune: "dissolves certainties and invites intuition",
+  pluto: "deeply transforms what no longer works",
+  "north-node": "points toward your direction of growth",
+  "south-node": "invites you to release outdated patterns",
+  "solar-eclipse": "marks a powerful fresh start",
+  "lunar-eclipse": "closes a chapter and frees up space",
+};
+
+export function getPlanetNarrative(planets: PlanetKey[], locale?: ContentLocale): string {
+  const fr = resolveLocale(locale) === "fr";
+  const meanings = fr ? PLANET_MEANINGS_FR : PLANET_MEANINGS_EN;
   if (planets.length === 0) return "";
   if (planets.length === 1) {
     const p = planetConfig[planets[0]];
-    return `${p.label} ${PLANET_MEANINGS[planets[0]]}.`;
+    return `${p.label} ${meanings[planets[0]]}.`;
   }
   // Multi-planet: compose
   const parts = planets.slice(0, 3).map(pk => {
     const p = planetConfig[pk];
-    return `${p.label} ${PLANET_MEANINGS[pk]}`;
+    return `${p.label} ${meanings[pk]}`;
   });
-  if (parts.length === 2) return `${parts[0]}, tandis que ${parts[1]}.`;
+  if (parts.length === 2) return fr ? `${parts[0]}, tandis que ${parts[1]}.` : `${parts[0]}, while ${parts[1]}.`;
   return `${parts[0]}. ${parts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(". ")}.`;
 }
 
 // ─── Duration Formatting ─────────────────────────────────
 
-export function formatDuration(startDate: Date, endDate: Date): string {
+export function formatDuration(startDate: Date, endDate: Date, locale?: ContentLocale): string {
+  const fr = resolveLocale(locale) === "fr";
   const diffMs = endDate.getTime() - startDate.getTime();
   const totalDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
   const months = Math.floor(totalDays / 30);
   const days = totalDays - months * 30;
-  if (months === 0) return `${totalDays} jours`;
-  if (days === 0) return months === 1 ? "1 mois" : `${months} mois`;
+  const dayWord = fr ? "jours" : "days";
+  const monthWord = fr ? "mois" : (months === 1 ? "month" : "months");
+  if (months === 0) return `${totalDays} ${dayWord}`;
+  if (days === 0) return months === 1 ? `1 ${monthWord}` : `${months} ${monthWord}`;
   return months === 1
-    ? `1 mois ${days} jours`
-    : `${months} mois ${days} jours`;
+    ? `1 ${monthWord} ${days} ${dayWord}`
+    : `${months} ${monthWord} ${days} ${dayWord}`;
 }
 
 // ─── Progress ────────────────────────────────────────────
@@ -184,25 +264,27 @@ export function getProgressPercent(startDate: Date, endDate: Date): number {
 
 // ─── Rarity Text (client-computed planet signature count) ─
 
-export function getRarityText(tierOccurrence: number, tierTotal: number, tier: string): string | null {
+export function getRarityText(tierOccurrence: number, tierTotal: number, tier: string, locale?: ContentLocale): string | null {
   // NOTE: despite the historical name, this is used to display lifetime occurrence counts.
   // It must NOT be fed tierOccurrence/tierTotal (planet-signature rarity counters).
   if (!tierOccurrence || !tierTotal || tierOccurrence <= 0 || tierTotal <= 1) return null;
-  return `sur ${tierTotal} dans ta vie`;
+  return resolveLocale(locale) === "fr" ? `sur ${tierTotal} dans ta vie` : `of ${tierTotal} in your lifetime`;
 }
 
 // ─── Cycle Text (D-R-D pass count from API) ──────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getCyclePassText(phase: any): string | null {
+export function getCyclePassText(phase: any, locale?: ContentLocale): string | null {
   const cycle = phase?.cycle;
   if (!cycle || !cycle.totalHits || cycle.totalHits <= 1) return null;
-  return `Passage ${cycle.hitNumber} sur ${cycle.totalHits}`;
+  return resolveLocale(locale) === "fr"
+    ? `Passage ${cycle.hitNumber} sur ${cycle.totalHits}`
+    : `Pass ${cycle.hitNumber} of ${cycle.totalHits}`;
 }
 
 // ─── Guidance by context ─────────────────────────────────
 
-const HOUSE_ACTIONS: Record<number, { current: string; future: string; past: string }> = {
+const HOUSE_ACTIONS_FR: Record<number, { current: string; future: string; past: string }> = {
   1:  { current: "Prends une initiative qui te ressemble.", future: "Prépare un changement d'image ou de posture.", past: "Ce qui a changé en toi à cette époque est toujours actif." },
   2:  { current: "Revois tes finances — un ajustement s'impose.", future: "Anticipe un mouvement financier.", past: "Les décisions financières de cette période ont laissé une empreinte." },
   3:  { current: "Un message ou une conversation peut tout changer.", future: "Sois attentif aux échanges qui arrivent.", past: "Une information reçue ici a orienté la suite." },
@@ -217,25 +299,43 @@ const HOUSE_ACTIONS: Record<number, { current: string; future: string; past: str
   12: { current: "Prends du recul. Le silence porte.", future: "Un temps de retrait sera bénéfique.", past: "Le travail intérieur de cette période a posé des bases invisibles." },
 };
 
+const HOUSE_ACTIONS_EN: Record<number, { current: string; future: string; past: string }> = {
+  1:  { current: "Take an initiative that feels like you.", future: "Prepare a change of image or posture.", past: "What changed in you back then is still active." },
+  2:  { current: "Review your finances — an adjustment is due.", future: "Anticipate a financial move.", past: "The financial decisions of that period left an imprint." },
+  3:  { current: "A message or a conversation can change everything.", future: "Stay alert to the exchanges coming your way.", past: "A piece of information received here shaped what followed." },
+  4:  { current: "Your home needs attention. Act where you live.", future: "A change tied to housing or family is approaching.", past: "What moved at home laid new foundations." },
+  5:  { current: "Say yes to pleasure and creativity.", future: "A creative or romantic window opens soon.", past: "The joy of that period is a resource that remains." },
+  6:  { current: "Adjust a routine that no longer works.", future: "Anticipate a change in your daily life.", past: "The habits you built here still carry you." },
+  7:  { current: "Invest in your key relationships.", future: "An important relationship is about to be activated.", past: "What played out in your relationships changed everything." },
+  8:  { current: "Accept what emerges, even if it's uncomfortable.", future: "Get ready to let something go.", past: "The transformation of that period made you stronger." },
+  9:  { current: "Widen your horizon — travel, learning, reflection.", future: "An expansion is coming — stay open.", past: "What you learned here still guides your choices." },
+  10: { current: "This is the moment to take a professional stand.", future: "Your career is about to be in the spotlight.", past: "The visibility gained here keeps paying off." },
+  11: { current: "Connect with the right people.", future: "New alliances are about to form.", past: "The connections from that period became pillars." },
+  12: { current: "Step back. Silence carries.", future: "A time of retreat will do you good.", past: "The inner work of that period laid invisible foundations." },
+};
+
 export function getContextualGuidance(
   domain: string,
   context: TimeContext,
   existingGuidance?: string,
   peakMoment?: string,
   apiTopics?: { house: number }[],
+  locale?: ContentLocale,
 ): string {
+  const fr = resolveLocale(locale) === "fr";
   // Use the primary topic's house for specific guidance
   const topicHouse = apiTopics?.[0]?.house;
-  const actions = topicHouse ? HOUSE_ACTIONS[topicHouse] : null;
+  const dict = fr ? HOUSE_ACTIONS_FR : HOUSE_ACTIONS_EN;
+  const actions = topicHouse ? dict[topicHouse] : null;
 
   if (context === "current") {
-    return actions?.current ?? existingGuidance ?? "Ce signal est actif. Observe ce qui bouge dans ta vie.";
+    return actions?.current ?? existingGuidance ?? (fr ? "Ce signal est actif. Observe ce qui bouge dans ta vie." : "This signal is active. Watch what's moving in your life.");
   }
   if (context === "future") {
-    return actions?.future ?? "Cette fenêtre approche. Reste attentif aux signes.";
+    return actions?.future ?? (fr ? "Cette fenêtre approche. Reste attentif aux signes." : "This window is approaching. Stay alert to the signs.");
   }
   // Past
-  return actions?.past ?? peakMoment ?? "Cette période a laissé une empreinte durable.";
+  return actions?.past ?? peakMoment ?? (fr ? "Cette période a laissé une empreinte durable." : "This period left a lasting imprint.");
 }
 
 // ─── Transit Narrative (from real API data) ─────────────
@@ -258,7 +358,7 @@ function fr(name: string): string { return PLANET_FR[name] || name; }
 
 // ─── Impact phrases by planet × aspect ──────────────────
 // No astrology jargon — describes what the person FEELS and should DO.
-const TRANSIT_IMPACT: Record<string, Record<string, string>> = {
+const TRANSIT_IMPACT_FR: Record<string, Record<string, string>> = {
   Pluto: {
     conjunction: "Quelque chose de profond se transforme en toi. Ce qui ne fonctionne plus s'efface pour laisser place au neuf.",
     opposition: "Une pression extérieure te pousse à changer. Ce n'est pas confortable, mais c'est nécessaire.",
@@ -297,35 +397,81 @@ const TRANSIT_IMPACT: Record<string, Record<string, string>> = {
   },
 };
 
+const TRANSIT_IMPACT_EN: Record<string, Record<string, string>> = {
+  Pluto: {
+    conjunction: "Something deep is transforming in you. What no longer works fades away to make room for the new.",
+    opposition: "Outside pressure is pushing you to change. It's not comfortable, but it's necessary.",
+    square: "A blockage is asking for your attention. The tension you feel points exactly where growth is possible.",
+    trine: "A deep change is happening naturally, without forcing. Follow the movement.",
+  },
+  Neptune: {
+    conjunction: "Your certainties are blurring — that's normal. Intuition takes over. Trust what you feel.",
+    opposition: "What you took for granted deserves questioning. Clarity will return.",
+    square: "Everything feels fuzzy right now. Don't force any decision. Patience is your best tool.",
+    trine: "Inspiration is flowing. Creativity, intuition, daydreaming — let it carry you without trying to control.",
+  },
+  Uranus: {
+    conjunction: "The unexpected is arriving. What seemed stable is moving — it's liberating, even if it shakes things.",
+    opposition: "Something is pushing you out of your comfort zone. Authenticity is the way.",
+    square: "An inner restlessness is rising. This urge for change is a signal — channel it.",
+    trine: "New ideas come easily. This is the moment to experiment and innovate.",
+  },
+  Saturn: {
+    conjunction: "This is the moment to build something solid. The discipline you invest now will carry you for a long time.",
+    opposition: "Reality is testing what you've built. What's solid holds. The rest must evolve.",
+    square: "It takes effort, but every obstacle overcome makes you stronger. Keep going.",
+    trine: "The groundwork pays off. Your efforts are quietly building toward something lasting.",
+  },
+  Jupiter: {
+    conjunction: "Doors are opening. It's a window of opportunities — be ready to seize what shows up.",
+    opposition: "The urge to do too much is there. Aim for what matters — growth comes through balance.",
+    square: "Ambition pushes, but reality slows. Adjust the course without losing momentum.",
+    trine: "Things are falling into place. Luck favors those who act — this is the moment.",
+  },
+  "North Node": {
+    conjunction: "A call toward something new. What attracts you — even if it's uncomfortable — is the right path.",
+  },
+  "South Node": {
+    conjunction: "It's time to release what no longer serves you. The old patterns are ready to go.",
+  },
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getTransitNarrative(phase: any): string {
+export function getTransitNarrative(phase: any, locale?: ContentLocale): string {
   if (!phase) return "";
+  const isFr = resolveLocale(locale) === "fr";
   const cat = phase.apiCategory;
   const planet = phase.transitPlanet;
-  const natal = phase.natalPoint;
   const aspect = phase.aspect;
 
   if (cat === "transit" && planet) {
     // Try specific impact phrase first
-    const planetImpact = TRANSIT_IMPACT[planet];
+    const dict = isFr ? TRANSIT_IMPACT_FR : TRANSIT_IMPACT_EN;
+    const planetImpact = dict[planet];
     if (planetImpact) {
       const text = planetImpact[aspect] || planetImpact.conjunction;
       if (text) return text;
     }
     // Fallback for unknown planets
-    return `Une énergie nouvelle influence ton quotidien dans les domaines activés.`;
+    return isFr
+      ? `Une énergie nouvelle influence ton quotidien dans les domaines activés.`
+      : `A new energy is influencing your daily life in the activated areas.`;
   }
 
   if (cat === "eclipse") {
     if (phase.eclipseType === "solar") {
-      return "Un tournant s'amorce. Ce qui est semé pendant cette période grandira pendant les 6 prochains mois.";
+      return isFr
+        ? "Un tournant s'amorce. Ce qui est semé pendant cette période grandira pendant les 6 prochains mois."
+        : "A turning point is beginning. What you plant during this period will grow over the next 6 months.";
     }
-    return "Ce qui couvait arrive à maturité. C'est le moment de lâcher ce qui ne fonctionne plus.";
+    return isFr
+      ? "Ce qui couvait arrive à maturité. C'est le moment de lâcher ce qui ne fonctionne plus."
+      : "What was brewing is reaching maturity. This is the moment to release what no longer works.";
   }
 
   if (cat === "zr") {
     const isPeak = phase.isPeakPeriod || (phase.markers as string[] | undefined)?.includes("Peak");
-    const lotImpact: Record<string, string> = {
+    const lotImpact: Record<string, string> = isFr ? {
       fortune: isPeak
         ? "Ce chapitre compte davantage — les circonstances extérieures s'amplifient. Importance et activité accrues, pas nécessairement facile."
         : "Tes circonstances matérielles et ton quotidien sont actifs. Ce qui se passe ici a du poids.",
@@ -335,62 +481,97 @@ export function getTransitNarrative(phase: any): string {
       eros: isPeak
         ? "Ce chapitre compte davantage — l'attachement et le désir s'intensifient. Ce qui se joue dans tes liens proches a plus de poids qu'il n'y paraît."
         : "L'attachement et le désir sont au premier plan. Tes relations profondes sont en mouvement.",
+    } : {
+      fortune: isPeak
+        ? "This chapter counts for more — outside circumstances are amplified. Heightened importance and activity, not necessarily easy."
+        : "Your material circumstances and daily life are active. What happens here carries weight.",
+      spirit: isPeak
+        ? "This chapter counts for more — your life direction is intensifying. A period of heightened importance: what you choose here leaves a mark."
+        : "Your life direction is active. The choices you make in this window shape what comes next.",
+      eros: isPeak
+        ? "This chapter counts for more — attachment and desire are intensifying. What plays out in your close bonds carries more weight than it seems."
+        : "Attachment and desire are front and center. Your deep relationships are in motion.",
     };
-    return lotImpact[phase.lotType] || "Une fenêtre de timing significative est ouverte pour toi.";
+    return lotImpact[phase.lotType] || (isFr ? "Une fenêtre de timing significative est ouverte pour toi." : "A significant timing window is open for you.");
   }
 
   if (cat === "station") {
-    return "Une pause dans le rythme. Les thèmes de cette période s'intensifient — prenez le temps de les observer.";
+    return isFr
+      ? "Une pause dans le rythme. Les thèmes de cette période s'intensifient — prenez le temps de les observer."
+      : "A pause in the rhythm. The themes of this period are intensifying — take the time to observe them.";
   }
 
   return "";
 }
 
-// ─── Translate API label to French ──────────────────────
+// ─── Translate API label to reader-friendly words ───────
 
-export function translateApiLabel(label: string | undefined): string | null {
+export function translateApiLabel(label: string | undefined, locale?: ContentLocale): string | null {
   if (!label) return null;
-  // "Jupiter conjunction natal Mars" → "Jupiter conjonction Mars natal"
-  // "ZR Fortune+Spirit L3 Cancer" → keep as-is (already readable)
-  // "Solar Eclipse conjunct natal Sun" → "Éclipse solaire conjonction Soleil natal"
+  const isFr = resolveLocale(locale) === "fr";
   let result = label;
-  for (const [en, frLabel] of Object.entries(PLANET_FR)) {
-    result = result.replace(new RegExp(`\\b${en}\\b`, "g"), frLabel);
+  if (isFr) {
+    // "Jupiter conjunction natal Mars" → "Jupiter activation Mars personnel"
+    for (const [en, frLabel] of Object.entries(PLANET_FR)) {
+      result = result.replace(new RegExp(`\\b${en}\\b`, "g"), frLabel);
+    }
+    result = result
+      .replace(/\bconjunction\b/gi, "activation")
+      .replace(/\bconjunct\b/gi, "activation")
+      .replace(/\bsquare\b/gi, "tension")
+      .replace(/\bopposition\b/gi, "confrontation")
+      .replace(/\btrine\b/gi, "flux")
+      .replace(/\bsextile\b/gi, "ouverture")
+      .replace(/\bnatal\b/gi, "personnel")
+      .replace(/\bReturn\b/gi, "Retour")
+      .replace(/\bSolar Eclipse\b/gi, "Nouveau départ")
+      .replace(/\bLunar Eclipse\b/gi, "Point culminant")
+      .replace(/\bSR\b/, "reprise")
+      .replace(/\bSD\b/, "pause")
+      .replace(/\bPeak\b/gi, "Pic")
+      .replace(/\bZR\b/, "Cycle de vie");
+    return result;
   }
+  // English: de-jargon the raw label without translating planet names
   result = result
     .replace(/\bconjunction\b/gi, "activation")
     .replace(/\bconjunct\b/gi, "activation")
     .replace(/\bsquare\b/gi, "tension")
     .replace(/\bopposition\b/gi, "confrontation")
-    .replace(/\btrine\b/gi, "flux")
-    .replace(/\bsextile\b/gi, "ouverture")
-    .replace(/\bnatal\b/gi, "personnel")
-    .replace(/\bReturn\b/gi, "Retour")
-    .replace(/\bSolar Eclipse\b/gi, "Nouveau départ")
-    .replace(/\bLunar Eclipse\b/gi, "Point culminant")
-    .replace(/\bSR\b/, "reprise")
+    .replace(/\btrine\b/gi, "flow")
+    .replace(/\bsextile\b/gi, "opening")
+    .replace(/\bnatal\b/gi, "personal")
+    .replace(/\bSolar Eclipse\b/gi, "Fresh start")
+    .replace(/\bLunar Eclipse\b/gi, "Culmination")
+    .replace(/\bSR\b/, "restart")
     .replace(/\bSD\b/, "pause")
-    .replace(/\bPeak\b/gi, "Pic")
-    .replace(/\bZR\b/, "Cycle de vie");
+    .replace(/\bZR\b/, "Life cycle");
   return result;
 }
 
 // ─── Cycle Narrative ────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getCycleNarrative(phase: any): string | null {
+export function getCycleNarrative(phase: any, locale?: ContentLocale): string | null {
   const cycle = phase?.cycle;
   if (!cycle || !cycle.totalHits || cycle.totalHits <= 1) return null;
+  const isFr = resolveLocale(locale) === "fr";
 
-  const hitDescriptions: Record<number, string> = {
+  const hitDescriptions: Record<number, string> = isFr ? {
     1: "Phase d'ouverture — le sujet apparaît dans ta vie.",
     2: "Phase de maturation — tu y reviens avec plus de recul.",
     3: "Phase de résolution — le sujet se clarifie et avance.",
+  } : {
+    1: "Opening phase — the theme appears in your life.",
+    2: "Maturing phase — you return to it with more perspective.",
+    3: "Resolution phase — the theme clarifies and moves forward.",
   };
 
   const hitText = cycle.totalHits <= 3
-    ? hitDescriptions[cycle.hitNumber] || `Passage ${cycle.hitNumber}.`
-    : `Passage ${cycle.hitNumber} sur ${cycle.totalHits} — le sujet se précise à chaque étape.`;
+    ? hitDescriptions[cycle.hitNumber] || (isFr ? `Passage ${cycle.hitNumber}.` : `Pass ${cycle.hitNumber}.`)
+    : (isFr
+        ? `Passage ${cycle.hitNumber} sur ${cycle.totalHits} — le sujet se précise à chaque étape.`
+        : `Pass ${cycle.hitNumber} of ${cycle.totalHits} — the theme sharpens at every step.`);
 
   return hitText;
 }
@@ -401,44 +582,63 @@ export function getCycleNarrative(phase: any): string | null {
 // since lifetimeNumber/lifetimeTotal are always undefined from API.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getLifetimeNarrative(phase: any): string | null {
+export function getLifetimeNarrative(phase: any, locale?: ContentLocale): string | null {
   const n = phase?.lifetimeNumber;
   const total = phase?.lifetimeTotal;
   if (!n || !total || total <= 1) return null;
+  const isFr = resolveLocale(locale) === "fr";
 
-  if (n === 1 && total > 1) return "Première fois dans ta vie. Tu découvres un territoire entièrement nouveau.";
-  if (n === total) return "Dernière fois dans ta vie. C'est le moment d'aller au bout de ce que cette période t'apporte.";
-  if (n === 2) return "Deuxième fois que tu vis ça. Tu as déjà des repères — utilise-les.";
-  return `${n}e occurrence sur ${total} dans ta vie. Chaque passage approfondit ta compréhension.`;
+  if (n === 1 && total > 1) return isFr
+    ? "Première fois dans ta vie. Tu découvres un territoire entièrement nouveau."
+    : "First time in your life. You're discovering entirely new territory.";
+  if (n === total) return isFr
+    ? "Dernière fois dans ta vie. C'est le moment d'aller au bout de ce que cette période t'apporte."
+    : "Last time in your life. This is the moment to take everything this period brings you.";
+  if (n === 2) return isFr
+    ? "Deuxième fois que tu vis ça. Tu as déjà des repères — utilise-les."
+    : "Second time you're living this. You already have reference points — use them.";
+  return isFr
+    ? `${n}e occurrence sur ${total} dans ta vie. Chaque passage approfondit ta compréhension.`
+    : `Occurrence ${n} of ${total} in your lifetime. Each pass deepens your understanding.`;
 }
 
 // ─── Topics Narrative (from real API topics) ────────────
 
-const HOUSE_HUMAN: Record<number, string> = {
+const HOUSE_HUMAN_FR: Record<number, string> = {
   1: "ta manière d'être", 2: "tes finances", 3: "tes échanges",
   4: "ton foyer", 5: "ta créativité", 6: "ton quotidien",
   7: "tes relations", 8: "tes transformations profondes", 9: "ton horizon",
   10: "ta carrière", 11: "ton réseau", 12: "ta vie intérieure",
 };
 
+const HOUSE_HUMAN_EN: Record<number, string> = {
+  1: "your way of being", 2: "your finances", 3: "your exchanges",
+  4: "your home", 5: "your creativity", 6: "your daily life",
+  7: "your relationships", 8: "your deep transformations", 9: "your horizon",
+  10: "your career", 11: "your network", 12: "your inner life",
+};
+
 export function getTopicsNarrative(
   topics: { house: number; topic: string; source: string }[] | undefined,
-  context: TimeContext
+  context: TimeContext,
+  locale?: ContentLocale
 ): string {
   if (!topics || topics.length === 0) return "";
+  const isFr = resolveLocale(locale) === "fr";
+  const dict = isFr ? HOUSE_HUMAN_FR : HOUSE_HUMAN_EN;
 
-  const parts = topics.map(t => HOUSE_HUMAN[t.house] || `ta vie`);
+  const parts = topics.map(t => dict[t.house] || (isFr ? `ta vie` : `your life`));
   const unique = [...new Set(parts)];
 
   const joined = unique.length === 1
     ? unique[0]
-    : unique.slice(0, -1).join(", ") + " et " + unique[unique.length - 1];
+    : unique.slice(0, -1).join(", ") + (isFr ? " et " : " and ") + unique[unique.length - 1];
 
   if (context === "current") {
-    return `Ce signal touche ${joined}.`;
+    return isFr ? `Ce signal touche ${joined}.` : `This signal touches ${joined}.`;
   }
   if (context === "future") {
-    return `Ce signal va toucher ${joined}.`;
+    return isFr ? `Ce signal va toucher ${joined}.` : `This signal will touch ${joined}.`;
   }
-  return `Ce signal a touché ${joined}.`;
+  return isFr ? `Ce signal a touché ${joined}.` : `This signal touched ${joined}.`;
 }
