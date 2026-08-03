@@ -16,6 +16,8 @@ import {
   extractNatalPoint,
 } from "@/lib/event-labels";
 import type { PlanetKey } from "@/lib/domain-config";
+import { toContentLocale } from "@/lib/event-labels";
+import { detectLocale } from "@/lib/i18n-demo";
 
 // ─── Year Data → MomentumPhase[] ────────────────────────────
 // Used for the initial fast load (toctoc-year.php, 2-10s)
@@ -74,7 +76,8 @@ export function yearDataToPhases(
       ev.aspect,
       ev.lotType,
       ev.level,
-      ev.markers
+      ev.markers,
+      toContentLocale(detectLocale())
     );
 
     // Compute date range
@@ -229,7 +232,7 @@ export function appDataToPhases(
     const durationMs = endMs - startMs;
     const durationWeeks = Math.max(1, Math.round(durationMs / (7 * 86400000)));
 
-    const meta = getEventMeta(b.cat, label, b.asp, lotType, b.lvl, b.markers);
+    const meta = getEventMeta(b.cat, label, b.asp, lotType, b.lvl, b.markers, toContentLocale(detectLocale()));
 
     // Map short cycle to detail format
     const rawCycle = b.cyc ? {
