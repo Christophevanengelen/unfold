@@ -225,6 +225,7 @@ const EN: TranslationMap = {
   "cta.subtitle":
     "Your personal signal, decoded. See your momentum — past, present, and next. Free on iOS and Android.",
   "footer.legal": "© 2026 Unfold. All rights reserved.",
+  "footer.signature": "Created and managed by",
 };
 
 // ─── French — complete translation ───────────────────────────────────────
@@ -407,6 +408,7 @@ const FR: TranslationMap = {
   "cta.subtitle":
     "Ton signal personnel, décodé. Vois ton momentum — passé, présent et à venir. Gratuit sur iOS et Android.",
   "footer.legal": "© 2026 Unfold. Tous droits réservés.",
+  "footer.signature": "Créé et géré par",
 };
 
 // ─── Partial overrides — inherited from the inline landing copy ──────────
@@ -437,6 +439,7 @@ const ES: TranslationMap = {
     "Prueba Pro de 7 días sin tarjeta. Cancela cuando quieras.",
   "pricing.trial": "Prueba Pro de 7 días sin tarjeta. Cancela cuando quieras.",
   "footer.legal": "© 2026 Unfold. Todos los derechos reservados.",
+  "footer.signature": "Creado y gestionado por",
 };
 
 const PT: TranslationMap = {
@@ -464,6 +467,7 @@ const PT: TranslationMap = {
     "Teste Pro de 7 dias sem cartão. Cancele quando quiser.",
   "pricing.trial": "Teste Pro de 7 dias sem cartão. Cancele quando quiser.",
   "footer.legal": "© 2026 Unfold. Todos os direitos reservados.",
+  "footer.signature": "Criado e gerido por",
 };
 
 const DE: TranslationMap = {
@@ -491,6 +495,7 @@ const DE: TranslationMap = {
     "7-Tage-Pro-Test, keine Kreditkarte. Jederzeit kündbar.",
   "pricing.trial": "7-Tage-Pro-Test, keine Kreditkarte. Jederzeit kündbar.",
   "footer.legal": "© 2026 Unfold. Alle Rechte vorbehalten.",
+  "footer.signature": "Erstellt und betreut von",
 };
 
 const IT: TranslationMap = {
@@ -518,6 +523,7 @@ const IT: TranslationMap = {
     "Prova Pro di 7 giorni senza carta. Annulla quando vuoi.",
   "pricing.trial": "Prova Pro di 7 giorni senza carta. Annulla quando vuoi.",
   "footer.legal": "© 2026 Unfold. Tutti i diritti riservati.",
+  "footer.signature": "Creato e gestito da",
 };
 
 const NL: TranslationMap = {
@@ -546,6 +552,7 @@ const NL: TranslationMap = {
   "pricing.trial":
     "7-daagse Pro-proefperiode, geen creditcard. Altijd opzegbaar.",
   "footer.legal": "© 2026 Unfold. Alle rechten voorbehouden.",
+  "footer.signature": "Gemaakt en beheerd door",
 };
 
 const JA: TranslationMap = {
@@ -574,6 +581,7 @@ const JA: TranslationMap = {
   "pricing.trial":
     "7日間Proトライアル、クレジットカード不要。いつでもキャンセル。",
   "footer.legal": "© 2026 Unfold. 全権利所有。",
+  "footer.signature": "制作・運営",
 };
 
 const ZH: TranslationMap = {
@@ -601,6 +609,7 @@ const ZH: TranslationMap = {
     "7天Pro试用，无需信用卡。随时取消。",
   "pricing.trial": "7天Pro试用，无需信用卡。随时取消。",
   "footer.legal": "© 2026 Unfold. 保留所有权利。",
+  "footer.signature": "由以下团队创建和管理",
 };
 
 const AR: TranslationMap = {
@@ -637,6 +646,7 @@ const AR: TranslationMap = {
     "تجربة Pro لمدة 7 أيام، بدون بطاقة ائتمان. إلغاء في أي وقت.",
   "footer.legal":
     "© 2026 Unfold. جميع الحقوق محفوظة.",
+  "footer.signature": "أنشئ ويُدار بواسطة",
 };
 
 const OVERRIDES: Record<LocaleCode, TranslationMap> = {

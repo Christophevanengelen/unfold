@@ -196,7 +196,18 @@ export default async function LandingPage({
         <FinalCTA t={tr} />
 
         <footer className="pb-10 text-center text-[10px] text-brand-10/50">
-          {tr("footer.legal")}
+          <p>{tr("footer.legal")}</p>
+          <p className="mt-1.5">
+            {tr("footer.signature")}{" "}
+            <a
+              href="https://www.hi-def.be"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 transition-colors hover:text-brand-10/80"
+            >
+              hi-def.be
+            </a>
+          </p>
         </footer>
       </div>
     </div>
