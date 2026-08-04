@@ -144,12 +144,17 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
     border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
     color: "var(--text-heading, #E6E2F2)",
     borderRadius: 10,
-    padding: "10px 14px",
-    fontSize: 13,
     outline: "none",
     width: "100%",
     fontFamily: "inherit",
   };
+
+  /**
+   * Padding + font-size live in classes (not in `inputStyle`) so mobile gets a
+   * 44px-tall touch target and a 16px font (under 16px iOS Safari zooms in on
+   * focus). `md:` restores the original `10px 14px` / `13px` exactly.
+   */
+  const inputClass = "px-[14px] py-3.5 text-[16px] md:py-[10px] md:text-[13px]";
 
   const labelStyle: React.CSSProperties = {
     fontSize: 10,
@@ -171,7 +176,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
       }}
     >
       {/* Premium badge */}
-      <div className="absolute right-6 top-6">
+      <div className="absolute right-4 top-4 md:right-6 md:top-6">
         <span
           className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
           style={{ background: ACCENT, color: "#F5F1FA" }}
@@ -181,12 +186,12 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
       </div>
 
       {/* Copy + CTA */}
-      <div className="px-10 pt-12 pb-8">
+      <div className="px-5 pt-11 pb-6 md:px-10 md:pt-12 md:pb-8">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
           {eyebrow}
         </p>
         <h2
-          className="mt-3 font-display text-[30px] font-bold leading-tight"
+          className="mt-3 font-display text-[24px] font-bold leading-tight md:text-[30px]"
           style={{ color: "var(--text-heading, #E6E2F2)", letterSpacing: -0.5 }}
         >
           {title}
@@ -197,11 +202,11 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
 
         <div className="mt-6">
           {!showForm ? (
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-center">
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-semibold transition-transform hover:scale-105"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[13px] font-semibold transition-transform hover:scale-105 md:w-auto md:justify-start md:py-3"
                 style={{ background: ACCENT, color: "#F5F1FA" }}
               >
                 {cta}
@@ -209,7 +214,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
               </button>
               <Link
                 href="/app/pricing"
-                className="text-[13px] font-medium transition-opacity hover:opacity-70"
+                className="py-2 text-center text-[13px] font-medium transition-opacity hover:opacity-70 md:py-0"
                 style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
               >
                 Subscribe →
@@ -229,13 +234,13 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
               style={{ overflow: "hidden" }}
             >
               <div
-                className="mt-6 rounded-2xl p-6"
+                className="mt-6 rounded-2xl p-4 md:p-6"
                 style={{
                   background: `color-mix(in srgb, ${ACCENT} 5%, var(--bg-primary, #1B1535))`,
                   border: `1px solid color-mix(in srgb, ${ACCENT} 16%, transparent)`,
                 }}
               >
-                <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="mb-5 flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
                   <p className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: ACCENT }}>
                     Enter your birth data
                   </p>
@@ -257,16 +262,20 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                       value={name}
                       onChange={(e) => { setName(e.target.value); setFormError(""); }}
                       placeholder="e.g. Alex"
+                      className={inputClass}
                       style={inputStyle}
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Date + time share a row from md: up; stacked on a phone,
+                      where two half-width fields would be unusable. */}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-3">
                     <div>
                       <label style={labelStyle}>Birth date</label>
                       <DateInput
                         value={date}
                         onChange={(value) => { setDate(value); setFormError(""); }}
+                        className={inputClass}
                         style={inputStyle}
                       />
                     </div>
@@ -276,6 +285,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                         type="time"
                         value={time}
                         onChange={(e) => { setTime(e.target.value); setFormError(""); }}
+                        className={inputClass}
                         style={inputStyle}
                       />
                     </div>
@@ -289,25 +299,31 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                       value={cityInput}
                       onChange={(e) => handleCityInput(e.target.value)}
                       placeholder="Type a city… e.g. Antwerp, Brussels"
+                      className={inputClass}
                       style={inputStyle}
                       autoComplete="off"
                     />
                     {suggestions.length > 0 && (
-                      <ul style={{
-                        marginTop: 6, listStyle: "none", padding: 0,
-                        border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
-                        borderRadius: 10,
-                        background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary, #F5F1FA))`,
-                        overflow: "hidden",
-                      }}>
+                      <ul
+                        // Mobile caps the list so a long result set can't push the
+                        // submit button off-screen; `md:` restores the un-capped list.
+                        className="max-h-60 overflow-auto md:max-h-none md:overflow-hidden"
+                        style={{
+                          marginTop: 6, listStyle: "none", padding: 0,
+                          border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
+                          borderRadius: 10,
+                          background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary, #F5F1FA))`,
+                        }}
+                      >
                         {suggestions.map((c) => (
                           <li key={c.displayName} style={{ borderBottom: `1px solid color-mix(in srgb, ${ACCENT} 10%, transparent)` }}>
                             <button
                               type="button"
                               onMouseDown={() => selectCity(c)}
+                              className="px-[14px] py-3 text-[14px] md:py-[10px] md:text-[13px]"
                               style={{
-                                width: "100%", textAlign: "left", padding: "10px 14px",
-                                fontSize: 13, color: "var(--text-heading, #150F2A)",
+                                width: "100%", textAlign: "left",
+                                color: "var(--text-heading, #150F2A)",
                                 background: "none", border: "none", cursor: "pointer", fontFamily: "inherit",
                               }}
                               onMouseEnter={(e) => (e.currentTarget.style.background = `color-mix(in srgb, ${ACCENT} 12%, transparent)`)}
@@ -331,12 +347,12 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                   <p className="mt-3 text-[12px]" style={{ color: "#e57373" }}>{formError}</p>
                 )}
 
-                <div className="mt-5 flex items-center gap-3">
+                <div className="mt-5 flex flex-col items-stretch gap-3 md:flex-row md:items-center">
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-center text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 md:w-auto md:justify-start md:py-3"
                     style={{ background: ACCENT, color: "#F5F1FA" }}
                   >
                     {isLoading ? (
@@ -355,7 +371,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                     <button
                       type="button"
                       onClick={() => { setShowForm(false); setFormError(""); }}
-                      className="text-[12px] transition-opacity hover:opacity-60"
+                      className="py-2 text-[12px] transition-opacity hover:opacity-60 md:py-0"
                       style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
                     >
                       Cancel
@@ -370,17 +386,15 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
 
       {/* Wave preview */}
       <div
-        className="relative mx-8 mb-0 overflow-hidden rounded-t-2xl border-t border-x"
+        className="relative mx-4 mb-0 h-[210px] overflow-hidden rounded-t-2xl border-t border-x md:mx-8 md:h-[200px]"
         style={{
           borderColor: `color-mix(in srgb, ${ACCENT} 16%, transparent)`,
-          height: "200px",
         }}
       >
         <div
+          className="h-full px-3 pt-4 md:px-5 md:pt-[18px]"
           style={{
             background: "linear-gradient(180deg, #090d1e, #070a19)",
-            padding: "18px 20px 0",
-            height: "100%",
           }}
         >
           {/* Mini header */}
@@ -388,14 +402,23 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
             <span style={{ fontSize: 10, fontWeight: 700, color: ACCENT, opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Spirit Wave · Zodiacal Releasing L2
             </span>
-            <span style={{ fontSize: 9, color: "#374151" }}>L1 bands · Cu markers</span>
+            {/* Secondary label has no room next to the title on a phone — the
+                scroll affordance for the wave strip takes its place instead. */}
+            <span className="hidden md:inline" style={{ fontSize: 9, color: "#374151" }}>L1 bands · Cu markers</span>
+            <span className="shrink-0 md:hidden" style={{ fontSize: 9, color: ACCENT, opacity: 0.7 }}>swipe →</span>
           </div>
 
-          {/* SVG wave preview */}
+          {/* SVG wave preview.
+              The wave is an 820x90 ribbon: squeezed into a ~290px phone card it
+              collapses into an unreadable zigzag, so below md: it keeps a 560px
+              floor and the strip scrolls horizontally instead (see the swipe hint
+              in the legend). From md: up it is width:100% again — unchanged. */}
+          <div className="overflow-x-auto md:overflow-x-visible">
           <svg
             viewBox="0 0 820 90"
             preserveAspectRatio="none"
-            style={{ width: "100%", height: "120px", display: "block" }}
+            className="w-[560px] max-w-none md:w-full"
+            style={{ height: "120px", display: "block" }}
           >
             {/* L1 background bands */}
             <rect x="0"   y="0" width="180" height="90" fill="rgba(249,115,22,0.07)" />
@@ -431,6 +454,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
             <line x1="580" y1="0" x2="580" y2="90" stroke="rgba(125,211,252,0.5)" strokeWidth="1.5" strokeDasharray="4,4"/>
             <text x="583" y="12" fill="#7C6BBF" fontSize="8" opacity="0.7">now</text>
           </svg>
+          </div>
 
           {/* Mini legend */}
           <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>

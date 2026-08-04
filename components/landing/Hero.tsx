@@ -254,7 +254,12 @@ export function Hero({ translations }: HeroProps) {
         {phase === "idle" && (
           <ScrollReveal variant="fadeUp" className="mt-8 text-center" threshold={0.05}>
             <p className="text-sm text-brand-10/40">
-              {t(translations, "hero.social", "Trusted by 2,400+ people who value clarity")}
+              {/* No audience-size claim: we have no figure we could substantiate. */}
+              {t(
+                translations,
+                "hero.social",
+                "Your signal is computed from your birth chart — never written in advance.",
+              )}
             </p>
           </ScrollReveal>
         )}

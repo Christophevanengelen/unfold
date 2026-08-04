@@ -152,12 +152,17 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
     border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
     color: "var(--text-heading, #E6E2F2)",
     borderRadius: 10,
-    padding: "10px 14px",
-    fontSize: 13,
     outline: "none",
     width: "100%",
     fontFamily: "inherit",
   };
+
+  /**
+   * Padding + font-size live in classes (not in `inputStyle`) so mobile gets a
+   * 44px-tall touch target and a 16px font (under 16px iOS Safari zooms in on
+   * focus). `md:` restores the original `10px 14px` / `13px` exactly.
+   */
+  const inputClass = "px-[14px] py-3.5 text-[16px] md:py-[10px] md:text-[13px]";
 
   const labelStyle: React.CSSProperties = {
     fontSize: 10,
@@ -179,7 +184,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
       }}
     >
       {/* Premium badge */}
-      <div className="absolute right-6 top-6">
+      <div className="absolute right-4 top-4 md:right-6 md:top-6">
         <span
           className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
           style={{ background: ACCENT, color: "#fff" }}
@@ -189,12 +194,12 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
       </div>
 
       {/* Copy + CTA */}
-      <div className="px-10 pt-12 pb-8">
+      <div className="px-5 pt-11 pb-6 md:px-10 md:pt-12 md:pb-8">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: ACCENT }}>
           {eyebrow}
         </p>
         <h2
-          className="mt-3 font-display text-[30px] font-bold leading-tight"
+          className="mt-3 font-display text-[24px] font-bold leading-tight md:text-[30px]"
           style={{ color: "var(--text-heading, #E6E2F2)", letterSpacing: -0.5 }}
         >
           {title}
@@ -206,11 +211,11 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
         {/* CTA */}
         <div className="mt-6">
           {!showForm ? (
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-center">
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-semibold transition-transform hover:scale-105"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[13px] font-semibold transition-transform hover:scale-105 md:w-auto md:justify-start md:py-3"
                 style={{ background: ACCENT, color: "#fff" }}
               >
                 {cta}
@@ -218,7 +223,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
               </button>
               <Link
                 href="/app/pricing"
-                className="text-[13px] font-medium transition-opacity hover:opacity-70"
+                className="py-2 text-center text-[13px] font-medium transition-opacity hover:opacity-70 md:py-0"
                 style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
               >
                 Subscribe →
@@ -239,13 +244,13 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
               style={{ overflow: "hidden" }}
             >
               <div
-                className="mt-6 rounded-2xl p-6"
+                className="mt-6 rounded-2xl p-4 md:p-6"
                 style={{
                   background: `color-mix(in srgb, ${ACCENT} 5%, var(--bg-primary, #1B1535))`,
                   border: `1px solid color-mix(in srgb, ${ACCENT} 18%, transparent)`,
                 }}
               >
-                <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="mb-5 flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
                   <p className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: ACCENT }}>
                     Enter your birth data
                   </p>
@@ -268,6 +273,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                       value={name}
                       onChange={(e) => { setName(e.target.value); setFormError(""); }}
                       placeholder="e.g. Alex"
+                      className={inputClass}
                       style={inputStyle}
                     />
                   </div>
@@ -278,6 +284,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                     <DateInput
                       value={date}
                       onChange={(value) => { setDate(value); setFormError(""); }}
+                      className={inputClass}
                       style={inputStyle}
                     />
                   </div>
@@ -289,6 +296,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                       type="time"
                       value={time}
                       onChange={(e) => { setTime(e.target.value); setFormError(""); }}
+                      className={inputClass}
                       style={inputStyle}
                     />
                   </div>
@@ -301,11 +309,15 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                       value={cityInput}
                       onChange={(e) => handleCityInput(e.target.value)}
                       placeholder="Type a city… e.g. Paris, Tokyo"
+                      className={inputClass}
                       style={inputStyle}
                       autoComplete="off"
                     />
                     {suggestions.length > 0 && (
                       <ul
+                        // Mobile caps the list so a long result set can't push the
+                        // submit button off-screen; `md:` restores the un-capped list.
+                        className="max-h-60 overflow-auto md:max-h-none md:overflow-hidden"
                         style={{
                           marginTop: 6,
                           listStyle: "none",
@@ -313,7 +325,6 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                           border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
                           borderRadius: 10,
                           background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary, #1B1535))`,
-                          overflow: "hidden",
                         }}
                       >
                         {suggestions.map((city) => (
@@ -321,11 +332,10 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                             <button
                               type="button"
                               onMouseDown={() => selectCity(city)}
+                              className="px-[14px] py-3 text-[14px] md:py-[10px] md:text-[13px]"
                               style={{
                                 width: "100%",
                                 textAlign: "left",
-                                padding: "10px 14px",
-                                fontSize: 13,
                                 color: "var(--text-heading, #E6E2F2)",
                                 background: "none",
                                 border: "none",
@@ -353,12 +363,12 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                   <p className="mt-3 text-[12px]" style={{ color: "#e57373" }}>{formError}</p>
                 )}
 
-                <div className="mt-5 flex items-center gap-3">
+                <div className="mt-5 flex flex-col items-stretch gap-3 md:flex-row md:items-center">
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={isComputing}
-                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-center text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 md:w-auto md:justify-start md:py-3"
                     style={{ background: ACCENT, color: "#fff" }}
                   >
                     {isComputing ? (
@@ -377,7 +387,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                     <button
                       type="button"
                       onClick={() => { setShowForm(false); setFormError(""); }}
-                      className="text-[12px] transition-opacity hover:opacity-60"
+                      className="py-2 text-[12px] transition-opacity hover:opacity-60 md:py-0"
                       style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
                     >
                       Cancel
@@ -393,17 +403,15 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
 
       {/* CSS preview — Solar Return year grid */}
       <div
-        className="relative mx-8 mb-0 overflow-hidden rounded-t-2xl border-t border-x"
+        className="relative mx-4 mb-0 h-[210px] overflow-hidden rounded-t-2xl border-t border-x md:mx-8 md:h-[260px]"
         style={{
           borderColor: `color-mix(in srgb, ${ACCENT} 18%, transparent)`,
-          height: "260px",
         }}
       >
         <div
+          className="h-full px-3 pt-4 md:px-5 md:pt-[18px]"
           style={{
             background: "linear-gradient(180deg, #090d1e, #070a19)",
-            padding: "18px 20px 0",
-            height: "100%",
             overflowY: "hidden",
           }}
         >
@@ -412,14 +420,15 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
             <span style={{ fontSize: 10, fontWeight: 700, color: ACCENT, opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.1em" }}>
               Birthday Stories · Solar Return
             </span>
-            <span style={{ fontSize: 9, color: "#4b5569" }}>100 years</span>
+            {/* Secondary label has no room next to the title on a phone */}
+            <span className="hidden md:inline" style={{ fontSize: 9, color: "#4b5569" }}>100 years</span>
           </div>
 
           {/* Year rows */}
           {PREVIEW_ROWS.map((row) => (
             <div
               key={row.year}
-              className="mb-2 flex items-center gap-3 rounded-lg px-3 py-2"
+              className="mb-2 flex items-center gap-2 rounded-lg px-2.5 py-2 md:gap-3 md:px-3"
               style={{
                 background: `color-mix(in srgb, ${row.color} 6%, rgba(255,255,255,0.02))`,
                 border: `1px solid color-mix(in srgb, ${row.color} 14%, transparent)`,
@@ -440,8 +449,20 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
               <span style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0", width: 36, flexShrink: 0 }}>
                 {row.year}
               </span>
-              {/* Theme */}
-              <span style={{ fontSize: 10, color: "#6b7280", flex: 1 }}>{row.theme}</span>
+              {/* Theme — truncates instead of wrapping to a second line on narrow cards */}
+              <span
+                style={{
+                  fontSize: 10,
+                  color: "#6b7280",
+                  flex: 1,
+                  minWidth: 0,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {row.theme}
+              </span>
               {/* Badge */}
               {row.pivotal && (
                 <span

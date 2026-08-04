@@ -170,12 +170,18 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
     border: `1px solid color-mix(in srgb, ${GOLD} 28%, transparent)`,
     color: "var(--text-heading, #E6E2F2)",
     borderRadius: 10,
-    padding: "10px 14px",
-    fontSize: 13,
     outline: "none",
     width: "100%",
     fontFamily: "inherit",
   };
+
+  /**
+   * Padding + font-size live in classes (not in `inputStyle`) so mobile can get
+   * a 44px-tall touch target and a 16px font — below 16px iOS Safari zooms the
+   * viewport on focus. From `md:` up the values collapse back to the original
+   * `10px 14px` / `13px`, so the desktop rendering is byte-identical.
+   */
+  const inputClass = "px-[14px] py-3.5 text-[16px] md:py-[10px] md:text-[13px]";
 
   const labelStyle: React.CSSProperties = {
     fontSize: 10,
@@ -197,7 +203,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
       }}
     >
       {/* Premium badge */}
-      <div className="absolute right-6 top-6">
+      <div className="absolute right-4 top-4 md:right-6 md:top-6">
         <span
           className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
           style={{ background: GOLD, color: "#fff" }}
@@ -207,12 +213,12 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
       </div>
 
       {/* Copy + CTA */}
-      <div className="px-10 pt-12 pb-8">
+      <div className="px-5 pt-11 pb-6 md:px-10 md:pt-12 md:pb-8">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: GOLD }}>
           {chartEyebrow}
         </p>
         <h2
-          className="mt-3 font-display text-[30px] font-bold leading-tight"
+          className="mt-3 font-display text-[24px] font-bold leading-tight md:text-[30px]"
           style={{ color: "var(--text-heading, #E6E2F2)", letterSpacing: -0.5 }}
         >
           {chartTitle}
@@ -226,11 +232,11 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
           {/* Always show the form flow → opens desktop HTML report */}
           {!showForm && !showCoupon ? (
             // Default state — primary + secondary CTAs
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col items-stretch gap-3 md:flex-row md:flex-wrap md:items-center">
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-semibold transition-transform hover:scale-105"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[13px] font-semibold transition-transform hover:scale-105 md:w-auto md:justify-start md:py-3"
                 style={{ background: GOLD, color: "#fff" }}
               >
                 {chartCta}
@@ -239,14 +245,14 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
               <button
                 type="button"
                 onClick={() => setShowCoupon(true)}
-                className="text-[13px] font-medium transition-opacity hover:opacity-70"
+                className="py-2 text-center text-[13px] font-medium transition-opacity hover:opacity-70 md:py-0"
                 style={{ color: GOLD }}
               >
                 I have a coupon ↓
               </button>
               <Link
                 href="/app/pricing"
-                className="text-[13px] font-medium transition-opacity hover:opacity-70"
+                className="py-2 text-center text-[13px] font-medium transition-opacity hover:opacity-70 md:py-0"
                 style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
               >
                 Subscribe →
@@ -255,7 +261,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
           ) : showCoupon ? (
             // Coupon entry
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col items-stretch gap-2 md:flex-row md:items-center">
                 <input
                   type="text"
                   value={code}
@@ -263,18 +269,17 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                   onKeyDown={(e) => e.key === "Enter" && tryCode()}
                   placeholder="COUPON CODE"
                   autoFocus
-                  className="rounded-full px-4 py-2.5 text-[13px] font-semibold uppercase tracking-widest outline-none"
+                  className="w-full rounded-full px-4 py-3 text-[16px] font-semibold uppercase tracking-widest outline-none md:w-[200px] md:py-2.5 md:text-[13px]"
                   style={{
                     background: `color-mix(in srgb, ${GOLD} 12%, var(--bg-primary, #1B1535))`,
                     border: `1px solid color-mix(in srgb, ${GOLD} 35%, transparent)`,
                     color: GOLD,
-                    width: 200,
                   }}
                 />
                 <button
                   type="button"
                   onClick={tryCode}
-                  className="rounded-full px-5 py-2.5 text-[13px] font-semibold transition-opacity hover:opacity-80"
+                  className="rounded-full px-5 py-3 text-[13px] font-semibold transition-opacity hover:opacity-80 md:py-2.5"
                   style={{ background: GOLD, color: "#fff" }}
                 >
                   Unlock
@@ -282,7 +287,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                 <button
                   type="button"
                   onClick={() => { setShowCoupon(false); setCouponError(""); }}
-                  className="text-[12px] transition-opacity hover:opacity-60"
+                  className="py-2 text-[12px] transition-opacity hover:opacity-60 md:py-0"
                   style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
                 >
                   Cancel
@@ -309,13 +314,13 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
               style={{ overflow: "hidden" }}
             >
               <div
-                className="mt-6 rounded-2xl p-6"
+                className="mt-6 rounded-2xl p-4 md:p-6"
                 style={{
                   background: `color-mix(in srgb, ${GOLD} 5%, var(--bg-primary, #1B1535))`,
                   border: `1px solid color-mix(in srgb, ${GOLD} 18%, transparent)`,
                 }}
               >
-                <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="mb-5 flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
                   <p className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: GOLD }}>
                     Enter your birth data
                   </p>
@@ -338,6 +343,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                       value={name}
                       onChange={(e) => { setName(e.target.value); setFormError(""); }}
                       placeholder="e.g. Alex"
+                      className={inputClass}
                       style={inputStyle}
                     />
                   </div>
@@ -348,6 +354,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                     <DateInput
                       value={date}
                       onChange={(value) => { setDate(value); setFormError(""); }}
+                      className={inputClass}
                       style={inputStyle}
                     />
                   </div>
@@ -359,6 +366,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                       type="time"
                       value={time}
                       onChange={(e) => { setTime(e.target.value); setFormError(""); }}
+                      className={inputClass}
                       style={inputStyle}
                     />
                   </div>
@@ -371,11 +379,15 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                       value={cityInput}
                       onChange={(e) => handleCityInput(e.target.value)}
                       placeholder="Type a city… e.g. Paris, Brussels"
+                      className={inputClass}
                       style={inputStyle}
                       autoComplete="off"
                     />
                     {suggestions.length > 0 && (
                       <ul
+                        // Mobile caps the list so a long result set can't push the
+                        // submit button off-screen; `md:` restores the un-capped list.
+                        className="max-h-60 overflow-auto md:max-h-none md:overflow-hidden"
                         style={{
                           marginTop: 6,
                           listStyle: "none",
@@ -383,7 +395,6 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                           border: `1px solid color-mix(in srgb, ${GOLD} 25%, transparent)`,
                           borderRadius: 10,
                           background: `color-mix(in srgb, ${GOLD} 6%, var(--bg-primary, #1B1535))`,
-                          overflow: "hidden",
                         }}
                       >
                         {suggestions.map((city) => (
@@ -391,11 +402,10 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                             <button
                               type="button"
                               onMouseDown={() => selectCity(city)}
+                              className="px-[14px] py-3 text-[14px] md:py-[10px] md:text-[13px]"
                               style={{
                                 width: "100%",
                                 textAlign: "left",
-                                padding: "10px 14px",
-                                fontSize: 13,
                                 color: "var(--text-heading, #E6E2F2)",
                                 background: "none",
                                 border: "none",
@@ -423,12 +433,12 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                   <p className="mt-3 text-[12px]" style={{ color: "#e57373" }}>{formError}</p>
                 )}
 
-                <div className="mt-5 flex items-center gap-3">
+                <div className="mt-5 flex flex-col items-stretch gap-3 md:flex-row md:items-center">
                   <button
                     type="button"
                     onClick={handleGenerate}
                     disabled={isComputing}
-                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-center text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 md:w-auto md:justify-start md:py-3"
                     style={{ background: GOLD, color: "#fff" }}
                   >
                     {isComputing ? (
@@ -447,7 +457,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                     <button
                       type="button"
                       onClick={() => { setShowForm(false); setFormError(""); }}
-                      className="text-[12px] transition-opacity hover:opacity-60"
+                      className="py-2 text-[12px] transition-opacity hover:opacity-60 md:py-0"
                       style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
                     >
                       Cancel
@@ -465,12 +475,14 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
         </AnimatePresence>
       </div>
 
-      {/* Live chart preview — scaled iframe */}
+      {/* Live chart preview — scaled iframe.
+          The iframe is sized as a % of its container and counter-scaled, so it
+          stays fluid at any width: on a phone it renders at ~1.5x the (narrow)
+          card and shrinks back to fit, same trick as on desktop. */}
       <div
-        className="relative mx-8 mb-0 overflow-hidden rounded-t-2xl border-t border-x"
+        className="relative mx-4 mb-0 h-[210px] overflow-hidden rounded-t-2xl border-t border-x md:mx-8 md:h-[260px]"
         style={{
           borderColor: `color-mix(in srgb, ${GOLD} 18%, transparent)`,
-          height: "260px",
         }}
       >
         <iframe
@@ -528,12 +540,11 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
             <button
               type="button"
               onClick={() => setReportHtml(null)}
+              className="h-11 w-11 shrink-0 md:h-8 md:w-8"
               style={{
                 background: `rgba(181,154,74,0.12)`,
                 border: `1px solid rgba(181,154,74,0.25)`,
                 borderRadius: "50%",
-                width: 32,
-                height: 32,
                 color: GOLD,
                 fontSize: 16,
                 cursor: "pointer",
