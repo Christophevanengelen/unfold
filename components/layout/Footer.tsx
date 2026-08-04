@@ -145,6 +145,17 @@ export function Footer({ locale }: FooterProps) {
           </p>
         </div>
       </div>
+      <p className="mt-6 text-center text-xs opacity-60">
+        Créé et géré par{" "}
+        <a
+          href="https://www.hi-def.be"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2"
+        >
+          hi-def.be
+        </a>
+      </p>
     </footer>
   );
 }
