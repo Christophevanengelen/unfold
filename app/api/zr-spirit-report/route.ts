@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promises as fs } from "fs";
-import path from "path";
-import os from "os";
-
-const CALCULATOR_DIR = "D:\\51.full-suite-api";
+import { callCalculatorData } from "@/lib/astrolearn-calculator";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,33 +46,6 @@ interface ZRData {
     ascendant: number;
     houseCusps?: number[];
   };
-}
-
-// ─── Calculator helper ────────────────────────────────────────────────────────
-
-async function callCalculator(endpoint: string, input: Record<string, unknown>): Promise<unknown> {
-  const id = `zr_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const tmpDir = os.tmpdir();
-  const inputFile  = path.join(tmpDir, `${id}_input.json`);
-  const outputFile = path.join(tmpDir, `${id}_output.json`);
-
-  await fs.writeFile(inputFile, JSON.stringify(input), "utf8");
-
-  await new Promise<void>((resolve, reject) => {
-    const cmd = `cd /d "${CALCULATOR_DIR}" && node calculator_wrapper.js "${endpoint}" "${inputFile}" "${outputFile}"`;
-    exec(cmd, { timeout: 90_000 }, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-
-  await fs.unlink(inputFile).catch(() => {});
-  const raw = await fs.readFile(outputFile, "utf8");
-  await fs.unlink(outputFile).catch(() => {});
-
-  const result = JSON.parse(raw);
-  if (result?.success && result?.data !== undefined) return result.data;
-  return result;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1045,7 +1013,7 @@ export async function GET(request: NextRequest) {
     : { city, country: p.get("country") ?? "" };
 
   try {
-    const raw = await callCalculator("/api/zodiacal-releasing", {
+    const raw = await callCalculatorData("/api/zodiacal-releasing", {
       birthDate,
       birthTime,
       ...locationPayload,
@@ -1072,11 +1040,13 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    // Technical detail stays server-side — the user gets a readable message.
+    console.error("[/api/zr-spirit-report] Spirit Wave generation failed", err);
     return new NextResponse(
-      `<!doctype html><html><body style="background:#0A0D1F;color:#e8ecf4;font-family:monospace;padding:40px;white-space:pre-wrap">
-<h2 style="color:#f87171;font-family:sans-serif">Error generating Spirit Wave</h2>
-<pre style="color:#6b7280;margin-top:16px;font-size:11px">${msg.replace(/</g, "&lt;")}</pre>
+      `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="background:#0A0D1F;color:#e8ecf4;font-family:Inter,system-ui,sans-serif;padding:48px;line-height:1.6">
+<h2 style="color:#E6E2F2;font-size:20px;margin:0 0 12px">Your Spirit Wave isn't ready yet</h2>
+<p style="color:#A8A1C4;font-size:14px;max-width:460px;margin:0">We couldn't reach the chart service just now. Nothing is wrong with your birth details — please try again in a few minutes.</p>
       </body></html>`,
       { status: 500, headers: { "Content-Type": "text/html; charset=utf-8" } },
     );

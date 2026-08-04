@@ -3,8 +3,20 @@ import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
 
-const CALCULATOR_DIR = process.env.CALCULATOR_DIR ?? "D:\\51.full-suite-api";
+/**
+ * Optional local escape hatch.
+ *
+ * The historical implementation shelled out to a `calculator_wrapper.js` living on a
+ * specific Windows machine (`D:\51.full-suite-api`). That path does not exist on macOS
+ * nor on Vercel, so the fallback is now opt-in: it only runs when `CALCULATOR_DIR` is
+ * explicitly set, and the command it builds is POSIX-shell compatible.
+ */
+const CALCULATOR_DIR = process.env.CALCULATOR_DIR?.trim() || null;
 const SPIRITUAL_API_TIMEOUT_MS = 120_000;
+
+function isLocalWrapperEnabled(): boolean {
+  return CALCULATOR_DIR !== null;
+}
 
 type CalculatorPayload = Record<string, unknown>;
 
@@ -22,6 +34,10 @@ async function callCalculatorWrapper(
   endpoint: string,
   input: Record<string, unknown>
 ): Promise<CalculatorPayload> {
+  if (!CALCULATOR_DIR) {
+    throw new Error("Local calculator wrapper is disabled (CALCULATOR_DIR is not set)");
+  }
+
   const id = `astrolearn_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const inputFile = path.join(os.tmpdir(), `${id}_input.json`);
   const outputFile = path.join(os.tmpdir(), `${id}_output.json`);
@@ -29,7 +45,7 @@ async function callCalculatorWrapper(
   await fs.writeFile(inputFile, JSON.stringify(input), "utf8");
 
   await new Promise<void>((resolve, reject) => {
-    const cmd = `cd /d "${CALCULATOR_DIR}" && node calculator_wrapper.js "${endpoint}" "${inputFile}" "${outputFile}"`;
+    const cmd = `cd "${CALCULATOR_DIR}" && node calculator_wrapper.js "${endpoint}" "${inputFile}" "${outputFile}"`;
     exec(cmd, { timeout: 120_000 }, (err) => {
       if (err) reject(err);
       else resolve();
@@ -87,6 +103,7 @@ export async function callEphemerisExpert(
   try {
     return await callSpiritualApi("/ephemeris-expert.php", input);
   } catch (phpError) {
+    if (!isLocalWrapperEnabled()) throw phpError;
     console.warn("[astrolearn-calculator] ephemeris PHP failed, using wrapper", phpError);
     return callCalculatorWrapper("/api/ephemeris-expert", input);
   }
@@ -106,6 +123,7 @@ export async function callCalculatorEndpoint(
   try {
     return await callSpiritualApi(endpoint, input);
   } catch (phpError) {
+    if (!isLocalWrapperEnabled()) throw phpError;
     const startedAt = Date.now();
     console.warn(`[astrolearn-calculator] PHP API failed for ${endpoint}, using wrapper`, phpError);
     const payload = await callCalculatorWrapper(endpoint, input);
@@ -115,6 +133,33 @@ export async function callCalculatorEndpoint(
     });
     return payload;
   }
+}
+
+/**
+ * Calls a calculator endpoint on the remote PHP API and returns the *unwrapped*
+ * payload — i.e. `data` when the API answers with the `{ success, data }` envelope,
+ * or the raw payload otherwise.
+ *
+ * This is the shared replacement for the per-route `callCalculator()` helpers that used
+ * to spawn `calculator_wrapper.js` through a Windows-only shell command. Transport,
+ * timeout, defensive JSON parsing and error messages all come from `callSpiritualApi`
+ * via `callCalculatorEndpoint`, so the local wrapper fallback (when `CALCULATOR_DIR` is
+ * set) keeps working transparently.
+ *
+ * @param endpoint calculator path, e.g. `/api/zodiacal-releasing`
+ * @param input    JSON body sent to the endpoint
+ */
+export async function callCalculatorData<T = unknown>(
+  endpoint: string,
+  input: Record<string, unknown> = {}
+): Promise<T> {
+  const payload = await callCalculatorEndpoint(endpoint, input);
+
+  if (payload && payload.success !== false && payload.data !== undefined) {
+    return payload.data as T;
+  }
+
+  return payload as T;
 }
 
 export function normalizeChartDataPayload(payload: CalculatorPayload): CalculatorPayload {
