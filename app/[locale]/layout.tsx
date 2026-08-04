@@ -1,14 +1,19 @@
 import { notFound } from "next/navigation";
 import { isValidLocale, getDirection } from "@/i18n/config";
+import { Footer } from "@/components/layout/Footer";
 
 /**
- * /[locale] layout — kept minimal so the marketing landing renders even
- * when DB-backed components fail. The new /[locale]/page.tsx is fully
- * self-contained: hero + features + CTAs + footer copy. No Header/Footer/
- * CookieConsent dependencies that were causing 500s.
+ * /[locale] layout — deliberately light. The DB-backed components that were
+ * causing the /[locale] 500s stay out; the landing page itself is fully
+ * self-contained (hero + narrative sections + CTAs, copy from
+ * lib/landing-copy.ts, no database).
  *
- * Header & cookie consent will return as separate stable components in V1.1
- * when we verify each renders cleanly across all 10 locales.
+ * Footer is wired back in (2026-08-04): it has no DB dependency — labels for
+ * the 10 locales live in the component — and it carries the hi-def.be
+ * signature. It had been dropped in April along with Header/CookieConsent,
+ * which left the signature rendered nowhere.
+ *
+ * Header & cookie consent still to return as separate stable components.
  */
 export default async function LocaleLayout({
   children,
@@ -31,6 +36,7 @@ export default async function LocaleLayout({
       style={{ backgroundColor: "var(--bg-primary, #1B1535)" }}
     >
       <main id="main" className="flex-1">{children}</main>
+      <Footer locale={locale} />
     </div>
   );
 }

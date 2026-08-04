@@ -591,3 +591,22 @@ h1, h2, h3, h4, h5, h6 {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Le pied de page global est rendu dans app/[locale]/layout.tsx, donc HORS de
+   .landing-immersive. Sans ça il retombe sur --bg-primary (clair en thème clair)
+   et se colle en bande claire sous une landing sombre. On lui fait donc adopter
+   la même surface et la même palette forcée, uniquement quand la page rendue est
+   la landing immersive. */
+main:has(> .landing-immersive) + footer {
+  --footer-bg: #150F2E;
+  --brand-8: #736A9F;
+  --brand-9: #8C84B2;
+  --brand-10: #A8A1C4;
+  --brand-11: #C7C2D8;
+  --brand-12: #E6E2F2;
+  --brand-13: #FDFCFE;
+  --text-heading: #E6E2F2;
+  --text-body: #C7C2D8;
+  --text-body-subtle: #A8A1C4;
+  border-top-color: rgba(255, 255, 255, 0.06);
+}

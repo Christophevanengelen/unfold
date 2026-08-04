@@ -195,20 +195,8 @@ export default async function LandingPage({
         {/* 12. Final CTA */}
         <FinalCTA t={tr} />
 
-        <footer className="pb-10 text-center text-[10px] text-brand-10/50">
-          <p>{tr("footer.legal")}</p>
-          <p className="mt-1.5">
-            {tr("footer.signature")}{" "}
-            <a
-              href="https://www.hi-def.be"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 transition-colors hover:text-brand-10/80"
-            >
-              hi-def.be
-            </a>
-          </p>
-        </footer>
+        {/* Le pied de page (liens légaux, copyright, signature hi-def.be)
+            est rendu par <Footer /> dans app/[locale]/layout.tsx. */}
       </div>
     </div>
   );

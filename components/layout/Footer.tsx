@@ -14,6 +14,7 @@ const footerLabels: Record<string, {
   terms: string;
   contact: string;
   rights: string;
+  signature: string;
 }> = {
   en: {
     product: "Product",
@@ -24,6 +25,7 @@ const footerLabels: Record<string, {
     terms: "Terms of Service",
     contact: "Contact",
     rights: "All rights reserved.",
+    signature: "Created and managed by",
   },
   fr: {
     product: "Produit",
@@ -34,6 +36,7 @@ const footerLabels: Record<string, {
     terms: "Conditions d\u2019utilisation",
     contact: "Contact",
     rights: "Tous droits r\u00e9serv\u00e9s.",
+    signature: "Créé et géré par",
   },
   es: {
     product: "Producto",
@@ -44,6 +47,84 @@ const footerLabels: Record<string, {
     terms: "T\u00e9rminos de Servicio",
     contact: "Contacto",
     rights: "Todos los derechos reservados.",
+    signature: "Creado y gestionado por",
+  },
+  pt: {
+    product: "Produto",
+    legal: "Legal",
+    pricing: "Preços",
+    demo: "Experimentar a demo",
+    privacy: "Privacidade",
+    terms: "Termos de utilização",
+    contact: "Contacto",
+    rights: "Todos os direitos reservados.",
+    signature: "Criado e gerido por",
+  },
+  de: {
+    product: "Produkt",
+    legal: "Rechtliches",
+    pricing: "Preise",
+    demo: "Demo testen",
+    privacy: "Datenschutz",
+    terms: "Nutzungsbedingungen",
+    contact: "Kontakt",
+    rights: "Alle Rechte vorbehalten.",
+    signature: "Erstellt und betreut von",
+  },
+  it: {
+    product: "Prodotto",
+    legal: "Legale",
+    pricing: "Prezzi",
+    demo: "Prova la demo",
+    privacy: "Privacy",
+    terms: "Termini di servizio",
+    contact: "Contatti",
+    rights: "Tutti i diritti riservati.",
+    signature: "Creato e gestito da",
+  },
+  nl: {
+    product: "Product",
+    legal: "Juridisch",
+    pricing: "Prijzen",
+    demo: "Probeer de demo",
+    privacy: "Privacy",
+    terms: "Gebruiksvoorwaarden",
+    contact: "Contact",
+    rights: "Alle rechten voorbehouden.",
+    signature: "Gemaakt en beheerd door",
+  },
+  ja: {
+    product: "プロダクト",
+    legal: "法的事項",
+    pricing: "料金",
+    demo: "デモを試す",
+    privacy: "プライバシー",
+    terms: "利用規約",
+    contact: "お問い合わせ",
+    rights: "全権利所有。",
+    signature: "制作・運営",
+  },
+  zh: {
+    product: "产品",
+    legal: "法律",
+    pricing: "价格",
+    demo: "试用演示",
+    privacy: "隐私政策",
+    terms: "服务条款",
+    contact: "联系我们",
+    rights: "保留所有权利。",
+    signature: "由以下团队创建和管理",
+  },
+  ar: {
+    product: "المنتج",
+    legal: "قانوني",
+    pricing: "الأسعار",
+    demo: "جرّب العرض التجريبي",
+    privacy: "الخصوصية",
+    terms: "شروط الخدمة",
+    contact: "اتصل بنا",
+    rights: "جميع الحقوق محفوظة.",
+    signature: "أنشئ ويُدار بواسطة",
   },
 };
 
@@ -51,7 +132,7 @@ export function Footer({ locale }: FooterProps) {
   const l = footerLabels[locale] ?? footerLabels.en;
 
   return (
-    <footer className="border-t border-white/5" style={{ backgroundColor: "var(--bg-primary, #1B1535)" }}>
+    <footer className="border-t border-white/5" style={{ backgroundColor: "var(--footer-bg, var(--bg-primary, #1B1535))" }}>
       <div className="mx-auto max-w-7xl px-6 py-12 md:py-16">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 md:gap-16">
           {/* Brand */}
@@ -145,8 +226,8 @@ export function Footer({ locale }: FooterProps) {
           </p>
         </div>
       </div>
-      <p className="mt-6 text-center text-xs opacity-60">
-        Créé et géré par{" "}
+      <p className="px-6 pb-8 text-center text-xs text-brand-10">
+        {l.signature}{" "}
         <a
           href="https://www.hi-def.be"
           target="_blank"
