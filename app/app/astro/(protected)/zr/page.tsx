@@ -187,6 +187,9 @@ export default function ZRPage() {
   const [saving, setSaving] = useState(false);
   const [eventsEnabled, setEventsEnabled] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
+  const [l3NavDate, setL3NavDate] = useState<string | null>(null);
+  const [l3NavPeriods, setL3NavPeriods] = useState<Record<string, ZRPeriod>>({});
+  const [l3NavLoading, setL3NavLoading] = useState(false);
 
   const chartRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -201,6 +204,27 @@ export default function ZRPage() {
     window.addEventListener("astrolearn:subject-changed", handleSubjectChanged);
     return () => window.removeEventListener("astrolearn:subject-changed", handleSubjectChanged);
   }, []);
+
+  useEffect(() => {
+    setL3NavDate(null);
+    setL3NavPeriods({});
+  }, [referenceDate]);
+
+  useEffect(() => {
+    if (l3NavDate === null) {
+      setL3NavPeriods({});
+      return;
+    }
+    setL3NavLoading(true);
+    fetch(`/api/astrolearn/zr?date=${l3NavDate}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const raw = data.data ?? data;
+        setL3NavPeriods(raw?.releasing?.currentPeriods ?? {});
+      })
+      .catch(() => {})
+      .finally(() => setL3NavLoading(false));
+  }, [l3NavDate]);
 
   useEffect(() => {
     fetch("/api/astrolearn/admin/session")
@@ -544,6 +568,23 @@ export default function ZRPage() {
   const currentPeriods = releasing?.currentPeriods ?? {};
   const L1 = currentPeriods["L1"];
   const L2 = currentPeriods["L2"];
+  const navPeriods = (l3NavDate && Object.keys(l3NavPeriods).length > 0) ? l3NavPeriods : currentPeriods;
+  const L3 = navPeriods["L3"] as ZRPeriod | undefined;
+  const L4 = navPeriods["L4"] as ZRPeriod | undefined;
+
+  function navigateL3(dir: "prev" | "next") {
+    if (!L3) return;
+    const d = new Date(dir === "next" ? L3.endDate : L3.startDate);
+    d.setDate(d.getDate() + (dir === "next" ? 1 : -1));
+    setL3NavDate(d.toISOString().split("T")[0]);
+  }
+
+  function navigateL4(dir: "prev" | "next") {
+    if (!L4) return;
+    const d = new Date(dir === "next" ? L4.endDate : L4.startDate);
+    d.setDate(d.getDate() + (dir === "next" ? 1 : -1));
+    setL3NavDate(d.toISOString().split("T")[0]);
+  }
 
   if (loading) {
     return (
@@ -606,6 +647,57 @@ export default function ZRPage() {
               <div className="text-[10px] font-bold uppercase tracking-widest text-[#9585CC] mb-0.5">L2</div>
               <div className="text-white font-bold">{L2.sign}</div>
               <div className="text-[10px] text-[#4A4070] font-mono mt-0.5">until {L2.endDate?.slice(0, 10)}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {(L3 || L4) && (
+        <div className="flex gap-2 relative">
+          {l3NavLoading && (
+            <div className="absolute inset-0 rounded-xl z-10 flex items-center justify-center" style={{ background: "rgba(15,12,34,0.5)" }}>
+              <div className="w-4 h-4 rounded-full border-2 border-[#9585CC] border-t-transparent animate-spin" />
+            </div>
+          )}
+          {L3 && (
+            <div className="flex-1 rounded-xl px-4 py-3" style={{ background: "rgba(19,15,39,0.8)", border: "1px solid rgba(149,133,204,0.25)" }}>
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#9585CC]">L3</div>
+                {l3NavDate && (
+                  <button onClick={() => setL3NavDate(null)} className="text-[9px] text-[#4A4070] hover:text-[#9585CC]">now</button>
+                )}
+              </div>
+              <div className="text-white font-bold text-sm">
+                {L3.sign}
+                {L3.isPeakPeriod && <span className="ml-1.5 text-[9px] text-amber-400 font-bold">Peak</span>}
+                {L3.isCulmination && <span className="ml-1.5 text-[9px] text-amber-400 font-bold">Culm</span>}
+                {L3.isLoosingOfBond && <span className="ml-1.5 text-[9px] text-red-400 font-bold">LB</span>}
+              </div>
+              <div className="text-[10px] text-[#4A4070] font-mono mt-0.5">
+                {L3.startDate?.slice(0, 10)} → {L3.endDate?.slice(0, 10)}
+              </div>
+              <div className="flex gap-1 mt-2">
+                <button onClick={() => navigateL3("prev")} className="flex-1 text-xs py-1 rounded-lg font-semibold" style={{ background: "rgba(149,133,204,0.18)", color: "#9585CC" }}>‹ prev</button>
+                <button onClick={() => navigateL3("next")} className="flex-1 text-xs py-1 rounded-lg font-semibold" style={{ background: "rgba(149,133,204,0.18)", color: "#9585CC" }}>next ›</button>
+              </div>
+            </div>
+          )}
+          {L4 && (
+            <div className="flex-1 rounded-xl px-4 py-3" style={{ background: "rgba(19,15,39,0.8)", border: "1px solid rgba(149,133,204,0.25)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-[#9585CC] mb-0.5">L4</div>
+              <div className="text-white font-bold text-sm">
+                {L4.sign}
+                {L4.isPeakPeriod && <span className="ml-1.5 text-[9px] text-amber-400 font-bold">Peak</span>}
+                {L4.isCulmination && <span className="ml-1.5 text-[9px] text-amber-400 font-bold">Culm</span>}
+                {L4.isLoosingOfBond && <span className="ml-1.5 text-[9px] text-red-400 font-bold">LB</span>}
+              </div>
+              <div className="text-[10px] text-[#4A4070] font-mono mt-0.5">
+                {L4.startDate?.slice(0, 10)} → {L4.endDate?.slice(0, 10)}
+              </div>
+              <div className="flex gap-1 mt-2">
+                <button onClick={() => navigateL4("prev")} className="flex-1 text-xs py-1 rounded-lg font-semibold" style={{ background: "rgba(149,133,204,0.18)", color: "#9585CC" }}>‹ prev</button>
+                <button onClick={() => navigateL4("next")} className="flex-1 text-xs py-1 rounded-lg font-semibold" style={{ background: "rgba(149,133,204,0.18)", color: "#9585CC" }}>next ›</button>
+              </div>
             </div>
           )}
         </div>

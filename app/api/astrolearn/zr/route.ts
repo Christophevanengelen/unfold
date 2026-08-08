@@ -20,12 +20,14 @@ export async function GET(request: NextRequest) {
   try {
     const subject = await resolveAstrologySubject();
     const targetDate = resolveTargetDate(request);
+    const l4Year = parseInt(targetDate.slice(0, 4), 10);
     const { endpoint, input } = getCalculatorRequest(subject, "zodiacal-releasing");
     const result = await callCalculatorEndpoint(endpoint, {
       ...input,
       lotType: "spirit",
       maxLevels: 4,
       targetDate,
+      l4Year,
     });
     return NextResponse.json(result);
   } catch (err) {
