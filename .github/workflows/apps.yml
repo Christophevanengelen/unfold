@@ -1,0 +1,53 @@
+name: Construire les apps
+on:
+  push:
+    branches: ["chantier/**", "main"]
+  workflow_dispatch:
+jobs:
+  android:
+    name: APK Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: bash scripts/build-native.sh
+        env:
+          NEXT_PUBLIC_API_BASE: https://favorable.day
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - run: npx cap sync android
+      - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: favorable-android-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+  ios:
+    name: App iOS (simulateur)
+    runs-on: macos-14
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: bash scripts/build-native.sh
+        env:
+          NEXT_PUBLIC_API_BASE: https://favorable.day
+      - run: npx cap sync ios
+      - run: xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - run: cd build/Build/Products/Debug-iphonesimulator && zip -qr "$GITHUB_WORKSPACE/favorable-simulateur.zip" App.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: favorable-ios-simulateur
+          path: favorable-simulateur.zip
+          if-no-files-found: warn
