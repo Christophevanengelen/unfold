@@ -15,7 +15,11 @@ import { NextRequest, NextResponse } from "next/server";
  *     fallback?: "mock" }
  *
  * Failure modes:
- *  - toctoc 5xx | timeout (>10s)  → 503 with `fallback: "mock"` flag (client renders deterministic mock)
+ *  - toctoc 5xx | timeout          → 503 { error }. Le client dit qu il ne peut
+ *  - toctoc 5xx ou depassement de delai -> 503 { error }. Le client dit qu il
+ *    ne peut pas calculer. Il n en invente jamais un : le drapeau
+ *    `fallback: "mock"` a ete retire volontairement le 26 aout 2026.
+ *    a ete retire volontairement.
  *  - personalize 5xx | timeout    → 200 with `delineation: null` (client renders template card)
  *  - budget guard full            → 429 (see lib/ai-guard.ts)
  *  - bad input                    → 400
@@ -342,7 +346,7 @@ export async function POST(req: NextRequest) {
     if (!tocRes.ok) {
       console.warn("[landing/signal] toctoc not ok", { status: tocRes.status, birthLog });
       return applyGuardCookie(guard, NextResponse.json(
-        { error: "toctoc_unavailable", fallback: "mock" },
+        { error: "toctoc_unavailable" },
         { status: 503, headers: { "Cache-Control": "no-store" } },
       ));
     }
@@ -352,14 +356,14 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.warn("[landing/signal] toctoc failed", err);
     return applyGuardCookie(guard, NextResponse.json(
-      { error: "toctoc_unavailable", fallback: "mock" },
+      { error: "toctoc_unavailable" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     ));
   }
 
   if (boudins.length === 0) {
     return applyGuardCookie(guard, NextResponse.json(
-      { error: "no_data", fallback: "mock" },
+      { error: "no_data" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     ));
   }
@@ -368,7 +372,7 @@ export async function POST(req: NextRequest) {
   const active = findActiveBoudin(boudins, todayISO);
   if (!active) {
     return applyGuardCookie(guard, NextResponse.json(
-      { error: "no_active_boudin", fallback: "mock" },
+      { error: "no_active_boudin" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     ));
   }
