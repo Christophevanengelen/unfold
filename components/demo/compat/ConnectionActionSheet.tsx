@@ -71,7 +71,7 @@ export function ConnectionActionSheet({
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/demo/compatibility/${connection.id}`;
+    const url = `${window.location.origin}/app/compatibility/${connection.id}`;
     try {
       if (navigator.share) {
         await navigator.share({

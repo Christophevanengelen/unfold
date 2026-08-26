@@ -7,6 +7,7 @@
 
 import { birthHash, type BirthData } from "./birth-data";
 import { storage } from "./storage";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── API Response Types ─────────────────────────────────────
 
@@ -262,7 +263,7 @@ async function callProxy(
   }
 
   // Dev mode: use Next.js proxy (handles CORS)
-  const res = await fetch("/api/toctoc", {
+  const res = await apiFetch("/api/toctoc", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ endpoint, ...payload }),

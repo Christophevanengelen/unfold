@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api-client";
 
 export default function AstroLoginPage() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function AstroLoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/astrolearn/login", {
+      const res = await apiFetch("/api/astrolearn/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatEuropeanDateInput } from "@/lib/european-date";
-import type { PeopleSource, PersonResult } from "@/app/api/astrolearn/admin/people/route";
+import type { PeopleSource, PersonResult } from "@/types/astrolearn";
+import { apiFetch } from "@/lib/api-client";
 
 type ViewSubject =
   | { source: "astrolearn"; personId: string; label: string; username?: string }
@@ -84,7 +85,7 @@ export default function AstroPeoplePicker({ open, onClose, onSelected }: AstroPe
           }
         : { source: "unfold", deviceId: person.deviceId ?? person.id, label: person.label };
 
-    const res = await fetch("/api/astrolearn/admin/view-subject", {
+    const res = await apiFetch("/api/astrolearn/admin/view-subject", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(subject),
@@ -102,7 +103,7 @@ export default function AstroPeoplePicker({ open, onClose, onSelected }: AstroPe
   }
 
   async function handleClear() {
-    await fetch("/api/astrolearn/admin/view-subject", { method: "DELETE" });
+    await apiFetch("/api/astrolearn/admin/view-subject", { method: "DELETE" });
     onSelected(null);
     onClose();
     router.refresh();

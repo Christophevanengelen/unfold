@@ -11,6 +11,7 @@ import {
   type RelationshipType,
 } from "@/lib/connections-store";
 import { relationshipConfig, relationshipOrder } from "@/components/demo/compat/relationshipConfig";
+import { connectionHref } from "@/lib/connection-href";
 
 const CONFETTI_COLORS = [
   "#B07CC2", "#D89EA0", "#6BA89A", "#9585CC", "#50C4D6", "#C4A86B",
@@ -153,7 +154,7 @@ function ConnectedContent() {
         transition={{ delay: 1.0 }}
       >
         <Link
-          href={connectionId ? `/app/compatibility/${connectionId}` : "/app/compatibility"}
+          href={connectionId ? connectionHref(connectionId) : "/app/compatibility"}
           className="flex w-full items-center justify-center rounded-full py-3.5 text-sm font-semibold shadow-lg transition-all active:scale-95"
           style={{
             background: selectedRelation ? "var(--bg-brand)" : "var(--surface-medium)",

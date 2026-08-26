@@ -22,6 +22,7 @@ import TransitTimeControls, {
   type TransitSpeedPreset,
   type TransitStepUnit,
 } from "./TransitTimeControls";
+import { apiFetch } from "@/lib/api-client";
 
 interface ChartData {
   planets: Record<string, number[]>;
@@ -809,7 +810,7 @@ export default function BirthChartPage() {
     setLoading(true);
     setError("");
     const startedAt = performance.now();
-    fetch("/api/astrolearn/chart-data")
+    apiFetch("/api/astrolearn/chart-data")
       .then((r) => r.json())
       .then((chartRes) => {
         if (chartRes.error) {
@@ -836,7 +837,7 @@ export default function BirthChartPage() {
     let cancelled = false;
     setPersonEvents([]);
 
-    fetch("/api/astrolearn/events")
+    apiFetch("/api/astrolearn/events")
       .then((response) => response.json())
       .then((payload) => {
         if (cancelled) return;
@@ -1306,7 +1307,7 @@ export default function BirthChartPage() {
 
     try {
       const fromInstant = transitInstantRef.current;
-      const response = await fetch("/api/astrolearn/transit-jump", {
+      const response = await apiFetch("/api/astrolearn/transit-jump", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

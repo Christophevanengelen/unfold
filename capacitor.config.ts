@@ -3,21 +3,10 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.zebrapad.unfold",
   appName: "Unfold",
-  // Live server URL: the native WebView loads directly from Vercel.
-  // This is the standard Capacitor hybrid pattern — the app has real native
-  // integration (deep links, safe areas, IAP, push notifications) so it
-  // satisfies App Store / Play Store requirements.
-  webDir: "out", // fallback for offline / dev builds
-  server: {
-    url: "https://unfold-nine.vercel.app/app",
-    cleartext: false,
-    allowNavigation: [
-      "unfold-nine.vercel.app",
-      "*.supabase.co",
-      "checkout.stripe.com",
-      "js.stripe.com",
-    ],
-  },
+  // L app embarque son propre code. Rien n est charge a distance au demarrage :
+  // c est ce qu exigent les regles 2.5.2 et 4.2 de l App Store. Les donnees, elles,
+  // viennent des API comme dans n importe quelle app (voir lib/api-client.ts).
+  webDir: "out",
   ios: {
     // Safe-area handling via CSS env() — do NOT set scrollEnabled here.
     contentInset: "automatic",

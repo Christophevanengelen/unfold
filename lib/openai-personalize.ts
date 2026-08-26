@@ -7,6 +7,7 @@
 import { storage } from "@/lib/storage";
 import { profileHash } from "@/types/user-profile";
 import type { UserProfile } from "@/types/user-profile";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -119,7 +120,7 @@ export async function getPersonalizedText(
 
   // Call server — boudinId priority, boudinIndex fallback
   try {
-    const response = await fetch("/api/openai/personalize", {
+    const response = await apiFetch("/api/openai/personalize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

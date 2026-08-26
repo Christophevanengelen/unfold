@@ -3,6 +3,17 @@ import { isValidLocale, getDirection } from "@/i18n/config";
 import { Footer } from "@/components/layout/Footer";
 
 /**
+ * Requis par output: "export" (build natif). Declare ici une seule fois, ce
+ * layout couvre toutes les pages sous /[locale]. Sur le web on renvoie une
+ * liste vide : rien ne change, les pages restent rendues a la demande.
+ */
+export function generateStaticParams() {
+  if (process.env.NEXT_PUBLIC_NATIVE !== "true") return [];
+  return [{ locale: "fr" }, { locale: "en" }, { locale: "es" }];
+}
+
+
+/**
  * /[locale] layout — deliberately light. The DB-backed components that were
  * causing the /[locale] 500s stay out; the landing page itself is fully
  * self-contained (hero + narrative sections + CTAs, copy from

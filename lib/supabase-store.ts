@@ -15,6 +15,7 @@
 import { supabase } from "@/lib/db";
 import { getDeviceId } from "@/lib/device-id";
 import type { BirthData } from "@/lib/birth-data";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Utilities ──────────────────────────────────────────
 
@@ -181,7 +182,7 @@ export async function updateRemoteRelationship(
   const deviceId = getDeviceId();
   if (!deviceId) return;
   try {
-    await fetch("/api/connection/upsert", {
+    await apiFetch("/api/connection/upsert", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ deviceId, inviteCode, relationship }),
@@ -199,7 +200,7 @@ export async function renameRemoteConnection(
   const deviceId = getDeviceId();
   if (!deviceId) return;
   try {
-    await fetch("/api/connection/upsert", {
+    await apiFetch("/api/connection/upsert", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ deviceId, inviteCode, name }),
@@ -235,7 +236,7 @@ export async function lookupInviteCode(code: string): Promise<{
   birthData: BirthData;
 } | null> {
   try {
-    const res = await fetch("/api/invite/validate", {
+    const res = await apiFetch("/api/invite/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),

@@ -6,6 +6,7 @@ import PersonEventSelector from "@/app/app/astro/(protected)/chart/PersonEventSe
 import { useAstrolearnSessionTime } from "@/lib/astrolearn-session-time";
 import { useAstrolearnSubjectReload } from "@/lib/use-astrolearn-subject-reload";
 import type { PersonEvent } from "@/lib/person-events";
+import { apiFetch } from "@/lib/api-client";
 
 export default function AstrolearnEventContextBar() {
   const pathname = usePathname();
@@ -20,7 +21,7 @@ export default function AstrolearnEventContextBar() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/astrolearn/events")
+    apiFetch("/api/astrolearn/events")
       .then((response) => response.json())
       .then((payload) => {
         if (!cancelled) {

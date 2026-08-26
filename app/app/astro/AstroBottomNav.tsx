@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api-client";
 
 function ChartIcon({ active }: { active: boolean }) {
   return (
@@ -68,7 +69,7 @@ export default function AstroBottomNav({ username }: { username: string }) {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch("/api/astrolearn/login", { method: "DELETE" });
+    await apiFetch("/api/astrolearn/login", { method: "DELETE" });
     router.push("/app/astro");
   }
 

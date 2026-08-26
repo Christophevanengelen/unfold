@@ -8,6 +8,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { onAuthStateChange, getUser } from "@/lib/supabase-auth";
 import type { User } from "@supabase/supabase-js";
+import { apiFetch } from "@/lib/api-client";
 
 interface AuthContextValue {
   user: User | null;
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const deviceId =
           typeof window !== "undefined" ? localStorage.getItem("unfold_device_id") : null;
         if (deviceId) {
-          fetch("/api/profile/link-auth", {
+          apiFetch("/api/profile/link-auth", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

@@ -10,6 +10,7 @@ import {
   type PersonEvent,
 } from "@/lib/person-events";
 import { useAstrolearnSessionTime } from "@/lib/astrolearn-session-time";
+import { apiFetch } from "@/lib/api-client";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -227,7 +228,7 @@ export default function ZRPage() {
   }, [l3NavDate]);
 
   useEffect(() => {
-    fetch("/api/astrolearn/admin/session")
+    apiFetch("/api/astrolearn/admin/session")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data) {
@@ -247,7 +248,7 @@ export default function ZRPage() {
 
     const requests = [fetch(`/api/astrolearn/zr?date=${referenceDate}`).then((r) => r.json())];
     if (eventsEnabled) {
-      requests.push(fetch("/api/astrolearn/events").then((r) => r.json()));
+      requests.push(apiFetch("/api/astrolearn/events").then((r) => r.json()));
     }
 
     Promise.all(requests)
@@ -546,7 +547,7 @@ export default function ZRPage() {
     if (!form.event_date) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/astrolearn/events", {
+      const res = await apiFetch("/api/astrolearn/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, event_date: toPersonEventCompactDate(form.event_date) }),

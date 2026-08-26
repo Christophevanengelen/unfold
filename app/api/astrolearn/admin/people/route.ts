@@ -5,21 +5,8 @@ import { getAstrolearnPool, getBubblePool } from "@/lib/astrolearn-db";
 import { summarizeBirthData } from "@/lib/astrology-subject";
 import { normalizeBirthIsoDate, parseEuropeanDateInput } from "@/lib/european-date";
 
-export type PersonResult = {
-  id: string;
-  source: "astrolearn" | "unfold";
-  label: string;
-  personId?: string;
-  username?: string;
-  deviceId?: string;
-  birthDate?: string;
-  birthTime?: string;
-  city?: string;
-  picture?: string;
-  hasCompleteBirthData: boolean;
-};
-
-export type PeopleSource = "mine" | "astrolearn" | "bubble" | "unfold";
+import type { PersonResult, PeopleSource } from "@/types/astrolearn";
+export type { PersonResult, PeopleSource };
 
 function clampLimit(raw: string | null): number {
   const parsed = Number(raw ?? "25");
