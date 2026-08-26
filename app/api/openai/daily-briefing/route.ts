@@ -72,10 +72,13 @@ NE JAMAIS produire de phrases qui pourraient s'appliquer à n'importe qui. Chaqu
 
 // ─── Fallback briefing (when API fails) ──────────────────
 
+// On n'invente jamais une lecture. L'ancien contenu affirmait « Tes signaux
+// sont actifs aujourd'hui » sans qu'aucun calcul n'ait abouti.
 const FALLBACK_BRIEFING = {
-  greeting: "Tes signaux sont actifs aujourd'hui.",
-  summary: "Ouvre un signal sur ta timeline pour découvrir ce qui se joue en ce moment dans ta vie.",
-  action: "Explore ta timeline pour comprendre ton momentum actuel.",
+  greeting: "On ne peut pas calculer ton signal en ce moment.",
+  summary:
+    "Le calcul n'a pas abouti. On préfère te le dire plutôt que d'inventer une lecture.",
+  action: "Réessaie dans quelques minutes.",
   activeDomains: [],
 };
 

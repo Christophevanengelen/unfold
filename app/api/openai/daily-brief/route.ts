@@ -41,7 +41,8 @@ FORMAT JSON strict :
 RÈGLES STRICTES :
 - Maximum 60 mots total (greeting + summary + action)
 - Signaux RAPIDES seulement : Mars, Vénus, Mercure, Soleil, Lune, nouvelle/pleine lune en maison, ZR L4
-- Si aucun signal fort : message neutre honnête ("Journée de transit calme — bon moment pour...")
+- Si aucun signal fort : dis-le simplement, sans inventer de transit. N affirme jamais
+  qu une journee est calme ou active si le calcul n a pas abouti.
 - NE PAS inventer des signaux qui ne sont pas dans les données reçues
 - Tutoie l'utilisateur (tu/ton/ta/tes)
 - Ton sobre, direct, actionnable
@@ -50,10 +51,14 @@ RÈGLES STRICTES :
 VOCABULAIRE AUTORISÉ : signal, fenêtre, timing, rythme, terrain, domaine, transit, maison
 VOCABULAIRE INTERDIT : énergie, chance, destin, univers, vibration, cosmique, astral, attirer, aligner`;
 
+// On n'invente jamais une lecture. L'ancien contenu affirmait « Journée de
+// transit calme aujourd'hui », ce qui est une affirmation sur le theme de la
+// personne, rendue avec un code 200, alors qu'aucun calcul n'avait abouti.
 const FALLBACK_BRIEF = {
-  greeting: "Journée de transit calme aujourd'hui.",
-  summary: "Pas de signal rapide actif en ce moment. C'est une fenêtre idéale pour consolider ce qui est en cours.",
-  action: "Profite de cette accalmie pour avancer sur un projet à long terme.",
+  greeting: "On ne peut pas calculer ton signal en ce moment.",
+  summary:
+    "Le calcul n'a pas abouti. On préfère te le dire plutôt que d'inventer une lecture.",
+  action: "Réessaie dans quelques minutes.",
   activeDomains: [],
 };
 
