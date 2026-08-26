@@ -8,7 +8,8 @@
  * Marie Ange's API provides category-specific prompts (transit/eclipse/station/zr)
  * with all archetypes and keywords inline. We add the user profile layer on top.
  *
- * Rate-limited to 30 calls/minute per session.
+ * Bounded by lib/ai-guard.ts (durable per-caller / per-IP / global counters).
+ * The previous in-memory limiter is gone: see the note where it used to live.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -16,6 +17,15 @@ import { supabase } from "@/lib/db";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
 import { corsPreflightResponse } from "@/lib/cors";
+import { isInternalCall } from "@/lib/internal-call";
+import {
+  enforceAiBudget,
+  applyGuardCookie,
+  budgetErrorHeaders,
+  AiBudgetError,
+  AiGuardUnavailableError,
+  type AiGuardResult,
+} from "@/lib/ai-guard";
 
 export const runtime = "nodejs";                  // Stripe + raw fetch require Node, not Edge
 
@@ -398,31 +408,12 @@ function cacheDelineation(birthHash: string, boudinId: string, profileHash: stri
 }
 
 // ─── Rate limiting ───────────────────────────────────────
-
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const RATE_LIMIT_MAX = 30;
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-  entry.count++;
-  return entry.count > RATE_LIMIT_MAX;
-}
-
-// Clean stale entries every 5 minutes
-if (typeof globalThis !== "undefined") {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of rateLimitMap) {
-      if (now > entry.resetAt) rateLimitMap.delete(key);
-    }
-  }, 5 * 60 * 1000);
-}
+// There used to be a `new Map()` limiter here, keyed by x-forwarded-for,
+// 30 calls per minute. On Vercel every lambda instance holds its own copy and
+// throws it away on cold start, so it capped nothing across the fleet: the same
+// trap documented at the top of lib/billing/entitlement.ts. It is replaced by
+// lib/ai-guard.ts, whose counters live in Postgres and are therefore shared by
+// every instance and survive restarts.
 
 // ─── Locale instruction (multi-language GPT output) ────────────
 // Appended to Marie Ange's French systemPrompt so GPT generates the
@@ -538,14 +529,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
   }
 
-  const sessionKey =
-    request.headers.get("x-forwarded-for") ??
-    request.headers.get("x-real-ip") ??
-    "anonymous";
+  // A verified loopback call from /api/landing/signal. That route already ran
+  // the budget guard for the visitor, so we neither re-count nor demand auth.
+  // The marker is signed now: `x-unfold-internal: 1` no longer opens anything.
+  const internal = isInternalCall(request);
 
-  if (isRateLimited(sessionKey)) {
-    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
-  }
+  let guard: AiGuardResult | undefined;
 
   try {
     const body = await request.json();
@@ -560,32 +549,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing birthData or boudinId/boudinIndex" }, { status: 400 });
     }
 
+    // ── BUDGET GATE ──
+    // Runs before the cache read as well as before OpenAI: a cache read still
+    // costs a Supabase round-trip, and an unbounded loop on it is still abuse.
+    if (!internal) {
+      try {
+        guard = await enforceAiBudget(request, "openai");
+      } catch (err) {
+        if (err instanceof AiBudgetError) {
+          return NextResponse.json(err.toJSON(), {
+            status: err.status,
+            headers: budgetErrorHeaders(err),
+          });
+        }
+        if (err instanceof AiGuardUnavailableError) {
+          console.error("[OpenAI] guard unavailable:", err.reason);
+          return NextResponse.json(err.toJSON(), { status: err.status });
+        }
+        throw err;
+      }
+    }
+
     // ── BILLING GATE: must run BEFORE cache return (otherwise free users
     //    see paid-cached responses for free) and BEFORE the SSE stream
     //    response (mid-stream throws can't write structured 402 JSON).
     const isDevBypass = process.env.NODE_ENV === "development" && process.env.DEV_BYPASS_AUTH === "true";
     const userId = isDevBypass ? "dev" : await getUserIdFromRequest(request);
     if (!userId) {
-      // Free unauthenticated requests still allowed for landing /api/landing/signal
-      // path which calls this internally — but require sign-in for direct
-      // personalize calls. The internal landing route bypasses auth via
-      // a server-side flag (see app/api/landing/signal/route.ts).
-      const isInternalLandingCall = request.headers.get("x-unfold-internal") === "1";
-      if (!isInternalLandingCall) {
-        return NextResponse.json(
+      // Anonymous callers are allowed only through the signed loopback from
+      // /api/landing/signal (the landing is intentionally anonymous). Every
+      // other anonymous call is refused. Before this change the marker was the
+      // literal string "1", which any caller could send.
+      if (!internal) {
+        return applyGuardCookie(guard, NextResponse.json(
           { error: "auth_required", message: "Connecte-toi pour accéder à l'IA personnalisée." },
           { status: 401 },
-        );
+        ));
       }
     } else if (!isDevBypass) {
       try {
         await enforceQuota(userId, "AI_DELINEATION");
       } catch (err) {
         if (err instanceof RequiresPlanError) {
-          return NextResponse.json(err.toJSON(), { status: err.status });
+          return applyGuardCookie(guard, NextResponse.json(err.toJSON(), { status: err.status }));
         }
         if (err instanceof QuotaExceededError) {
-          return NextResponse.json(err.toJSON(), { status: err.status });
+          return applyGuardCookie(guard, NextResponse.json(err.toJSON(), { status: err.status }));
         }
         throw err;
       }
@@ -600,7 +609,7 @@ export async function POST(request: NextRequest) {
 
     const cached = await getCachedDelineation(bHash, cacheId, pHash);
     if (cached) {
-      return NextResponse.json(cached);
+      return applyGuardCookie(guard, NextResponse.json(cached));
     }
 
     // ── Step 1: Get category-specific prompt + payload from Marie Ange's API ──
@@ -626,10 +635,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!detailRes.ok) {
-      return NextResponse.json(
+      return applyGuardCookie(guard, NextResponse.json(
         { error: "TocToc detail API error", status: detailRes.status },
         { status: 502 }
-      );
+      ));
     }
 
     const detail = await detailRes.json();
@@ -671,10 +680,10 @@ export async function POST(request: NextRequest) {
     console.log("[AUDIT] === END TRACE ===");
 
     if (!llmPayload) {
-      return NextResponse.json(
+      return applyGuardCookie(guard, NextResponse.json(
         { error: "Missing llmPayload from TocToc API" },
         { status: 502 }
-      );
+      ));
     }
 
     // ── Step 2: Build system prompt ──
@@ -708,10 +717,10 @@ export async function POST(request: NextRequest) {
     if (!openaiRes.ok) {
       const err = await openaiRes.json().catch(() => ({}));
       console.error("[OpenAI] API error:", openaiRes.status, err);
-      return NextResponse.json(
+      return applyGuardCookie(guard, NextResponse.json(
         { error: "OpenAI API error", status: openaiRes.status },
         { status: 502 }
-      );
+      ));
     }
 
     // ── Step 4: Stream OpenAI tokens to client as SSE ──
@@ -831,15 +840,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return new Response(stream, {
+    return applyGuardCookie(guard, new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
       },
-    });
+    }));
   } catch (error) {
     console.error("[OpenAI] Personalize error:", error);
-    return NextResponse.json({ error: "Failed to generate" }, { status: 500 });
+    return applyGuardCookie(guard, NextResponse.json({ error: "Failed to generate" }, { status: 500 }));
   }
 }

@@ -17,6 +17,16 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import {
+  enforceAiBudget,
+  applyGuardCookie,
+  budgetErrorHeaders,
+  AiBudgetError,
+  AiGuardUnavailableError,
+  type AiGuardResult,
+} from "@/lib/ai-guard";
+
+export const runtime = "nodejs";                  // crypto + Supabase admin client
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -124,12 +134,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
   }
 
+  let guard: AiGuardResult | undefined;
+
   try {
     const body = await request.json();
     const { birthData } = body as { birthData: BirthDataPayload };
 
     if (!birthData?.birthDate || !birthData?.birthTime) {
       return NextResponse.json({ error: "Missing birthData" }, { status: 400 });
+    }
+
+    // ── BUDGET GATE ──
+    // Same reason as /api/openai/daily-brief: this route spends the OpenAI key
+    // and had no caller identification, no quota and no rate limit at all.
+    // It runs before the calls to Marie-Ange's API, which are expensive too.
+    try {
+      guard = await enforceAiBudget(request, "openai");
+    } catch (err) {
+      if (err instanceof AiBudgetError) {
+        return NextResponse.json(err.toJSON(), {
+          status: err.status,
+          headers: budgetErrorHeaders(err),
+        });
+      }
+      if (err instanceof AiGuardUnavailableError) {
+        console.error("[DailyBriefing] guard unavailable:", err.reason);
+        return NextResponse.json(err.toJSON(), { status: err.status });
+      }
+      throw err;
     }
 
     const hour = new Date().getHours();
@@ -142,7 +174,7 @@ export async function POST(request: NextRequest) {
     if (signalDetails.length === 0) {
       const fallbackDetails = await getSignalsFromYearEndpoint(birthData);
       if (fallbackDetails.length === 0) {
-        return NextResponse.json(FALLBACK_BRIEFING);
+        return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEFING));
       }
       signalDetails.push(...fallbackDetails);
     }
@@ -175,27 +207,27 @@ ${signalDetails.map((s, i) => `--- Signal ${i + 1} ---\n${s}`).join("\n\n")}`;
     if (!openaiRes.ok) {
       const err = await openaiRes.json().catch(() => ({}));
       console.error("[DailyBriefing] OpenAI error:", openaiRes.status, err);
-      return NextResponse.json(FALLBACK_BRIEFING);
+      return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEFING));
     }
 
     const data = await openaiRes.json();
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
-      return NextResponse.json(FALLBACK_BRIEFING);
+      return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEFING));
     }
 
     const parsed = JSON.parse(content);
 
-    return NextResponse.json({
+    return applyGuardCookie(guard, NextResponse.json({
       greeting: parsed.greeting ?? FALLBACK_BRIEFING.greeting,
       summary: parsed.summary ?? FALLBACK_BRIEFING.summary,
       action: parsed.action ?? FALLBACK_BRIEFING.action,
       activeDomains: parsed.activeDomains ?? [],
-    });
+    }));
   } catch (error) {
     console.error("[DailyBriefing] Error:", error);
-    return NextResponse.json(FALLBACK_BRIEFING);
+    return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEFING));
   }
 }
 

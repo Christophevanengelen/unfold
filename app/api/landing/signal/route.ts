@@ -17,33 +17,35 @@ import { NextRequest, NextResponse } from "next/server";
  * Failure modes:
  *  - toctoc 5xx | timeout (>10s)  → 503 with `fallback: "mock"` flag (client renders deterministic mock)
  *  - personalize 5xx | timeout    → 200 with `delineation: null` (client renders template card)
- *  - rate limit (5/IP/min)        → 429
+ *  - budget guard full            → 429 (see lib/ai-guard.ts)
  *  - bad input                    → 400
  *
  * Privacy: never logs full birth data. Uses an SHA-256 hash prefix for telemetry.
  */
 
 import crypto from "crypto";
+import { internalCallHeaders } from "@/lib/internal-call";
+import {
+  enforceAiBudget,
+  applyGuardCookie,
+  budgetErrorHeaders,
+  AiBudgetError,
+  AiGuardUnavailableError,
+  type AiGuardResult,
+} from "@/lib/ai-guard";
+
+export const runtime = "nodejs";                  // crypto + Supabase admin client
 
 const TOCTOC_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
 const TOCTOC_TIMEOUT_MS = 25_000;
 const PERSONALIZE_TIMEOUT_MS = 15_000;
 
-// In-memory rate limiter (per Vercel function instance — see TODO Upstash KV).
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RL_WINDOW_MS = 60_000;
-const RL_MAX = 5;
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + RL_WINDOW_MS });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > RL_MAX;
-}
+// The in-memory rate limiter that used to live here (5 per IP per minute, a
+// `new Map()` with a TODO about Upstash) capped nothing: on Vercel every
+// instance keeps its own map and drops it on cold start. This route is the
+// public entry point that reaches OpenAI through the loopback call to
+// /api/openai/personalize, so its bound now comes from lib/ai-guard.ts, whose
+// counters live in Postgres.
 
 function logHash(s: string): string {
   return crypto.createHash("sha256").update(s).digest("hex").slice(0, 8);
@@ -258,18 +260,12 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Pro
 // ─── Route handler ──────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // Rate-limit by IP
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     req.headers.get("x-real-ip") ??
     "anonymous";
 
-  if (isRateLimited(ip)) {
-    return NextResponse.json(
-      { error: "rate_limited", message: "Trop de tentatives. Réessaie dans une minute." },
-      { status: 429, headers: { "Cache-Control": "no-store" } },
-    );
-  }
+  let guard: AiGuardResult | undefined;
 
   let body: {
     birthDate?: string;
@@ -306,6 +302,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_birth_time" }, { status: 400 });
   }
 
+  // ── BUDGET GATE ──
+  // Placed after validation and before the first outbound call, so a refused
+  // request costs neither an OpenAI token nor a hit on Marie-Ange's API.
+  try {
+    guard = await enforceAiBudget(req, "openai");
+  } catch (err) {
+    if (err instanceof AiBudgetError) {
+      return NextResponse.json(err.toJSON(), {
+        status: err.status,
+        headers: budgetErrorHeaders(err),
+      });
+    }
+    if (err instanceof AiGuardUnavailableError) {
+      console.error("[landing/signal] guard unavailable:", err.reason);
+      return NextResponse.json(err.toJSON(), { status: err.status });
+    }
+    throw err;
+  }
+
   const birthLog = logHash(`${birthDate}_${birthTime}_${latitude.toFixed(2)}_${longitude.toFixed(2)}`);
   console.log("[landing/signal] start", { birthLog, ipHash: logHash(ip) });
 
@@ -326,36 +341,36 @@ export async function POST(req: NextRequest) {
     );
     if (!tocRes.ok) {
       console.warn("[landing/signal] toctoc not ok", { status: tocRes.status, birthLog });
-      return NextResponse.json(
+      return applyGuardCookie(guard, NextResponse.json(
         { error: "toctoc_unavailable", fallback: "mock" },
         { status: 503, headers: { "Cache-Control": "no-store" } },
-      );
+      ));
     }
     const tocJson = (await tocRes.json()) as TocTocAppShortBody;
     boudins = tocJson.data?.boudins ?? tocJson.boudins ?? [];
     console.log("[landing/signal] toctoc ok", { boudins: boudins.length, ms: Date.now() - t0, birthLog });
   } catch (err) {
     console.warn("[landing/signal] toctoc failed", err);
-    return NextResponse.json(
+    return applyGuardCookie(guard, NextResponse.json(
       { error: "toctoc_unavailable", fallback: "mock" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
-    );
+    ));
   }
 
   if (boudins.length === 0) {
-    return NextResponse.json(
+    return applyGuardCookie(guard, NextResponse.json(
       { error: "no_data", fallback: "mock" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
-    );
+    ));
   }
 
   // ── Step 2: pick the active boudin ──
   const active = findActiveBoudin(boudins, todayISO);
   if (!active) {
-    return NextResponse.json(
+    return applyGuardCookie(guard, NextResponse.json(
       { error: "no_active_boudin", fallback: "mock" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
-    );
+    ));
   }
 
   // ── Step 3: personalize via L2-cached endpoint (loopback) ──
@@ -370,9 +385,10 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Loopback marker — bypasses auth-required gate on personalize
-          // since landing is intentionally anonymous (visitors not signed in).
-          "x-unfold-internal": "1",
+          // Signed loopback marker. Personalize accepts an anonymous caller
+          // only through it, and skips its own budget count because this
+          // request was already counted above.
+          ...internalCallHeaders(),
         },
         body: JSON.stringify({
           birthData: { birthDate, birthTime, latitude, longitude, timezone },
@@ -404,7 +420,7 @@ export async function POST(req: NextRequest) {
   const lifetime = buildLifetimeStats(boudins, todayISO);
   const pastPeaks = findPastPeaks(boudins, todayISO, 3);
 
-  return NextResponse.json(
+  return applyGuardCookie(guard, NextResponse.json(
     {
       active: {
         boudinId: active.id,
@@ -426,5 +442,5 @@ export async function POST(req: NextRequest) {
       fromCache: personalizeFromCache,
     },
     { headers: { "Cache-Control": "no-store" } },
-  );
+  ));
 }
