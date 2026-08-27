@@ -110,9 +110,9 @@ Ni l une ni l autre app n est deposable. Points bloquants verifies :
   charge une URL distante, `/out/` est dans `.gitignore`, aucune ressource
   embarquee, **aucune CI** (`.github` absent). Regles Apple 4.2 et surtout 2.5.2.
 - Projet Xcode signe **au nom de Zebrapad** (`DEVELOPMENT_TEAM = JG9V6PMN8T`,
-  bundle `com.zebrapad.unfold`). Un bundle ID ne se transfere pas entre equipes.
+  bundle `day.favorable.app`). Un bundle ID ne se transfere pas entre equipes.
 - **La PR #3 ne doit pas etre fusionnee** : elle figerait l `applicationId` Android
-  a `com.zebrapad.unfold`, **definitif des le premier envoi**.
+  a `day.favorable.app`, **definitif des le premier envoi**.
 - Aucun `signingConfig`, aucune cle : aucun `.aab` signable.
 - `capacitor.config.ts` autorise `checkout.stripe.com` dans la vue web native :
   violation directe de la politique de paiement de Play.

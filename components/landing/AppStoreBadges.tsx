@@ -39,7 +39,7 @@ const LOCALE_TO_COUNTRY: Record<string, string> = {
 // Use ?token=&mt=8 to enable Smart App Banner attribution if needed.
 const APPLE_APP_ID = "id6740000000";              // ← replace with real ID
 const APPLE_APP_SLUG = "unfold-astrology";        // ← replace with App Store slug
-const PLAY_PACKAGE_NAME = "com.zebrapad.unfold";  // ← matches Capacitor android appId
+const PLAY_PACKAGE_NAME = "day.favorable.app";  // identifiant fige le 27 aout 2026, definitif
 
 function detectCountry(): string {
   if (typeof navigator === "undefined") return "us";

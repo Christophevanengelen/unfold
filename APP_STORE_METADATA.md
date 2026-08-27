@@ -1,6 +1,6 @@
 # App Store Connect — Metadata for Submission
 
-Bundle ID: `com.zebrapad.unfold`
+Bundle ID: `day.favorable.app`
 Apple Team: `JG9V6PMN8T` (Zebrapad, Inc.)
 Category: **Lifestyle** (primary), **Health & Fitness** (secondary)
 

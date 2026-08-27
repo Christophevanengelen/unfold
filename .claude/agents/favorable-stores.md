@@ -11,7 +11,7 @@ racine avant tout. Aujourd hui ni l une ni l autre n est deposable.
 ## L irreversible, a proteger
 
 - **La PR #3 ne doit pas etre fusionnee.** Elle figerait l `applicationId` Android
-  a `com.zebrapad.unfold`. Cet identifiant est **definitif des le premier envoi**,
+  a `day.favorable.app`. Cet identifiant est **definitif des le premier envoi**,
   il ne se change plus jamais, et Christophe publie en son nom, pas au nom de
   Zebrapad.
 - Un bundle ID Apple ne se transfere pas d une equipe a une autre. Le projet Xcode

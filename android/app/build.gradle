@@ -1,10 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
+    // namespace = paquet Java interne (classe R, MainActivity). Invisible sur
+    // la fiche du store, on le laisse tel quel pour ne rien deplacer.
+    // Ce qui est definitif chez Google, c est applicationId ci-dessous.
     namespace = "com.unfold.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.unfold.app"
+        applicationId "day.favorable.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
