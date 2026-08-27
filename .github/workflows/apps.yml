@@ -4,6 +4,20 @@ on:
     branches: ["chantier/**", "main"]
   workflow_dispatch:
 jobs:
+  web:
+    name: Site web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - name: Construire le site complet (verifie aussi les types des routes API)
+        run: npx next build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
   android:
     name: APK Android
     runs-on: ubuntu-latest

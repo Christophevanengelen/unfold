@@ -28,6 +28,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 import crypto from "crypto";
+import { unstable_cache } from "next/cache";
 import { internalCallHeaders } from "@/lib/internal-call";
 import {
   enforceAiBudget,
@@ -39,9 +40,19 @@ import {
 } from "@/lib/ai-guard";
 
 export const runtime = "nodejs";                  // crypto + Supabase admin client
+// toctoc-app-short calcule les boudins d une vie entiere : mesure a 54 s puis
+// 60 s le 27 aout 2026 (2088 boudins, 637 Ko). La route doit pouvoir l attendre.
+export const maxDuration = 120;
 
 const TOCTOC_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
-const TOCTOC_TIMEOUT_MS = 25_000;
+// Etait a 25 s : toctoc-app-short repond en 55 a 60 s, donc la page renvoyait
+// un 503 a tous les visiteurs, systematiquement. Mesure faite en direct sur
+// favorable.day le 27 aout 2026.
+const TOCTOC_TIMEOUT_MS = 90_000;
+// Les boudins d une personne ne dependent que de sa naissance : ce sont des
+// fenetres de dates. On les garde 30 jours dans le cache de donnees Vercel,
+// pour qu une seule personne paie l attente du calcul.
+const BOUDINS_TTL_S = 60 * 60 * 24 * 30;
 const PERSONALIZE_TIMEOUT_MS = 15_000;
 
 // The in-memory rate limiter that used to live here (5 per IP per minute, a
@@ -261,6 +272,55 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Pro
   }
 }
 
+
+// ─── Boudins : appel unique, garde 30 jours ─────────────────
+//
+// Le calcul complet d une vie prend une minute chez Marie Ange. Il ne depend
+// que de la naissance, donc on le fait une fois par personne et on le range
+// dans le cache de donnees de Vercel. La cle est un hachage de la naissance :
+// aucune date de naissance en clair dans une cle de cache.
+
+interface BirthInput {
+  birthDate: string;
+  birthTime: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+}
+
+function birthCacheKey(b: BirthInput): string {
+  return crypto
+    .createHash("sha256")
+    .update(`${b.birthDate}_${b.birthTime}_${b.latitude.toFixed(4)}_${b.longitude.toFixed(4)}_${b.timezone}`)
+    .digest("hex");
+}
+
+async function fetchBoudins(b: BirthInput): Promise<ShortBoudin[]> {
+  const tocRes = await fetchWithTimeout(
+    `${TOCTOC_BASE}/toctoc-app-short.php`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(b),
+    },
+    TOCTOC_TIMEOUT_MS,
+  );
+  if (!tocRes.ok) throw new Error(`toctoc ${tocRes.status}`);
+  const tocJson = (await tocRes.json()) as TocTocAppShortBody;
+  const boudins = tocJson.data?.boudins ?? tocJson.boudins ?? [];
+  // Un resultat vide n est pas un resultat : on ne le met pas en cache 30 jours.
+  if (boudins.length === 0) throw new Error("toctoc vide");
+  return boudins;
+}
+
+function getBoudins(b: BirthInput): Promise<ShortBoudin[]> {
+  const key = birthCacheKey(b);
+  return unstable_cache(() => fetchBoudins(b), ["landing-boudins", key], {
+    revalidate: BOUDINS_TTL_S,
+    tags: ["landing-boudins"],
+  })();
+}
+
 // ─── Route handler ──────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -330,28 +390,11 @@ export async function POST(req: NextRequest) {
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
-  // ── Step 1: toctoc-app-short for the boudins list ──
+  // ── Step 1: toctoc-app-short for the boudins list (mis en cache) ──
   let boudins: ShortBoudin[] = [];
   try {
     const t0 = Date.now();
-    const tocRes = await fetchWithTimeout(
-      `${TOCTOC_BASE}/toctoc-app-short.php`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ birthDate, birthTime, latitude, longitude, timezone }),
-      },
-      TOCTOC_TIMEOUT_MS,
-    );
-    if (!tocRes.ok) {
-      console.warn("[landing/signal] toctoc not ok", { status: tocRes.status, birthLog });
-      return applyGuardCookie(guard, NextResponse.json(
-        { error: "toctoc_unavailable" },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
-      ));
-    }
-    const tocJson = (await tocRes.json()) as TocTocAppShortBody;
-    boudins = tocJson.data?.boudins ?? tocJson.boudins ?? [];
+    boudins = await getBoudins({ birthDate, birthTime, latitude, longitude, timezone });
     console.log("[landing/signal] toctoc ok", { boudins: boudins.length, ms: Date.now() - t0, birthLog });
   } catch (err) {
     console.warn("[landing/signal] toctoc failed", err);
