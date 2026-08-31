@@ -45,7 +45,14 @@ heures apres l epuisement echoue a l identique. Il n y a ni file d attente, ni
 degradation progressive, ni message d avertissement quand on approche — le
 compteur est invisible jusqu au refus.
 
-Ne relance pas « pour voir ». Attends le lendemain, et envoie tout d un coup.
+**Le compteur ne se remet PAS a zero a minuit local.** Verifie le
+1er septembre a 00 h 55 heure de Bruxelles : refus identique. Le runner GitHub
+affichait alors `2026-08-31T22:55` — il tourne en UTC, ou l on etait encore la
+veille. Selon qu Apple compte en UTC ou sur son propre fuseau americain, la
+bascule tombe vers 2 h ou vers 9 h du matin, heure belge.
+
+Ne relance pas « pour voir » : chaque tentative coute une dizaine de minutes de
+CI pour reposer la meme question. Attends le matin, et envoie tout d un coup.
 
 ### L habitude a prendre
 
