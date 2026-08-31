@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { ChevronLeft } from "flowbite-react-icons/outline";
 import { DateInput } from "@/components/ui/DateInput";
 import { searchCities, type GeoResult } from "@/lib/geocode";
@@ -273,9 +274,9 @@ export function StepInput({
       {/* CTA */}
       <motion.div
         className="mt-auto"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.6, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+        initial={CTA_DEPART}
+        animate={CTA_ARRIVEE}
+        transition={CTA_IMMEDIAT}
       >
         <button
           type="button"

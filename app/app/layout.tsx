@@ -199,7 +199,7 @@ export default function DemoLayout({
         <MomentumProvider>
           <div
             className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"}
-            style={{ backgroundColor: "#110D24" }}
+            style={{ backgroundColor: "var(--bg-primary)" }}
           >
             <div
               className={obFrameClasses}
@@ -231,7 +231,7 @@ export default function DemoLayout({
 
   // SSR: render only the dark background — no content, no flash
   if (!mounted) {
-    return <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }} />;
+    return <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "var(--bg-primary)" }} />;
   }
 
   // Full-screen standalone report pages — bypass phone chrome entirely
@@ -258,7 +258,7 @@ export default function DemoLayout({
   return (
     <AuthProvider>
     <MomentumProvider>
-    <div className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"} style={{ backgroundColor: "#110D24" }}>
+    <div className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"} style={{ backgroundColor: "var(--bg-primary)" }}>
       {/* Mobile frame (conditional) */}
       <div
         className={frameClasses}
@@ -298,14 +298,25 @@ export default function DemoLayout({
 
         {/* Status bar — absolute overlay so content scrolls behind */}
         {!hideNav && (
-          <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 pt-3 pb-2" style={{
+          <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 pb-2" style={{
+            // La barre se posait sous l ile dynamique. Elle commence maintenant
+            // sous la zone de securite, comme le veut Apple.
+            paddingTop: "calc(12px + var(--safe-top, 0px))",
             background: "var(--glass-bg)",
             borderBottom: "1px solid var(--glass-border)",
             backdropFilter: `blur(var(--glass-blur))`,
           }}>
-            <span className="text-xs font-medium" style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
-              9:41
-            </span>
+            {/* L heure factice n a de sens que dans la maquette telephone du web.
+                Dans l app, elle se retrouvait juste sous la vraie horloge du
+                systeme : deux heures affichees, dont une fausse et figee a 9:41.
+                Apple interdit d ailleurs d imiter les elements du systeme. */}
+            {isNative ? (
+              <span className="w-10" aria-hidden="true" />
+            ) : (
+              <span className="text-xs font-medium" style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
+                9:41
+              </span>
+            )}
             <UnfoldLogo size={22} />
             <div className="flex items-center gap-2">
               {/* Trial countdown — web + Android only (anti-steering iOS) */}

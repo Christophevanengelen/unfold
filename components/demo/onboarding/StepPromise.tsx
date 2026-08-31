@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 /* eslint-disable @next/next/no-img-element */
 
@@ -104,9 +105,9 @@ export function StepPromise({ onNext }: StepPromiseProps) {
         {/* CTA */}
         <motion.div
           className="mt-auto pb-8 pt-6"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+          initial={CTA_DEPART}
+          animate={CTA_ARRIVEE}
+          transition={CTA_IMMEDIAT}
         >
           <button
             type="button"

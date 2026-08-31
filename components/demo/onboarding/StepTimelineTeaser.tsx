@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 
 import { planetConfig, type PlanetKey } from "@/lib/domain-config";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
@@ -152,7 +153,10 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
                 height: p.orbit * 2,
                 left: CENTER - p.orbit,
                 top: CENTER - p.orbit,
-                border: `1px solid rgba(255,255,255,0.04)`,
+                // Du blanc a 4 % : visible sur fond sombre, totalement absent sur
+                // fond clair. On passe par le violet de marque, qui existe dans
+                // les deux themes.
+                border: `1px solid color-mix(in srgb, var(--accent-purple) 14%, transparent)`,
               }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -326,10 +330,9 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
       {/* CTA — always in layout, fades in smoothly */}
       <motion.div
         className="mt-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: spotlightIndex >= ACTIVE_PLANETS.length ? 1 : 0 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        style={{ pointerEvents: spotlightIndex >= ACTIVE_PLANETS.length ? "auto" : "none" }}
+        initial={CTA_DEPART}
+        animate={CTA_ARRIVEE}
+        transition={CTA_IMMEDIAT}
       >
         <button
           type="button"

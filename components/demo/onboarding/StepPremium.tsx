@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { CalendarMonth, Clock, ChartPie } from "flowbite-react-icons/outline";
 import { mockForecast } from "@/lib/mock-data";
@@ -210,7 +211,7 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
       </motion.div>
 
       {/* CTA */}
-      <motion.div className="mt-auto pt-6" variants={fadeInUp}>
+      <motion.div className="mt-auto pt-6" initial={CTA_DEPART} animate={CTA_ARRIVEE} transition={CTA_IMMEDIAT}>
         <button
           type="button"
           onClick={onNext}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { ScoreRing } from "@/components/demo/ScoreRing";
 import { SatelliteScores } from "@/components/demo/SatelliteScores";
@@ -163,7 +164,7 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
       </motion.p>
 
       {/* CTA */}
-      <motion.div className="mt-auto pt-6" variants={fadeInUp}>
+      <motion.div className="mt-auto pt-6" initial={CTA_DEPART} animate={CTA_ARRIVEE} transition={CTA_IMMEDIAT}>
         <button
           type="button"
           onClick={onNext}
