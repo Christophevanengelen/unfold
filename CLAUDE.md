@@ -252,7 +252,7 @@ fois le 31 aout 2026, ne pas y repasser du temps.
 
 ## Les skills de ce depot
 
-Trois skills vivent dans `.claude/skills/`. Ils ne repetent pas ce que le code
+Quatre skills vivent dans `.claude/skills/`. Ils ne repetent pas ce que le code
 dit deja : ils gardent ce qui a coute des heures a decouvrir, et qu on ne peut
 pas deviner en lisant les fichiers.
 
@@ -261,6 +261,9 @@ pas deviner en lisant les fichiers.
   de commit ou depuis l onglet Actions : Apple plafonne les envois par jour.
 - **favorable-base** — migrations Supabase. `SUPABASE_DB_URL` dans `.env.local`
   donne un acces psql direct : ne jamais faire coller du SQL a Christophe.
+- **favorable-site** — le site favorable.day : `force-dynamic` obligatoire sur
+  toute page localisee, adresse de base, prix a source unique, vocabulaire qui
+  tient a distance de l article 4.3(b). Contacts centralises sur hi-def.be.
 - **favorable-natif** — les pieges de l app Capacitor : routes a barre finale,
   navigation par le routeur, greffons a synchroniser, et la panne muette qui est
   le defaut recurrent de ce depot.

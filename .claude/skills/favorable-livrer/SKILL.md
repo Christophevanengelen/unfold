@@ -21,6 +21,33 @@ heures — et la premiere build a ne pas pouvoir partir a ete la seule qui
 comptait. Un script de test ou un commentaire corrige n a rien a faire chez un
 testeur.
 
+## Le plafond d envois d Apple
+
+Apple limite le nombre d envois par jour et par application. Le 31 aout 2026, ce
+plafond a ete atteint en une soiree — vingt-deux builds — et le robinet s est
+ferme pour vingt-quatre heures. La premiere build a ne pas pouvoir partir a ete
+la seule qui comptait.
+
+C est pour cela que l envoi est desormais deliberé. Ne le contourne pas : si tu
+poussais dix corrections d outillage avec `[testflight]`, tu reproduirais
+exactement la panne.
+
+## Avant de soupconner Apple
+
+Trois fois de suite le 31 aout, la cause etait chez nous et pas chez eux :
+
+- « Marie-Ange ne voit pas l app » → elle etait testeuse interne depuis le
+  debut, statut `Invited`, jamais accepte. Aucun rapport avec la revue.
+- « Le widget casse la signature » → il a ete retire entierement, et le CI
+  echouait toujours. C etait le plafond de certificats.
+- « L origine de la vue web est unfold://localhost » → faux, les types de
+  Capacitor disent le contraire.
+
+**Regle : va lire l etat reel avant de construire une explication.**
+`node scripts/apple.mjs revue`, le statut du testeur dans App Store Connect, les
+logs Vercel. Une theorie qui s appuie sur une capture d ecran ou un souvenir
+coute plus cher que trente secondes de verification.
+
 ## Les certificats : ne jamais laisser le CI en creer
 
 `xcodebuild archive` signe l archive en **developpement** ; c est l export qui
