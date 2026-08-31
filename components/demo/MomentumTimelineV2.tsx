@@ -575,15 +575,6 @@ function OverviewView({
 
   return (
     <div className="relative flex h-full flex-col">
-      {/* MESURE TEMPORAIRE — on lit les vrais chiffres de la geometrie au lieu
-          de les supposer. A retirer des que la largeur est reglee. */}
-      <div
-        className="pointer-events-none absolute left-2 z-40 rounded px-1.5 py-0.5 font-mono text-[9px]"
-        style={{ top: "calc(var(--safe-top, 0px) + 4px)", background: "rgba(0,0,0,.6)", color: "#9fe" }}
-      >
-        c{Math.round(containerWidth)} dispo{Math.round(availableWidth)} couloirs{LANE_COUNT} fixe{Math.round(fixedLanesWidth)} ecart{Math.round(laneGap)} total{Math.round(totalLanesWidth)} decal{Math.round(adjustedOffsetX)}
-      </div>
-
       {/* Scrollable timeline */}
       <div ref={scrollRef} className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
         <div className="relative" style={{ height: getTotalHeight() }}>
