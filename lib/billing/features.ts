@@ -68,22 +68,36 @@ export const FEATURES: Record<FeatureKey, FeatureSpec> = {
 
 /** Plans available for purchase. Family plan deferred Phase 2. */
 export const PLANS = {
+  // Prix decides le 31 aout 2026 apres analyse de marche : 5,99 €/mois,
+  // 39,99 €/an, essai de sept jours. Le code portait encore 9,99 / 89, ce que
+  // le site affichait a tout le monde.
+  //
+  // CES VALEURS DOIVENT CORRESPONDRE aux produits crees dans App Store Connect
+  // et chez le prestataire de paiement. Trois endroits, une seule verite : si
+  // l un derive, la personne voit un prix et en paie un autre.
   monthly: {
     id: "monthly",
     label: "Mensuel",
-    priceEUR: 9.99,
+    priceEUR: 5.99,
     period: "month" as const,
   },
   annual: {
     id: "annual",
     label: "Annuel",
-    priceEUR: 89.0,
+    priceEUR: 39.99,
     period: "year" as const,
-    monthlyEquivalent: 7.42,
-    savingsEUR: 30.88,
-    savingsPct: 26,
+    monthlyEquivalent: 3.33,
+    savingsEUR: 31.89,
+    savingsPct: 44,
   },
-  // One-time payment — grants permanent premium access (period_end = 2099-12-31).
+  // Paiement unique, acces permanent (period_end = 2099-12-31).
+  //
+  // ATTENTION — ce prix n a jamais ete decide et il est devenu incoherent avec
+  // les nouveaux tarifs : 49 € a vie contre 39,99 €/an, c est quinze mois
+  // d abonnement. Quelqu un qui compte deux minutes ne prendra jamais l annuel.
+  // Il faut soit relever le prix a vie, soit retirer l offre. En attendant,
+  // l offre n est de toute facon montree que sur le web (voir `!ios` dans
+  // app/app/pricing/page.tsx).
   lifetime: {
     id: "lifetime",
     label: "À vie",

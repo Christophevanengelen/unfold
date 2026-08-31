@@ -34,7 +34,7 @@ WHAT YOU GET FREE FOREVER
 • 1 connection (matching with one person)
 • 1 AI-personalized reading per week
 
-PRO UNLOCKS THE FUTURE (€9.99/month, 7-day free trial)
+PRO UNLOCKS THE FUTURE (€5.99/month, 7-day free trial)
 • Full 36-month timeline — see your peak windows months in advance
 • Real-time peak alerts — notification when a major window opens
 • Unlimited AI delineations — ask Unfold anything about your chart
@@ -55,8 +55,8 @@ Built by people who care about craft. Built for people who care about timing.
 —
 
 Subscription details:
-• Monthly: €9.99/month
-• Annual: €89/year (save 25%)
+• Monthly: €5.99/month
+• Annual: €39.99/year (save 44%)
 • Auto-renews; manage in iOS Settings → Apple ID → Subscriptions
 
 Privacy Policy: https://unfold-nine.vercel.app/en/privacy
@@ -100,7 +100,7 @@ CE QUE TU AS GRATUITEMENT POUR TOUJOURS
 • 1 connexion (matching avec une personne)
 • 1 délinéation IA personnalisée par semaine
 
-PRO DÉBLOQUE LE FUTUR (€9.99/mois, 7 jours gratuits)
+PRO DÉBLOQUE LE FUTUR (€5.99/mois, 7 jours gratuits)
 • Timeline complète 36 mois — vois tes pics des mois en avance
 • Alertes pics en temps réel — notification quand une fenêtre majeure s'ouvre
 • Délinéations IA illimitées — pose à Unfold tout ce que tu veux sur ton thème
@@ -121,8 +121,8 @@ Construit par des gens qui aiment l'artisanat. Pour des gens qui aiment le timin
 —
 
 Détails abonnement :
-• Mensuel : €9.99/mois
-• Annuel : €89/an (-25%)
+• Mensuel : €5.99/mois
+• Annuel : €39,99/an (-44%)
 • Renouvellement auto ; gérer dans Réglages iOS → Apple ID → Abonnements
 
 Politique de confidentialité : https://unfold-nine.vercel.app/fr/privacy
@@ -162,7 +162,7 @@ LO QUE TIENES GRATIS PARA SIEMPRE
 • 1 conexión (matching con una persona)
 • 1 análisis IA personalizado por semana
 
-PRO DESBLOQUEA EL FUTURO (€9.99/mes, 7 días gratis)
+PRO DESBLOQUEA EL FUTURO (€5.99/mes, 7 días gratis)
 • Línea de tiempo completa 36 meses
 • Alertas de picos en tiempo real
 • Análisis IA ilimitados
@@ -183,8 +183,8 @@ Hecho por gente que ama el oficio. Para gente que ama el timing.
 —
 
 Detalles de suscripción:
-• Mensual: €9.99/mes
-• Anual: €89/año (-25%)
+• Mensual: €5.99/mes
+• Anual: €39,99/año (-44%)
 • Renovación automática; gestiona en Ajustes iOS → Apple ID → Suscripciones
 
 Política de privacidad: https://unfold-nine.vercel.app/es/privacy
@@ -245,8 +245,8 @@ Feito por pessoas que amam ofício. Para pessoas que amam timing.
 —
 
 Detalhes da assinatura:
-• Mensal: R$54.90/mês (~€9.99)
-• Anual: R$489/ano (-25%, ~€89)
+• Mensal: R$32.90/mês (~€5.99)
+• Anual: R$219/ano (-44%, ~€39,99)
 • Renovação automática; gerencie em Ajustes iOS → Apple ID → Assinaturas
 
 Política de privacidade: https://unfold-nine.vercel.app/pt/privacy
@@ -302,13 +302,13 @@ App Preview Video (optional, 15-30 sec): Worth doing for organic ranking. Show t
 
 **unfold_monthly_pro**
 - Type: Auto-renewable subscription
-- Price tier: 10 (€9.99 in EU, $10.99 in US)
+- Price tier a caler sur 5,99 € (EU) — prix decide le 31/08/2026, voir lib/billing/features.ts
 - Subscription group: `unfold_pro` (single)
 - Free trial: 7 days
 
 **unfold_annual_pro**
 - Type: Auto-renewable subscription
-- Price tier: 50 (€89 in EU, $99 in US)
+- Price tier a caler sur 39,99 € (EU) — prix decide le 31/08/2026, voir lib/billing/features.ts
 - Subscription group: `unfold_pro` (same as monthly — required for upgrade/downgrade)
 - Free trial: 7 days
 
