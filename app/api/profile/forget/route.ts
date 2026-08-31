@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient, getUserFromBearer } from "@/lib/db";
-import { corsPreflightResponse } from "@/lib/cors";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
@@ -112,7 +112,7 @@ async function purgeRevenueCat(appUserId: string): Promise<string[]> {
 
 // ─── Route handler ─────────────────────────────────────────
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   const admin = getAdminClient();
 
   // ── Try to resolve authenticated user ───────────────────
@@ -279,3 +279,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+// Les en-tetes CORS doivent etre sur la reponse reelle, pas seulement sur le
+// preflight : sans eux, le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui rendait des routes injoignables depuis l app.
+export const POST = corsHandler(handlePost);

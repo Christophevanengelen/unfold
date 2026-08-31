@@ -1,45 +1,75 @@
 /**
  * CORS helper for API routes that Capacitor calls cross-origin.
  *
- * Allowed origins (single-origin echo — never wildcard):
- *   - capacitor://localhost  (iOS Capacitor WebView)
- *   - https://localhost      (Android Capacitor WebView)
- *   - http://localhost:3333  (local dev)
- *   - https://unfold-nine.vercel.app (web same-origin, technically fine)
+ * D ou viennent ces origines — a garder en phase avec capacitor.config.ts :
  *
- * Usage:
- *   export async function OPTIONS(req) { return corsPreflightResponse(req); }
- *   // In POST/GET: return withCors(req, NextResponse.json(...));
+ *   iOS     : le serveur d actifs interne de la WKWebView sert depuis
+ *             `<server.iosScheme>://<server.hostname>`. Les deux clefs sont
+ *             absentes de capacitor.config.ts, donc les valeurs par defaut de
+ *             Capacitor s appliquent : scheme `capacitor`, hote `localhost`,
+ *             soit l origine `capacitor://localhost`.
+ *             ATTENTION : la clef `ios.scheme` (= "unfold") n a RIEN a voir.
+ *             C est le nom du schema de compilation Xcode utilise par
+ *             `npx cap run ios` ; le moteur natif ne la lit jamais. Le
+ *             « unfold » de Info.plist (CFBundleURLSchemes) est encore autre
+ *             chose : le lien profond des mails de connexion. Ni l un ni
+ *             l autre ne produit une origine `unfold://localhost`.
+ *
+ *   Android : `<server.androidScheme>://<server.hostname>`. Les deux clefs sont
+ *             absentes elles aussi, donc scheme `https` par defaut, soit
+ *             `https://localhost`.
+ *
+ * Si un jour `server.iosScheme` ou `server.androidScheme` apparait dans
+ * capacitor.config.ts, il faut ajouter l origine correspondante ici, sinon
+ * l app native se fait refuser ses appels.
+ *
+ * Origines admises (on renvoie l origine exacte — jamais de joker) :
+ *   - capacitor://localhost           (WebView Capacitor iOS)
+ *   - https://localhost               (WebView Capacitor Android)
+ *   - http://localhost:3333           (dev local)
+ *   - https://favorable.day           (production — cible par defaut de
+ *                                      NEXT_PUBLIC_API_BASE, voir lib/api-client.ts)
+ *   - https://unfold-nine.vercel.app  (domaine Vercel d origine)
+ *
+ * Usage — les DEUX sont necessaires. Le preflight seul ne suffit pas :
+ * sans en-tete sur la reponse reelle, le navigateur jette quand meme le
+ * resultat.
+ *   export function OPTIONS(req) { return corsPreflightResponse(req); }
+ *   // et dans GET/POST/DELETE : return withCors(req, NextResponse.json(...));
  */
 
 import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED = new Set([
   "capacitor://localhost",
-  // L origine reelle de la vue web iOS. capacitor.config.ts fixe
-  // ios.scheme a "unfold", donc le serveur interne sert sur unfold://localhost
-  // et non sur le capacitor://localhost par defaut. Sans cette entree, TOUTES
-  // les routes protegees par withCors sont injoignables depuis l iPhone.
-  "unfold://localhost",
   "https://localhost",
   "http://localhost:3333",
-  "https://unfold-nine.vercel.app",
-  // Le domaine de production manquait. Sans consequence pour un appel
-  // meme-origine depuis la vitrine, mais le repli renvoyait une origine
-  // etrangere au produit.
   "https://favorable.day",
+  "https://unfold-nine.vercel.app",
 ]);
 
 function getAllowedOrigin(req: NextRequest): string {
   const origin = req.headers.get("origin") ?? "";
-  return ALLOWED.has(origin) ? origin : "https://unfold-nine.vercel.app";
+  return ALLOWED.has(origin) ? origin : "https://favorable.day";
 }
 
-export function withCors(req: NextRequest, res: NextResponse): NextResponse {
+// Generique sur Response, pas seulement NextResponse : /api/openai/personalize
+// renvoie un flux SSE construit avec `new Response(stream, ...)`.
+export function withCors<T extends Response>(req: NextRequest, res: T): T {
   res.headers.set("Access-Control-Allow-Origin", getAllowedOrigin(req));
   res.headers.set("Access-Control-Allow-Credentials", "true");
-  res.headers.set("Vary", "Origin");
+  res.headers.append("Vary", "Origin");
   return res;
+}
+
+/**
+ * Enrobe un gestionnaire de route pour que TOUTES ses reponses portent les
+ * en-tetes CORS, sans avoir a toucher chaque `return` du fichier.
+ */
+export function corsHandler<Req extends NextRequest, Res extends Response>(
+  handler: (req: Req) => Promise<Res> | Res,
+): (req: Req) => Promise<Res> {
+  return async (req: Req) => withCors(req, await handler(req));
 }
 
 export function corsPreflightResponse(req: NextRequest): NextResponse {

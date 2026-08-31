@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { getEntitlement } from "@/lib/billing/entitlement";
-import { corsPreflightResponse } from "@/lib/cors";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export function OPTIONS(req: NextRequest) { return corsPreflightResponse(req); }
  *
  * Response: { plan, status, current_period_end, trial_end, features }
  */
-export async function GET(req: NextRequest) {
+async function handleGet(req: NextRequest) {
   const userId = await getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json(
@@ -32,3 +32,6 @@ export async function GET(req: NextRequest) {
     headers: { "Cache-Control": "no-store" },
   });
 }
+
+// Les en-tetes CORS doivent etre sur la reponse reelle, pas seulement sur le preflight.
+export const GET = corsHandler(handleGet);

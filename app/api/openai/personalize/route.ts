@@ -16,7 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
-import { corsPreflightResponse } from "@/lib/cors";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 import { isInternalCall } from "@/lib/internal-call";
 import {
   enforceAiBudget,
@@ -523,7 +523,7 @@ function buildUserProfileContext(
 
 // ─── Route handler ───────────────────────────────────────
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
@@ -852,3 +852,6 @@ export async function POST(request: NextRequest) {
     return applyGuardCookie(guard, NextResponse.json({ error: "Failed to generate" }, { status: 500 }));
   }
 }
+
+// Les en-tetes CORS doivent etre sur la reponse reelle, pas seulement sur le preflight.
+export const POST = corsHandler(handlePost);

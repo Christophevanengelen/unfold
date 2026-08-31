@@ -16,7 +16,15 @@ const config: CapacitorConfig = {
     // Ne pas toucher a scrollEnabled ici.
     contentInset: "never",
     backgroundColor: "#1B1535",
-    scheme: "unfold",
+    // Le schema de compilation XCODE, pas l origine de la vue web. Il doit
+    // porter le nom de la cible, sinon `npx cap run ios` cherche un schema
+    // inexistant. Il valait "unfold", qui n existe pas.
+    //
+    // L origine de la vue web se regle avec server.iosScheme, absent ici :
+    // elle vaut donc le defaut, capacitor://localhost. Et le "unfold" des
+    // liens profonds vit dans Info.plist (CFBundleURLSchemes) — trois choses
+    // differentes qui portent le meme mot.
+    scheme: "App",
   },
   android: {
     backgroundColor: "#1B1535",

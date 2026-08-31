@@ -21,7 +21,7 @@ import { join } from "path";
 import { supabase } from "@/lib/db";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { enforceFeature, enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
-import { corsPreflightResponse } from "@/lib/cors";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 import { isInternalCall } from "@/lib/internal-call";
 import {
   enforceAiBudget,
@@ -154,7 +154,7 @@ interface RequestBody {
   [k: string]: unknown;
 }
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   const SYSTEM_PROMPT = loadSystemPrompt();
   const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
   if (!apiKey) {
@@ -302,3 +302,6 @@ export async function POST(req: NextRequest) {
     ));
   }
 }
+
+// Les en-tetes CORS doivent etre sur la reponse reelle, pas seulement sur le preflight.
+export const POST = corsHandler(handlePost);
