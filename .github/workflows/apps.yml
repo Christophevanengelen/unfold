@@ -13,6 +13,11 @@ jobs:
         with:
           node-version: "22"
       - run: npm ci
+      - name: Verifier l envoi de notifications
+        # Deux details d APNs se trompent en silence et ne se voient qu en
+        # production : la signature ES256 au mauvais format, et le 410 d Apple
+        # ignore. Le test fabrique sa propre clef et son propre APNs.
+        run: node scripts/verifier-apns.mjs
       - name: Construire le site complet (verifie aussi les types des routes API)
         run: npx next build
         env:
