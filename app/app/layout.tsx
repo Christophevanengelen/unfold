@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { mesurer, mesurerUneFois } from "@/lib/mesure";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
@@ -114,6 +115,7 @@ export default function DemoLayout({
   const [mounted, setMounted] = useState(false);
   const [streak, setStreak] = useState(0);
   useEffect(() => {
+    mesurer("app_ouverte");
     setMounted(true);
     setStreak(checkAndUpdateStreak());
 

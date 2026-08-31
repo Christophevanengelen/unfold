@@ -31,7 +31,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         heading: "1. Information We Collect",
         paragraphs: [
           "Account Information: When you create an account, we collect your date of birth, time of birth (optional), and birth location (optional). These are used solely to calculate your personal momentum signals.",
-          "Usage Data: We collect anonymized usage analytics such as feature usage frequency, session duration, and navigation patterns. This helps us improve the app experience.",
+          "Usage Data: We record a short list of named events \u2014 app opened, onboarding started, onboarding finished, first signal seen, signal opened \u2014 together with a random identifier generated on your device, whether you are on the web or in the app, and your interface language. The identifier tells us two installations apart; it says nothing about you and does not follow you across devices. We do not record session duration or navigation paths. If your browser sends Do Not Track, nothing is sent at all.",
           "Device Information: We may collect device type, operating system version, and app version for compatibility and debugging purposes.",
           "We do NOT collect or store: real names, email addresses (unless you provide one for account recovery), phone numbers, location data, photos, contacts, or any health data.",
         ],

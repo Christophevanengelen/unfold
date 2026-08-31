@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { mesurerUneFois } from "@/lib/mesure";
 import { motion } from "motion/react";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
@@ -21,6 +22,7 @@ interface StepPromiseProps {
  * The user thinks "yes" and taps.
  */
 export function StepPromise({ onNext }: StepPromiseProps) {
+  useEffect(() => { mesurerUneFois("onboarding_demarre"); }, []);
   const [locale, setLocale] = useState<Locale>("en");
   useEffect(() => { setLocale(detectLocale()); }, []);
 

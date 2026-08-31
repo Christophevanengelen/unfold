@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { mesurerUneFois } from "@/lib/mesure";
 import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
 import { scaleIn } from "@/lib/animations";
@@ -597,6 +598,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
                       return;
                     } catch { /* ignore parse errors */ }
                   }
+                  mesurerUneFois("onboarding_termine");
                   router.push("/app/timeline");
                 }}
                 className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"

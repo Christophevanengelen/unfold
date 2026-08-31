@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo, startTransition } from "react";
+import { mesurer, mesurerUneFois } from "@/lib/mesure";
 import { motion, AnimatePresence } from "motion/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
@@ -1240,6 +1241,7 @@ export function MomentumTimelineV2() {
       openPremium();
       return;
     }
+    mesurer("signal_ouvert", { futur: capsule.isFuture === true });
     setSelectedCapsule(capsule);
   }, [openPremium, userIsPremium]);
 
@@ -1259,6 +1261,13 @@ export function MomentumTimelineV2() {
   // Show spinner only when we have NO data at all.
   // If year data (phases) arrived, show timeline immediately — lifetime loads in background.
   const hasAnyData = phases.length > 0 || timelinePhases.length > 0;
+
+  // Le moment ou la personne voit son signal pour la premiere fois : c est
+  // l aboutissement du parcours, et le seul evenement qui dit si le produit a
+  // tenu sa promesse. Emis une fois par installation.
+  useEffect(() => {
+    if (hasAnyData) mesurerUneFois("premier_signal_vu");
+  }, [hasAnyData]);
   if (
     (state === "loading" && !hasAnyData) ||
     (isLoadingLifetime && !hasAnyData)
