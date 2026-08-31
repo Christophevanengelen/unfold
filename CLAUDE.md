@@ -192,3 +192,60 @@ The product covers **12 life domains** (astrological houses), NOT "love/health/w
 1. Create component in `components/landing/`
 2. Add content keys to seed
 3. Import in `app/[locale]/page.tsx`
+
+---
+
+## Les apps natives (iOS / Android) — lire avant d y toucher
+
+Verifie sur un vrai iPhone le 31 aout 2026 : l app native tourne.
+
+### Comptes et identite
+
+- **Identifiant fige** : `day.favorable.app`. Definitif des la premiere
+  publication sur Google Play, il ne se change plus jamais ensuite.
+- **Equipe Apple** : `LD9N97K83G` (« Christophe van Engelen »), compte
+  `jhondoe2509@gmail.com`, role Admin. C est la sienne.
+- **Ne jamais remettre** `JG9V6PMN8T` (Zebrapad, Inc., l equipe de Marie-Ange).
+  Christophe ne veut pas y etre.
+- **Google Play** : compte ouvert avant 2015, donc **exempt** de la regle des
+  12 testeurs pendant 14 jours. Publication directe possible.
+
+### Deux pieges de construction, deja corriges, a ne pas reintroduire
+
+1. `app/page.tsx` est reste le modele de create-next-app. Sur le web le
+   middleware redirige et personne ne la voit ; en natif il n y a pas de
+   middleware, donc elle devenait l ecran d ouverture de l app.
+   `scripts/build-native.sh` **ecrase toujours** `out/index.html`.
+2. Le serveur interne de Capacitor sur iOS **ne sert pas l index d un dossier** :
+   toute adresse sans extension de fichier retombe sur la page racine. Un
+   `location.replace("./app/")` relatif se rempile et donne `/app/app/app/app/`,
+   et un `/app/` absolu retombe sur la page d entree. La page d entree vise donc
+   le fichier lui-meme : **`/app/index.html`**.
+
+### Diagnostiquer un ecran vide dans l app
+
+Injecter juste apres `<head>` dans `ios/App/App/public/app/index.html` un
+`window.onerror` + `unhandledrejection` qui ecrivent l erreur en rouge par-dessus
+la page. Seul moyen de voir un plantage JS sans inspecteur Safari. Retirer apres.
+
+### Verifier un bundle
+
+```
+find ios/App/App/public -type f | wc -l      # environ 266
+cat ios/App/App/capacitor.config.json        # aucune cle "url"
+head -c 200 ios/App/App/public/index.html    # la page d entree, pas Next
+```
+
+### Outils Xcode pour l agent (session locale uniquement)
+
+Xcode 26 expose un serveur MCP : construire, lancer sur l appareil et lire les
+erreurs sans cliquer.
+
+1. Xcode > Settings > Intelligence > Model Context Protocol >
+   « Allow external agents to use Xcode tools ».
+2. `claude mcp add --transport stdio xcode -- xcrun mcpbridge`
+3. Garder le projet ouvert dans Xcode.
+
+**Ne fonctionne que depuis une session locale sur le Mac.** Depuis une session
+distante dans le nuage, le serveur ne remonte pas jusqu a l agent : verifie deux
+fois le 31 aout 2026, ne pas y repasser du temps.
