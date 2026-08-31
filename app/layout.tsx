@@ -46,8 +46,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const h = await headers();
-  const lang = h.get("x-locale") || "en";
+  // En build natif il n y a ni serveur ni middleware : headers() n existe pas.
+  // La langue de l app est de toute facon choisie cote client (lib/i18n-demo).
+  const lang =
+    process.env.NEXT_PUBLIC_NATIVE === "true"
+      ? "fr"
+      : (await headers()).get("x-locale") || "en";
 
   return (
     <html lang={lang} suppressHydrationWarning>

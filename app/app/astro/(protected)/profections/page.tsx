@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Script from "next/script";
 import { useAstrolearnSubjectReload } from "@/lib/use-astrolearn-subject-reload";
 import { useAstrolearnSessionTime } from "@/lib/astrolearn-session-time";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -185,7 +186,7 @@ export default function ProfectionsPage() {
     setLoading(true);
     setError("");
     Promise.all([
-      fetch("/api/astrolearn/chart-data").then((r) => r.json()),
+      apiFetch("/api/astrolearn/chart-data").then((r) => r.json()),
       fetch(`/api/astrolearn/profections?date=${referenceDate}`).then((r) => r.json()),
     ])
       .then(([chartJson, profJson]) => {

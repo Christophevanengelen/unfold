@@ -2,7 +2,7 @@
 
 **Status as of 2026-04-28:**
 - ✅ Web app live at https://unfold-nine.vercel.app — astrology positioning, 10 languages, Stripe billing wired
-- ✅ Capacitor iOS shell ready in `/ios` (bundle ID `com.zebrapad.unfold`)
+- ✅ Capacitor iOS shell ready in `/ios` (bundle ID `day.favorable.app`)
 - ✅ All code work done — only Apple-side work blocking submission
 - ⏳ Apple Developer Program enrollment (YOUR ACTION) — gates everything below
 
@@ -29,7 +29,7 @@ Once Dev Program is active, go to https://appstoreconnect.apple.com → My Apps 
 - **Platform:** iOS
 - **Name:** `Unfold` (or `Unfold: Astrology Timing` if "Unfold" is taken)
 - **Primary Language:** English (U.S.) — we'll add localizations after
-- **Bundle ID:** `com.zebrapad.unfold` (must match iOS Xcode project — already configured)
+- **Bundle ID:** `day.favorable.app` (must match iOS Xcode project — already configured)
 - **SKU:** `unfold-001` (internal ID, anything unique)
 - **User Access:** Full Access
 
@@ -45,7 +45,7 @@ This creates a cert tied to your Mac. You only need to do this once per Mac.
 
 In App Store Connect (or Xcode automatic signing):
 - Profile type: **App Store**
-- Bundle ID: `com.zebrapad.unfold`
+- Bundle ID: `day.favorable.app`
 - Certificate: the Distribution cert from step 3
 
 If using Xcode automatic signing (recommended): just open `ios/App/App.xcworkspace` → select the `App` target → Signing & Capabilities → make sure "Automatically manage signing" is checked and Team is `Zebrapad, Inc. (JG9V6PMN8T)`. Xcode handles the profile.
@@ -73,7 +73,7 @@ Apple review typically takes 24-48 hours for new apps.
 
 | Asset | Status | Notes |
 |---|---|---|
-| Bundle ID | ✅ `com.zebrapad.unfold` | Matches Apple Dev Team `JG9V6PMN8T` |
+| Bundle ID | ✅ `day.favorable.app` | Matches Apple Dev Team `JG9V6PMN8T` |
 | Apple Team config | ✅ Set in Xcode project | `JG9V6PMN8T` |
 | App icon (1024×1024) | ✅ Real Unfold mark | `ios/App/App/Assets.xcassets/AppIcon.appiconset/` |
 | Info.plist permissions | ✅ Camera, Photos, ATT | Localized usage strings included |
@@ -146,7 +146,7 @@ When Apple approves the app and you're ready to release:
 
 1. **App Store Connect** — manually release the build (not auto-release after approval — gives you control)
 2. **Update real App Store ID** in `components/landing/AppStoreBadges.tsx` — replace `id6740000000` with the real ID Apple assigns
-3. **Create the Play Store listing** with the same `com.zebrapad.unfold` package (Google Play Console — $25 one-time)
+3. **Create the Play Store listing** with the same `day.favorable.app` package (Google Play Console — $25 one-time)
 4. **Marie Ange API content translations** — ask her for FR→EN/ES/PT translations of:
    - Capsule names (~25 strings: "Brouillard créatif"→"Creative Fog", etc.)
    - House names (Foyer→Home, Carrière→Career, etc.)

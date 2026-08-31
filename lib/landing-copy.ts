@@ -34,6 +34,10 @@ export type LocaleCode =
 // ─── English — complete base (every key lives here) ──────────────────────
 
 const EN: TranslationMap = {
+  "hero.signal.unavailable":
+    "We cannot compute your signal right now. Try again in a moment.",
+  "hero.signal.disabled":
+    "Signal computation is paused right now. Come back in a little while.",
   // Hero
   "hero.v2.eyebrow": "Personal timing engine",
   "hero.v2.title": "Some periods of your life feel more intense.",
@@ -230,6 +234,10 @@ const EN: TranslationMap = {
 // ─── French — complete translation ───────────────────────────────────────
 
 const FR: TranslationMap = {
+  "hero.signal.unavailable":
+    "Impossible de calculer ton signal en ce moment. Réessaie dans un instant.",
+  "hero.signal.disabled":
+    "Le calcul du signal est momentanément suspendu. Reviens dans un moment.",
   "hero.v2.eyebrow": "Moteur de timing personnel",
   "hero.v2.title": "Certaines périodes de ta vie sont plus intenses.",
   "hero.v2.subtitle": "Il y a une raison. Entre ta date de naissance.",

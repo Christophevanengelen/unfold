@@ -18,12 +18,24 @@
 import { test, expect, type BrowserContext } from "@playwright/test";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
-const BASE = "https://unfold-nine.vercel.app";
-const SUPABASE_URL = "https://jvpdpjqidxtavmaaeudn.supabase.co";
-const SERVICE_ROLE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2cGRwanFpZHh0YXZtYWFldWRuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzI4Njk4NiwiZXhwIjoyMDkyODYyOTg2fQ.lzxMpddYAqlxCziQ3mERyHMdActEzrp6A6G8zrJpyMw";
-const ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2cGRwanFpZHh0YXZtYWFldWRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyODY5ODYsImV4cCI6MjA5Mjg2Mjk4Nn0.mElJSOjQ9oIXkSCx1Yb2VmWMTGROlKc5y_tXd1RQ4s0";
+// Aucune valeur en dur ici : ce fichier est dans un depot public.
+// Les quatre valeurs viennent de l environnement. Le test echoue clairement
+// si l une manque, plutot que de planter obscurement plus loin.
+function requis(nom: string): string {
+  const v = process.env[nom];
+  if (!v) {
+    throw new Error(
+      `Variable d environnement manquante : ${nom}. ` +
+        `Voir .env.example. Ne jamais recopier une cle dans ce fichier.`,
+    );
+  }
+  return v;
+}
+
+const BASE = requis("E2E_BASE_URL");
+const SUPABASE_URL = requis("E2E_SUPABASE_URL");
+const SERVICE_ROLE_KEY = requis("E2E_SUPABASE_SERVICE_ROLE_KEY");
+const ANON_KEY = requis("E2E_SUPABASE_ANON_KEY");
 const TEST_EMAIL = "playwright@example.com";
 
 // Test birth data — Brussels, arbitrary date that will produce real API results

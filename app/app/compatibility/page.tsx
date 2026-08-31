@@ -13,6 +13,8 @@ import {
 } from "@/lib/connections-store";
 import { getBirthDataSync, type BirthData } from "@/lib/birth-data";
 import { ConnectionList } from "@/components/demo/compat/ConnectionList";
+import { apiFetch } from "@/lib/api-client";
+import { connectionHref } from "@/lib/connection-href";
 
 const LONG_PRESS_HINT_KEY = "unfold_longpress_hint_seen_v1";
 
@@ -61,7 +63,7 @@ export default function ConnectionsPage() {
     setCodeSubmitting(true);
     setCodeError(null);
     try {
-      const res = await fetch("/api/invite/validate", {
+      const res = await apiFetch("/api/invite/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: trimmed }),
@@ -92,7 +94,7 @@ export default function ConnectionsPage() {
       setConnections(getConnections());
       setCode("");
       setShowCodeInput(false);
-      router.push(`/demo/compatibility/${newConn.id}`);
+      router.push(connectionHref(newConn.id));
     } catch {
       setCodeError("Erreur réseau. Réessaie dans un instant.");
     } finally {

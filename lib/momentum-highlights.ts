@@ -8,6 +8,7 @@
  * Backend: C:\wamp64\www\ai.zebrapad.io\full-suite-spiritual-api\toctoc-highlights.php
  * Proxied: POST /api/toctoc  { endpoint: "toctoc-highlights", ...birthData }
  */
+import { apiFetch } from "@/lib/api-client";
 
 /** One entry in the yearlyTimeline[] array — one row per year. */
 export interface YearlyEntry {
@@ -99,7 +100,7 @@ export async function fetchHighlights(birthData: {
   username?: string;
 }): Promise<HighlightsResponse | null> {
   try {
-    const res = await fetch("/api/toctoc", {
+    const res = await apiFetch("/api/toctoc", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ endpoint: "toctoc-highlights", ...birthData }),

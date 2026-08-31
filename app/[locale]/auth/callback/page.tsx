@@ -13,6 +13,8 @@
 
 import { useEffect } from "react";
 
+
+
 export default function LocaleAuthCallbackRelay() {
   useEffect(() => {
     // Preserve ?code=, ?returnTo= AND #access_token= intact

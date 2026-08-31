@@ -15,35 +15,52 @@ import { NextRequest, NextResponse } from "next/server";
  *     fallback?: "mock" }
  *
  * Failure modes:
- *  - toctoc 5xx | timeout (>10s)  → 503 with `fallback: "mock"` flag (client renders deterministic mock)
+ *  - toctoc 5xx | timeout          → 503 { error }. Le client dit qu il ne peut
+ *  - toctoc 5xx ou depassement de delai -> 503 { error }. Le client dit qu il
+ *    ne peut pas calculer. Il n en invente jamais un : le drapeau
+ *    `fallback: "mock"` a ete retire volontairement le 26 aout 2026.
+ *    a ete retire volontairement.
  *  - personalize 5xx | timeout    → 200 with `delineation: null` (client renders template card)
- *  - rate limit (5/IP/min)        → 429
+ *  - budget guard full            → 429 (see lib/ai-guard.ts)
  *  - bad input                    → 400
  *
  * Privacy: never logs full birth data. Uses an SHA-256 hash prefix for telemetry.
  */
 
 import crypto from "crypto";
+import { unstable_cache } from "next/cache";
+import { internalCallHeaders } from "@/lib/internal-call";
+import {
+  enforceAiBudget,
+  applyGuardCookie,
+  budgetErrorHeaders,
+  AiBudgetError,
+  AiGuardUnavailableError,
+  type AiGuardResult,
+} from "@/lib/ai-guard";
+
+export const runtime = "nodejs";                  // crypto + Supabase admin client
+// toctoc-app-short calcule les boudins d une vie entiere : mesure a 54 s puis
+// 60 s le 27 aout 2026 (2088 boudins, 637 Ko). La route doit pouvoir l attendre.
+export const maxDuration = 120;
 
 const TOCTOC_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
-const TOCTOC_TIMEOUT_MS = 25_000;
+// Etait a 25 s : toctoc-app-short repond en 55 a 60 s, donc la page renvoyait
+// un 503 a tous les visiteurs, systematiquement. Mesure faite en direct sur
+// favorable.day le 27 aout 2026.
+const TOCTOC_TIMEOUT_MS = 90_000;
+// Les boudins d une personne ne dependent que de sa naissance : ce sont des
+// fenetres de dates. On les garde 30 jours dans le cache de donnees Vercel,
+// pour qu une seule personne paie l attente du calcul.
+const BOUDINS_TTL_S = 60 * 60 * 24 * 30;
 const PERSONALIZE_TIMEOUT_MS = 15_000;
 
-// In-memory rate limiter (per Vercel function instance — see TODO Upstash KV).
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RL_WINDOW_MS = 60_000;
-const RL_MAX = 5;
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + RL_WINDOW_MS });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > RL_MAX;
-}
+// The in-memory rate limiter that used to live here (5 per IP per minute, a
+// `new Map()` with a TODO about Upstash) capped nothing: on Vercel every
+// instance keeps its own map and drops it on cold start. This route is the
+// public entry point that reaches OpenAI through the loopback call to
+// /api/openai/personalize, so its bound now comes from lib/ai-guard.ts, whose
+// counters live in Postgres.
 
 function logHash(s: string): string {
   return crypto.createHash("sha256").update(s).digest("hex").slice(0, 8);
@@ -255,21 +272,64 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Pro
   }
 }
 
+
+// ─── Boudins : appel unique, garde 30 jours ─────────────────
+//
+// Le calcul complet d une vie prend une minute chez Marie Ange. Il ne depend
+// que de la naissance, donc on le fait une fois par personne et on le range
+// dans le cache de donnees de Vercel. La cle est un hachage de la naissance :
+// aucune date de naissance en clair dans une cle de cache.
+
+interface BirthInput {
+  birthDate: string;
+  birthTime: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+}
+
+function birthCacheKey(b: BirthInput): string {
+  return crypto
+    .createHash("sha256")
+    .update(`${b.birthDate}_${b.birthTime}_${b.latitude.toFixed(4)}_${b.longitude.toFixed(4)}_${b.timezone}`)
+    .digest("hex");
+}
+
+async function fetchBoudins(b: BirthInput): Promise<ShortBoudin[]> {
+  const tocRes = await fetchWithTimeout(
+    `${TOCTOC_BASE}/toctoc-app-short.php`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(b),
+    },
+    TOCTOC_TIMEOUT_MS,
+  );
+  if (!tocRes.ok) throw new Error(`toctoc ${tocRes.status}`);
+  const tocJson = (await tocRes.json()) as TocTocAppShortBody;
+  const boudins = tocJson.data?.boudins ?? tocJson.boudins ?? [];
+  // Un resultat vide n est pas un resultat : on ne le met pas en cache 30 jours.
+  if (boudins.length === 0) throw new Error("toctoc vide");
+  return boudins;
+}
+
+function getBoudins(b: BirthInput): Promise<ShortBoudin[]> {
+  const key = birthCacheKey(b);
+  return unstable_cache(() => fetchBoudins(b), ["landing-boudins", key], {
+    revalidate: BOUDINS_TTL_S,
+    tags: ["landing-boudins"],
+  })();
+}
+
 // ─── Route handler ──────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // Rate-limit by IP
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
     req.headers.get("x-real-ip") ??
     "anonymous";
 
-  if (isRateLimited(ip)) {
-    return NextResponse.json(
-      { error: "rate_limited", message: "Trop de tentatives. Réessaie dans une minute." },
-      { status: 429, headers: { "Cache-Control": "no-store" } },
-    );
-  }
+  let guard: AiGuardResult | undefined;
 
   let body: {
     birthDate?: string;
@@ -306,56 +366,58 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_birth_time" }, { status: 400 });
   }
 
+  // ── BUDGET GATE ──
+  // Placed after validation and before the first outbound call, so a refused
+  // request costs neither an OpenAI token nor a hit on Marie-Ange's API.
+  try {
+    guard = await enforceAiBudget(req, "openai");
+  } catch (err) {
+    if (err instanceof AiBudgetError) {
+      return NextResponse.json(err.toJSON(), {
+        status: err.status,
+        headers: budgetErrorHeaders(err),
+      });
+    }
+    if (err instanceof AiGuardUnavailableError) {
+      console.error("[landing/signal] guard unavailable:", err.reason);
+      return NextResponse.json(err.toJSON(), { status: err.status });
+    }
+    throw err;
+  }
+
   const birthLog = logHash(`${birthDate}_${birthTime}_${latitude.toFixed(2)}_${longitude.toFixed(2)}`);
   console.log("[landing/signal] start", { birthLog, ipHash: logHash(ip) });
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
-  // ── Step 1: toctoc-app-short for the boudins list ──
+  // ── Step 1: toctoc-app-short for the boudins list (mis en cache) ──
   let boudins: ShortBoudin[] = [];
   try {
     const t0 = Date.now();
-    const tocRes = await fetchWithTimeout(
-      `${TOCTOC_BASE}/toctoc-app-short.php`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ birthDate, birthTime, latitude, longitude, timezone }),
-      },
-      TOCTOC_TIMEOUT_MS,
-    );
-    if (!tocRes.ok) {
-      console.warn("[landing/signal] toctoc not ok", { status: tocRes.status, birthLog });
-      return NextResponse.json(
-        { error: "toctoc_unavailable", fallback: "mock" },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    const tocJson = (await tocRes.json()) as TocTocAppShortBody;
-    boudins = tocJson.data?.boudins ?? tocJson.boudins ?? [];
+    boudins = await getBoudins({ birthDate, birthTime, latitude, longitude, timezone });
     console.log("[landing/signal] toctoc ok", { boudins: boudins.length, ms: Date.now() - t0, birthLog });
   } catch (err) {
     console.warn("[landing/signal] toctoc failed", err);
-    return NextResponse.json(
-      { error: "toctoc_unavailable", fallback: "mock" },
+    return applyGuardCookie(guard, NextResponse.json(
+      { error: "toctoc_unavailable" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
-    );
+    ));
   }
 
   if (boudins.length === 0) {
-    return NextResponse.json(
-      { error: "no_data", fallback: "mock" },
+    return applyGuardCookie(guard, NextResponse.json(
+      { error: "no_data" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
-    );
+    ));
   }
 
   // ── Step 2: pick the active boudin ──
   const active = findActiveBoudin(boudins, todayISO);
   if (!active) {
-    return NextResponse.json(
-      { error: "no_active_boudin", fallback: "mock" },
+    return applyGuardCookie(guard, NextResponse.json(
+      { error: "no_active_boudin" },
       { status: 503, headers: { "Cache-Control": "no-store" } },
-    );
+    ));
   }
 
   // ── Step 3: personalize via L2-cached endpoint (loopback) ──
@@ -370,9 +432,10 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Loopback marker — bypasses auth-required gate on personalize
-          // since landing is intentionally anonymous (visitors not signed in).
-          "x-unfold-internal": "1",
+          // Signed loopback marker. Personalize accepts an anonymous caller
+          // only through it, and skips its own budget count because this
+          // request was already counted above.
+          ...internalCallHeaders(),
         },
         body: JSON.stringify({
           birthData: { birthDate, birthTime, latitude, longitude, timezone },
@@ -404,7 +467,7 @@ export async function POST(req: NextRequest) {
   const lifetime = buildLifetimeStats(boudins, todayISO);
   const pastPeaks = findPastPeaks(boudins, todayISO, 3);
 
-  return NextResponse.json(
+  return applyGuardCookie(guard, NextResponse.json(
     {
       active: {
         boudinId: active.id,
@@ -426,5 +489,5 @@ export async function POST(req: NextRequest) {
       fromCache: personalizeFromCache,
     },
     { headers: { "Cache-Control": "no-store" } },
-  );
+  ));
 }

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Unfold</string>
-    <string name="title_activity_main">Unfold</string>
-    <string name="package_name">com.unfold.app</string>
-    <string name="custom_url_scheme">com.unfold.app</string>
+    <string name="app_name">Favorable</string>
+    <string name="title_activity_main">Favorable</string>
+    <string name="package_name">day.favorable.app</string>
+    <string name="custom_url_scheme">day.favorable.app</string>
 </resources>

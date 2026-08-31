@@ -13,6 +13,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 const PLAN_KEY = "unfold_plan";
 const AI_CALLS_KEY = "unfold_ai_calls";
@@ -97,7 +98,7 @@ export function usePremiumStatus(): boolean {
     // Step 2: Verify via server (runs once per mount)
     if (!fetchedRef.current) {
       fetchedRef.current = true;
-      fetch("/api/billing/me", {
+      apiFetch("/api/billing/me", {
         headers: { "Cache-Control": "no-store" },
         credentials: "include",
       })
@@ -160,7 +161,7 @@ export function useBillingState(): BillingState {
 
     if (!fetchedRef.current) {
       fetchedRef.current = true;
-      fetch("/api/billing/me", {
+      apiFetch("/api/billing/me", {
         headers: { "Cache-Control": "no-store" },
         credentials: "include",
       })

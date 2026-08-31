@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AstroPeoplePicker from "./AstroPeoplePicker";
+import { apiFetch } from "@/lib/api-client";
 
 const TABS = [
   { label: "Birth Chart", href: "/app/astro/chart" },
@@ -25,7 +26,7 @@ export default function AstroTabNav({ username }: { username: string }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/astrolearn/admin/session")
+    apiFetch("/api/astrolearn/admin/session")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data) return;
@@ -36,7 +37,7 @@ export default function AstroTabNav({ username }: { username: string }) {
   }, []);
 
   async function handleLogout() {
-    await fetch("/api/astrolearn/login", { method: "DELETE" });
+    await apiFetch("/api/astrolearn/login", { method: "DELETE" });
     router.push("/app/astro");
   }
 

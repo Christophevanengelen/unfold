@@ -23,6 +23,7 @@ import { AuthSheet } from "@/components/demo/AuthSheet";
 import { isIOSBundle } from "@/lib/platform";
 import { PLANS } from "@/lib/billing/features";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Localized copy for this page ────────────────────────────────
 // Inline since these strings are page-specific. Other UI lives in i18n-demo.ts.
@@ -381,7 +382,7 @@ export default function DemoPricingPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/billing/checkout", {
+      const res = await apiFetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priceId: plan, locale }),

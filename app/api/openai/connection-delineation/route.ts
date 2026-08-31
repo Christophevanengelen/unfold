@@ -22,6 +22,15 @@ import { supabase } from "@/lib/db";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { enforceFeature, enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
 import { corsPreflightResponse } from "@/lib/cors";
+import { isInternalCall } from "@/lib/internal-call";
+import {
+  enforceAiBudget,
+  applyGuardCookie,
+  budgetErrorHeaders,
+  AiBudgetError,
+  AiGuardUnavailableError,
+  type AiGuardResult,
+} from "@/lib/ai-guard";
 
 export const runtime = "nodejs";
 
@@ -162,17 +171,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
+  // ── BUDGET GATE: bounds the OpenAI spend for every caller, paying or not.
+  //    Runs before the billing gate and before the cache read.
+  const internal = isInternalCall(req);
+  let guard: AiGuardResult | undefined;
+  if (!internal) {
+    try {
+      guard = await enforceAiBudget(req, "openai");
+    } catch (err) {
+      if (err instanceof AiBudgetError) {
+        return NextResponse.json(err.toJSON(), {
+          status: err.status,
+          headers: budgetErrorHeaders(err),
+        });
+      }
+      if (err instanceof AiGuardUnavailableError) {
+        console.error("[connection-delineation] guard unavailable:", err.reason);
+        return NextResponse.json(err.toJSON(), { status: err.status });
+      }
+      throw err;
+    }
+  }
+
   // ── BILLING GATE: must run BEFORE cache return AND BEFORE OpenAI call.
   //    Connection delineation is gated on:
   //      1) future months (FUTURE_CAPSULES feature, premium-only)
   //      2) AI quota (1/week free, unlimited paid)
+  //    The anonymous escape hatch is the signed loopback marker, not the
+  //    literal header value "1" that anyone could send.
   const userId = await getUserIdFromRequest(req);
-  const isInternalLandingCall = req.headers.get("x-unfold-internal") === "1";
-  if (!userId && !isInternalLandingCall) {
-    return NextResponse.json(
+  if (!userId && !internal) {
+    return applyGuardCookie(guard, NextResponse.json(
       { error: "auth_required", message: "Connecte-toi pour accéder à la délinéation IA." },
       { status: 401 },
-    );
+    ));
   }
   if (userId) {
     const monthKeyStr = String(body.monthKey ?? "");
@@ -185,10 +217,10 @@ export async function POST(req: NextRequest) {
       await enforceQuota(userId, "AI_DELINEATION");
     } catch (err) {
       if (err instanceof RequiresPlanError) {
-        return NextResponse.json(err.toJSON(), { status: err.status });
+        return applyGuardCookie(guard, NextResponse.json(err.toJSON(), { status: err.status }));
       }
       if (err instanceof QuotaExceededError) {
-        return NextResponse.json(err.toJSON(), { status: err.status });
+        return applyGuardCookie(guard, NextResponse.json(err.toJSON(), { status: err.status }));
       }
       throw err;
     }
@@ -220,7 +252,7 @@ export async function POST(req: NextRequest) {
 
   if (birthHash) {
     const cached = await getCachedDelineation(birthHash, boudinId, profileHash);
-    if (cached) return NextResponse.json(cached);
+    if (cached) return applyGuardCookie(guard, NextResponse.json(cached));
   }
 
   // ── OpenAI call (cache miss) ──
@@ -245,10 +277,10 @@ export async function POST(req: NextRequest) {
   if (!openaiRes.ok) {
     const err = await openaiRes.json().catch(() => ({}));
     console.error("[connection-delineation] OpenAI error:", openaiRes.status, err);
-    return NextResponse.json(
+    return applyGuardCookie(guard, NextResponse.json(
       { error: "OpenAI API error", status: openaiRes.status },
       { status: 502 },
-    );
+    ));
   }
 
   const result = await openaiRes.json();
@@ -258,15 +290,15 @@ export async function POST(req: NextRequest) {
     const parsed = JSON.parse(text) as Record<string, unknown>;
     // Fire-and-forget cache write (doesn't block response)
     if (birthHash) cacheDelineation(birthHash, boudinId, profileHash, parsed);
-    return NextResponse.json(parsed);
+    return applyGuardCookie(guard, NextResponse.json(parsed));
   } catch {
     console.error(
       "[connection-delineation] Failed to parse OpenAI response:",
       text.slice(0, 200),
     );
-    return NextResponse.json(
+    return applyGuardCookie(guard, NextResponse.json(
       { error: "Invalid LLM response" },
       { status: 500 },
-    );
+    ));
   }
 }

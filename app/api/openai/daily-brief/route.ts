@@ -12,6 +12,16 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import {
+  enforceAiBudget,
+  applyGuardCookie,
+  budgetErrorHeaders,
+  AiBudgetError,
+  AiGuardUnavailableError,
+  type AiGuardResult,
+} from "@/lib/ai-guard";
+
+export const runtime = "nodejs";                  // crypto + Supabase admin client
 
 const TOCTOC_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
 const OPENAI_MODEL = "gpt-4o-mini";
@@ -31,7 +41,8 @@ FORMAT JSON strict :
 RÈGLES STRICTES :
 - Maximum 60 mots total (greeting + summary + action)
 - Signaux RAPIDES seulement : Mars, Vénus, Mercure, Soleil, Lune, nouvelle/pleine lune en maison, ZR L4
-- Si aucun signal fort : message neutre honnête ("Journée de transit calme — bon moment pour...")
+- Si aucun signal fort : dis-le simplement, sans inventer de transit. N affirme jamais
+  qu une journee est calme ou active si le calcul n a pas abouti.
 - NE PAS inventer des signaux qui ne sont pas dans les données reçues
 - Tutoie l'utilisateur (tu/ton/ta/tes)
 - Ton sobre, direct, actionnable
@@ -40,10 +51,14 @@ RÈGLES STRICTES :
 VOCABULAIRE AUTORISÉ : signal, fenêtre, timing, rythme, terrain, domaine, transit, maison
 VOCABULAIRE INTERDIT : énergie, chance, destin, univers, vibration, cosmique, astral, attirer, aligner`;
 
+// On n'invente jamais une lecture. L'ancien contenu affirmait « Journée de
+// transit calme aujourd'hui », ce qui est une affirmation sur le theme de la
+// personne, rendue avec un code 200, alors qu'aucun calcul n'avait abouti.
 const FALLBACK_BRIEF = {
-  greeting: "Journée de transit calme aujourd'hui.",
-  summary: "Pas de signal rapide actif en ce moment. C'est une fenêtre idéale pour consolider ce qui est en cours.",
-  action: "Profite de cette accalmie pour avancer sur un projet à long terme.",
+  greeting: "On ne peut pas calculer ton signal en ce moment.",
+  summary:
+    "Le calcul n'a pas abouti. On préfère te le dire plutôt que d'inventer une lecture.",
+  action: "Réessaie dans quelques minutes.",
   activeDomains: [],
 };
 
@@ -99,12 +114,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
   }
 
+  let guard: AiGuardResult | undefined;
+
   try {
     const body = await request.json();
     const { birthData } = body as { birthData: BirthDataPayload };
 
     if (!birthData?.birthDate || !birthData?.birthTime) {
       return NextResponse.json({ error: "Missing birthData" }, { status: 400 });
+    }
+
+    // ── BUDGET GATE ──
+    // This route spends the OpenAI key and used to be reachable by anyone with
+    // no identification, no quota and no rate limit. The guard runs after input
+    // validation and before the first outbound call, so a refused request costs
+    // neither an OpenAI token nor a hit on Marie-Ange's API.
+    try {
+      guard = await enforceAiBudget(request, "openai");
+    } catch (err) {
+      if (err instanceof AiBudgetError) {
+        return NextResponse.json(err.toJSON(), {
+          status: err.status,
+          headers: budgetErrorHeaders(err),
+        });
+      }
+      if (err instanceof AiGuardUnavailableError) {
+        console.error("[DailyBrief] guard unavailable:", err.reason);
+        return NextResponse.json(err.toJSON(), { status: err.status });
+      }
+      throw err;
     }
 
     // ── Call the dedicated daily-brief endpoint ──
@@ -122,13 +160,13 @@ export async function POST(request: NextRequest) {
 
     if (!briefRes.ok) {
       console.error("[DailyBrief] daily-brief endpoint error:", briefRes.status);
-      return NextResponse.json(FALLBACK_BRIEF);
+      return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEF));
     }
 
     const briefData: DailyBriefResponse = await briefRes.json();
 
     if (!briefData.success || !briefData.signals || briefData.signals.length === 0) {
-      return NextResponse.json(FALLBACK_BRIEF);
+      return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEF));
     }
 
     // ── Build user message from signal llmPayloads ──
@@ -166,22 +204,22 @@ ${signalTexts}${lunationNote}`;
 
     if (!openaiRes.ok) {
       console.error("[DailyBrief] OpenAI error:", openaiRes.status);
-      return NextResponse.json(FALLBACK_BRIEF);
+      return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEF));
     }
 
     const data = await openaiRes.json();
     const content = data.choices?.[0]?.message?.content;
-    if (!content) return NextResponse.json(FALLBACK_BRIEF);
+    if (!content) return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEF));
 
     const parsed = JSON.parse(content);
-    return NextResponse.json({
+    return applyGuardCookie(guard, NextResponse.json({
       greeting: parsed.greeting ?? FALLBACK_BRIEF.greeting,
       summary: parsed.summary ?? FALLBACK_BRIEF.summary,
       action: parsed.action ?? FALLBACK_BRIEF.action,
       activeDomains: parsed.activeDomains ?? [],
-    });
+    }));
   } catch (error) {
     console.error("[DailyBrief] Error:", error);
-    return NextResponse.json(FALLBACK_BRIEF);
+    return applyGuardCookie(guard, NextResponse.json(FALLBACK_BRIEF));
   }
 }

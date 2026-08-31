@@ -2,6 +2,16 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/LegalPage";
 import { termsOfService } from "@/lib/legal-content";
 
+/**
+ * Requis par output: "export" (build natif). Sur le web, on renvoie une liste
+ * vide : les pages restent rendues a la demande, rien ne change.
+ */
+export function generateStaticParams() {
+  if (process.env.NEXT_PUBLIC_NATIVE !== "true") return [];
+  return [{ locale: "fr" }, { locale: "en" }, { locale: "es" }];
+}
+
+
 export async function generateMetadata({
   params,
 }: {

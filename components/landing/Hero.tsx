@@ -8,7 +8,6 @@ import { HeroForm, type HeroFormPayload } from "./HeroForm";
 import { LoadingNarrator } from "./LoadingNarrator";
 import { HeroSignalCard, type RealSignal } from "./HeroSignalCard";
 import { generateSignalFromDate } from "@/lib/signal-generator";
-import { buildMockRealSignal } from "@/lib/landing-mock";
 import type { TranslationMap } from "@/lib/i18n";
 
 interface HeroProps {
@@ -106,9 +105,10 @@ export function Hero({ translations }: HeroProps) {
     abortRef.current = ctrl;
 
     if (!REAL_SIGNAL_ENABLED) {
-      setSignal(buildMockRealSignal(payload.birthDate));
-      setPhase("revealed");
-      trackEvent("hero_signal_revealed", { kind: "mock", reason: "flag-off" });
+      // On n'invente jamais un signal. Si le calcul est coupe, on le dit.
+      setErrorMessage(t(translations, "hero.signal.disabled"));
+      setPhase("idle");
+      trackEvent("hero_signal_failed", { reason: "flag-off" });
       return;
     }
 
@@ -137,17 +137,15 @@ export function Hero({ translations }: HeroProps) {
       }
 
       if (!res.ok) {
-        // Soft fallback to mock so the visitor still sees something
-        const data = await res.json().catch(() => ({}));
-        if (data?.fallback === "mock") {
-          setSignal(buildMockRealSignal(payload.birthDate));
-          setPhase("revealed");
-          trackEvent("hero_signal_revealed", { kind: "mock", reason: "fallback" });
-          return;
-        }
-        setErrorMessage("Connexion instable. Réessaie dans un instant.");
+        // On n'invente jamais un signal. Le serveur peut suggerer "mock" :
+        // on ignore deliberement cette suggestion, la page promet un calcul reel.
+        const data = (await res.json().catch(() => ({}))) as { fallback?: string };
+        setErrorMessage(t(translations, "hero.signal.unavailable"));
         setPhase("idle");
-        trackEvent("hero_signal_failed", { status: res.status });
+        trackEvent("hero_signal_failed", {
+          status: res.status,
+          serverSuggested: data?.fallback ?? null,
+        });
         return;
       }
 
@@ -175,12 +173,12 @@ export function Hero({ translations }: HeroProps) {
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
       console.error("[hero] signal fetch failed", err);
-      // Fallback to mock so the page never feels broken
-      setSignal(buildMockRealSignal(payload.birthDate));
-      setPhase("revealed");
-      trackEvent("hero_signal_revealed", { kind: "mock", reason: "exception" });
+      // On n'invente jamais un signal.
+      setErrorMessage(t(translations, "hero.signal.unavailable"));
+      setPhase("idle");
+      trackEvent("hero_signal_failed", { reason: "exception" });
     }
-  }, []);
+  }, [translations]);
 
   return (
     <section className="relative overflow-hidden py-28 md:py-36 lg:py-44">

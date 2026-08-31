@@ -16,6 +16,7 @@ import { AuthSheet } from "@/components/demo/AuthSheet";
 import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
 import { useBillingState } from "@/lib/premium-gate";
 import { isNative, getPlatform } from "@/lib/platform";
+import { apiFetch } from "@/lib/api-client";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -193,7 +194,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                     }
                   } else {
                     // Web → Stripe Customer Portal
-                    fetch("/api/billing/portal", { method: "POST", credentials: "include" })
+                    apiFetch("/api/billing/portal", { method: "POST", credentials: "include" })
                       .then((r) => r.ok ? r.json() : null)
                       .then((data) => { if (data?.url) window.location.href = data.url; })
                       .catch(() => {});
@@ -218,7 +219,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   onClick={async () => {
                     // Phase 4: will call Purchases.restorePurchases() via RC SDK
                     // For now, just refetch /api/billing/me to sync state
-                    await fetch("/api/billing/me", { credentials: "include" });
+                    await apiFetch("/api/billing/me", { credentials: "include" });
                     window.dispatchEvent(new CustomEvent("unfold:plan-changed", { detail: billing.isPremium ? "premium" : "free" }));
                     onClose();
                   }}

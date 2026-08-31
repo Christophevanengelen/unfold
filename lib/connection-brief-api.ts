@@ -9,6 +9,7 @@
 import type { BirthData } from "@/lib/birth-data";
 import type { RelationshipType, MatchingWindow } from "@/lib/matching-narratives";
 import type { PlanetKey } from "@/lib/domain-config";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── API response types (exported for delineation pipeline) ──
 
@@ -216,7 +217,7 @@ export async function fetchConnectionBrief(
     responseWindow: { mode: "connection_month_plus_next", months },
   };
 
-  const res = await fetch("/api/toctoc", {
+  const res = await apiFetch("/api/toctoc", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

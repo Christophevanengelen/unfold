@@ -10,6 +10,7 @@
 import { storage } from "@/lib/storage";
 import type { ActivePeriod } from "@/lib/connection-brief-api";
 import type { RelationshipType } from "@/lib/matching-narratives";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export async function getConnectionDelineation(
   };
 
   try {
-    const res = await fetch("/api/openai/connection-delineation", {
+    const res = await apiFetch("/api/openai/connection-delineation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

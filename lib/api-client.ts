@@ -11,10 +11,13 @@
 import { isNative } from "@/lib/platform";
 import { supabaseAuth } from "@/lib/supabase-auth";
 
-const VERCEL_BASE = "https://unfold-nine.vercel.app";
+// Domaine du serveur appele par l app quand elle tourne en natif.
+// Configurable au build : NEXT_PUBLIC_API_BASE.
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE ?? "https://favorable.day";
 
 export function getApiBase(): string {
-  return isNative() ? VERCEL_BASE : "";
+  return isNative() ? API_BASE : "";
 }
 
 /** Adds Bearer token from Supabase session when running in Capacitor. */

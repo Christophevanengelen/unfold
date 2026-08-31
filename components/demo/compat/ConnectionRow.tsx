@@ -10,6 +10,7 @@ import { relationshipConfig } from "./relationshipConfig";
 import { RelationshipAvatar } from "./RelationshipAvatar";
 import { TierPulse } from "./TierPulse";
 import { WindowMicroPreview } from "./WindowMicroPreview";
+import { connectionHref } from "@/lib/connection-href";
 
 interface ConnectionRowProps {
   connection: RealConnection;
@@ -42,7 +43,7 @@ export function ConnectionRow({ connection, summary, loading, onLongPress }: Con
       return;
     }
     if (!didLongPressRef.current) {
-      router.push(`/demo/compatibility/${connection.id}`);
+      router.push(connectionHref(connection.id));
     }
   };
 

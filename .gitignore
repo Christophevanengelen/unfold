@@ -47,3 +47,6 @@ next-env.d.ts
 /lib/generated/prisma
 .playwright-mcp/
 qa-*.png
+
+# Rien de ce qui attend la corbeille ne part sur un depot public.
+_to_delete/
