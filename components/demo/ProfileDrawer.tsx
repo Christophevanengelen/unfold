@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye } from "flowbite-react-icons/outline";
+import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye, TrashBin } from "flowbite-react-icons/outline";
 import { BottomSheet } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { PersonalizeFlow } from "@/components/demo/PersonalizeFlow";
@@ -12,6 +12,8 @@ import { isProfileComplete, type UserProfile } from "@/types/user-profile";
 import { useAuth } from "@/lib/auth-context";
 import { signOut } from "@/lib/supabase-auth";
 import { clearBirthData } from "@/lib/birth-data";
+import { getBirthDataSync, birthHash } from "@/lib/birth-data";
+import { apiFetch } from "@/lib/api-client";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
 import { getStreak } from "@/lib/streak";
@@ -40,6 +42,11 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const { birthData } = useMomentum();
   const { user, isAuthenticated } = useAuth();
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
+  // Suppression de compte. Apple l exige depuis le 30 juin 2022 pour toute app
+  // qui cree un compte, et Google demande en plus une adresse web publique.
+  // La route existait depuis des mois ; aucun ecran ne l appelait.
+  const [suppressionOuverte, setSuppressionOuverte] = useState(false);
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
   const [locale, setLocaleState] = useState<Locale>("en");
@@ -296,6 +303,66 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               <ArrowRightToBracket size={16} className="text-accent-purple" />
               {t("profile.sign_in", locale)}
             </button>
+          )}
+
+          {/* Suppression de compte — toujours accessible, comme Apple l exige */}
+          <div className="my-4 h-px bg-brand-3" />
+          {!suppressionOuverte ? (
+            <button
+              type="button"
+              onClick={() => setSuppressionOuverte(true)}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-bg-secondary"
+              style={{ color: "var(--accent-pink)" }}
+            >
+              <TrashBin size={16} />
+              {t("profile.delete_account", locale)}
+            </button>
+          ) : (
+            <div className="rounded-xl px-3 py-3" style={{ background: "var(--surface-light)" }}>
+              <p className="text-xs leading-relaxed text-text-body-subtle">
+                {t("profile.delete_warning", locale)}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  disabled={suppressionEnCours}
+                  onClick={async () => {
+                    setSuppressionEnCours(true);
+                    try {
+                      const naissance = getBirthDataSync();
+                      await apiFetch("/api/profile/forget", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(
+                          naissance ? { birthHash: birthHash(naissance) } : {},
+                        ),
+                      });
+                    } catch {
+                      // Meme si le serveur ne repond pas, on efface ce qui est
+                      // sur l appareil : la personne a demande a partir.
+                    }
+                    try { await signOut(); } catch { /* deja deconnectee */ }
+                    clearBirthData();
+                    try { localStorage.clear(); } catch { /* stockage refuse */ }
+                    onClose();
+                    router.replace("/app/onboarding");
+                  }}
+                  className="flex-1 rounded-full py-2.5 text-xs font-semibold text-white transition-opacity disabled:opacity-50"
+                  style={{ background: "var(--accent-pink)", minHeight: 44 }}
+                >
+                  {t("profile.delete_confirm", locale)}
+                </button>
+                <button
+                  type="button"
+                  disabled={suppressionEnCours}
+                  onClick={() => setSuppressionOuverte(false)}
+                  className="flex-1 rounded-full py-2.5 text-xs font-semibold text-text-heading transition-colors hover:bg-bg-secondary"
+                  style={{ minHeight: 44 }}
+                >
+                  {t("profile.delete_cancel", locale)}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </BottomSheet>
