@@ -7,30 +7,51 @@ description: "Envoyer une build de Favorable sur TestFlight, suivre la revue bet
 
 Tout ce qui a coute des heures le 31 aout 2026, pour ne pas le repayer.
 
-## L envoi ne part plus tout seul
+## L envoi est deliberé, et le plafond d Apple explique pourquoi
 
 Le CI compile a chaque commit, mais **n envoie sur TestFlight que si on le
 demande** :
 
 - `[testflight]` dans le message de commit, ou
-- declenchement manuel depuis l onglet Actions
+- `gh workflow run apps.yml --ref main`
 
-**Pourquoi :** Apple plafonne les envois par jour et par application. Le
-31 aout, vingt-deux builds en une soiree ont ferme le robinet pour vingt-quatre
-heures — et la premiere build a ne pas pouvoir partir a ete la seule qui
-comptait. Un script de test ou un commentaire corrige n a rien a faire chez un
-testeur.
+### Le test avant d envoyer
 
-## Le plafond d envois d Apple
+Une seule question, et elle se repond en une seconde :
 
-Apple limite le nombre d envois par jour et par application. Le 31 aout 2026, ce
-plafond a ete atteint en une soiree — vingt-deux builds — et le robinet s est
-ferme pour vingt-quatre heures. La premiere build a ne pas pouvoir partir a ete
-la seule qui comptait.
+> **Un testeur verrait-il la difference ?**
 
-C est pour cela que l envoi est desormais deliberé. Ne le contourne pas : si tu
-poussais dix corrections d outillage avec `[testflight]`, tu reproduirais
-exactement la panne.
+Si non — un script de verification, un outil de terminal, un commentaire, une
+migration deja appliquee, un fichier de documentation — **on n envoie pas**. On
+laisse s accumuler, et on envoie une fois, quand il y a quelque chose a voir.
+
+### Ce que ça a coute le 31 aout 2026
+
+Vingt-deux builds en une soiree, la plupart pour des corrections que personne
+n aurait remarquees. Le plafond s est ferme, et **les seules builds a ne pas
+pouvoir partir ont ete celles qui contenaient les corrections qui comptaient** :
+les profils enfin enregistres, l heure et le lieu obligatoires, l aide a la
+saisie reparee.
+
+Marie-Ange a donc passe la soiree a tester une version sans aucune de ces
+corrections, et a signaler des bugs deja corriges.
+
+### Quand le plafond est atteint
+
+    Upload limit reached. Please wait 1 day and try again.
+
+**Ce n est pas contournable.** Verifie le 31 aout : une nouvelle tentative deux
+heures apres l epuisement echoue a l identique. Il n y a ni file d attente, ni
+degradation progressive, ni message d avertissement quand on approche — le
+compteur est invisible jusqu au refus.
+
+Ne relance pas « pour voir ». Attends le lendemain, et envoie tout d un coup.
+
+### L habitude a prendre
+
+Travailler vite et livrer vite ne sont pas la meme chose. La premiere consomme
+la seconde. Corrige autant que tu veux, commite autant que tu veux — mais
+**groupe les envois**.
 
 ## Avant de soupconner Apple
 
