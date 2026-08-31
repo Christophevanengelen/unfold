@@ -25,6 +25,7 @@ import {
   AiGuardUnavailableError,
   type AiGuardResult,
 } from "@/lib/ai-guard";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 export const runtime = "nodejs";                  // crypto + Supabase admin client
 
@@ -131,7 +132,7 @@ interface MonthEntry {
 
 // ─── Route handler ───────────────────────────────────────
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 500 });
@@ -365,3 +366,13 @@ function monthDiff(a: string, b: string): number {
   const [by, bm] = b.split("-").map(Number);
   return (by - ay) * 12 + (bm - am);
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const POST = corsHandler(handlePost);

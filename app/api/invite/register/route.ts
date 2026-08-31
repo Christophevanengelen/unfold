@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 /**
  * POST /api/invite/register
@@ -11,7 +12,7 @@ import { supabase } from "@/lib/db";
  * `invite_codes` row and `profiles.invite_code` are up to date so validate
  * lookups work no matter which table is queried.
  */
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
     const deviceId: string | undefined = body?.deviceId;
@@ -64,3 +65,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const POST = corsHandler(handlePost);

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 /**
  * Proxy for Open-Meteo geocoding API.
  * Free, no API key, returns lat/lng + timezone in one call.
  * https://open-meteo.com/en/docs/geocoding-api
  */
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q");
   if (!q || q.trim().length < 2) {
     return NextResponse.json({ results: [] });
@@ -32,3 +33,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [] }, { status: 500 });
   }
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const GET = corsHandler(handleGet);

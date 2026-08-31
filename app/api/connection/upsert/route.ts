@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 /**
  * POST /api/connection/upsert
@@ -14,7 +15,7 @@ import { supabase } from "@/lib/db";
  *
  * Uses (owner_device_id, invite_code) unique constraint for upsert.
  */
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
     if (!body?.deviceId || !body?.name || !body?.relationship || !body?.inviteCode) {
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
  * PATCH /api/connection/upsert — update relationship or name for a given invite_code.
  * Body: { deviceId, inviteCode, relationship?, name? }
  */
-export async function PATCH(req: NextRequest) {
+async function handlePatch(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
     if (!body?.deviceId || !body?.inviteCode) {
@@ -114,7 +115,7 @@ export async function PATCH(req: NextRequest) {
 /**
  * DELETE /api/connection/upsert?deviceId=...&inviteCode=...
  */
-export async function DELETE(req: NextRequest) {
+async function handleDelete(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const deviceId = url.searchParams.get("deviceId");
@@ -141,3 +142,15 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const POST = corsHandler(handlePost);
+export const PATCH = corsHandler(handlePatch);
+export const DELETE = corsHandler(handleDelete);

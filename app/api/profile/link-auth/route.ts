@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/db";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 /**
  * POST /api/profile/link-auth
@@ -11,7 +12,7 @@ import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
  * Body: { deviceId: string }
  * Auth: Bearer JWT from supabaseAuth session (or cookie session on web)
  */
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   const userId = await getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "auth_required" }, { status: 401 });
@@ -50,3 +51,13 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const POST = corsHandler(handlePost);

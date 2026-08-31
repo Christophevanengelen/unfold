@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callCalculatorData } from "@/lib/astrolearn-calculator";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 /**
  * POST /api/lifetime-report
@@ -10,7 +11,7 @@ import { callCalculatorData } from "@/lib/astrolearn-calculator";
  * Body: { name, birthDate, birthTime, timezone, lat, lng }
  * Returns: text/html — the complete standalone chart page.
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, birthDate, birthTime, timezone, lat, lng } = body;
@@ -55,3 +56,13 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const POST = corsHandler(handlePost);

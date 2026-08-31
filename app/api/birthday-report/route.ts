@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callCalculatorData } from "@/lib/astrolearn-calculator";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -530,7 +531,7 @@ function switchView(key, btn) {
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   const p    = request.nextUrl.searchParams;
   const name = p.get("name") ?? "You";
   const date = p.get("date") ?? "";
@@ -591,3 +592,13 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const GET = corsHandler(handleGet);

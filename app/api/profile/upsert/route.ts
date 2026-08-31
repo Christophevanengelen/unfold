@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 /**
  * POST /api/profile/upsert
@@ -12,7 +13,7 @@ import { supabase } from "@/lib/db";
  * so client-side calls to supabase.from(...).upsert() silently no-op. This
  * route is the server-side path for every profile write.
  */
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
     if (!body?.deviceId || !body?.birthData?.birthDate) {
@@ -50,3 +51,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const POST = corsHandler(handlePost);

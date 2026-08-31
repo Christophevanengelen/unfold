@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
+import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 
 const BASE_URL = "https://ai.zebrapad.io/full-suite-spiritual-api";
 
@@ -66,7 +67,7 @@ function cacheBrief(pairHash: string, targetMonth: string, brief: unknown): void
 
 // ─── Route handler ───────────────────────────────────────
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const body = await request.json();
     const { endpoint = "toctoc-year", ...payload } = body;
@@ -118,3 +119,13 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+
+export function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+// Les en-tetes CORS doivent etre sur la reponse REELLE, pas seulement sur le
+// preflight : sans eux le navigateur jette le resultat malgre un preflight
+// accepte. C est ce qui empechait l app d enregistrer les profils.
+export const POST = corsHandler(handlePost);
