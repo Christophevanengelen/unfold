@@ -83,6 +83,36 @@ d'abonnement. Le relever, ou retirer l'offre.
 
 ---
 
+## 3 ter. Dossier App Store — assaini le 31/08
+
+Le champ mots-clés anglais contenait `co-star`, le nom d'une app concurrente.
+Apple l'interdit et c'est un motif de retrait. Les quatre listes ont été
+remplacées, `horoscope` retiré du premier dépôt, et la note au relecteur écrite.
+
+**Reste à trancher avant de coller dans App Store Connect :**
+- le partage exact entre gratuit et Pro (exigé par l'article 3.1.2(c)) ;
+- l'accord de Marie-Ange pour figurer nommément sur la fiche publique ;
+- **ne pas mentionner les notifications** tant qu'aucune n'est arrivée sur un
+  vrai téléphone — l'article 2.3.1 sanctionne l'annonce d'une fonction non
+  livrée par le retrait de l'app.
+
+---
+
+## 3 quater. Logotype — à dessiner
+
+`public/logo/logo-dark.svg` et `logo-light.svg` (563×173) contiennent le mot
+« unfold » **vectorisé**. Aucun remplacement de texte ne peut l'atteindre.
+
+Le favicon n'y pointe plus (il utilise `icon-mark.svg`, carré et lisible à
+16 px), donc plus rien d'illisible dans les onglets. Mais le logotype reste
+affiché dans l'en-tête et le pied de page du site.
+
+C'est le seul livrable de design du dossier. Il faut « favorable » vectorisé
+dans la même fonte — neuf lettres au lieu de six, donc vérifier l'en-tête à
+375 px de large, où il partage la barre avec le sélecteur de langue.
+
+---
+
 ## 4. Signature Android
 
 Aucune configuration de signature : impossible de déposer sur Google Play.
