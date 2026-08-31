@@ -11,6 +11,7 @@ import {
   type MomentumPhase,
 } from "@/lib/mock-timeline";
 import { useMomentum } from "@/lib/momentum-store";
+import { t, detectLocale } from "@/lib/i18n-demo";
 import { CapsuleDetailSheet } from "./CapsuleDetailSheet";
 import { DailyBriefing } from "./DailyBriefing";
 import { usePremiumStatus } from "@/lib/premium-gate";
@@ -1130,7 +1131,8 @@ function getSavedViewMode(): ViewMode {
 }
 
 export function MomentumTimelineV2() {
-  const { timelinePhases, phases, birthDateStr, state, isLoadingLifetime } = useMomentum();
+  const { timelinePhases, phases, birthDateStr, state, isLoadingLifetime, reessayer } = useMomentum();
+  const locale = detectLocale();
   const openPremium = usePremiumTeaser();
   // Verified premium status — fetches /api/billing/me on mount, never trusts localStorage alone
   const userIsPremium = usePremiumStatus();
@@ -1268,6 +1270,36 @@ export function MomentumTimelineV2() {
   useEffect(() => {
     if (hasAnyData) mesurerUneFois("premier_signal_vu");
   }, [hasAnyData]);
+  // Le calcul a echoue et il n y a rien a montrer.
+  //
+  // Ce cas n etait pas traite : on tombait directement sur la timeline, vide,
+  // sans message ni bouton. Le moteur est un service tiers — il tombe, il est
+  // lent — et quiconque ouvrait l app a ce moment-la voyait une toile blanche
+  // sans rien pouvoir faire. Un testeur d Apple en aurait conclu que l app est
+  // incomplete, et c est le motif de rejet le plus courant.
+  //
+  // On dit ce qui se passe, on n accuse personne, et on laisse une porte.
+  if (state === "error" && !hasAnyData) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
+        <p className="text-base font-semibold text-text-heading">
+          {t("common.echec_titre", locale)}
+        </p>
+        <p className="max-w-xs text-sm text-text-body-subtle">
+          {t("common.echec_corps", locale)}
+        </p>
+        <button
+          type="button"
+          onClick={reessayer}
+          className="rounded-xl px-5 font-medium text-white transition-opacity active:opacity-80"
+          style={{ background: "var(--accent-purple)", minHeight: 48 }}
+        >
+          {t("common.echec_reessayer", locale)}
+        </button>
+      </div>
+    );
+  }
+
   if (
     (state === "loading" && !hasAnyData) ||
     (isLoadingLifetime && !hasAnyData)

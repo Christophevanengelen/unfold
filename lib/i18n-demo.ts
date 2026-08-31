@@ -121,6 +121,9 @@ type Strings = {
     profile: string;
   };
   common: {
+    echec_titre: string;
+    echec_corps: string;
+    echec_reessayer: string;
     cancel: string;
     continue: string;
     close: string;
@@ -218,6 +221,9 @@ const FR: Strings = {
     profile: "Profil",
   },
   common: {
+    echec_titre: "Ta timeline n'a pas pu être calculée",
+    echec_corps: "Le calcul n'a pas répondu. Ça arrive, et ce n'est pas perdu — tes données sont intactes.",
+    echec_reessayer: "Réessayer",
     cancel: "Annuler",
     continue: "Continuer",
     close: "Fermer",
@@ -315,6 +321,9 @@ const EN: Strings = {
     profile: "Profile",
   },
   common: {
+    echec_titre: "Your timeline couldn't be calculated",
+    echec_corps: "The calculation didn't respond. It happens, and nothing is lost — your data is intact.",
+    echec_reessayer: "Try again",
     cancel: "Cancel",
     continue: "Continue",
     close: "Close",
@@ -412,6 +421,9 @@ const ES: Strings = {
     profile: "Perfil",
   },
   common: {
+    echec_titre: "No se pudo calcular tu línea de tiempo",
+    echec_corps: "El cálculo no respondió. Pasa, y no se ha perdido nada: tus datos están intactos.",
+    echec_reessayer: "Reintentar",
     cancel: "Cancelar",
     continue: "Continuar",
     close: "Cerrar",
@@ -509,6 +521,9 @@ const DE: Strings = {
     profile: "Profil",
   },
   common: {
+    echec_titre: "Deine Timeline konnte nicht berechnet werden",
+    echec_corps: "Die Berechnung hat nicht geantwortet. Das kommt vor, nichts ist verloren — deine Daten sind intakt.",
+    echec_reessayer: "Erneut versuchen",
     cancel: "Abbrechen",
     continue: "Weiter",
     close: "Schließen",
@@ -606,6 +621,9 @@ const IT: Strings = {
     profile: "Profilo",
   },
   common: {
+    echec_titre: "Non è stato possibile calcolare la tua timeline",
+    echec_corps: "Il calcolo non ha risposto. Capita, e non si è perso nulla: i tuoi dati sono intatti.",
+    echec_reessayer: "Riprova",
     cancel: "Annulla",
     continue: "Continua",
     close: "Chiudi",
@@ -703,6 +721,9 @@ const PT: Strings = {
     profile: "Perfil",
   },
   common: {
+    echec_titre: "Não foi possível calcular a tua linha do tempo",
+    echec_corps: "O cálculo não respondeu. Acontece, e nada se perdeu — os teus dados estão intactos.",
+    echec_reessayer: "Tentar de novo",
     cancel: "Cancelar",
     continue: "Continuar",
     close: "Fechar",
@@ -800,6 +821,9 @@ const NL: Strings = {
     profile: "Profiel",
   },
   common: {
+    echec_titre: "Je tijdlijn kon niet worden berekend",
+    echec_corps: "De berekening reageerde niet. Dat gebeurt, en er is niets verloren — je gegevens zijn intact.",
+    echec_reessayer: "Opnieuw proberen",
     cancel: "Annuleren",
     continue: "Doorgaan",
     close: "Sluiten",
@@ -897,6 +921,9 @@ const JA: Strings = {
     profile: "プロフィール",
   },
   common: {
+    echec_titre: "タイムラインを計算できませんでした",
+    echec_corps: "計算が応答しませんでした。よくあることで、データは失われていません。",
+    echec_reessayer: "再試行",
     cancel: "キャンセル",
     continue: "続ける",
     close: "閉じる",
@@ -994,6 +1021,9 @@ const ZH: Strings = {
     profile: "个人资料",
   },
   common: {
+    echec_titre: "无法计算你的时间线",
+    echec_corps: "计算没有响应。这种情况会发生，你的数据没有丢失。",
+    echec_reessayer: "重试",
     cancel: "取消",
     continue: "继续",
     close: "关闭",
@@ -1091,6 +1121,9 @@ const AR: Strings = {
     profile: "الملف الشخصي",
   },
   common: {
+    echec_titre: "تعذّر حساب مخططك الزمني",
+    echec_corps: "لم تستجب العملية الحسابية. يحدث هذا أحيانًا، ولم تُفقد بياناتك.",
+    echec_reessayer: "إعادة المحاولة",
     cancel: "إلغاء",
     continue: "متابعة",
     close: "إغلاق",

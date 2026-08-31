@@ -90,6 +90,8 @@ interface MomentumContextValue {
   birthData: BirthData | null;
   birthDateStr: string;
   needsOnboarding: boolean;
+  /** Redemander le calcul apres un echec du moteur. */
+  reessayer: () => void;
   loadSignals: (birth?: BirthData) => Promise<void>;
 }
 
@@ -129,6 +131,7 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     data: yearPhases,
     error: yearError,
     isValidating: isLoadingYear,
+    mutate: rechargerAnnee,
   } = useSWR(
     birthData ? ["year-phases", birthData.birthDate] : null,
     () => fetchYear(birthData!),
@@ -181,6 +184,18 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
 
   const errorMsg = yearError?.message ?? null;
 
+  /**
+   * Redemander le calcul apres un echec.
+   *
+   * Le moteur est un service tiers ; il tombe, il est lent, il repond mal. Sans
+   * ce bouton, une panne passagere condamnait l ecran jusqu au redemarrage de
+   * l app — et le testeur d Apple, lui, ne redemarre pas : il conclut que
+   * l app est vide.
+   */
+  const reessayer = useCallback(() => {
+    void rechargerAnnee();
+  }, [rechargerAnnee]);
+
   const value = useMemo<MomentumContextValue>(() => ({
     phases,
     timelinePhases,
@@ -192,7 +207,8 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     birthDateStr,
     needsOnboarding,
     loadSignals,
-  }), [phases, timelinePhases, state, errorMsg, isLive, isLoadingLifetime, birthData, birthDateStr, needsOnboarding, loadSignals]);
+    reessayer,
+  }), [phases, timelinePhases, state, errorMsg, isLive, isLoadingLifetime, birthData, birthDateStr, needsOnboarding, loadSignals, reessayer]);
 
   return (
     <MomentumContext.Provider value={value}>
