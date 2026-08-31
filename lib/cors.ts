@@ -16,6 +16,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED = new Set([
   "capacitor://localhost",
+  // L origine reelle de la vue web iOS. capacitor.config.ts fixe
+  // ios.scheme a "unfold", donc le serveur interne sert sur unfold://localhost
+  // et non sur le capacitor://localhost par defaut. Sans cette entree, TOUTES
+  // les routes protegees par withCors sont injoignables depuis l iPhone.
+  "unfold://localhost",
   "https://localhost",
   "http://localhost:3333",
   "https://unfold-nine.vercel.app",
