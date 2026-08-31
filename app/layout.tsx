@@ -26,7 +26,15 @@ export const metadata: Metadata = {
     description: "See your peak windows before they arrive. 7-day free trial.",
   },
   icons: {
-    icon: "/logo/logo-dark.svg",
+    // La marque seule, pas le logotype complet. logo-dark.svg fait 563x173 et
+    // contient le mot ecrit en toutes lettres : a seize pixels dans un onglet,
+    // il devient une tache illisible. icon-mark.svg est carre et lisible a
+    // cette taille — c est a ça que sert un favicon.
+    //
+    // Effet de bord heureux : le logotype porte encore le mot « unfold »
+    // vectorise, qu aucun remplacement de texte ne peut atteindre. Le favicon
+    // cesse donc de l afficher en attendant qu un nouveau logotype existe.
+    icon: "/logo/icon-mark.svg",
     apple: "/logo/icon-mark.svg",
   },
   manifest: "/site.webmanifest",

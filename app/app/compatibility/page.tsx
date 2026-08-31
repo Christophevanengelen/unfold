@@ -204,7 +204,7 @@ export default function ConnectionsPage() {
                   if (codeError) setCodeError(null);
                 }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !codeSubmitting) handleCodeSubmit(); }}
-                placeholder="UNFOLD-XXXX"
+                placeholder="FAV-XXXX"
                 className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-mono tracking-wider text-white placeholder:text-white/20 focus:border-accent-purple/40 focus:outline-none"
                 maxLength={12}
                 disabled={codeSubmitting}

@@ -119,8 +119,15 @@ export function removeConnection(id: string): void {
 }
 
 /**
- * Generate an invite code for the current user.
- * Format: UNFOLD-XXXX (4 random alphanumeric chars)
+ * Fabrique le code d invitation de la personne.
+ *
+ * Format : FAV-XXXX, quatre caracteres tires sans les confusables (ni 0/O,
+ * ni 1/I) — un code se lit a voix haute et se recopie a la main.
+ *
+ * Les codes UNFOLD-XXXX deja emis restent valides pour toujours : la base et la
+ * route serveur acceptent les deux formes, et aucun code existant n a ete
+ * reecrit. Quelqu un qui a partage le sien par capture d ecran il y a six mois
+ * doit encore pouvoir etre rejoint.
  */
 export function generateInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I confusion
@@ -128,13 +135,13 @@ export function generateInviteCode(): string {
   for (let i = 0; i < 4; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
-  return `UNFOLD-${code}`;
+  return `FAV-${code}`;
 }
 
 const MY_CODE_KEY = "unfold_my_invite_code";
 
 export function getMyInviteCode(): string {
-  if (typeof window === "undefined") return "UNFOLD-XXXX";
+  if (typeof window === "undefined") return "FAV-XXXX";
   let code = localStorage.getItem(MY_CODE_KEY);
   if (!code) {
     code = generateInviteCode();
