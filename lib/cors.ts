@@ -19,6 +19,10 @@ const ALLOWED = new Set([
   "https://localhost",
   "http://localhost:3333",
   "https://unfold-nine.vercel.app",
+  // Le domaine de production manquait. Sans consequence pour un appel
+  // meme-origine depuis la vitrine, mais le repli renvoyait une origine
+  // etrangere au produit.
+  "https://favorable.day",
 ]);
 
 function getAllowedOrigin(req: NextRequest): string {

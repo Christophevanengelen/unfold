@@ -16,6 +16,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/db";
+import { withCors, corsPreflightResponse } from "@/lib/cors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,8 +37,24 @@ const SURFACES = new Set(["app", "web"]);
 /** Une poignee de proprietes courtes, jamais de texte libre volumineux. */
 const PROPS_MAX = 512;
 
-function refus(raison: string, status = 400) {
-  return NextResponse.json({ error: raison }, { status, headers: { "Cache-Control": "no-store" } });
+/**
+ * L app tourne dans une vue web dont l origine est capacitor://localhost et
+ * appelle https://favorable.day : c est un appel d origine croisee. Avec un
+ * Content-Type application/json, le navigateur envoie d abord un preflight
+ * OPTIONS. Sans reponse portant les en-tetes CORS, il bloque le POST qui suit.
+ * Constate le 31/08/2026 : le preflight repondait 204 mais sans
+ * Access-Control-Allow-Origin, donc AUCUN evenement ne remontait de l app.
+ * La vitrine web, elle, appelle en meme origine et n etait pas concernee.
+ */
+export async function OPTIONS(req: NextRequest) {
+  return corsPreflightResponse(req);
+}
+
+function refus(req: NextRequest, raison: string, status = 400) {
+  return withCors(
+    req,
+    NextResponse.json({ error: raison }, { status, headers: { "Cache-Control": "no-store" } }),
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -45,7 +62,7 @@ export async function POST(req: NextRequest) {
   try {
     corps = await req.json();
   } catch {
-    return refus("corps_illisible");
+    return refus(req, "corps_illisible");
   }
 
   const { event, installId, surface, locale, props } = (corps ?? {}) as {
@@ -56,20 +73,20 @@ export async function POST(req: NextRequest) {
     props?: unknown;
   };
 
-  if (typeof event !== "string" || !EVENEMENTS.has(event)) return refus("evenement_inconnu");
+  if (typeof event !== "string" || !EVENEMENTS.has(event)) return refus(req, "evenement_inconnu");
   if (typeof installId !== "string" || installId.length < 8 || installId.length > 64) {
-    return refus("installation_invalide");
+    return refus(req, "installation_invalide");
   }
-  if (typeof surface !== "string" || !SURFACES.has(surface)) return refus("surface_inconnue");
+  if (typeof surface !== "string" || !SURFACES.has(surface)) return refus(req, "surface_inconnue");
   if (locale !== undefined && (typeof locale !== "string" || locale.length > 8)) {
-    return refus("langue_invalide");
+    return refus(req, "langue_invalide");
   }
 
   let proprietes: Record<string, unknown> = {};
   if (props !== undefined) {
-    if (typeof props !== "object" || props === null || Array.isArray(props)) return refus("props_invalides");
+    if (typeof props !== "object" || props === null || Array.isArray(props)) return refus(req, "props_invalides");
     const serialise = JSON.stringify(props);
-    if (serialise.length > PROPS_MAX) return refus("props_trop_longues");
+    if (serialise.length > PROPS_MAX) return refus(req, "props_trop_longues");
     proprietes = props as Record<string, unknown>;
   }
 
@@ -89,5 +106,5 @@ export async function POST(req: NextRequest) {
     // silence volontaire
   }
 
-  return new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+  return withCors(req, new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } }));
 }
