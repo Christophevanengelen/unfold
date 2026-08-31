@@ -56,7 +56,10 @@ export function BottomSheet({ open, onClose, children, maxHeight = "85%" }: Bott
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto scrollbar-none">
+            <div
+              className="flex-1 overflow-y-auto scrollbar-none"
+              style={{ paddingBottom: "var(--safe-bottom, 0px)" }}
+            >
               {children}
             </div>
           </motion.div>

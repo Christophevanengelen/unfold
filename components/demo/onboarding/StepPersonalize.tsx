@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 interface StepPersonalizeProps {
@@ -134,7 +135,7 @@ export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
       </div>
 
       {/* CTA */}
-      <motion.div className="pt-6" variants={fadeInUp}>
+      <motion.div className="pt-6" initial={CTA_DEPART} animate={CTA_ARRIVEE} transition={CTA_IMMEDIAT}>
         <button
           type="button"
           onClick={onNext}

@@ -8,8 +8,13 @@ const config: CapacitorConfig = {
   // viennent des API comme dans n importe quelle app (voir lib/api-client.ts).
   webDir: "out",
   ios: {
-    // Safe-area handling via CSS env() — do NOT set scrollEnabled here.
-    contentInset: "automatic",
+    // Les zones de securite sont gerees en CSS (env(safe-area-inset-*), voir
+    // globals.css et app/app/layout.tsx), donc la vue web couvre tout l ecran.
+    // Avec "automatic", iOS reservait la bande du haut et y laissait voir le fond
+    // natif de la vue web, fige en sombre : on avait un bandeau mauve fonce
+    // au-dessus d une page claire. Constate le 31 aout 2026.
+    // Ne pas toucher a scrollEnabled ici.
+    contentInset: "never",
     backgroundColor: "#1B1535",
     scheme: "unfold",
   },

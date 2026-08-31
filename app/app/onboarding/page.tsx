@@ -190,7 +190,15 @@ export default function OnboardingPage() {
   const isFirstScreen = step === 0;
 
   return (
-    <div className="relative h-full overflow-hidden p-5">
+    <div
+      className="relative h-full overflow-hidden px-5"
+      style={{
+        // 20px comme avant quand l appareil n a ni encoche ni barre d accueil ;
+        // la zone de securite prend le dessus des qu elle est plus grande.
+        paddingTop: "max(20px, var(--safe-top))",
+        paddingBottom: "max(20px, var(--safe-bottom))",
+      }}
+    >
       {/* Progress dots — hidden on preparing screen (step 5) */}
       {step < 5 && (
         <div className="mb-4">

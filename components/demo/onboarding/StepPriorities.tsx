@@ -3,7 +3,10 @@
 /**
  * Step 3.5 — What matters most.
  *
- * Ultra-light priority selection: tap 1-3 pills.
+ * Selection libre : on tape autant de pastilles qu on veut, au moins une.
+ * La limite a trois a saute le 31 aout 2026 : elle grisait six pastilles sur
+ * neuf des le troisieme choix, ce qui les rendait illisibles et donnait
+ * l impression d une erreur plutot que d une regle.
  * This is the ONLY personalization data collected during onboarding.
  * Feeds GPT with priorities to customize text from day 1.
  *
@@ -16,9 +19,9 @@ import { motion } from "motion/react";
 import { S } from "@/lib/layout-constants";
 import type { PriorityDomain } from "@/types/user-profile";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 
 const EASE = [0.4, 0, 0.2, 1] as const;
-const MAX_PICKS = 3;
 
 interface PriorityOption {
   key: PriorityDomain;
@@ -55,7 +58,7 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
     setTouched(true);
     if (selected.includes(key)) {
       onChange(selected.filter(k => k !== key));
-    } else if (selected.length < MAX_PICKS) {
+    } else {
       onChange([...selected, key]);
     }
   };
@@ -79,7 +82,7 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline -mt-0.5 mr-1">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        Back
+        {t("onboarding.back", locale)}
       </motion.button>
 
       {/* Headline — stays at top */}
@@ -90,7 +93,7 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.8, ease: EASE }}
       >
-        What matters most?
+        {t("onboarding.p4_headline", locale)}
       </motion.h1>
 
       <motion.p
@@ -100,7 +103,7 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.8, ease: EASE }}
       >
-        Pick up to {MAX_PICKS}. This shapes your signal.
+        {t("onboarding.p4_sub", locale)}
       </motion.p>
 
       {/* Pills — centered vertically in remaining space */}
@@ -116,13 +119,12 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
       >
         {options.map((opt, i) => {
           const isSelected = selected.includes(opt.key);
-          const isDisabled = !isSelected && selected.length >= MAX_PICKS;
 
           return (
             <motion.button
               key={opt.key}
               type="button"
-              onClick={() => !isDisabled && toggle(opt.key)}
+              onClick={() => toggle(opt.key)}
               className="rounded-full font-medium transition-all"
               style={{
                 fontSize: 13,
@@ -131,13 +133,12 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
                 color: isSelected ? "#fff" : opt.color,
                 background: isSelected
                   ? `color-mix(in srgb, ${opt.color} 80%, transparent)`
-                  : `color-mix(in srgb, ${opt.color} 10%, transparent)`,
-                border: `1.5px solid ${isSelected ? opt.color : `color-mix(in srgb, ${opt.color} 25%, transparent)`}`,
-                opacity: isDisabled ? 0.35 : 1,
+                  : `color-mix(in srgb, ${opt.color} 16%, transparent)`,
+                border: `1.5px solid ${isSelected ? opt.color : `color-mix(in srgb, ${opt.color} 45%, transparent)`}`,
                 boxShadow: isSelected ? `0 0 16px color-mix(in srgb, ${opt.color} 25%, transparent)` : "none",
               }}
               initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: isDisabled ? 0.35 : 1, scale: 1 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.7 + i * 0.05, duration: 0.4, ease: EASE }}
               whileTap={{ scale: 0.95 }}
             >
@@ -154,16 +155,16 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
         animate={{ opacity: touched ? 0.5 : 0 }}
         transition={{ duration: 0.3 }}
       >
-        {selected.length} / {MAX_PICKS} selected
+        {t("onboarding.p4_selected", locale).replace("{n}", String(selected.length))}
       </motion.p>
       </div>
 
       {/* CTA */}
       <motion.div
         className="mt-auto"
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ delay: 1.2, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        initial={CTA_DEPART}
+        animate={CTA_ARRIVEE}
+        transition={CTA_IMMEDIAT}
       >
         <button
           type="button"
@@ -175,7 +176,7 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
           }`}
           style={{ minHeight: S.touch, padding: `${S.sm + S.xs}px 0` }}
         >
-          Continue
+          {t("onboarding.p4_cta", locale)}
         </button>
       </motion.div>
     </motion.div>

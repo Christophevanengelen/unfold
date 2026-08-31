@@ -14,6 +14,7 @@ import { signOut } from "@/lib/supabase-auth";
 import { clearBirthData } from "@/lib/birth-data";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
+import { getStreak } from "@/lib/streak";
 import { useBillingState } from "@/lib/premium-gate";
 import { isNative, getPlatform } from "@/lib/platform";
 import { apiFetch } from "@/lib/api-client";
@@ -52,6 +53,13 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
     setPersonalizeOpen(false);
   };
 
+  // La serie vivait dans la barre du haut, supprimee le 31/08/2026. Sa place
+  // est ici : c est l ecran ou l on regarde son propre etat.
+  const [streak, setStreak] = useState(0);
+  useEffect(() => {
+    if (open) setStreak(getStreak().count);
+  }, [open]);
+
   return (
     <>
       <BottomSheet open={open} onClose={onClose} maxHeight="60%">
@@ -78,6 +86,11 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   >Trial</span>
                 )}
               </p>
+              {streak >= 2 && (
+                <p className="mt-0.5 text-[11px] font-semibold" style={{ color: "var(--accent-purple)" }}>
+                  {t("profile.streak_day", locale).replace("{n}", String(streak))}
+                </p>
+              )}
             </div>
           </div>
 

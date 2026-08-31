@@ -166,6 +166,17 @@ button, a, [role="button"], [role="link"],
    LIGHT MODE
    ============================================== */
 :root {
+  /* Zones de securite de l appareil : l encoche en haut, la barre d accueil en bas.
+     Declarees ici une fois pour toutes, donc disponibles dans TOUT l arbre. Elles
+     existaient deja mais personne ne les lisait, et les boutons du bas tombaient
+     sous la barre d accueil de l iPhone.
+     Sur le web env() vaut 0 ; le cadre telephone de la demo les redefinit pour
+     simuler un vrai appareil (voir app/app/layout.tsx). */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
   /* Neutral scale — purple-tinted mauve (white → near-black) */
   --brand-0: #FDFCFE;
   --brand-1: #F5F1FA;

@@ -4,11 +4,18 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Heart, Clock } from "flowbite-react-icons/outline";
+import { Heart, Clock, User } from "flowbite-react-icons/outline";
 import { getConnections } from "@/lib/connections-store";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
-export function BottomNav() {
+interface BottomNavProps {
+  /** Ouvre le profil. Il vivait dans une barre du haut qui ne servait qu a ca :
+      Apple veut les destinations principales dans la barre d onglets. */
+  onProfile?: () => void;
+  profileActive?: boolean;
+}
+
+export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) {
   const pathname = usePathname();
   const [connectionCount, setConnectionCount] = useState(0);
   const [locale, setLocaleState] = useState<Locale>("en");
@@ -41,8 +48,9 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="flex items-center justify-around pb-2" style={{
-      height: 56,
+    <nav className="flex items-center justify-around" style={{
+      height: "calc(56px + var(--safe-bottom, 0px))",
+      paddingBottom: "calc(8px + var(--safe-bottom, 0px))",
       background: "var(--glass-bg)",
       border: "none",
       borderTop: "1px solid var(--glass-border)",
@@ -56,7 +64,8 @@ export function BottomNav() {
           <Link
             key={item.key}
             href={item.href}
-            className="relative flex flex-col items-center justify-center gap-0.5 px-5 py-2"
+            className="relative flex flex-col items-center justify-center gap-0.5 px-5"
+            style={{ minHeight: 44, minWidth: 44 }}
             aria-label={item.label}
           >
             <div className="relative">
@@ -85,6 +94,30 @@ export function BottomNav() {
           </Link>
         );
       })}
+
+      {onProfile && (
+        <button
+          type="button"
+          onClick={onProfile}
+          className="relative flex flex-col items-center justify-center gap-0.5 px-5"
+          style={{ minHeight: 44, minWidth: 44 }}
+          aria-label={t("nav.profile", locale)}
+        >
+          <User
+            size={20}
+            className={`transition-all duration-200 ${
+              profileActive ? "text-accent-purple" : "text-text-body-subtle"
+            }`}
+          />
+          {profileActive && (
+            <motion.span
+              layoutId="nav-indicator"
+              className="absolute bottom-1 h-[2px] w-4 rounded-full bg-accent-purple"
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+        </button>
+      )}
     </nav>
   );
 }

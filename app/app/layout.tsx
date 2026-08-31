@@ -132,8 +132,11 @@ export default function DemoLayout({
     if (typeof window === "undefined" || !window.Capacitor) return;
     import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
       const isDark = resolvedTheme !== "light";
-      // Dark mode → white text/icons on dark bg; Light mode → dark text/icons on light bg
-      StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark }).catch(() => {});
+      // Attention au nommage du greffon : Style.Dark veut dire « texte clair, pour
+      // un fond sombre », et Style.Light « texte sombre, pour un fond clair ». La
+      // ligne d avant faisait exactement l inverse, donc l heure et la batterie
+      // etaient illisibles dans les deux themes. Verifie au pixel le 31/08/2026.
+      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
       StatusBar.setBackgroundColor({ color: isDark ? "#1B1535" : "#F5F1FA" }).catch(() => {});
     });
   }, [resolvedTheme]);
@@ -171,10 +174,19 @@ export default function DemoLayout({
 
   // Hide bottom nav on onboarding/invite flows
   const HIDDEN_NAV_ROUTES = ["/app/onboarding", "/app/invite"];
-  const hideNav = HIDDEN_NAV_ROUTES.some((r) => pathname.startsWith(r));
-  const isOnboarding = pathname.startsWith("/app/onboarding");
-  const isHome = pathname === "/app";
-  const isTimeline = pathname === "/app/timeline";
+  // En natif, l export statique ajoute une barre finale (trailingSlash: true
+  // dans next.config.ts), donc pathname vaut "/app/timeline/" et jamais
+  // "/app/timeline". Les deux comparaisons strictes ci-dessous tombaient a faux
+  // dans l app : la timeline et l accueil n etaient pas traites en pleine
+  // largeur et heritaient d un retrait de 20 points de chaque cote, plus les
+  // marges haute et basse. C est ce qui donnait l impression que l app tournait
+  // dans un cadre. Mesure le 31/08/2026 : conteneur a 362 points au lieu de 402.
+  const route = pathname.replace(/\/index\.html$/, "").replace(/\/+$/, "") || "/";
+
+  const hideNav = HIDDEN_NAV_ROUTES.some((r) => route.startsWith(r));
+  const isOnboarding = route.startsWith("/app/onboarding");
+  const isHome = route === "/app";
+  const isTimeline = route === "/app/timeline";
   // Full-bleed routes manage their own padding and scroll
   const isFullBleed = isHome || isTimeline || isOnboarding;
 
@@ -196,9 +208,16 @@ export default function DemoLayout({
         <MomentumProvider>
           <div
             className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"}
-            style={{ backgroundColor: "#110D24" }}
+            style={{ backgroundColor: "var(--bg-primary)" }}
           >
-            <div className={obFrameClasses} style={{ transform: "translateZ(0)" }}>
+            <div
+              className={obFrameClasses}
+              style={{
+                transform: "translateZ(0)",
+                "--safe-top": obSafeTop,
+                "--safe-bottom": obSafeBottom,
+              } as React.CSSProperties}
+            >
               <div
                 className="pointer-events-none absolute inset-0"
                 aria-hidden="true"
@@ -208,13 +227,7 @@ export default function DemoLayout({
                 }}
               />
               <PremiumTeaserContext.Provider value={() => setPremiumOpen(true)}>
-                <div
-                  className="relative flex-1 overflow-hidden"
-                  style={{
-                    "--safe-top": obSafeTop,
-                    "--safe-bottom": obSafeBottom,
-                  } as React.CSSProperties}
-                >
+                <div className="relative flex-1 overflow-hidden">
                   {children}
                 </div>
               </PremiumTeaserContext.Provider>
@@ -227,12 +240,12 @@ export default function DemoLayout({
 
   // SSR: render only the dark background — no content, no flash
   if (!mounted) {
-    return <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "#110D24" }} />;
+    return <div className="flex min-h-screen items-center justify-center p-4" style={{ backgroundColor: "var(--bg-primary)" }} />;
   }
 
   // Full-screen standalone report pages — bypass phone chrome entirely
   const REPORT_ROUTES = ["/app/birthday-graph", "/app/spirit-wave", "/app/lifetime-chart"];
-  if (REPORT_ROUTES.some((r) => pathname.startsWith(r))) {
+  if (REPORT_ROUTES.some((r) => route.startsWith(r))) {
     return (
       <AuthProvider>
         <MomentumProvider>
@@ -254,13 +267,15 @@ export default function DemoLayout({
   return (
     <AuthProvider>
     <MomentumProvider>
-    <div className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"} style={{ backgroundColor: "#110D24" }}>
+    <div className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"} style={{ backgroundColor: "var(--bg-primary)" }}>
       {/* Mobile frame (conditional) */}
       <div
         className={frameClasses}
         style={{
           transform: "translateZ(0)",
-        }}
+          "--safe-top": safeTop,
+          "--safe-bottom": safeBottom,
+        } as React.CSSProperties}
       >
         {/* Subtle ambient depth — monochrome purple only */}
         <div
@@ -280,26 +295,45 @@ export default function DemoLayout({
                 ? "relative overflow-hidden"
                 : "overflow-y-auto overflow-x-hidden px-5 scrollbar-none"
             }`}
-            style={{
-              "--safe-top": safeTop,
-              "--safe-bottom": safeBottom,
-              ...(!isFullBleed ? { paddingTop: safeTop, paddingBottom: safeBottom } : {}),
-            } as React.CSSProperties}
+            style={
+              !isFullBleed
+                ? { paddingTop: "var(--safe-top)", paddingBottom: "var(--safe-bottom)" }
+                // Pleine largeur : le contenu passe SOUS l ile et defile
+                // derriere, comme le fait iOS partout. Une marge haute ici
+                // coupait le haut des boudins au lieu de les laisser glisser
+                // dessous. Ce sont les elements poses en haut, s il y en a, qui
+                // doivent lire var(--safe-top), pas le conteneur qui defile.
+                : undefined
+            }
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
           </div>
         </PremiumTeaserContext.Provider>
 
-        {/* Status bar — absolute overlay so content scrolls behind */}
-        {!hideNav && (
-          <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 pt-3 pb-2" style={{
+        {/* Barre du haut : maquette web uniquement. En natif elle doublait la
+            barre du systeme sans rien apporter (un logo, et le profil qui est
+            desormais un onglet). Le compteur de serie et la pastille d essai
+            attendent une nouvelle place : voir le registre du chantier. */}
+        {!hideNav && !isNative && (
+          <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 pb-2" style={{
+            // La barre se posait sous l ile dynamique. Elle commence maintenant
+            // sous la zone de securite, comme le veut Apple.
+            paddingTop: "calc(12px + var(--safe-top, 0px))",
             background: "var(--glass-bg)",
             borderBottom: "1px solid var(--glass-border)",
             backdropFilter: `blur(var(--glass-blur))`,
           }}>
-            <span className="text-xs font-medium" style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
-              9:41
-            </span>
+            {/* L heure factice n a de sens que dans la maquette telephone du web.
+                Dans l app, elle se retrouvait juste sous la vraie horloge du
+                systeme : deux heures affichees, dont une fausse et figee a 9:41.
+                Apple interdit d ailleurs d imiter les elements du systeme. */}
+            {isNative ? (
+              <span className="w-10" aria-hidden="true" />
+            ) : (
+              <span className="text-xs font-medium" style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
+                9:41
+              </span>
+            )}
             <UnfoldLogo size={22} />
             <div className="flex items-center gap-2">
               {/* Trial countdown — web + Android only (anti-steering iOS) */}
@@ -325,7 +359,10 @@ export default function DemoLayout({
         {/* Bottom nav — absolute overlay so content scrolls behind */}
         {!hideNav && (
           <div className="absolute bottom-0 left-0 right-0 z-30">
-            <BottomNav />
+            <BottomNav
+              onProfile={() => setDrawerOpen(true)}
+              profileActive={drawerOpen}
+            />
           </div>
         )}
 

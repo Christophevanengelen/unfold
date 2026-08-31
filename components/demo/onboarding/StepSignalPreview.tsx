@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 interface StepSignalPreviewProps {
@@ -313,10 +314,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
       {/* CTA — always in layout, fades in smoothly */}
       <motion.div
         className="mt-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: phase >= 3 ? 1 : 0 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        style={{ pointerEvents: phase >= 3 ? "auto" : "none" }}
+        initial={CTA_DEPART}
+        animate={CTA_ARRIVEE}
+        transition={CTA_IMMEDIAT}
       >
         <button
           type="button"
