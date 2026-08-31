@@ -36,12 +36,41 @@ du domicile. Le numéro peut être un numéro dédié.
 
 ---
 
-## 3. Cohérence des mentions légales
+## 3. Textes légaux — quatre problèmes trouvés le 31/08
 
-Les prix ont été alignés le 31/08/2026 (5,99 €/mois, 39,99 €/an) dans
-`lib/billing/features.ts` et `APP_STORE_METADATA.md`. Reste à vérifier
-que rien ne traîne ailleurs : conditions générales, politique de
-confidentialité, mentions légales, e-mails transactionnels.
+Aucun prix en dur ne traîne dans `lib/legal-content.ts` : la seule mention est
+générique. Bonne nouvelle. Mais l'inspection en a sorti quatre autres.
+
+**a. Les textes légaux nomment « Unfold ».** Extrait des conditions :
+*« Unfold n'est pas responsable des décisions que vous prenez… »*. Un document
+qui engage juridiquement désigne une entité qui n'est plus le nom du produit.
+C'est plus gênant qu'une incohérence de marque.
+
+**b. Aucune identité du vendeur.** Ni raison sociale, ni adresse, ni numéro
+d'entreprise, ni TVA. En Europe, les mentions légales sont obligatoires pour un
+site commercial. Se règle en même temps que le point 1 (statut DSA), avec les
+mêmes informations.
+
+**c. La clause de facturation est inexacte.** Elle affirme que les abonnements
+sont facturés « via l'App Store ou Google Play » et renvoie aux politiques de
+remboursement de ces plateformes. Or le site vend en direct, par son propre
+prestataire de paiement (voir `handleCheckout` dans `app/app/pricing/page.tsx`).
+Pour un achat fait sur le web, la clause est fausse — et elle escamote le droit
+de rétractation européen de quatorze jours, qui s'applique alors.
+
+**d. Trois langues sur dix.** Les textes n'existent qu'en français, anglais et
+espagnol, alors que l'app tourne en dix langues. Une personne en allemand, en
+japonais ou en arabe accepte des conditions qu'elle ne lit pas dans sa langue.
+
+Les points **b** et **c** touchent au droit de la consommation : ils demandent
+une relecture par quelqu'un dont c'est le métier, pas une rédaction improvisée.
+
+---
+
+## 3 bis. Prix — fait le 31/08
+
+Alignés dans `lib/billing/features.ts` et `APP_STORE_METADATA.md` :
+5,99 €/mois, 39,99 €/an, 7 jours d'essai. Le site affichait jusque-là 9,99 €.
 
 **Décision produit en attente :** le prix « à vie » de 49 € n'a jamais été
 tranché et devient incohérent — 49 € à vie contre 39,99 €/an, c'est quinze mois
