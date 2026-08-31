@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://unfold.app";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://favorable.day";
 
 export default function robots(): MetadataRoute.Robots {
   return {

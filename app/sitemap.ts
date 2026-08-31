@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { localeCodes } from "@/i18n/config";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://unfold.app";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://favorable.day";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // Landing pages for each locale

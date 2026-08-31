@@ -201,7 +201,7 @@ export function buildInviteUrl(name: string, birthData: BirthData, code: string)
     tz: birthData.timezone,
     place: birthData.placeOfBirth || "",
   });
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://unfold.app";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://favorable.day";
   return `${origin}/demo/invite/join?${params.toString()}`;
 }
 

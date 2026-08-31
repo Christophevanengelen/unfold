@@ -57,7 +57,10 @@ interface CapsuleData {
 
 const MONTH_NAMES = ["Jan", "Fev", "Mar", "Avr", "Mai", "Jun", "Jul", "Aou", "Sep", "Oct", "Nov", "Dec"];
 
-const SHARE_URL = "https://unfold.app/?utm_source=share&utm_medium=signal";
+// Chaque carte partagee envoyait vers unfold.app, qui appartient a une autre
+// application. Les gens faisaient donc de la publicite pour un tiers en
+// partageant leur propre signal.
+const SHARE_URL = "https://favorable.day/?utm_source=share&utm_medium=signal";
 
 // ─── Tier glow colors ────────────────────────────────────
 function getTierGlow(tier: CapsuleData["tier"]): string {
@@ -177,7 +180,7 @@ export function ShareSignalCard({
                 className="text-[11px] font-medium tracking-wide"
                 style={{ color: "rgba(195, 185, 215, 0.7)" }}
               >
-                unfold.app
+                favorable.day
               </span>
             </div>
 
@@ -281,7 +284,7 @@ export function ShareSignalCard({
                 className="text-[11px] font-semibold"
                 style={{ color: "#9B85C4" }}
               >
-                unfold.app
+                favorable.day
               </span>
             </div>
           </div>

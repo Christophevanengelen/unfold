@@ -34,11 +34,16 @@ const LOCALE_TO_COUNTRY: Record<string, string> = {
   "ar":     "ae", "ar-ae": "ae", "ar-sa": "sa", "ar-eg": "eg",
 };
 
-// PLACEHOLDER IDs — replace these with real App Store ID + Play package once
-// Christophe completes Apple Dev enrollment + creates listings.
-// Use ?token=&mt=8 to enable Smart App Banner attribution if needed.
-const APPLE_APP_ID = "id6740000000";              // ← replace with real ID
-const APPLE_APP_SLUG = "unfold-astrology";        // ← replace with App Store slug
+// L identifiant reel de l app dans App Store Connect. L ancien, id6740000000,
+// etait un bouchon jamais remplace : les deux badges du site renvoyaient donc
+// vers une page inexistante, et le badge Google Play vers une app non publiee.
+//
+// APP_PUBLIEE garde les liens. Tant qu elle vaut false, les badges ne sont pas
+// affiches du tout : promettre un telechargement impossible coute plus cher
+// que de ne rien promettre. La passer a true le jour de la publication.
+export const APP_PUBLIEE = false;
+const APPLE_APP_ID = "id6807001088";
+const APPLE_APP_SLUG = "favorable";
 const PLAY_PACKAGE_NAME = "day.favorable.app";  // identifiant fige le 27 aout 2026, definitif
 
 function detectCountry(): string {

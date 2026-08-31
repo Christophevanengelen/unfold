@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://unfold.app";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://favorable.day";
 
 function SoftwareApplicationSchema() {
   const schema = {

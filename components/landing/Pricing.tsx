@@ -1,6 +1,7 @@
 import { Check } from "flowbite-react-icons/outline";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { PricingToggle } from "./PricingToggle";
+import { PLANS } from "@/lib/billing/features";
 
 interface PricingProps {
   t: (key: string, fallback?: string) => string;
@@ -54,7 +55,9 @@ export function Pricing({ t }: PricingProps) {
           }
           premiumMonthly={
             <p className="font-display text-4xl font-bold text-white">
-              $4
+              {/* Lu depuis PLANS : le site affichait $4/mois et $29/an, des
+                  prix qui n ont jamais existe. Une seule source de verite. */}
+              {PLANS.monthly.priceEUR.toFixed(2).replace(".", ",")} €
               <span className="text-base font-normal text-brand-10">
                 {t("pricing.premium.period", "/month")}
               </span>
@@ -63,7 +66,7 @@ export function Pricing({ t }: PricingProps) {
           premiumYearly={
             <div>
               <p className="font-display text-4xl font-bold text-white">
-                $29
+                {PLANS.annual.priceEUR.toFixed(2).replace(".", ",")} €
                 <span className="text-base font-normal text-brand-10">
                   {t("pricing.premium.period.year", "/year")}
                 </span>

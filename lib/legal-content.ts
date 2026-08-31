@@ -265,7 +265,7 @@ export const termsOfService: Record<string, LegalDocument> = {
         heading: "3. Free and Premium Plans",
         paragraphs: [
           "The Free plan includes: your current daily momentum signal, Love/Health/Work breakdown, past signal review, and basic compatibility.",
-          "The Premium plan ($4/month or $29/year) includes: full momentum timeline, future signal preview, peak window alerts, and advanced compatibility features.",
+          "The Premium plan (\u20ac5.99/month or \u20ac39.99/year) includes: full momentum timeline, future signal preview, peak window alerts, and advanced compatibility features.",
           "Premium subscriptions are billed through Apple App Store or Google Play Store. Subscription management, cancellation, and refund policies are governed by the respective platform's terms.",
         ],
       },
