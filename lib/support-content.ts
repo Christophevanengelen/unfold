@@ -22,7 +22,7 @@
  * creer la boite d abord, verifier qu elle reçoit, et seulement ensuite
  * publier.
  */
-export const CONTACT = "hello@favorable.day";
+export const CONTACT = "cve@hi-def.be";
 
 export type SupportDoc = {
   title: string;
