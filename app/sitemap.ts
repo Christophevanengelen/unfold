@@ -26,6 +26,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.3,
     },
+    {
+      // Page d assistance : champ obligatoire d App Store Connect, et la
+      // seule page qui explique comment supprimer son compte et resilier.
+      // Priorite plus haute que les textes legaux : les gens la cherchent.
+      url: `${BASE_URL}/${locale}/support`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
   ]);
 
   return [...landingPages, ...legalPages];
