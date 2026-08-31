@@ -174,10 +174,19 @@ export default function DemoLayout({
 
   // Hide bottom nav on onboarding/invite flows
   const HIDDEN_NAV_ROUTES = ["/app/onboarding", "/app/invite"];
-  const hideNav = HIDDEN_NAV_ROUTES.some((r) => pathname.startsWith(r));
-  const isOnboarding = pathname.startsWith("/app/onboarding");
-  const isHome = pathname === "/app";
-  const isTimeline = pathname === "/app/timeline";
+  // En natif, l export statique ajoute une barre finale (trailingSlash: true
+  // dans next.config.ts), donc pathname vaut "/app/timeline/" et jamais
+  // "/app/timeline". Les deux comparaisons strictes ci-dessous tombaient a faux
+  // dans l app : la timeline et l accueil n etaient pas traites en pleine
+  // largeur et heritaient d un retrait de 20 points de chaque cote, plus les
+  // marges haute et basse. C est ce qui donnait l impression que l app tournait
+  // dans un cadre. Mesure le 31/08/2026 : conteneur a 362 points au lieu de 402.
+  const route = pathname.replace(/\/index\.html$/, "").replace(/\/+$/, "") || "/";
+
+  const hideNav = HIDDEN_NAV_ROUTES.some((r) => route.startsWith(r));
+  const isOnboarding = route.startsWith("/app/onboarding");
+  const isHome = route === "/app";
+  const isTimeline = route === "/app/timeline";
   // Full-bleed routes manage their own padding and scroll
   const isFullBleed = isHome || isTimeline || isOnboarding;
 
@@ -236,7 +245,7 @@ export default function DemoLayout({
 
   // Full-screen standalone report pages — bypass phone chrome entirely
   const REPORT_ROUTES = ["/app/birthday-graph", "/app/spirit-wave", "/app/lifetime-chart"];
-  if (REPORT_ROUTES.some((r) => pathname.startsWith(r))) {
+  if (REPORT_ROUTES.some((r) => route.startsWith(r))) {
     return (
       <AuthProvider>
         <MomentumProvider>
