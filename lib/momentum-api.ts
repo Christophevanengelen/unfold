@@ -272,23 +272,53 @@ async function callProxy(
   return res.json();
 }
 
+/**
+ * Combien de temps on garde une reponse du moteur.
+ *
+ * L appel n envoie AUCUNE date : uniquement les donnees de naissance. La
+ * reponse ne depend donc que du theme, et le passe / en cours / a venir est
+ * recalcule localement a chaque affichage (voir momentum-adapter.ts). Le TTL de
+ * 24 heures qui s appliquait ne protegeait donc de rien : il redemandait chaque
+ * jour un calcul identique.
+ *
+ * Ce qui bouge quand meme : le moteur centre sa fenetre sur SA date du jour.
+ * Une reponse « annee » couvre trois ans autour d aujourd hui, donc sa bordure
+ * se decale avec le temps. Un mois de decalage sur trois ans de couverture ne
+ * se voit pas ; un an, si. D ou deux durees differentes.
+ *
+ * La vie entiere, elle, ne bouge pas : c est le theme d une personne, du debut
+ * a la fin.
+ *
+ * L enjeu n est pas seulement d epargner le serveur de Marie-Ange. Chaque appel
+ * evite est une occasion de moins de tomber sur une panne : le moteur est un
+ * service tiers, et l ecran d echec ne devrait se voir qu au tout premier
+ * lancement.
+ */
+const TTL_ANNEE = 30 * 24 * 60 * 60 * 1000;
+const TTL_VIE = 365 * 24 * 60 * 60 * 1000;
+
 /** Fast 3-year window (2-10s). Use for initial load. */
 export async function fetchYearData(
   birth: BirthData
 ): Promise<TocTocYearResponse> {
   const cacheKey = `unfold_year_${birthHash(birth)}`;
-  const cached = await storage.getCache<TocTocYearResponse>(cacheKey);
-  if (cached) {
-    console.log("[Momentum] Year data from cache");
-    return cached;
-  }
+  const frais = await storage.get<TocTocYearResponse>(cacheKey, TTL_ANNEE);
+  if (frais) return frais;
 
-  const data = (await callProxy("toctoc-year", birth)) as TocTocYearResponse;
-  if (data?.success || data?.data?.success) {
-    await storage.setCache(cacheKey, data);
-    console.log("[Momentum] Year data fetched & cached");
+  try {
+    const data = (await callProxy("toctoc-year", birth)) as TocTocYearResponse;
+    if (data?.success || data?.data?.success) {
+      await storage.setCache(cacheKey, data);
+    }
+    return data;
+  } catch (erreur) {
+    // Le moteur n a pas repondu. Une reponse d il y a six mois vaut infiniment
+    // mieux qu un ecran vide : les periodes n ont pas change, seule la bordure
+    // de la fenetre a bouge. On ne montre l echec que si on n a jamais rien eu.
+    const perime = await storage.get<TocTocYearResponse>(cacheKey);
+    if (perime) return perime;
+    throw erreur;
   }
-  return data;
 }
 
 /** Full lifetime boudins (~475 KB via toctoc-app-short). Use for background enrichment. */
@@ -296,16 +326,18 @@ export async function fetchAppData(
   birth: BirthData
 ): Promise<TocTocAppShortResponse> {
   const cacheKey = `unfold_app_short_v2_${birthHash(birth)}`;
-  const cached = await storage.getCache<TocTocAppShortResponse>(cacheKey);
-  if (cached) {
-    console.log("[Momentum] App data from cache (short boudins)");
-    return cached;
-  }
+  const frais = await storage.get<TocTocAppShortResponse>(cacheKey, TTL_VIE);
+  if (frais) return frais;
 
-  const data = (await callProxy("toctoc-app-short", birth)) as TocTocAppShortResponse;
-  if (data?.success || data?.data?.success) {
-    await storage.setCache(cacheKey, data);
-    console.log("[Momentum] App short data fetched & cached");
+  try {
+    const data = (await callProxy("toctoc-app-short", birth)) as TocTocAppShortResponse;
+    if (data?.success || data?.data?.success) {
+      await storage.setCache(cacheKey, data);
+    }
+    return data;
+  } catch (erreur) {
+    const perime = await storage.get<TocTocAppShortResponse>(cacheKey);
+    if (perime) return perime;
+    throw erreur;
   }
-  return data;
 }
