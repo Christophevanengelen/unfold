@@ -36,12 +36,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const apparence = theme === "light" || theme === "dark" ? theme : "system";
   const apparenceSuivante =
     apparence === "system" ? "light" : apparence === "light" ? "dark" : "system";
-  const libelleApparence =
-    apparence === "system"
-      ? t("profile.systeme", locale)
-      : apparence === "dark"
-        ? t("profile.dark", locale)
-        : t("profile.light", locale);
+
   const { birthData } = useMomentum();
   const { user, isAuthenticated } = useAuth();
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
@@ -193,7 +188,11 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               {t("profile.appearance", locale)}
             </span>
             <span className="text-xs text-text-body-subtle">
-              {libelleApparence}
+              {apparence === "system"
+                ? t("profile.systeme", locale)
+                : apparence === "dark"
+                  ? t("profile.dark", locale)
+                  : t("profile.light", locale)}
             </span>
           </button>
 
