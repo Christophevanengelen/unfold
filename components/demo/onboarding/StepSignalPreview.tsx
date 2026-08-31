@@ -157,9 +157,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
         >
           <motion.div
             className="flex-1 h-px"
-            style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.25))" }}
+            style={{ background: "linear-gradient(to right, transparent, color-mix(in srgb, var(--accent-purple) 30%, transparent))" }}
             animate={phase >= 1 ? {
-              background: "linear-gradient(to right, transparent, rgba(255,255,255,0.6))",
+              background: "linear-gradient(to right, transparent, color-mix(in srgb, var(--accent-purple) 65%, transparent))",
             } : {}}
             transition={{ duration: 0.6 }}
           />
@@ -173,9 +173,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
           </motion.span>
           <motion.div
             className="flex-1 h-px"
-            style={{ background: "linear-gradient(to left, transparent, rgba(255,255,255,0.25))" }}
+            style={{ background: "linear-gradient(to left, transparent, color-mix(in srgb, var(--accent-purple) 30%, transparent))" }}
             animate={phase >= 1 ? {
-              background: "linear-gradient(to left, transparent, rgba(255,255,255,0.6))",
+              background: "linear-gradient(to left, transparent, color-mix(in srgb, var(--accent-purple) 65%, transparent))",
             } : {}}
             transition={{ duration: 0.6 }}
           />

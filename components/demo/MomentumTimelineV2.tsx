@@ -689,9 +689,9 @@ function OverviewView({
                 style={{ paddingBottom: oCapPad - 2, gap: oDotGap }}
               >
                 {(capsule.topicColors?.length ? capsule.topicColors : capsule.planets.map(p => planetConfig[p].color)).map((color, pi) => {
-                  const dc = capsule.isFuture ? "rgba(255, 255, 255, 0.6)" : color;
+                  const dc = capsule.isFuture ? "color-mix(in srgb, var(--accent-purple) 55%, transparent)" : color;
                   const dg = capsule.isFuture
-                    ? "0 0 4px rgba(255,255,255,0.15)"
+                    ? "0 0 4px color-mix(in srgb, var(--accent-purple) 25%, transparent)"
                     : capsule.isCurrent
                       ? `0 0 8px ${color}`
                       : `0 0 4px color-mix(in srgb, ${color} 40%, transparent)`;
@@ -1084,7 +1084,7 @@ function ListView({
                           key={`dot-${pi}`}
                           className="h-[5px] w-[5px] rounded-full"
                           style={{
-                            background: capsule.isFuture ? "rgba(255,255,255,0.4)" : color,
+                            background: capsule.isFuture ? "color-mix(in srgb, var(--accent-purple) 45%, transparent)" : color,
                             boxShadow: capsule.isFuture ? "none" : `0 0 3px ${color}`,
                           }}
                         />

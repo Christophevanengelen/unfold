@@ -128,10 +128,10 @@ export function FirstUseGuide({ onDone }: { onDone: () => void }) {
             <div
               className="w-full rounded-2xl text-center"
               style={{
-                background: "rgba(27, 21, 53, 0.85)",
+                background: "var(--glass-bg)",
                 backdropFilter: "blur(24px)",
                 WebkitBackdropFilter: "blur(24px)",
-                border: "1px solid rgba(149, 133, 204, 0.2)",
+                border: "1px solid var(--glass-border)",
                 padding: "24px 20px 20px",
               }}
             >
@@ -140,7 +140,7 @@ export function FirstUseGuide({ onDone }: { onDone: () => void }) {
                   fontSize: 18,
                   fontWeight: 600,
                   lineHeight: 1.3,
-                  color: "rgba(255, 255, 255, 0.95)",
+                  color: "var(--text-heading)",
                   marginBottom: 6,
                 }}
               >
