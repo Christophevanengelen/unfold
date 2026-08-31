@@ -74,7 +74,8 @@ RETURNS TABLE (
         AND e.created_at <  p.debut + INTERVAL '8 days'
     ))::BIGINT
   FROM premieres p;
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
+$$ LANGUAGE sql STABLE SECURITY DEFINER
+   SET search_path = public, pg_temp;
 
 REVOKE ALL ON FUNCTION retention_app(TIMESTAMPTZ) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION retention_app(TIMESTAMPTZ) TO service_role;
@@ -89,7 +90,8 @@ BEGIN
   GET DIAGNOSTICS removed = ROW_COUNT;
   RETURN removed;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+   SET search_path = public, pg_temp;
 
 REVOKE ALL ON FUNCTION purge_app_events(INTERVAL) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION purge_app_events(INTERVAL) TO service_role;

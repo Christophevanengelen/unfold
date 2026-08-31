@@ -46,7 +46,8 @@ BEGIN
   RETURNING count INTO result_count;
   RETURN result_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+   SET search_path = public, pg_temp;
 
 REVOKE ALL ON FUNCTION increment_ai_usage(TEXT, TEXT, TEXT, TIMESTAMPTZ) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION increment_ai_usage(TEXT, TEXT, TEXT, TIMESTAMPTZ) TO service_role;
@@ -61,7 +62,8 @@ BEGIN
   GET DIAGNOSTICS removed = ROW_COUNT;
   RETURN removed;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+   SET search_path = public, pg_temp;
 
 REVOKE ALL ON FUNCTION purge_ai_usage(INTERVAL) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION purge_ai_usage(INTERVAL) TO service_role;

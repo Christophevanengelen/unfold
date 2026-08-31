@@ -73,7 +73,8 @@ BEGIN
     invalide_le = NULL,
     motif       = NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+   SET search_path = public, pg_temp;
 
 REVOKE ALL ON FUNCTION enregistrer_push_jeton(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION enregistrer_push_jeton(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO service_role;
@@ -90,7 +91,8 @@ BEGIN
      SET actif = FALSE, invalide_le = now(), motif = p_motif
    WHERE jeton = p_jeton;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+   SET search_path = public, pg_temp;
 
 REVOKE ALL ON FUNCTION invalider_push_jeton(TEXT, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION invalider_push_jeton(TEXT, TEXT) TO service_role;
@@ -111,7 +113,8 @@ BEGIN
   GET DIAGNOSTICS supprimes = ROW_COUNT;
   RETURN supprimes;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+   SET search_path = public, pg_temp;
 
 REVOKE ALL ON FUNCTION purge_push_jetons() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION purge_push_jetons() TO service_role;
@@ -130,7 +133,8 @@ BEGIN
   GET DIAGNOSTICS supprimes = ROW_COUNT;
   RETURN supprimes;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+   SET search_path = public, pg_temp;
 
 REVOKE ALL ON FUNCTION oublier_push_jetons(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION oublier_push_jetons(TEXT) TO service_role;
