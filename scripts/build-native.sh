@@ -73,22 +73,28 @@ echo "3/3  page d entree et verification"
 
 # Capacitor ouvre out/index.html. La vitrine web n etant pas embarquee,
 # on pose une page d entree minimale qui bascule immediatement sur l app.
-if [ ! -f out/index.html ]; then
-  cat > out/index.html <<'HTML'
+# Toujours ecraser : app/page.tsx est reste la page d accueil par defaut de
+# create-next-app. Sur le web personne ne la voit, le middleware redirige vers
+# /[locale]. Dans l app native il n y a pas de middleware, donc cette page
+# devenait l ecran d ouverture. Constate sur l iPhone le 31 aout 2026.
+cat > out/index.html <<'HTML'
 <!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Unfold</title>
+<title>Favorable</title>
 <style>html,body{margin:0;height:100%;background:#1B1535}</style>
-<script>location.replace("./app/");</script>
+<script>
+// Chemin ABSOLU : le serveur interne de Capacitor renvoie cette page pour toute
+// adresse inconnue, donc un chemin relatif se rempile a chaque tour.
+if (location.pathname !== "/app/index.html") { location.replace("/app/index.html"); }
+</script>
 </head>
 <body></body>
 </html>
 HTML
-  echo "  page d entree creee : out/index.html vers ./app/"
-fi
+echo "  page d entree posee : out/index.html vers ./app/"
 NB=$(find out -type f | wc -l)
 echo "  out/ contient $NB fichiers"
 find out -maxdepth 2 -name "index.html" | head -5 | sed 's/^/  /'
