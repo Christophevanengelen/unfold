@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { mesurer, mesurerUneFois } from "@/lib/mesure";
 import { brancherEcoutes } from "@/lib/push";
 import { cheminDepuisNotification } from "@/lib/push-routes";
+import { brancherLiensProfonds } from "@/lib/deep-links";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
@@ -142,6 +143,18 @@ export default function DemoLayout({
       const chemin = cheminDepuisNotification(donnees);
       if (chemin) router.push(chemin);
     }).then((f) => {
+      debrancher = f;
+    });
+    return () => debrancher?.();
+  }, [router]);
+
+  // Liens magiques. Le schema unfold:// etait declare mais personne ne
+  // l ecoutait : le jeton partait a la poubelle et la personne se retrouvait
+  // devant l accueil, pas connectee, sans message. On rafraichit l ecran a la
+  // connexion pour qu elle voie son compte apparaitre.
+  useEffect(() => {
+    let debrancher: (() => void) | undefined;
+    void brancherLiensProfonds(() => router.refresh()).then((f) => {
       debrancher = f;
     });
     return () => debrancher?.();

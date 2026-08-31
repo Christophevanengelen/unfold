@@ -22,6 +22,10 @@ jobs:
         # planifier() est pure : deux annees de selection sont eprouvees en une
         # seconde, sans reseau ni base.
         run: node scripts/verifier-planification.mjs
+      - name: Verifier les liens magiques
+        # La panne d origine etait muette : le jeton partait a la poubelle sans
+        # qu aucune erreur ne s affiche.
+        run: node scripts/verifier-liens-profonds.mjs
       - name: Construire le site complet (verifie aussi les types des routes API)
         run: npx next build
         env:

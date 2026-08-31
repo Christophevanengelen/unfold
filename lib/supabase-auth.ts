@@ -6,6 +6,8 @@
 
 import { createClient, type User, type AuthChangeEvent, type Session } from "@supabase/supabase-js";
 import { detectLocale } from "@/lib/i18n-demo";
+import { isNative } from "@/lib/platform";
+import { RETOUR_NATIF } from "@/lib/deep-links";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -27,9 +29,17 @@ export const supabaseAuth = url && anonKey && anonKey !== "PASTE_YOUR_ANON_KEY_H
 export async function signInWithMagicLink(email: string, redirectTo?: string) {
   if (!supabaseAuth) throw new Error("Supabase not configured");
   const locale = detectLocale();
-  const destination = redirectTo ?? (typeof window !== "undefined"
-    ? `${window.location.origin}/auth/callback?locale=${locale}`
-    : `https://unfold-nine.vercel.app/auth/callback?locale=${locale}`);
+  // Dans l app, on nomme l adresse de retour explicitement au lieu de la
+  // deduire de window.location.origin. Les deux valent `unfold://localhost`,
+  // mais l ecrire noir sur blanc rend visible ce qui doit etre autorise cote
+  // Supabase — c est la moitie de la panne qu on vient de reparer.
+  const destination =
+    redirectTo ??
+    (isNative()
+      ? `${RETOUR_NATIF}?locale=${locale}`
+      : typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback?locale=${locale}`
+        : `https://favorable.day/auth/callback?locale=${locale}`);
   const { error } = await supabaseAuth.auth.signInWithOtp({
     email,
     options: {
