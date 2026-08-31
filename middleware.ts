@@ -24,7 +24,18 @@ export function middleware(request: NextRequest) {
   // Admin route protection
   if (pathname.startsWith("/admin")) {
     const adminPassword = process.env.ADMIN_PASSWORD;
-    if (adminPassword) {
+
+    // Sans mot de passe configure, cette zone se FERME. Elle s ouvrait :
+    // le test « if (adminPassword) » laissait passer tout le monde des que la
+    // variable manquait, et elle manquait en production. Verifie le 31/08/2026,
+    // /admin/kpi repondait 200 a un inconnu, chiffres compris. Un garde-fou qui
+    // s annule quand sa configuration manque n en est pas un.
+    // 404 plutot que 401 : inutile d annoncer que la zone existe.
+    if (!adminPassword) {
+      return new NextResponse("Not found", { status: 404, headers: securityHeaders });
+    }
+
+    {
       const authHeader = request.headers.get("authorization");
       if (!authHeader || !isValidBasicAuth(authHeader, adminPassword)) {
         return new NextResponse("Authentication required", {
