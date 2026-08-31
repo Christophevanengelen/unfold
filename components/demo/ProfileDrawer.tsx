@@ -145,15 +145,17 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           {billing.isPremium && (
             <button
               type="button"
-              onClick={() => { onClose(); router.push("/app/boudin"); }}
+              onClick={() => { onClose(); router.push("/app/lifetime-chart"); }}
               className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
             >
               <span className="flex items-center gap-2.5">
                 <Eye size={16} className="text-accent-purple" />
                 Full timeline chart
               </span>
+              {/* « Sausage » etait le nom interne du graphique. Un mot d atelier
+                  n a rien a faire sous les yeux de la personne. */}
               <span className="text-[10px] font-semibold" style={{ color: "var(--accent-purple)", opacity: 0.7 }}>
-                Sausage
+                Premium
               </span>
             </button>
           )}

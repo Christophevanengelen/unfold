@@ -350,7 +350,7 @@ export default function DemoPricingPage() {
     if (valid.includes(couponCode.trim().toUpperCase())) {
       try { localStorage.setItem(COUPON_KEY, "true"); } catch {}
       setCouponSuccess(true);
-      setTimeout(() => router.replace("/app/boudin"), 1000);
+      setTimeout(() => router.replace("/app/timeline"), 1000);
     } else {
       setCouponError("Invalid code — check spelling and try again.");
     }

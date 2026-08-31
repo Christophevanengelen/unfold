@@ -36,6 +36,16 @@ CHEMINS=(
   # CMS interne. Meme raison : pas le produit, et pas sa place dans un binaire.
   "app/admin"
   "app/unlock"
+  # Le graphique de vie fige. boudin-sausage.html s intitule en interne
+  # « TocToc MA LEVAN 1980-2080 » : c est le theme natal de Marie-Ange, calcule
+  # une fois puis fige. Sur la vitrine web, c est une demonstration assumee.
+  # Dans l app, l ecran s appelait « Your 100-year lifetime timeline » et
+  # affichait donc la vie de quelqu un d autre a la place de celle de la
+  # personne. A lui seul il pesait 7,7 Mo, soit avec son voisin les deux tiers
+  # du binaire. L app calcule la vraie frise dans /app/lifetime-chart.
+  "app/app/boudin"
+  "public/boudin-sausage.html"
+  "public/boudin-timeline.html"
 )
 
 ecarter() {
