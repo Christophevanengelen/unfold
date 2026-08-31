@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye, TrashBin } from "flowbite-react-icons/outline";
+import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye, TrashBin, Bell } from "flowbite-react-icons/outline";
 import { BottomSheet } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { PersonalizeFlow } from "@/components/demo/PersonalizeFlow";
@@ -15,6 +15,8 @@ import { clearBirthData, getBirthDataSync, birthHash } from "@/lib/birth-data";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
 import { getStreak } from "@/lib/streak";
+import { etatPermission, demanderPuisEnregistrer, type EtatPermission } from "@/lib/push";
+import { getDeviceId } from "@/lib/device-id";
 import { useBillingState } from "@/lib/premium-gate";
 import { isNative, getPlatform } from "@/lib/platform";
 import { apiFetch } from "@/lib/api-client";
@@ -45,6 +47,15 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   // La route existait depuis des mois ; aucun ecran ne l appelait.
   const [suppressionOuverte, setSuppressionOuverte] = useState(false);
   const [suppressionEnCours, setSuppressionEnCours] = useState(false);
+
+  // Notifications. On LIT l etat sans jamais rien demander a l ouverture du
+  // tiroir : sur iOS la boite systeme ne s affiche qu une fois dans la vie de
+  // l installation, et un refus ne se rattrape plus depuis l app. Elle n est
+  // appelee que sur un geste explicite.
+  const [permission, setPermission] = useState<EtatPermission>("indisponible");
+  useEffect(() => {
+    if (open) void etatPermission().then(setPermission);
+  }, [open]);
   const [authOpen, setAuthOpen] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
   const [locale, setLocaleState] = useState<Locale>("en");
@@ -179,6 +190,33 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               {LOCALE_LABELS[locale]}
             </span>
           </button>
+
+          {/* Notifications — visible uniquement dans l app, la vitrine web
+              n a pas de notifications distantes */}
+          {permission !== "indisponible" && (
+            <button
+              type="button"
+              disabled={permission === "accorde"}
+              onClick={() => {
+                if (permission === "jamais_demande") {
+                  void demanderPuisEnregistrer().then(setPermission);
+                }
+              }}
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary disabled:hover:bg-transparent"
+            >
+              <span className="flex items-center gap-2.5">
+                <Bell size={16} className="text-text-body-subtle" />
+                {t("profile.notifications", locale)}
+              </span>
+              <span className="text-xs text-text-body-subtle">
+                {permission === "accorde"
+                  ? t("profile.notif_active", locale)
+                  : permission === "refuse"
+                    ? t("profile.notif_reglages", locale)
+                    : ""}
+              </span>
+            </button>
+          )}
 
           {/* Theme toggle */}
           <button
@@ -331,9 +369,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                       await apiFetch("/api/profile/forget", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(
-                          naissance ? { birthHash: birthHash(naissance) } : {},
-                        ),
+                        body: JSON.stringify({
+                          ...(naissance ? { birthHash: birthHash(naissance) } : {}),
+                          deviceId: getDeviceId(),
+                        }),
                       });
                     } catch {
                       // Meme si le serveur ne repond pas, on efface ce qui est

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { mesurer, mesurerUneFois } from "@/lib/mesure";
+import { brancherEcoutes } from "@/lib/push";
+import { cheminDepuisNotification } from "@/lib/push-routes";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
@@ -127,6 +129,23 @@ export default function DemoLayout({
       });
     }
   }, []);
+
+  // Notifications : toucher une notification ouvre la periode concernee, jamais
+  // l accueil. On navigue avec le routeur et non avec location.href : le
+  // serveur interne de Capacitor ne sert pas l index d un dossier, une
+  // navigation dure retomberait sur la page racine (voir CLAUDE.md).
+  // L evenement est conserve par le greffon jusqu a ce qu un ecouteur existe,
+  // donc un demarrage a froid n est pas une course.
+  useEffect(() => {
+    let debrancher: (() => void) | undefined;
+    void brancherEcoutes((donnees) => {
+      const chemin = cheminDepuisNotification(donnees);
+      if (chemin) router.push(chemin);
+    }).then((f) => {
+      debrancher = f;
+    });
+    return () => debrancher?.();
+  }, [router]);
 
   // Native-only: sync iOS StatusBar style with current theme
   // Runs on mount and whenever user toggles Appearance

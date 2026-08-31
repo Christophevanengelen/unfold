@@ -259,6 +259,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Les jetons de notification partent avec le reste. Une notification qui
+    // arrive apres un effacement demande est un incident declarable.
+    if (typeof body?.deviceId === "string" && body.deviceId.length >= 8) {
+      try {
+        const { data: jetons } = await admin.rpc("oublier_push_jetons", {
+          p_device_id: body.deviceId,
+        });
+        result.push_jetons = typeof jetons === "number" ? jetons : 0;
+      } catch {
+        // La migration 010 n est peut-etre pas encore passee : on n echoue pas
+        // l effacement pour autant, le reste a bien ete supprime.
+      }
+    }
+
     return NextResponse.json({ ok: true, deleted: result });
   } catch (err) {
     console.error("[profile/forget] error:", err);
