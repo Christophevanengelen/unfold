@@ -766,7 +766,7 @@ function OverviewView({
             exit={{ opacity: 0, scale: 0.6 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="absolute left-2 z-30 flex h-11 items-center justify-center rounded-full px-4"
-            style={{ ...PILL_STYLE, bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}
+            style={{ ...PILL_STYLE, bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
             whileTap={{ scale: 0.95 }}
           >
             <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
@@ -775,7 +775,7 @@ function OverviewView({
       </AnimatePresence>
 
       {/* Up/Down — right side, stacked vertically, thumb zone */}
-      <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}>
+      <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}>
         <motion.button
           type="button"
           onClick={() => jumpByYear("future")}
@@ -953,14 +953,14 @@ function ListView({
           type="button"
           onClick={scrollToNow}
           className="absolute left-2 z-30 flex h-11 items-center justify-center rounded-full px-4"
-          style={{ ...PILL_STYLE, bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}
+          style={{ ...PILL_STYLE, bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
         >
           <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
         </button>
       )}
 
       {/* Up/Down — absolute right, jump by year like overview */}
-      <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}>
+      <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}>
         <button type="button" onClick={() => jumpByYear("future")} className="flex h-11 w-11 items-center justify-center rounded-full" style={PILL_STYLE}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
@@ -1301,7 +1301,7 @@ export function MomentumTimelineV2() {
            telephone, il fallait la deuxieme main. Elle descend juste au-dessus
            de la barre d onglets, dans la zone que le pouce atteint sans effort.
            Masquee pendant l accueil et le guide. ── */}
-      {!showWelcome && !showGuide && <div className="absolute left-0 right-0 z-20 flex items-center justify-center" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)", paddingInline: S.px }}>
+      {!showWelcome && !showGuide && <div className="absolute left-0 right-0 z-20 flex items-center justify-center" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)", paddingInline: S.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}
