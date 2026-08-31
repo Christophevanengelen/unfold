@@ -359,8 +359,22 @@ function OverviewView({
   const labelMargin = 32;
   const rightMargin = 12;
   const availableWidth = containerWidth - labelMargin - rightMargin;
-  // Compute total width from actual lane widths (variable per tier)
-  const totalLanesWidth = getLaneX(LANE_COUNT, capsules, LANE_SPACING);
+
+  // Les couloirs etaient poses a leur largeur naturelle puis CENTRES dans la
+  // place disponible. Sur un telephone plus large que la maquette d origine,
+  // tout le surplus partait en deux gouttieres vides a gauche et a droite, et
+  // le dessin paraissait tasse au milieu.
+  // On garde la largeur des capsules, qui porte le sens (elle encode le tier),
+  // et on repartit le surplus dans les espaces entre couloirs. Le dessin occupe
+  // alors toute la largeur. L espace est borne pour ne pas devenir absurde sur
+  // une tablette : au-dela, on recentre le reste comme avant.
+  const fixedLanesWidth = getLaneX(LANE_COUNT, capsules, 0);
+  const gapsCount = Math.max(1, LANE_COUNT - 1);
+  const laneGap = Math.min(
+    28,
+    Math.max(LANE_SPACING, (availableWidth - fixedLanesWidth) / gapsCount),
+  );
+  const totalLanesWidth = fixedLanesWidth + laneGap * gapsCount;
   const laneWidth = LANE_COUNT > 0 ? totalLanesWidth / LANE_COUNT : 28; // avg for legacy refs
   const adjustedOffsetX = labelMargin + Math.max(0, (availableWidth - totalLanesWidth) / 2);
 
@@ -403,7 +417,7 @@ function OverviewView({
       // Clamp: if minH pushes capsule below birth, shift it up
       if (topY + h > birthY) topY = birthY - h;
       // Position by accumulating actual widths per lane — uniform gap between capsule edges
-      const laneX = adjustedOffsetX + getLaneX(capsule.lane, capsules, LANE_SPACING);
+      const laneX = adjustedOffsetX + getLaneX(capsule.lane, capsules, laneGap);
       return { capsule, topY, h, w, laneX, idx: i };
     });
 
@@ -751,8 +765,8 @@ function OverviewView({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.6 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute left-1/2 -translate-x-1/2 z-30 flex h-8 items-center justify-center rounded-full px-3"
-            style={{ ...PILL_STYLE, bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}
+            className="absolute left-1/2 -translate-x-1/2 z-30 flex h-11 items-center justify-center rounded-full px-4"
+            style={{ ...PILL_STYLE, bottom: "calc(56px + var(--safe-bottom, 0px) + 68px)" }}
             whileTap={{ scale: 0.95 }}
           >
             <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
@@ -761,11 +775,11 @@ function OverviewView({
       </AnimatePresence>
 
       {/* Up/Down — right side, stacked vertically, thumb zone */}
-      <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}>
+      <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}>
         <motion.button
           type="button"
           onClick={() => jumpByYear("future")}
-          className="flex h-8 w-8 items-center justify-center rounded-full"
+          className="flex h-11 w-11 items-center justify-center rounded-full"
           style={PILL_STYLE}
           whileTap={{ scale: 0.9 }}
         >
@@ -774,7 +788,7 @@ function OverviewView({
         <motion.button
           type="button"
           onClick={() => jumpByYear("past")}
-          className="flex h-8 w-8 items-center justify-center rounded-full"
+          className="flex h-11 w-11 items-center justify-center rounded-full"
           style={PILL_STYLE}
           whileTap={{ scale: 0.9 }}
         >
@@ -938,19 +952,19 @@ function ListView({
         <button
           type="button"
           onClick={scrollToNow}
-          className="absolute left-1/2 -translate-x-1/2 z-30 flex h-8 items-center justify-center rounded-full px-3"
-          style={{ ...PILL_STYLE, bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}
+          className="absolute left-1/2 -translate-x-1/2 z-30 flex h-11 items-center justify-center rounded-full px-4"
+          style={{ ...PILL_STYLE, bottom: "calc(56px + var(--safe-bottom, 0px) + 68px)" }}
         >
           <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
         </button>
       )}
 
       {/* Up/Down — absolute right, jump by year like overview */}
-      <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}>
-        <button type="button" onClick={() => jumpByYear("future")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
+      <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}>
+        <button type="button" onClick={() => jumpByYear("future")} className="flex h-11 w-11 items-center justify-center rounded-full" style={PILL_STYLE}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
-        <button type="button" onClick={() => jumpByYear("past")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
+        <button type="button" onClick={() => jumpByYear("past")} className="flex h-11 w-11 items-center justify-center rounded-full" style={PILL_STYLE}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
       </div>
