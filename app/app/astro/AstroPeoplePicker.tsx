@@ -34,7 +34,7 @@ const TABS: { id: PeopleSource; label: string; placeholder: string }[] = [
   },
   {
     id: "unfold",
-    label: "Unfold App",
+    label: "Favorable",
     placeholder: "Search by name, email, device, or birth date (DD/MM/YYYY)",
   },
 ];

@@ -99,7 +99,7 @@ export function ShareSignalCard({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Unfold — ${tierLabel}`,
+          title: `Favorable — ${tierLabel}`,
           text: displayText,
           url: SHARE_URL,
         });

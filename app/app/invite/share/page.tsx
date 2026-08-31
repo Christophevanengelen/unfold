@@ -32,7 +32,7 @@ export default function InviteShare() {
     }
   };
 
-  const shareMessage = `Je compare nos rythmes sur Unfold. Clique ici pour voir notre compatibilité : ${inviteUrl}`;
+  const shareMessage = `Je compare nos rythmes sur Favorable. Clique ici pour voir notre compatibilité : ${inviteUrl}`;
 
   const handleShare = async (method: string) => {
     if (method === "copy") {
@@ -48,10 +48,10 @@ export default function InviteShare() {
     } else if (method === "sms") {
       window.open(`sms:?body=${encodedMsg}`, "_blank");
     } else if (method === "email") {
-      window.open(`mailto:?subject=${encodeURIComponent("Comparons nos rythmes sur Unfold")}&body=${encodedMsg}`, "_blank");
+      window.open(`mailto:?subject=${encodeURIComponent("Comparons nos rythmes sur Favorable")}&body=${encodedMsg}`, "_blank");
     } else if (navigator.share) {
       try {
-        await navigator.share({ title: "Unfold", text: shareMessage, url: inviteUrl });
+        await navigator.share({ title: "Favorable", text: shareMessage, url: inviteUrl });
       } catch { /* user cancelled */ }
     }
   };

@@ -72,7 +72,7 @@ export default function AstroTabNav({ username }: { username: string }) {
         <div className="px-4 pb-2 flex items-center justify-between gap-3">
           <p className="text-[10px] text-[#8C7FAE]">
             {viewSubject
-              ? `Viewing: ${viewSubject.label} (${viewSubject.source === "astrolearn" ? "AstroLearn" : "Unfold"})`
+              ? `Viewing: ${viewSubject.label} (${viewSubject.source === "astrolearn" ? "AstroLearn" : "Favorable"})`
               : "Select a person to view their chart data"}
           </p>
           <button

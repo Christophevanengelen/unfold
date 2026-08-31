@@ -73,7 +73,7 @@ export default function LifetimeChartPage() {
               textDecoration: "none",
             }}
           >
-            Back to Unfold →
+            Retour à Favorable →
           </a>
         </div>
       </div>

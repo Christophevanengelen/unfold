@@ -70,7 +70,7 @@ export default function ConnectionsPage() {
       });
 
       if (res.status === 404) {
-        setCodeError("Code introuvable. Demande à la personne de rouvrir Unfold une fois pour synchroniser son code.");
+        setCodeError("Code introuvable. Demande à la personne de rouvrir Favorable une fois pour synchroniser son code.");
         return;
       }
       if (!res.ok) {

@@ -21,7 +21,11 @@ export async function POST(req: NextRequest) {
     if (!deviceId || !code) {
       return NextResponse.json({ error: "Missing deviceId or code" }, { status: 400 });
     }
-    if (!/^UNFOLD-[A-Z0-9]{4}$/.test(code)) {
+    // Les deux prefixes sont acceptes, et c est definitif. UNFOLD- est le
+    // format historique : des codes de cette forme circulent par capture
+    // d ecran et par SMS, et doivent fonctionner indefiniment. FAV- est le
+    // format produit depuis le renommage.
+    if (!/^(UNFOLD|FAV)-[A-Z0-9]{4}$/.test(code)) {
       return NextResponse.json({ error: "Invalid code shape" }, { status: 400 });
     }
     if (!supabase) {
