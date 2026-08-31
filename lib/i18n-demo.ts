@@ -73,6 +73,7 @@ type Strings = {
     appearance: string;
     light: string;
     dark: string;
+    systeme: string;
     account: string;
     sign_in: string;
     sign_out: string;
@@ -158,6 +159,7 @@ const FR: Strings = {
     appearance: "Apparence",
     light: "Clair",
     dark: "Sombre",
+    systeme: "Système",
     account: "Compte",
     sign_in: "Se connecter",
     sign_out: "Se déconnecter",
@@ -243,6 +245,7 @@ const EN: Strings = {
     appearance: "Appearance",
     light: "Light",
     dark: "Dark",
+    systeme: "System",
     account: "Account",
     sign_in: "Sign in",
     sign_out: "Sign out",
@@ -328,6 +331,7 @@ const ES: Strings = {
     appearance: "Apariencia",
     light: "Claro",
     dark: "Oscuro",
+    systeme: "Sistema",
     account: "Cuenta",
     sign_in: "Iniciar sesión",
     sign_out: "Cerrar sesión",
@@ -413,6 +417,7 @@ const DE: Strings = {
     appearance: "Erscheinungsbild",
     light: "Hell",
     dark: "Dunkel",
+    systeme: "System",
     account: "Konto",
     sign_in: "Anmelden",
     sign_out: "Abmelden",
@@ -498,6 +503,7 @@ const IT: Strings = {
     appearance: "Aspetto",
     light: "Chiaro",
     dark: "Scuro",
+    systeme: "Sistema",
     account: "Account",
     sign_in: "Accedi",
     sign_out: "Esci",
@@ -583,6 +589,7 @@ const PT: Strings = {
     appearance: "Aparência",
     light: "Claro",
     dark: "Escuro",
+    systeme: "Sistema",
     account: "Conta",
     sign_in: "Entrar",
     sign_out: "Sair",
@@ -668,6 +675,7 @@ const NL: Strings = {
     appearance: "Weergave",
     light: "Licht",
     dark: "Donker",
+    systeme: "Systeem",
     account: "Account",
     sign_in: "Inloggen",
     sign_out: "Uitloggen",
@@ -753,6 +761,7 @@ const JA: Strings = {
     appearance: "外観",
     light: "ライト",
     dark: "ダーク",
+    systeme: "システム",
     account: "アカウント",
     sign_in: "サインイン",
     sign_out: "サインアウト",
@@ -838,6 +847,7 @@ const ZH: Strings = {
     appearance: "外观",
     light: "浅色",
     dark: "深色",
+    systeme: "跟随系统",
     account: "账户",
     sign_in: "登录",
     sign_out: "退出",
@@ -923,6 +933,7 @@ const AR: Strings = {
     appearance: "المظهر",
     light: "فاتح",
     dark: "داكن",
+    systeme: "النظام",
     account: "الحساب",
     sign_in: "تسجيل الدخول",
     sign_out: "تسجيل الخروج",
