@@ -15,7 +15,8 @@ import { clearBirthData, getBirthDataSync, birthHash } from "@/lib/birth-data";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
 import { getStreak } from "@/lib/streak";
-import { etatPermission, demanderPuisEnregistrer, type EtatPermission } from "@/lib/push";
+import { etatPermission, demanderPuisEnregistrer, lireCadence, reglerCadence, type EtatPermission } from "@/lib/push";
+import type { Cadence } from "@/lib/push-planification";
 import { getDeviceId } from "@/lib/device-id";
 import { useBillingState } from "@/lib/premium-gate";
 import { isNative, getPlatform } from "@/lib/platform";
@@ -53,6 +54,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   // l installation, et un refus ne se rattrape plus depuis l app. Elle n est
   // appelee que sur un geste explicite.
   const [permission, setPermission] = useState<EtatPermission>("indisponible");
+  const [cadence, setCadence] = useState<Cadence>(lireCadence);
   useEffect(() => {
     if (open) void etatPermission().then(setPermission);
   }, [open]);
@@ -216,6 +218,35 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                     : ""}
               </span>
             </button>
+          )}
+
+          {permission === "accorde" && (
+            <div className="px-3 pb-1 pt-2">
+              <p className="mb-2 text-xs font-medium text-text-body-subtle">
+                {t("profile.notif_cadence", locale)}
+              </p>
+              <div className="flex gap-1.5 rounded-xl bg-bg-secondary p-1">
+                {(["essentiel", "normal", "tout"] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => {
+                      setCadence(c);
+                      void reglerCadence(c);
+                    }}
+                    aria-pressed={cadence === c}
+                    className={`flex-1 rounded-lg px-2 text-xs font-medium transition-colors ${
+                      cadence === c
+                        ? "bg-bg-primary text-text-heading shadow-sm"
+                        : "text-text-body-subtle hover:text-text-heading"
+                    }`}
+                    style={{ minHeight: 40 }}
+                  >
+                    {t(`profile.notif_${c}`, locale)}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Theme toggle */}

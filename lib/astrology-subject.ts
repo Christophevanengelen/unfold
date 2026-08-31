@@ -195,6 +195,16 @@ async function loadAstrolearnSubject(username: string): Promise<AstrologySubject
   return loadAstrolearnSubjectByKey({ username });
 }
 
+/**
+ * Construit un sujet a partir du seul identifiant d appareil, sans session.
+ * C est ce dont le cron des notifications a besoin : il balaie des personnes
+ * qui ne sont pas en train de naviguer, donc resolveAstrologySubject, qui lit
+ * des cookies, ne lui sert a rien.
+ */
+export async function chargerSujetParAppareil(deviceId: string): Promise<AstrologySubject> {
+  return loadUnfoldSubject(deviceId);
+}
+
 async function loadUnfoldSubject(deviceId: string): Promise<AstrologySubject> {
   const supabase = getAdminClient();
   const { data, error } = await supabase

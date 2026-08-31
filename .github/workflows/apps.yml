@@ -18,6 +18,10 @@ jobs:
         # production : la signature ES256 au mauvais format, et le 410 d Apple
         # ignore. Le test fabrique sa propre clef et son propre APNs.
         run: node scripts/verifier-apns.mjs
+      - name: Verifier le choix des notifications
+        # planifier() est pure : deux annees de selection sont eprouvees en une
+        # seconde, sans reseau ni base.
+        run: node scripts/verifier-planification.mjs
       - name: Construire le site complet (verifie aussi les types des routes API)
         run: npx next build
         env:

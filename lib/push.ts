@@ -163,3 +163,39 @@ export function marquerPropose(): void {
     /* stockage refusé */
   }
 }
+
+/**
+ * La cadence choisie. Elle fait autorite cote serveur, qui decide des envois ;
+ * la copie locale n existe que pour afficher le bon cran sans attendre le
+ * reseau a l ouverture du tiroir.
+ */
+const CLE_CADENCE = "favorable_push_cadence";
+
+export function lireCadence(): "essentiel" | "normal" | "tout" {
+  try {
+    const v = localStorage.getItem(CLE_CADENCE);
+    if (v === "essentiel" || v === "tout") return v;
+  } catch {
+    /* stockage refuse */
+  }
+  return "normal";
+}
+
+export async function reglerCadence(cadence: "essentiel" | "normal" | "tout"): Promise<void> {
+  try {
+    localStorage.setItem(CLE_CADENCE, cadence);
+  } catch {
+    /* stockage refuse */
+  }
+  try {
+    await fetch(`${getApiBase()}/api/push/cadence`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({ deviceId: getDeviceId(), cadence }),
+    });
+  } catch {
+    // silence volontaire : le serveur garde le cran precedent, et l app
+    // renverra le choix au prochain reglage.
+  }
+}
