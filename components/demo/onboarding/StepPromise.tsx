@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 /* eslint-disable @next/next/no-img-element */
@@ -56,13 +57,10 @@ export function StepPromise({ onNext }: StepPromiseProps) {
             Le nom est donc pose ici dans la police de l app, en attendant un
             logotype dessine. Le paddingLeft compense l interlettrage final,
             sinon le mot penche a gauche. */}
-        <img
-          src="/logo/icon-mark.svg"
-          alt=""
-          aria-hidden="true"
-          width={124}
-          height={124}
-        />
+        {/* Le fichier icon-mark.svg porte des couleurs figees, faites pour un
+            fond sombre : sur le theme clair la marque disparaissait sur le
+            fond presque blanc. Le composant, lui, connait les deux themes. */}
+        <UnfoldLogo size={124} />
         <span
           className="mt-5 select-none text-[34px] font-light leading-none"
           style={{

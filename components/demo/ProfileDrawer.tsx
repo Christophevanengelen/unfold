@@ -26,8 +26,17 @@ interface ProfileDrawerProps {
 
 export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const router = useRouter();
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+
+  // L apparence a trois etats, comme partout chez Apple : Systeme, Clair,
+  // Sombre. Le bouton n en avait que deux : des qu on y touchait, l app cessait
+  // definitivement de suivre le telephone. Quelqu un qui bascule son iPhone en
+  // sombre le soir gardait une app claire, sans moyen de revenir en arriere.
+  const apparence = theme === "light" || theme === "dark" ? theme : "system";
+  const apparenceSuivante =
+    apparence === "system" ? "light" : apparence === "light" ? "dark" : "system";
+
   const { birthData } = useMomentum();
   const { user, isAuthenticated } = useAuth();
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
@@ -167,7 +176,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           {/* Theme toggle */}
           <button
             type="button"
-            onClick={() => setTheme(isDark ? "light" : "dark")}
+            onClick={() => setTheme(apparenceSuivante)}
             className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
           >
             <span className="flex items-center gap-2.5">
@@ -179,7 +188,11 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               {t("profile.appearance", locale)}
             </span>
             <span className="text-xs text-text-body-subtle">
-              {isDark ? t("profile.dark", locale) : t("profile.light", locale)}
+              {apparence === "system"
+                ? t("profile.systeme", locale)
+                : apparence === "dark"
+                  ? t("profile.dark", locale)
+                  : t("profile.light", locale)}
             </span>
           </button>
 

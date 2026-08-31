@@ -172,6 +172,12 @@ button, a, [role="button"], [role="link"],
      sous la barre d accueil de l iPhone.
      Sur le web env() vaut 0 ; le cadre telephone de la demo les redefinit pour
      simuler un vrai appareil (voir app/app/layout.tsx). */
+  /* Hauteur de la barre d onglets, hors zone de securite. Tout ce qui flotte
+     au-dessus s y raccroche : la bascule, les chevrons, la pastille NOW. On la
+     declare ici pour qu un changement de hauteur ne laisse pas des boutons
+     sous la barre, comme c est arrive avec un 68 px recopie a la main. */
+  --barre-onglets: 64px;
+
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
