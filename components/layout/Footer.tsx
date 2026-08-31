@@ -148,7 +148,7 @@ export function Footer({ locale }: FooterProps) {
                 className="font-display text-lg font-normal text-brand-11"
                 style={{ letterSpacing: "0.2em" }}
               >
-                unfold
+                favorable
               </span>
             </Link>
             <p className="text-sm leading-relaxed text-brand-10">
@@ -209,7 +209,7 @@ export function Footer({ locale }: FooterProps) {
               </li>
               <li>
                 <a
-                  href="mailto:hello@unfold.app"
+                  href="mailto:hello@favorable.app"
                   className="text-sm text-brand-11 transition-colors hover:text-white"
                 >
                   {l.contact}
@@ -222,7 +222,7 @@ export function Footer({ locale }: FooterProps) {
         {/* Bottom bar */}
         <div className="mt-10 border-t border-white/5 pt-6">
           <p className="text-center text-xs text-brand-10">
-            &copy; {new Date().getFullYear()} Unfold. {l.rights}
+            &copy; {new Date().getFullYear()} Favorable. {l.rights}
           </p>
         </div>
       </div>

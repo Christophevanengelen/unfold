@@ -90,7 +90,7 @@ export default async function LandingPage({
             className="font-display text-[20px] font-normal text-brand-11"
             style={{ letterSpacing: "0.2em" }}
           >
-            unfold
+            favorable
           </span>
         </div>
 

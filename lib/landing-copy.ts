@@ -73,7 +73,7 @@ const EN: TranslationMap = {
   "free.eyebrow": "Always free",
   "free.title": "Three signals. One clear picture.",
   "free.subtitle":
-    "Every day, Unfold reads your past, present, and next momentum — free, forever.",
+    "Every day, Favorable reads your past, present, and next momentum — free, forever.",
   "free.past.title": "Past signal",
   "free.past.desc":
     "See which planets shaped your last momentum period and what it meant.",
@@ -88,7 +88,7 @@ const EN: TranslationMap = {
   "transition.free_to_clarity":
     "Your signal is free. But your story goes deeper.",
   "transition.timeline_to_social":
-    "That’s your rhythm. Here’s what Unfold commits to doing with it.",
+    "That’s your rhythm. Here’s what Favorable commits to doing with it.",
   "transition.free_to_premium":
     "Free reads today. Premium reveals what’s forming ahead.",
   "transition.premium_to_teasers":
@@ -119,7 +119,7 @@ const EN: TranslationMap = {
   "social.promise1.label": "Daily clarity",
   "social.promise1.title": "Know what today is asking of you",
   "social.promise1.body":
-    "Unfold reads the transits active on your birth chart today and names the pattern in plain language — no horoscope, no guesswork.",
+    "Favorable reads the transits active on your birth chart today and names the pattern in plain language — no horoscope, no guesswork.",
   "social.promise2.label": "Weekly rhythm",
   "social.promise2.title": "Plan with your peaks, not against them",
   "social.promise2.body":
@@ -132,7 +132,7 @@ const EN: TranslationMap = {
   "social.pillar2": "JPL/NASA ephemerides, computed in real time",
   "social.pillar3": "Your data is never stored without your consent",
   "social.note":
-    "These are Unfold’s own product commitments, written by the team — not customer reviews.",
+    "These are Favorable’s own product commitments, written by the team — not customer reviews.",
 
   // Compatibility
   "compat.v2.eyebrow": "Shared timing",
@@ -153,7 +153,7 @@ const EN: TranslationMap = {
   "alerts.eyebrow": "Quiet intelligence",
   "alerts.title": "It watches. You live.",
   "alerts.subtitle":
-    "Unfold doesn’t spam you. It watches your signal quietly — and calls when something exceptional forms.",
+    "Favorable doesn’t spam you. It watches your signal quietly — and calls when something exceptional forms.",
   "alerts.p1": "Only when it matters",
   "alerts.p2": "Never noise",
   "alerts.p3": "Always on time",
@@ -222,13 +222,13 @@ const EN: TranslationMap = {
   "pricing.premium.f6": "Advanced compatibility",
   "pricing.justification":
     "Premium evolves with you — your timeline updates as new planetary signals shape your rhythm.",
-  "pricing.trial": "7-day Pro trial, no credit card. Cancel anytime.",
+  "pricing.trial": "7 days free, then your plan. Cancel anytime.",
 
   // Final CTA + footer
-  "cta.title": "Download Unfold",
+  "cta.title": "Download Favorable",
   "cta.subtitle":
     "Your personal signal, decoded. See your momentum — past, present, and next. Free on iOS and Android.",
-  "footer.legal": "© 2026 Unfold. All rights reserved.",
+  "footer.legal": "© 2026 Favorable. All rights reserved.",
 };
 
 // ─── French — complete translation ───────────────────────────────────────
@@ -270,7 +270,7 @@ const FR: TranslationMap = {
   "free.eyebrow": "Toujours gratuit",
   "free.title": "Trois signaux. Une lecture claire.",
   "free.subtitle":
-    "Chaque jour, Unfold lit ton momentum passé, présent et à venir — gratuitement, pour toujours.",
+    "Chaque jour, Favorable lit ton momentum passé, présent et à venir — gratuitement, pour toujours.",
   "free.past.title": "Signal passé",
   "free.past.desc":
     "Vois quelles planètes ont façonné ta dernière période de momentum, et ce qu’elle voulait dire.",
@@ -284,7 +284,7 @@ const FR: TranslationMap = {
   "transition.free_to_clarity":
     "Ton signal est gratuit. Mais ton histoire va bien plus loin.",
   "transition.timeline_to_social":
-    "Ça, c’est ton rythme. Voici ce qu’Unfold s’engage à en faire.",
+    "Ça, c’est ton rythme. Voici ce qu’Favorable s’engage à en faire.",
   "transition.free_to_premium":
     "Le gratuit lit ton aujourd’hui. Premium révèle ce qui se forme devant toi.",
   "transition.premium_to_teasers":
@@ -311,7 +311,7 @@ const FR: TranslationMap = {
   "social.promise1.label": "Clarté quotidienne",
   "social.promise1.title": "Sache ce que ta journée te demande",
   "social.promise1.body":
-    "Unfold lit les transits actifs sur ton thème natal aujourd’hui et nomme la dynamique en mots clairs — pas d’horoscope, pas d’à-peu-près.",
+    "Favorable lit les transits actifs sur ton thème natal aujourd’hui et nomme la dynamique en mots clairs — pas d’horoscope, pas d’à-peu-près.",
   "social.promise2.label": "Rythme de la semaine",
   "social.promise2.title": "Compose avec tes pics, pas contre eux",
   "social.promise2.body":
@@ -324,7 +324,7 @@ const FR: TranslationMap = {
   "social.pillar2": "Éphémérides JPL/NASA, calculées en temps réel",
   "social.pillar3": "Tes données ne sont jamais conservées sans ton accord",
   "social.note":
-    "Ce sont les engagements produit d’Unfold, écrits par l’équipe — ce ne sont pas des avis clients.",
+    "Ce sont les engagements produit d’Favorable, écrits par l’équipe — ce ne sont pas des avis clients.",
 
   "compat.v2.eyebrow": "Timing partagé",
   "compat.v2.title": "Sache quand vos rythmes s’alignent.",
@@ -343,7 +343,7 @@ const FR: TranslationMap = {
   "alerts.eyebrow": "Intelligence discrète",
   "alerts.title": "Elle veille. Tu vis.",
   "alerts.subtitle":
-    "Unfold ne te spamme pas. L’app surveille ton signal en silence — et te prévient quand quelque chose d’exceptionnel se forme.",
+    "Favorable ne te spamme pas. L’app surveille ton signal en silence — et te prévient quand quelque chose d’exceptionnel se forme.",
   "alerts.p1": "Seulement quand ça compte",
   "alerts.p2": "Jamais de bruit",
   "alerts.p3": "Toujours à temps",
@@ -409,12 +409,12 @@ const FR: TranslationMap = {
   "pricing.justification":
     "Premium évolue avec toi — ta chronologie se met à jour à mesure que de nouveaux signaux planétaires façonnent ton rythme.",
   "pricing.trial":
-    "7 jours d’essai Pro sans carte bancaire. Annulable à tout moment.",
+    "7 jours d’essai, puis votre formule. Annulable à tout moment.",
 
-  "cta.title": "Télécharge Unfold",
+  "cta.title": "Télécharge Favorable",
   "cta.subtitle":
     "Ton signal personnel, décodé. Vois ton momentum — passé, présent et à venir. Gratuit sur iOS et Android.",
-  "footer.legal": "© 2026 Unfold. Tous droits réservés.",
+  "footer.legal": "© 2026 Favorable. Tous droits réservés.",
 };
 
 // ─── Partial overrides — inherited from the inline landing copy ──────────
@@ -424,7 +424,7 @@ const ES: TranslationMap = {
   "hero.v2.eyebrow": "Astrología premium · Timing personal",
   "hero.v2.title": "Descubre cuándo la vida se mueve a tu favor",
   "hero.v2.subtitle":
-    "Unfold lee tu carta natal y tus tránsitos actuales para revelar tus ventanas de pico — amor, trabajo, creatividad. Sin horóscopos cursis.",
+    "Favorable lee tu carta natal y tus tránsitos actuales para revelar tus ventanas de pico — amor, trabajo, creatividad. Sin horóscopos cursis.",
   "teaser.lifetime.eyebrow": "Informe de vida · Premium",
   "teaser.lifetime.title": "Tu vida entera, desplegada.",
   "teaser.lifetime.sub":
@@ -443,15 +443,15 @@ const ES: TranslationMap = {
   "pricing.title": "Gratis para empezar",
   "pricing.subtitle":
     "Prueba Pro de 7 días sin tarjeta. Cancela cuando quieras.",
-  "pricing.trial": "Prueba Pro de 7 días sin tarjeta. Cancela cuando quieras.",
-  "footer.legal": "© 2026 Unfold. Todos los derechos reservados.",
+  "pricing.trial": "7 días de prueba, luego tu plan. Cancela cuando quieras.",
+  "footer.legal": "© 2026 Favorable. Todos los derechos reservados.",
 };
 
 const PT: TranslationMap = {
   "hero.v2.eyebrow": "Astrologia premium · Timing pessoal",
   "hero.v2.title": "Saiba quando a vida age a seu favor",
   "hero.v2.subtitle":
-    "Unfold lê seu mapa natal e seus trânsitos atuais para revelar suas janelas de pico — amor, trabalho, criatividade. Sem horóscopo bobo.",
+    "Favorable lê seu mapa natal e seus trânsitos atuais para revelar suas janelas de pico — amor, trabalho, criatividade. Sem horóscopo bobo.",
   "teaser.lifetime.eyebrow": "Relatório vitalício · Premium",
   "teaser.lifetime.title": "Toda a sua vida, desenrolada.",
   "teaser.lifetime.sub":
@@ -471,14 +471,14 @@ const PT: TranslationMap = {
   "pricing.subtitle":
     "Teste Pro de 7 dias sem cartão. Cancele quando quiser.",
   "pricing.trial": "Teste Pro de 7 dias sem cartão. Cancele quando quiser.",
-  "footer.legal": "© 2026 Unfold. Todos os direitos reservados.",
+  "footer.legal": "© 2026 Favorable. Todos os direitos reservados.",
 };
 
 const DE: TranslationMap = {
   "hero.v2.eyebrow": "Premium-Astrologie · Persönliches Timing",
   "hero.v2.title": "Wisse wann das Leben für dich spielt",
   "hero.v2.subtitle":
-    "Unfold liest dein Geburtshoroskop und aktuelle Transite, um deine Höhepunkt-Fenster zu zeigen — Liebe, Arbeit, Kreativität.",
+    "Favorable liest dein Geburtshoroskop und aktuelle Transite, um deine Höhepunkt-Fenster zu zeigen — Liebe, Arbeit, Kreativität.",
   "teaser.lifetime.eyebrow": "Lebenslanger Report · Premium",
   "teaser.lifetime.title": "Dein ganzes Leben, entfaltet.",
   "teaser.lifetime.sub":
@@ -498,14 +498,14 @@ const DE: TranslationMap = {
   "pricing.subtitle":
     "7-Tage-Pro-Test, keine Kreditkarte. Jederzeit kündbar.",
   "pricing.trial": "7-Tage-Pro-Test, keine Kreditkarte. Jederzeit kündbar.",
-  "footer.legal": "© 2026 Unfold. Alle Rechte vorbehalten.",
+  "footer.legal": "© 2026 Favorable. Alle Rechte vorbehalten.",
 };
 
 const IT: TranslationMap = {
   "hero.v2.eyebrow": "Astrologia premium · Timing personale",
   "hero.v2.title": "Sappi quando la vita gioca a tuo favore",
   "hero.v2.subtitle":
-    "Unfold legge il tuo tema natale e i tuoi transiti attuali per rivelare le tue finestre di picco — amore, lavoro, creatività.",
+    "Favorable legge il tuo tema natale e i tuoi transiti attuali per rivelare le tue finestre di picco — amore, lavoro, creatività.",
   "teaser.lifetime.eyebrow": "Report a vita · Premium",
   "teaser.lifetime.title": "La tua intera vita, dispiegata.",
   "teaser.lifetime.sub":
@@ -525,14 +525,14 @@ const IT: TranslationMap = {
   "pricing.subtitle":
     "Prova Pro di 7 giorni senza carta. Annulla quando vuoi.",
   "pricing.trial": "Prova Pro di 7 giorni senza carta. Annulla quando vuoi.",
-  "footer.legal": "© 2026 Unfold. Tutti i diritti riservati.",
+  "footer.legal": "© 2026 Favorable. Tutti i diritti riservati.",
 };
 
 const NL: TranslationMap = {
   "hero.v2.eyebrow": "Premium astrologie · Persoonlijke timing",
   "hero.v2.title": "Weet wanneer het leven in jouw voordeel beweegt",
   "hero.v2.subtitle":
-    "Unfold leest je geboortehoroscoop en huidige transits om je piekvensters te onthullen — liefde, werk, creativiteit.",
+    "Favorable leest je geboortehoroscoop en huidige transits om je piekvensters te onthullen — liefde, werk, creativiteit.",
   "teaser.lifetime.eyebrow": "Levenslang rapport · Premium",
   "teaser.lifetime.title": "Jouw hele leven, uitgerold.",
   "teaser.lifetime.sub":
@@ -553,14 +553,14 @@ const NL: TranslationMap = {
     "7-daagse Pro-proefperiode, geen creditcard. Altijd opzegbaar.",
   "pricing.trial":
     "7-daagse Pro-proefperiode, geen creditcard. Altijd opzegbaar.",
-  "footer.legal": "© 2026 Unfold. Alle rechten voorbehouden.",
+  "footer.legal": "© 2026 Favorable. Alle rechten voorbehouden.",
 };
 
 const JA: TranslationMap = {
   "hero.v2.eyebrow": "プレミアム占星術 · パーソナルタイミング",
   "hero.v2.title": "人生があなたの味方をする時を知る",
   "hero.v2.subtitle":
-    "Unfoldはあなたのネイタルチャートと現在のトランジットを読み、あなたのピークウィンドウを明らかにします — 愛、仕事、創造性。",
+    "Favorableはあなたのネイタルチャートと現在のトランジットを読み、あなたのピークウィンドウを明らかにします — 愛、仕事、創造性。",
   "teaser.lifetime.eyebrow": "生涯レポート · プレミアム",
   "teaser.lifetime.title": "あなたの人生全体、展開。",
   "teaser.lifetime.sub":
@@ -581,14 +581,14 @@ const JA: TranslationMap = {
     "7日間Proトライアル、クレジットカード不要。いつでもキャンセル。",
   "pricing.trial":
     "7日間Proトライアル、クレジットカード不要。いつでもキャンセル。",
-  "footer.legal": "© 2026 Unfold. 全権利所有。",
+  "footer.legal": "© 2026 Favorable. 全権利所有。",
 };
 
 const ZH: TranslationMap = {
   "hero.v2.eyebrow": "高级占星 · 个人时机",
   "hero.v2.title": "知道何时生活向你倾斜",
   "hero.v2.subtitle":
-    "Unfold读取您的本命盘和当前过运，揭示您的高峰窗口 — 爱情、工作、创造力。",
+    "Favorable读取您的本命盘和当前过运，揭示您的高峰窗口 — 爱情、工作、创造力。",
   "teaser.lifetime.eyebrow": "终身报告 · 高级",
   "teaser.lifetime.title": "您的整个人生，展开。",
   "teaser.lifetime.sub":
@@ -608,7 +608,7 @@ const ZH: TranslationMap = {
   "pricing.subtitle":
     "7天Pro试用，无需信用卡。随时取消。",
   "pricing.trial": "7天Pro试用，无需信用卡。随时取消。",
-  "footer.legal": "© 2026 Unfold. 保留所有权利。",
+  "footer.legal": "© 2026 Favorable. 保留所有权利。",
 };
 
 const AR: TranslationMap = {
@@ -617,7 +617,7 @@ const AR: TranslationMap = {
   "hero.v2.title":
     "اعرف متى تعمل الحياة لصالحك",
   "hero.v2.subtitle":
-    "يقرأ Unfold خريطتك الفلكية والعبور الحالي لكشف نوافذ الذروة لديك — الحب والعمل والإبداع.",
+    "يقرأ Favorable خريطتك الفلكية والعبور الحالي لكشف نوافذ الذروة لديك — الحب والعمل والإبداع.",
   "teaser.lifetime.eyebrow":
     "تقرير العمر · متميز",
   "teaser.lifetime.title":
@@ -644,7 +644,7 @@ const AR: TranslationMap = {
   "pricing.trial":
     "تجربة Pro لمدة 7 أيام، بدون بطاقة ائتمان. إلغاء في أي وقت.",
   "footer.legal":
-    "© 2026 Unfold. جميع الحقوق محفوظة.",
+    "© 2026 Favorable. جميع الحقوق محفوظة.",
 };
 
 const OVERRIDES: Record<LocaleCode, TranslationMap> = {

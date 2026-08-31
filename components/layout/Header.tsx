@@ -26,7 +26,7 @@ export function Header({ locale }: HeaderProps) {
             priority
           />
           <span className="font-display text-xl font-normal text-brand-11" style={{ letterSpacing: "0.2em" }}>
-            unfold
+            favorable
           </span>
         </Link>
         <div className="flex items-center gap-3">

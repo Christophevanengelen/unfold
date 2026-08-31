@@ -65,6 +65,12 @@ export function AppStoreBadges() {
     setCountry(detectCountry());
   }, []);
 
+  // Tant que l app n est pas publiee, on n affiche rien plutot que deux boutons
+  // qui menent a une page d erreur. Une promesse non tenue des le premier clic
+  // coute plus cher qu une absence de bouton — et la page propose deja d essayer
+  // la version web juste au-dessus.
+  if (!APP_PUBLIEE) return null;
+
   const appleUrl = `https://apps.apple.com/${country}/app/${APPLE_APP_SLUG}/${APPLE_APP_ID}`;
   const playUrl = `https://play.google.com/store/apps/details?id=${PLAY_PACKAGE_NAME}&hl=${country}`;
 
@@ -76,7 +82,7 @@ export function AppStoreBadges() {
         target="_blank"
         rel="noopener noreferrer"
         className="group flex h-[52px] w-[168px] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-4 text-white backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
-        aria-label="Download Unfold on the App Store"
+        aria-label="Télécharger Favorable sur l\u2019App Store"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

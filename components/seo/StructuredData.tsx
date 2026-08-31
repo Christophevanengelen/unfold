@@ -4,7 +4,7 @@ function SoftwareApplicationSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Unfold",
+    name: "Favorable",
     description:
       "Personal timing app. Free daily momentum score across Love, Health, and Work. Compare rhythms with anyone. Premium unlocks future peaks and monthly momentum maps.",
     applicationCategory: "LifestyleApplication",
@@ -14,36 +14,36 @@ function SoftwareApplicationSchema() {
       {
         "@type": "Offer",
         price: "0",
-        priceCurrency: "USD",
-        name: "Free",
+        priceCurrency: "EUR",
+        name: "Gratuit",
         description:
           "Daily momentum score, Love/Health/Work breakdown, yesterday review, basic compatibility",
       },
       {
         "@type": "Offer",
-        price: "4.00",
-        priceCurrency: "USD",
-        name: "Premium Monthly",
+        price: "5.99",
+        priceCurrency: "EUR",
+        name: "Premium mensuel",
         description:
           "Future momentum windows, monthly momentum map, peak alerts, advanced compatibility",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: "4.00",
-          priceCurrency: "USD",
+          price: "5.99",
+          priceCurrency: "EUR",
           billingDuration: "P1M",
         },
       },
       {
         "@type": "Offer",
-        price: "29.00",
-        priceCurrency: "USD",
-        name: "Premium Yearly",
+        price: "39.99",
+        priceCurrency: "EUR",
+        name: "Premium annuel",
         description:
-          "All Premium features billed annually. Save 39%.",
+          "Toutes les fonctions Premium, facturees a l annee. 44 % d economie.",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: "29.00",
-          priceCurrency: "USD",
+          price: "39.99",
+          priceCurrency: "EUR",
           billingDuration: "P1Y",
         },
       },
@@ -62,7 +62,7 @@ function OrganizationSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Unfold",
+    name: "Favorable",
     url: BASE_URL,
     logo: `${BASE_URL}/logo/logo-dark.svg`,
   };

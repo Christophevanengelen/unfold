@@ -16,29 +16,29 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://favorable.day";
  */
 
 const TITLES: Record<string, string> = {
-  en: "Unfold — Premium Astrology Timing & Personal Momentum App",
-  fr: "Unfold — App d'astrologie premium · Timing personnel et momentum quotidien",
-  es: "Unfold — App de astrología premium · Timing personal y momentum diario",
-  pt: "Unfold — App de astrologia premium · Timing pessoal e momentum diário",
-  de: "Unfold — Premium-Astrologie-App · Persönliches Timing und tägliches Momentum",
-  it: "Unfold — App di astrologia premium · Timing personale e momentum quotidiano",
-  nl: "Unfold — Premium astrologie-app · Persoonlijke timing en dagelijks momentum",
-  ja: "Unfold — プレミアム占星術アプリ · パーソナルタイミングと毎日のモメンタム",
-  zh: "Unfold — 高级占星应用 · 个人时机与每日动量",
-  ar: "Unfold — تطبيق علم الفلك المتميز · التوقيت الشخصي والزخم اليومي",
+  en: "Favorable — Premium Astrology Timing & Personal Momentum App",
+  fr: "Favorable — App d'astrologie premium · Timing personnel et momentum quotidien",
+  es: "Favorable — App de astrología premium · Timing personal y momentum diario",
+  pt: "Favorable — App de astrologia premium · Timing pessoal e momentum diário",
+  de: "Favorable — Premium-Astrologie-App · Persönliches Timing und tägliches Momentum",
+  it: "Favorable — App di astrologia premium · Timing personale e momentum quotidiano",
+  nl: "Favorable — Premium astrologie-app · Persoonlijke timing en dagelijks momentum",
+  ja: "Favorable — プレミアム占星術アプリ · パーソナルタイミングと毎日のモメンタム",
+  zh: "Favorable — 高级占星应用 · 个人时机与每日动量",
+  ar: "Favorable — تطبيق علم الفلك المتميز · التوقيت الشخصي والزخم اليومي",
 };
 
 const DESCRIPTIONS: Record<string, string> = {
-  en: "Pro-level astrological timing for modern life. Unfold reads your natal chart and current transits to reveal your peak windows in love, work, and growth. 7-day free trial. The Co-Star alternative built for premium users.",
-  fr: "Astrologie pro pour la vie moderne. Unfold lit ton thème natal et tes transits actuels pour révéler tes pics énergétiques en amour, travail et créativité. 7 jours gratuits. L'alternative premium aux apps astro grand public.",
-  es: "Astrología profesional para la vida moderna. Unfold lee tu carta natal y tus tránsitos actuales para revelar tus ventanas de pico en amor, trabajo y crecimiento. 7 días gratis. La alternativa premium a las apps de astrología masivas.",
-  pt: "Astrologia profissional para a vida moderna. Unfold lê seu mapa natal e trânsitos atuais para revelar suas janelas de pico em amor, trabalho e crescimento. 7 dias grátis. A alternativa premium aos apps de astrologia populares.",
-  de: "Profi-Astrologie für das moderne Leben. Unfold liest dein Geburtshoroskop und aktuelle Transite, um deine Höhepunkt-Fenster in Liebe, Arbeit und Wachstum zu zeigen. 7 Tage gratis.",
-  it: "Astrologia professionale per la vita moderna. Unfold legge il tuo tema natale e i transiti attuali per rivelare le tue finestre di picco in amore, lavoro e crescita. 7 giorni gratis.",
-  nl: "Professionele astrologie voor het moderne leven. Unfold leest je geboortehoroscoop en huidige transits om je piekvensters in liefde, werk en groei te onthullen. 7 dagen gratis.",
+  en: "Pro-level astrological timing for modern life. Favorable reads your natal chart and current transits to reveal your peak windows in love, work, and growth. 7-day free trial. The Co-Star alternative built for premium users.",
+  fr: "Astrologie pro pour la vie moderne. Favorable lit ton thème natal et tes transits actuels pour révéler tes pics énergétiques en amour, travail et créativité. 7 jours gratuits. L'alternative premium aux apps astro grand public.",
+  es: "Astrología profesional para la vida moderna. Favorable lee tu carta natal y tus tránsitos actuales para revelar tus ventanas de pico en amor, trabajo y crecimiento. 7 días gratis. La alternativa premium a las apps de astrología masivas.",
+  pt: "Astrologia profissional para a vida moderna. Favorable lê seu mapa natal e trânsitos atuais para revelar suas janelas de pico em amor, trabalho e crescimento. 7 dias grátis. A alternativa premium aos apps de astrologia populares.",
+  de: "Profi-Astrologie für das moderne Leben. Favorable liest dein Geburtshoroskop und aktuelle Transite, um deine Höhepunkt-Fenster in Liebe, Arbeit und Wachstum zu zeigen. 7 Tage gratis.",
+  it: "Astrologia professionale per la vita moderna. Favorable legge il tuo tema natale e i transiti attuali per rivelare le tue finestre di picco in amore, lavoro e crescita. 7 giorni gratis.",
+  nl: "Professionele astrologie voor het moderne leven. Favorable leest je geboortehoroscoop en huidige transits om je piekvensters in liefde, werk en groei te onthullen. 7 dagen gratis.",
   ja: "現代生活のためのプロレベル占星術。あなたのネイタルチャートと現在のトランジットを読み、愛・仕事・成長のピークウィンドウを明らかにします。7日間無料トライアル。",
-  zh: "为现代生活打造的专业占星。Unfold读取您的本命盘和当前过运,揭示您在爱情、工作和成长方面的高峰窗口。7天免费试用。",
-  ar: "علم الفلك الاحترافي للحياة العصرية. يقرأ Unfold خريطتك الفلكية والعبور الحالي لكشف نوافذ الذروة في الحب والعمل والنمو. تجربة مجانية لمدة 7 أيام.",
+  zh: "为现代生活打造的专业占星。Favorable读取您的本命盘和当前过运,揭示您在爱情、工作和成长方面的高峰窗口。7天免费试用。",
+  ar: "علم الفلك الاحترافي للحياة العصرية. يقرأ Favorable خريطتك الفلكية والعبور الحالي لكشف نوافذ الذروة في الحب والعمل والنمو. تجربة مجانية لمدة 7 أيام.",
 };
 
 const KEYWORDS: Record<string, string[]> = {
@@ -90,7 +90,7 @@ export function generateLandingMetadata(locale: string): Metadata {
       title,
       description,
       type: "website",
-      siteName: "Unfold",
+      siteName: "Favorable",
       url,
       locale: ogLocale,
       alternateLocale: alternateLocales,
@@ -99,9 +99,10 @@ export function generateLandingMetadata(locale: string): Metadata {
       card: "summary_large_image",
       title,
       description,
-      site: "@unfoldapp",
+    // twitter:site retire : @unfoldapp n est pas verifie comme etant le notre,
+    // et une balise pointant vers le compte d un tiers est pire que son absence.
     },
-    applicationName: "Unfold",
+    applicationName: "Favorable",
     category: "lifestyle",
     robots: {
       index: true,
