@@ -209,7 +209,7 @@ export function Footer({ locale }: FooterProps) {
               </li>
               <li>
                 <a
-                  href="mailto:hello@hi-def.be"
+                  href="mailto:cve@hi-def.be"
                   className="text-sm text-brand-11 transition-colors hover:text-white"
                 >
                   {l.contact}

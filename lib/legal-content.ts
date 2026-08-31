@@ -61,7 +61,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         heading: "5. Your Rights",
         paragraphs: [
           "You have the right to: access the personal data we hold about you, request correction of inaccurate data, request deletion of your data, export your data in a portable format, and withdraw consent at any time.",
-          "To exercise any of these rights, contact us at hello@hi-def.be.",
+          "To exercise any of these rights, contact us at cve@hi-def.be.",
         ],
       },
       {
@@ -92,7 +92,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
       {
         heading: "10. Contact",
         paragraphs: [
-          "If you have questions about this Privacy Policy, contact us at hello@hi-def.be.",
+          "If you have questions about this Privacy Policy, contact us at cve@hi-def.be.",
         ],
       },
     ],
@@ -137,7 +137,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         heading: "5. Vos droits",
         paragraphs: [
           "Vous avez le droit de : acc\u00e9der \u00e0 vos donn\u00e9es personnelles, demander leur correction, demander leur suppression, exporter vos donn\u00e9es et retirer votre consentement \u00e0 tout moment.",
-          "Pour exercer ces droits, contactez-nous \u00e0 hello@hi-def.be.",
+          "Pour exercer ces droits, contactez-nous \u00e0 cve@hi-def.be.",
         ],
       },
       {
@@ -161,7 +161,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
       {
         heading: "9. Contact",
         paragraphs: [
-          "Pour toute question, contactez-nous \u00e0 hello@hi-def.be.",
+          "Pour toute question, contactez-nous \u00e0 cve@hi-def.be.",
         ],
       },
     ],
@@ -206,7 +206,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         heading: "5. Tus derechos",
         paragraphs: [
           "Tienes derecho a: acceder a tus datos personales, solicitar su correcci\u00f3n, solicitar su eliminaci\u00f3n, exportar tus datos y retirar tu consentimiento en cualquier momento.",
-          "Para ejercer estos derechos, cont\u00e1ctanos en hello@hi-def.be.",
+          "Para ejercer estos derechos, cont\u00e1ctanos en cve@hi-def.be.",
         ],
       },
       {
@@ -230,7 +230,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
       {
         heading: "9. Contacto",
         paragraphs: [
-          "Para consultas, cont\u00e1ctanos en hello@hi-def.be.",
+          "Para consultas, cont\u00e1ctanos en cve@hi-def.be.",
         ],
       },
     ],
@@ -309,7 +309,7 @@ export const termsOfService: Record<string, LegalDocument> = {
       {
         heading: "10. Contact",
         paragraphs: [
-          "For questions about these Terms, contact us at hello@hi-def.be.",
+          "For questions about these Terms, contact us at cve@hi-def.be.",
         ],
       },
     ],
@@ -382,7 +382,7 @@ export const termsOfService: Record<string, LegalDocument> = {
       {
         heading: "10. Contact",
         paragraphs: [
-          "Pour toute question, contactez-nous \u00e0 hello@hi-def.be.",
+          "Pour toute question, contactez-nous \u00e0 cve@hi-def.be.",
         ],
       },
     ],
@@ -455,7 +455,7 @@ export const termsOfService: Record<string, LegalDocument> = {
       {
         heading: "10. Contacto",
         paragraphs: [
-          "Para consultas, cont\u00e1ctanos en hello@hi-def.be.",
+          "Para consultas, cont\u00e1ctanos en cve@hi-def.be.",
         ],
       },
     ],
