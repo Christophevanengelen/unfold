@@ -19,8 +19,21 @@ import { isNative } from "@/lib/platform";
 import { getDeviceId } from "@/lib/device-id";
 import { getApiBase } from "@/lib/api-client";
 
-/** Ce que le système répond, sans jamais rien demander. */
-export type EtatPermission = "jamais_demande" | "accorde" | "refuse" | "indisponible";
+/**
+ * Ce que le système répond, sans jamais rien demander.
+ *
+ * `indisponible` et `erreur` sont volontairement distincts. Le premier veut
+ * dire « nous ne sommes pas dans l app, cette fonction n existe pas ici » et
+ * justifie de ne rien afficher. Le second veut dire « nous sommes dans l app et
+ * quelque chose a casse » — et là, masquer la ligne fait passer une panne pour
+ * une absence de fonctionnalité. C est ce qui vient d arriver.
+ */
+export type EtatPermission =
+  | "jamais_demande"
+  | "accorde"
+  | "refuse"
+  | "erreur"
+  | "indisponible";
 
 const CLE_PROPOSE = "favorable_push_propose_le";
 
@@ -33,15 +46,26 @@ async function greffon() {
  * Lit l'état sans rien déclencher. À appeler au démarrage.
  */
 export async function etatPermission(): Promise<EtatPermission> {
+  // Hors de l app, il n y a rien a montrer : ce n est pas une panne.
   if (typeof window === "undefined" || !isNative()) return "indisponible";
   try {
     const { receive } = await (await greffon()).checkPermissions();
     if (receive === "granted") return "accorde";
     if (receive === "denied") return "refuse";
     return "jamais_demande";
-  } catch {
-    return "indisponible";
+  } catch (e) {
+    // Dans l app, un echec se dit. On garde le detail pour pouvoir le lire
+    // depuis l ecran plutot que d avoir a deviner a distance.
+    dernierEchec = e instanceof Error ? e.message : String(e);
+    return "erreur";
   }
+}
+
+let dernierEchec: string | null = null;
+
+/** Le detail du dernier echec, pour l affichage de secours. */
+export function detailEchec(): string | null {
+  return dernierEchec;
 }
 
 /**
@@ -57,8 +81,9 @@ export async function demanderPuisEnregistrer(): Promise<EtatPermission> {
     // requestPermissions demande, register obtient le jeton : deux appels.
     await p.register();
     return "accorde";
-  } catch {
-    return "indisponible";
+  } catch (e) {
+    dernierEchec = e instanceof Error ? e.message : String(e);
+    return "erreur";
   }
 }
 

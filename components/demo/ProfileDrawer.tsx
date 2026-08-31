@@ -15,7 +15,7 @@ import { clearBirthData, getBirthDataSync, birthHash } from "@/lib/birth-data";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
 import { getStreak } from "@/lib/streak";
-import { etatPermission, demanderPuisEnregistrer, lireCadence, reglerCadence, type EtatPermission } from "@/lib/push";
+import { etatPermission, demanderPuisEnregistrer, lireCadence, reglerCadence, detailEchec, type EtatPermission } from "@/lib/push";
 import type { Cadence } from "@/lib/push-planification";
 import { getDeviceId } from "@/lib/device-id";
 import { useBillingState } from "@/lib/premium-gate";
@@ -200,7 +200,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               type="button"
               disabled={permission === "accorde"}
               onClick={() => {
-                if (permission === "jamais_demande") {
+                // « erreur » reste cliquable : si l echec etait passager, la
+                // demande peut aboutir. Une ligne grisee sans explication ne
+                // laisserait aucune issue.
+                if (permission === "jamais_demande" || permission === "erreur") {
                   void demanderPuisEnregistrer().then(setPermission);
                 }
               }}
@@ -215,21 +218,29 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   ? t("profile.notif_active", locale)
                   : permission === "refuse"
                     ? t("profile.notif_reglages", locale)
-                    : ""}
+                    : permission === "erreur"
+                      // Volontairement brut : en test, savoir ce qui a casse
+                      // vaut mieux qu un message poli qui ne dit rien.
+                      ? (detailEchec() ?? "indisponible").slice(0, 40)
+                      : t("profile.notif_activer", locale)}
               </span>
             </button>
           )}
 
-          {permission === "accorde" && (
+          {permission !== "indisponible" && (
             <div className="px-3 pb-1 pt-2">
               <p className="mb-2 text-xs font-medium text-text-body-subtle">
                 {t("profile.notif_cadence", locale)}
               </p>
-              <div className="flex gap-1.5 rounded-xl bg-bg-secondary p-1">
+              <div
+                className="flex gap-1.5 rounded-xl bg-bg-secondary p-1"
+                style={{ opacity: permission === "accorde" ? 1 : 0.45 }}
+              >
                 {(["essentiel", "normal", "tout"] as const).map((c) => (
                   <button
                     key={c}
                     type="button"
+                    disabled={permission !== "accorde"}
                     onClick={() => {
                       setCadence(c);
                       void reglerCadence(c);

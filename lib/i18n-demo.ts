@@ -81,6 +81,7 @@ type Strings = {
     notif_active: string;
     notif_reglages: string;
     notif_cadence: string;
+    notif_activer: string;
     notif_essentiel: string;
     notif_normal: string;
     notif_tout: string;
@@ -177,6 +178,7 @@ const FR: Strings = {
     notif_active: "Activé",
     notif_reglages: "À réactiver dans les Réglages",
     notif_cadence: "Fréquence",
+    notif_activer: "Activer",
     notif_essentiel: "L'essentiel",
     notif_normal: "Équilibré",
     notif_tout: "Tout",
@@ -273,6 +275,7 @@ const EN: Strings = {
     notif_active: "On",
     notif_reglages: "Turn back on in Settings",
     notif_cadence: "Frequency",
+    notif_activer: "Turn on",
     notif_essentiel: "Essential only",
     notif_normal: "Balanced",
     notif_tout: "Everything",
@@ -369,6 +372,7 @@ const ES: Strings = {
     notif_active: "Activado",
     notif_reglages: "Reactivar en Ajustes",
     notif_cadence: "Frecuencia",
+    notif_activer: "Activar",
     notif_essentiel: "Lo esencial",
     notif_normal: "Equilibrado",
     notif_tout: "Todo",
@@ -465,6 +469,7 @@ const DE: Strings = {
     notif_active: "An",
     notif_reglages: "In den Einstellungen wieder aktivieren",
     notif_cadence: "Häufigkeit",
+    notif_activer: "Aktivieren",
     notif_essentiel: "Nur Wichtiges",
     notif_normal: "Ausgewogen",
     notif_tout: "Alles",
@@ -561,6 +566,7 @@ const IT: Strings = {
     notif_active: "Attivo",
     notif_reglages: "Riattiva nelle Impostazioni",
     notif_cadence: "Frequenza",
+    notif_activer: "Attiva",
     notif_essentiel: "L'essenziale",
     notif_normal: "Equilibrato",
     notif_tout: "Tutto",
@@ -657,6 +663,7 @@ const PT: Strings = {
     notif_active: "Ativado",
     notif_reglages: "Reativar nos Ajustes",
     notif_cadence: "Frequência",
+    notif_activer: "Ativar",
     notif_essentiel: "O essencial",
     notif_normal: "Equilibrado",
     notif_tout: "Tudo",
@@ -753,6 +760,7 @@ const NL: Strings = {
     notif_active: "Aan",
     notif_reglages: "Weer inschakelen in Instellingen",
     notif_cadence: "Frequentie",
+    notif_activer: "Inschakelen",
     notif_essentiel: "Alleen belangrijk",
     notif_normal: "Gebalanceerd",
     notif_tout: "Alles",
@@ -849,6 +857,7 @@ const JA: Strings = {
     notif_active: "オン",
     notif_reglages: "設定で再度オンにしてください",
     notif_cadence: "頻度",
+    notif_activer: "オンにする",
     notif_essentiel: "重要なものだけ",
     notif_normal: "標準",
     notif_tout: "すべて",
@@ -945,6 +954,7 @@ const ZH: Strings = {
     notif_active: "已开启",
     notif_reglages: "请在设置中重新开启",
     notif_cadence: "频率",
+    notif_activer: "开启",
     notif_essentiel: "仅重要内容",
     notif_normal: "均衡",
     notif_tout: "全部",
@@ -1041,6 +1051,7 @@ const AR: Strings = {
     notif_active: "مفعّل",
     notif_reglages: "أعد التفعيل من الإعدادات",
     notif_cadence: "التكرار",
+    notif_activer: "تفعيل",
     notif_essentiel: "الأهم فقط",
     notif_normal: "متوازن",
     notif_tout: "الكل",
