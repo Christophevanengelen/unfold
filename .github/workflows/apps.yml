@@ -151,11 +151,13 @@ jobs:
       - run: npx cap sync ios
         if: steps.verrou.outputs.pret == 'oui'
 
-      - name: Trousseau temporaire et certificat de distribution
+      - name: Trousseau temporaire et certificats
         if: steps.verrou.outputs.pret == 'oui'
         env:
           P12: ${{ secrets.APPLE_DIST_CERT_P12 }}
           P12_MDP: ${{ secrets.APPLE_DIST_CERT_PASSWORD }}
+          DEV_P12: ${{ secrets.APPLE_DEV_CERT_P12 }}
+          DEV_MDP: ${{ secrets.APPLE_DEV_CERT_PASSWORD }}
         run: |
           TROUSSEAU="$RUNNER_TEMP/signature.keychain-db"
           MDP="$(openssl rand -base64 24)"
@@ -165,6 +167,23 @@ jobs:
           printf '%s' "$P12" | base64 --decode > "$RUNNER_TEMP/dist.p12"
           security import "$RUNNER_TEMP/dist.p12" -k "$TROUSSEAU" -P "$P12_MDP" \
             -T /usr/bin/codesign -T /usr/bin/security -f pkcs12
+          # Le certificat de DEVELOPPEMENT compte autant que celui de
+          # distribution, et c est le detail qui a coute la soiree du 31 aout.
+          # xcodebuild archive signe l archive en developpement — c est l export
+          # qui la re-signe en distribution. Sur un runner neuf, sans trousseau,
+          # allowProvisioningUpdates fabriquait donc un certificat de
+          # developpement A CHAQUE PASSAGE. Apple en limite deux par compte : au
+          # onzieme, plus aucune archive ne passait.
+          #
+          # En lui en donnant un a reutiliser, le CI n en cree plus jamais.
+          if [ -n "$DEV_P12" ]; then
+            printf '%s' "$DEV_P12" | base64 --decode > "$RUNNER_TEMP/dev.p12"
+            security import "$RUNNER_TEMP/dev.p12" -k "$TROUSSEAU" -P "$DEV_MDP" \
+              -T /usr/bin/codesign -T /usr/bin/security -f pkcs12
+            rm -f "$RUNNER_TEMP/dev.p12"
+          else
+            echo "::warning title=Certificat de developpement absent::le CI va en fabriquer un, et le compte a une limite de deux."
+          fi
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MDP" "$TROUSSEAU" > /dev/null
           security list-keychains -d user -s "$TROUSSEAU" $(security list-keychains -d user | tr -d '"')
           rm -f "$RUNNER_TEMP/dist.p12"
