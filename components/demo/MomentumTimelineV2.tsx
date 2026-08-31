@@ -752,7 +752,7 @@ function OverviewView({
             exit={{ opacity: 0, scale: 0.6 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="absolute left-1/2 -translate-x-1/2 z-30 flex h-8 items-center justify-center rounded-full px-3"
-            style={{ ...PILL_STYLE, bottom: 68 }}
+            style={{ ...PILL_STYLE, bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}
             whileTap={{ scale: 0.95 }}
           >
             <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
@@ -761,7 +761,7 @@ function OverviewView({
       </AnimatePresence>
 
       {/* Up/Down — right side, stacked vertically, thumb zone */}
-      <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: 68 }}>
+      <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}>
         <motion.button
           type="button"
           onClick={() => jumpByYear("future")}
@@ -939,14 +939,14 @@ function ListView({
           type="button"
           onClick={scrollToNow}
           className="absolute left-1/2 -translate-x-1/2 z-30 flex h-8 items-center justify-center rounded-full px-3"
-          style={{ ...PILL_STYLE, bottom: 68 }}
+          style={{ ...PILL_STYLE, bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}
         >
           <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
         </button>
       )}
 
       {/* Up/Down — absolute right, jump by year like overview */}
-      <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: 68 }}>
+      <div className="absolute right-3 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)" }}>
         <button type="button" onClick={() => jumpByYear("future")} className="flex h-8 w-8 items-center justify-center rounded-full" style={PILL_STYLE}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
@@ -1282,8 +1282,12 @@ export function MomentumTimelineV2() {
         )}
       </AnimatePresence>
 
-      {/* ── View toggle — top, below header — hidden during welcome/guide ── */}
-      {!showWelcome && !showGuide && <div className="absolute left-0 right-0 z-20 flex items-center justify-center" style={{ top: LAYOUT.toggleTop, paddingInline: S.px }}>
+      {/* ── Bascule timeline / liste ──
+           Elle etait en haut au centre : hors de portee du pouce sur un grand
+           telephone, il fallait la deuxieme main. Elle descend juste au-dessus
+           de la barre d onglets, dans la zone que le pouce atteint sans effort.
+           Masquee pendant l accueil et le guide. ── */}
+      {!showWelcome && !showGuide && <div className="absolute left-0 right-0 z-20 flex items-center justify-center" style={{ bottom: "calc(56px + var(--safe-bottom, 0px) + 12px)", paddingInline: S.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}
@@ -1293,12 +1297,14 @@ export function MomentumTimelineV2() {
               key={mode}
               type="button"
               onClick={() => setViewMode(mode)}
-              className="relative flex items-center justify-center rounded-full p-1.5 transition-all duration-200"
+              className="relative flex items-center justify-center rounded-full transition-all duration-200"
               style={{
                 color: viewMode === mode ? "#fff" : "var(--text-disabled)",
                 background: viewMode === mode ? "var(--accent-purple)" : "transparent",
-                width: 28,
-                height: 28,
+                // 44 points, le minimum qu Apple demande pour une cible tactile.
+                // On etait a 28.
+                width: 44,
+                height: 44,
               }}
               aria-label={mode === "overview" ? "Timeline view" : "List view"}
             >
