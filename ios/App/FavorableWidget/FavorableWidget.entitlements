@@ -2,11 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>aps-environment</key>
-	<string>development</string>
-	<!-- Le meme groupe que FavorableWidget.entitlements. Les deux cibles
-	     doivent le declarer a l identique : sinon UserDefaults(suiteName:)
-	     rend nil, en silence, des deux cotes. -->
+	<!-- Le groupe doit etre declare a l identique dans les droits de l app.
+	     Sans cela, UserDefaults(suiteName:) rend nil sans aucun message. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.day.favorable.app</string>
