@@ -17,10 +17,15 @@ export function UnfoldLogo({ size = 20, className = "" }: UnfoldLogoProps) {
     "M135.154 107.212L91.0666 151.889L91.0245 151.931C91.0245 151.931 91.0069 151.948 90.9964 151.959L90.9789 151.976C90.9789 151.976 90.9684 151.983 90.9649 151.99C88.4369 154.445 84.3941 154.413 81.9047 151.892L80.8984 150.872L37.8169 107.215L68.0795 60.3996L82.1536 38.6292C84.1838 35.4875 88.7805 35.4875 90.8141 38.6292L135.154 107.215V107.212Z",
   ];
 
-  /* Dark mode: pastel on dark bg */
-  const darkFills = ["#C1A7FF", "white", "white", "#DACAFF", "#DACAFF", "white"];
-  /* Light mode: deeper purple on light bg */
-  const lightFills = ["#8676BE", "#A094CE", "#A094CE", "#BEB7DD", "#BEB7DD", "#A094CE"];
+  /* Les deux palettes portaient un nom trompeur et etaient appliquees a
+     l envers : les pastels, faits pour un fond sombre, servaient au theme
+     clair, ou la marque disparaissait sur le fond presque blanc. Renommees
+     d apres le FOND qu elles habillent, pour que l erreur ne revienne pas.
+     Constate sur iPhone le 31 aout 2026. */
+  /* Sur fond sombre : pastels et blanc */
+  const surFondSombre = ["#C1A7FF", "white", "white", "#DACAFF", "#DACAFF", "white"];
+  /* Sur fond clair : violets plus profonds */
+  const surFondClair = ["#8676BE", "#A094CE", "#A094CE", "#BEB7DD", "#BEB7DD", "#A094CE"];
 
   const svgProps = {
     width: size,
@@ -32,16 +37,16 @@ export function UnfoldLogo({ size = 20, className = "" }: UnfoldLogoProps) {
 
   return (
     <>
-      {/* Light mode */}
+      {/* Theme clair */}
       <svg {...svgProps} className={`block dark:hidden ${className}`}>
         {paths.map((d, i) => (
-          <path key={i} d={d} fill={darkFills[i]} />
+          <path key={i} d={d} fill={surFondClair[i]} />
         ))}
       </svg>
-      {/* Dark mode */}
+      {/* Theme sombre */}
       <svg {...svgProps} className={`hidden dark:block ${className}`}>
         {paths.map((d, i) => (
-          <path key={i} d={d} fill={lightFills[i]} />
+          <path key={i} d={d} fill={surFondSombre[i]} />
         ))}
       </svg>
     </>
