@@ -68,9 +68,23 @@ export function StepInput({
   const placeRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Only nickname + date of birth are required — time and place sharpen the signal but are optional.
-  // StepPreparing defaults: time → "12:00", place → "Brussels" when not provided.
-  const isValid = formData.nickname.trim() !== "" && formData.dob !== "";
+  // Les quatre champs sont requis, et ce n est pas un exces de zele.
+  //
+  // Marie-Ange, qui a ecrit le moteur, l a dit noir sur blanc : sans l heure et
+  // le lieu exacts, le calcul ne tourne pas correctement. L Ascendant et le Lot
+  // de l Esprit — sur lesquels repose tout le zodiacal releasing — se deplacent
+  // de plusieurs signes selon l heure de naissance. Une timeline calculee sur
+  // une heure approximative n est pas une timeline approximative : c est la
+  // timeline de quelqu un d autre.
+  //
+  // Le code substituait auparavant « 12:00 » et « Brussels » en silence. La
+  // personne recevait alors un resultat qui n etait pas le sien, sans que rien
+  // ne l en avertisse.
+  const isValid =
+    formData.nickname.trim() !== "" &&
+    formData.dob !== "" &&
+    formData.timeOfBirth !== "" &&
+    formData.placeOfBirth.trim() !== "";
 
   const handleChange = (key: keyof OnboardingFormData, value: string) => {
     if (key === "placeOfBirth") {

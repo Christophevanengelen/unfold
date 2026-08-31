@@ -238,14 +238,29 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
       const coords = resolved
         ? { lat: resolved.lat, lng: resolved.lng, tz: resolved.timezone }
         : resolveCity(formData?.placeOfBirth || "Brussels");
+      // Aucune valeur de repli sur les donnees de naissance.
+      //
+      // Ce bloc inventait une date (15 janvier 1990), une heure (midi) et un
+      // lieu (Bruxelles) quand ils manquaient. Quelqu un qui serait arrive ici
+      // sans les avoir saisis aurait reçu le theme d une personne fictive,
+      // presente comme le sien, sans le moindre avertissement.
+      //
+      // L ecran precedent les exige desormais tous les quatre. Si l on arrive
+      // ici sans eux, c est un defaut de navigation : on renvoie la personne
+      // les saisir plutot que de fabriquer une reponse.
+      if (!formData?.dob || !formData?.timeOfBirth || !formData?.placeOfBirth) {
+        router.replace("/app/onboarding");
+        return;
+      }
+
       const birthData: BirthData = {
-        nickname: formData?.nickname || "You",
-        birthDate: formData?.dob || "1990-01-15",
-        birthTime: formData?.timeOfBirth || "12:00",
+        nickname: formData.nickname || "You",
+        birthDate: formData.dob,
+        birthTime: formData.timeOfBirth,
         latitude: coords.lat,
         longitude: coords.lng,
         timezone: coords.tz,
-        placeOfBirth: formData?.placeOfBirth || "Brussels",
+        placeOfBirth: formData.placeOfBirth,
       };
 
       saveBirthData(birthData);

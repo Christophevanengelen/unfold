@@ -1,3 +1,4 @@
+import { getApiBase } from "@/lib/api-client";
 /**
  * Geocoding client — wraps our /api/geocode proxy (Open-Meteo).
  * Returns city name + lat/lng/timezone in one call.
@@ -44,7 +45,7 @@ export async function searchCities(query: string): Promise<GeoResult[]> {
   if (!query || query.trim().length < 2) return [];
   try {
     const res = await fetch(
-      `/api/geocode?q=${encodeURIComponent(query.trim())}`,
+      `${getApiBase()}/api/geocode?q=${encodeURIComponent(query.trim())}`,
     );
     if (!res.ok) return [];
     const data = (await res.json()) as { results?: OpenMeteoResult[] };
