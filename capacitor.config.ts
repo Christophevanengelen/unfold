@@ -48,6 +48,12 @@ const config: CapacitorConfig = {
       resizeOnFullScreen: true,
     },
     Haptics: {},
+    PushNotifications: {
+      // Sans cette liste, une notification recue pendant que l app est au
+      // premier plan n apparait pas du tout : le greffon renvoie une liste
+      // vide par defaut. Verifie dans les sources de la version 8.1.2.
+      presentationOptions: ["badge", "sound", "alert"],
+    },
   },
 };
 
