@@ -37,6 +37,23 @@ jobs:
           NEXT_PUBLIC_API_BASE: https://favorable.day
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Poser google-services.json
+        env:
+          GS: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          # Le depot est public : ce fichier n y est pas commite, il arrive par
+          # un secret. Il ne contient pas de cle serveur, mais il expose le
+          # numero de projet et la cle d API cliente, inutile de les afficher.
+          # Sans lui, android/app/build.gradle n applique pas le greffon
+          # google-services et l APK sort simplement sans notifications :
+          # la construction ne casse pas.
+          if [ -n "$GS" ]; then
+            printf '%s' "$GS" > android/app/google-services.json
+            echo "google-services.json pose"
+          else
+            echo "::notice title=Notifications ignorees::pas de secret GOOGLE_SERVICES_JSON, l APK sortira sans push."
+          fi
+
       - run: npx cap sync android
       - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4

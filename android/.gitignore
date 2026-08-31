@@ -62,7 +62,9 @@ captures/
 .cxx/
 
 # Google Services (e.g. APIs or Firebase)
-# google-services.json
+# Le depot est public. Ce fichier arrive par un secret GitHub au moment de la
+# construction (voir .github/workflows/apps.yml) et ne doit jamais y entrer.
+google-services.json
 
 # Freeline
 freeline.py
