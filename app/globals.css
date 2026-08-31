@@ -627,3 +627,27 @@ main:has(> .landing-immersive) + footer {
   --text-body-subtle: #A8A1C4;
   border-top-color: rgba(255, 255, 255, 0.06);
 }
+
+
+/* ── Reduire les animations ────────────────────────────────────────────────
+   Le pendant CSS de components/MouvementProvider.tsx, qui ne couvre que les
+   animations de motion/react. Ici on neutralise les transitions et animations
+   ecrites en CSS.
+
+   On ne met pas les durees a zero : une valeur infime plutot que nulle laisse
+   les evenements de fin de transition se declencher, dont dependent certains
+   composants pour savoir qu une animation est terminee. A zero, ils
+   n arriveraient jamais et des elements resteraient bloques.
+
+   Le defilement doux est neutralise aussi : c est l un des mouvements qui
+   provoque le plus de gene. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
