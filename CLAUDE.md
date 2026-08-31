@@ -249,3 +249,20 @@ erreurs sans cliquer.
 **Ne fonctionne que depuis une session locale sur le Mac.** Depuis une session
 distante dans le nuage, le serveur ne remonte pas jusqu a l agent : verifie deux
 fois le 31 aout 2026, ne pas y repasser du temps.
+
+## Les skills de ce depot
+
+Trois skills vivent dans `.claude/skills/`. Ils ne repetent pas ce que le code
+dit deja : ils gardent ce qui a coute des heures a decouvrir, et qu on ne peut
+pas deviner en lisant les fichiers.
+
+- **favorable-livrer** — envoyer sur TestFlight, suivre la revue beta, gerer
+  testeurs et certificats. L envoi ne part QUE sur `[testflight]` dans le message
+  de commit ou depuis l onglet Actions : Apple plafonne les envois par jour.
+- **favorable-base** — migrations Supabase. `SUPABASE_DB_URL` dans `.env.local`
+  donne un acces psql direct : ne jamais faire coller du SQL a Christophe.
+- **favorable-natif** — les pieges de l app Capacitor : routes a barre finale,
+  navigation par le routeur, greffons a synchroniser, et la panne muette qui est
+  le defaut recurrent de ce depot.
+
+Les lire avant de toucher a la livraison, a la base ou a l app.
