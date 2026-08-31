@@ -46,6 +46,12 @@ générique. Bonne nouvelle. Mais l'inspection en a sorti quatre autres.
 qui engage juridiquement désigne une entité qui n'est plus le nom du produit.
 C'est plus gênant qu'une incohérence de marque.
 
+**b′. Adresses de contact — fait le 31/08.** Les dix-sept mentions pointent
+désormais vers `hello@hi-def.be`. Le domaine a bien un MX chez Infomaniak,
+contrairement à `unfold.app` qui n'en avait aucun. **Reste à vérifier que
+l'alias `hello@` existe dans Infomaniak et redirige vers la boîte principale** —
+c'est la dernière chose qui sépare ce contact d'un contact mort.
+
 **b. Aucune identité du vendeur.** Ni raison sociale, ni adresse, ni numéro
 d'entreprise, ni TVA. En Europe, les mentions légales sont obligatoires pour un
 site commercial. Se règle en même temps que le point 1 (statut DSA), avec les

@@ -16,7 +16,7 @@
 /**
  * ⚠️ Cette boite doit EXISTER avant la soumission a Apple.
  *
- * Les anciens textes pointaient vers privacy@unfold.app et legal@unfold.app —
+ * Les anciens textes pointaient vers hello@hi-def.be et hello@hi-def.be —
  * un domaine qui ne nous appartient pas et qui n a aucun enregistrement MX.
  * Toute demande RGPD partait donc dans le vide. Ne pas reproduire l erreur :
  * creer la boite d abord, verifier qu elle reçoit, et seulement ensuite

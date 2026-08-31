@@ -61,7 +61,7 @@ Subscription details:
 
 Privacy Policy: https://unfold-nine.vercel.app/en/privacy
 Terms of Service: https://unfold-nine.vercel.app/en/terms
-Support: support@unfold.app
+Support: hello@hi-def.be
 ```
 
 **Keywords (100 chars total, comma-separated, no spaces):**
@@ -127,7 +127,7 @@ Détails abonnement :
 
 Politique de confidentialité : https://unfold-nine.vercel.app/fr/privacy
 CGU : https://unfold-nine.vercel.app/fr/terms
-Support : support@unfold.app
+Support : hello@hi-def.be
 ```
 
 **Keywords:**
@@ -189,7 +189,7 @@ Detalles de suscripción:
 
 Política de privacidad: https://unfold-nine.vercel.app/es/privacy
 Términos: https://unfold-nine.vercel.app/es/terms
-Soporte: support@unfold.app
+Soporte: hello@hi-def.be
 ```
 
 **Keywords:**
@@ -251,7 +251,7 @@ Detalhes da assinatura:
 
 Política de privacidade: https://unfold-nine.vercel.app/pt/privacy
 Termos: https://unfold-nine.vercel.app/pt/terms
-Suporte: support@unfold.app
+Suporte: hello@hi-def.be
 ```
 
 **Keywords:**
@@ -318,7 +318,7 @@ App Preview Video (optional, 15-30 sec): Worth doing for organic ranking. Show t
 
 ```
 Demo birth data (all features unlocked for review):
-Email: appstore-review@unfold.app
+Email: appstore-hello@hi-def.be
 Password: (no password — magic-link auth; pre-create account in Supabase)
 
 Or use any new email — the magic-link flow works without manual review.

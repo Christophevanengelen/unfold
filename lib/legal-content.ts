@@ -21,7 +21,7 @@ export type LegalDocument = {
 export const privacyPolicy: Record<string, LegalDocument> = {
   en: {
     title: "Privacy Policy",
-    lastUpdated: "Last updated: March 21, 2026",
+    lastUpdated: "Last updated: August 31, 2026",
     intro: [
       "Unfold (\"we\", \"our\", \"us\") respects your privacy. This Privacy Policy explains how we collect, use, and protect your personal information when you use our mobile application and website (collectively, the \"Service\").",
       "By using the Service, you agree to the collection and use of information in accordance with this policy.",
@@ -61,7 +61,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         heading: "5. Your Rights",
         paragraphs: [
           "You have the right to: access the personal data we hold about you, request correction of inaccurate data, request deletion of your data, export your data in a portable format, and withdraw consent at any time.",
-          "To exercise any of these rights, contact us at privacy@unfold.app.",
+          "To exercise any of these rights, contact us at hello@hi-def.be.",
         ],
       },
       {
@@ -92,7 +92,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
       {
         heading: "10. Contact",
         paragraphs: [
-          "If you have questions about this Privacy Policy, contact us at privacy@unfold.app.",
+          "If you have questions about this Privacy Policy, contact us at hello@hi-def.be.",
         ],
       },
     ],
@@ -100,7 +100,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
 
   fr: {
     title: "Politique de confidentialit\u00e9",
-    lastUpdated: "Derni\u00e8re mise \u00e0 jour : 21 mars 2026",
+    lastUpdated: "Derni\u00e8re mise \u00e0 jour : 31 ao\u00fbt 2026",
     intro: [
       "Unfold (\u00ab nous \u00bb, \u00ab notre \u00bb) respecte votre vie priv\u00e9e. Cette Politique de confidentialit\u00e9 explique comment nous collectons, utilisons et prot\u00e9geons vos informations personnelles lorsque vous utilisez notre application mobile et notre site web (collectivement, le \u00ab Service \u00bb).",
       "En utilisant le Service, vous acceptez la collecte et l\u2019utilisation des informations conform\u00e9ment \u00e0 cette politique.",
@@ -137,7 +137,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         heading: "5. Vos droits",
         paragraphs: [
           "Vous avez le droit de : acc\u00e9der \u00e0 vos donn\u00e9es personnelles, demander leur correction, demander leur suppression, exporter vos donn\u00e9es et retirer votre consentement \u00e0 tout moment.",
-          "Pour exercer ces droits, contactez-nous \u00e0 privacy@unfold.app.",
+          "Pour exercer ces droits, contactez-nous \u00e0 hello@hi-def.be.",
         ],
       },
       {
@@ -161,7 +161,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
       {
         heading: "9. Contact",
         paragraphs: [
-          "Pour toute question, contactez-nous \u00e0 privacy@unfold.app.",
+          "Pour toute question, contactez-nous \u00e0 hello@hi-def.be.",
         ],
       },
     ],
@@ -169,7 +169,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
 
   es: {
     title: "Pol\u00edtica de Privacidad",
-    lastUpdated: "\u00daltima actualizaci\u00f3n: 21 de marzo de 2026",
+    lastUpdated: "\u00daltima actualizaci\u00f3n: 31 de agosto de 2026",
     intro: [
       "Unfold (\"nosotros\", \"nuestro\") respeta tu privacidad. Esta Pol\u00edtica de Privacidad explica c\u00f3mo recopilamos, usamos y protegemos tu informaci\u00f3n personal cuando utilizas nuestra aplicaci\u00f3n m\u00f3vil y sitio web (colectivamente, el \"Servicio\").",
       "Al usar el Servicio, aceptas la recopilaci\u00f3n y el uso de informaci\u00f3n de acuerdo con esta pol\u00edtica.",
@@ -206,7 +206,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         heading: "5. Tus derechos",
         paragraphs: [
           "Tienes derecho a: acceder a tus datos personales, solicitar su correcci\u00f3n, solicitar su eliminaci\u00f3n, exportar tus datos y retirar tu consentimiento en cualquier momento.",
-          "Para ejercer estos derechos, cont\u00e1ctanos en privacy@unfold.app.",
+          "Para ejercer estos derechos, cont\u00e1ctanos en hello@hi-def.be.",
         ],
       },
       {
@@ -230,7 +230,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
       {
         heading: "9. Contacto",
         paragraphs: [
-          "Para consultas, cont\u00e1ctanos en privacy@unfold.app.",
+          "Para consultas, cont\u00e1ctanos en hello@hi-def.be.",
         ],
       },
     ],
@@ -242,7 +242,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
 export const termsOfService: Record<string, LegalDocument> = {
   en: {
     title: "Terms of Service",
-    lastUpdated: "Last updated: March 21, 2026",
+    lastUpdated: "Last updated: August 31, 2026",
     intro: [
       "Welcome to Unfold. These Terms of Service (\"Terms\") govern your use of the Unfold mobile application and website (the \"Service\"). By using the Service, you agree to these Terms.",
     ],
@@ -309,7 +309,7 @@ export const termsOfService: Record<string, LegalDocument> = {
       {
         heading: "10. Contact",
         paragraphs: [
-          "For questions about these Terms, contact us at legal@unfold.app.",
+          "For questions about these Terms, contact us at hello@hi-def.be.",
         ],
       },
     ],
@@ -317,7 +317,7 @@ export const termsOfService: Record<string, LegalDocument> = {
 
   fr: {
     title: "Conditions d\u2019utilisation",
-    lastUpdated: "Derni\u00e8re mise \u00e0 jour : 21 mars 2026",
+    lastUpdated: "Derni\u00e8re mise \u00e0 jour : 31 ao\u00fbt 2026",
     intro: [
       "Bienvenue sur Unfold. Ces Conditions d\u2019utilisation (\u00ab Conditions \u00bb) r\u00e9gissent votre utilisation de l\u2019application mobile et du site web Unfold (le \u00ab Service \u00bb). En utilisant le Service, vous acceptez ces Conditions.",
     ],
@@ -382,7 +382,7 @@ export const termsOfService: Record<string, LegalDocument> = {
       {
         heading: "10. Contact",
         paragraphs: [
-          "Pour toute question, contactez-nous \u00e0 legal@unfold.app.",
+          "Pour toute question, contactez-nous \u00e0 hello@hi-def.be.",
         ],
       },
     ],
@@ -390,7 +390,7 @@ export const termsOfService: Record<string, LegalDocument> = {
 
   es: {
     title: "T\u00e9rminos de Servicio",
-    lastUpdated: "\u00daltima actualizaci\u00f3n: 21 de marzo de 2026",
+    lastUpdated: "\u00daltima actualizaci\u00f3n: 31 de agosto de 2026",
     intro: [
       "Bienvenido a Unfold. Estos T\u00e9rminos de Servicio (\"T\u00e9rminos\") rigen el uso de la aplicaci\u00f3n m\u00f3vil y el sitio web de Unfold (el \"Servicio\"). Al usar el Servicio, aceptas estos T\u00e9rminos.",
     ],
@@ -455,7 +455,7 @@ export const termsOfService: Record<string, LegalDocument> = {
       {
         heading: "10. Contacto",
         paragraphs: [
-          "Para consultas, cont\u00e1ctanos en legal@unfold.app.",
+          "Para consultas, cont\u00e1ctanos en hello@hi-def.be.",
         ],
       },
     ],
