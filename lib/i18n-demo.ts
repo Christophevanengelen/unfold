@@ -106,6 +106,7 @@ type Strings = {
   nav: {
     timeline: string;
     match: string;
+    profile: string;
   };
   common: {
     cancel: string;
@@ -190,6 +191,7 @@ const FR: Strings = {
   nav: {
     timeline: "Timeline",
     match: "Match",
+    profile: "Profil",
   },
   common: {
     cancel: "Annuler",
@@ -274,6 +276,7 @@ const EN: Strings = {
   nav: {
     timeline: "Timeline",
     match: "Match",
+    profile: "Profile",
   },
   common: {
     cancel: "Cancel",
@@ -358,6 +361,7 @@ const ES: Strings = {
   nav: {
     timeline: "Línea de tiempo",
     match: "Match",
+    profile: "Perfil",
   },
   common: {
     cancel: "Cancelar",
@@ -442,6 +446,7 @@ const DE: Strings = {
   nav: {
     timeline: "Zeitleiste",
     match: "Match",
+    profile: "Profil",
   },
   common: {
     cancel: "Abbrechen",
@@ -526,6 +531,7 @@ const IT: Strings = {
   nav: {
     timeline: "Timeline",
     match: "Match",
+    profile: "Profilo",
   },
   common: {
     cancel: "Annulla",
@@ -610,6 +616,7 @@ const PT: Strings = {
   nav: {
     timeline: "Linha do tempo",
     match: "Match",
+    profile: "Perfil",
   },
   common: {
     cancel: "Cancelar",
@@ -694,6 +701,7 @@ const NL: Strings = {
   nav: {
     timeline: "Tijdlijn",
     match: "Match",
+    profile: "Profiel",
   },
   common: {
     cancel: "Annuleren",
@@ -778,6 +786,7 @@ const JA: Strings = {
   nav: {
     timeline: "タイムライン",
     match: "マッチ",
+    profile: "プロフィール",
   },
   common: {
     cancel: "キャンセル",
@@ -862,6 +871,7 @@ const ZH: Strings = {
   nav: {
     timeline: "时间线",
     match: "匹配",
+    profile: "个人资料",
   },
   common: {
     cancel: "取消",
@@ -946,6 +956,7 @@ const AR: Strings = {
   nav: {
     timeline: "الجدول الزمني",
     match: "مطابقة",
+    profile: "الملف الشخصي",
   },
   common: {
     cancel: "إلغاء",

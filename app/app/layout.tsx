@@ -289,15 +289,21 @@ export default function DemoLayout({
             style={
               !isFullBleed
                 ? { paddingTop: "var(--safe-top)", paddingBottom: "var(--safe-bottom)" }
-                : undefined
+                : isNative
+                  // Pleine largeur, mais jamais sous l ile dynamique.
+                  ? { paddingTop: "var(--safe-top)" }
+                  : undefined
             }
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
           </div>
         </PremiumTeaserContext.Provider>
 
-        {/* Status bar — absolute overlay so content scrolls behind */}
-        {!hideNav && (
+        {/* Barre du haut : maquette web uniquement. En natif elle doublait la
+            barre du systeme sans rien apporter (un logo, et le profil qui est
+            desormais un onglet). Le compteur de serie et la pastille d essai
+            attendent une nouvelle place : voir le registre du chantier. */}
+        {!hideNav && !isNative && (
           <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 pb-2" style={{
             // La barre se posait sous l ile dynamique. Elle commence maintenant
             // sous la zone de securite, comme le veut Apple.
@@ -342,7 +348,10 @@ export default function DemoLayout({
         {/* Bottom nav — absolute overlay so content scrolls behind */}
         {!hideNav && (
           <div className="absolute bottom-0 left-0 right-0 z-30">
-            <BottomNav />
+            <BottomNav
+              onProfile={() => setDrawerOpen(true)}
+              profileActive={drawerOpen}
+            />
           </div>
         )}
 
