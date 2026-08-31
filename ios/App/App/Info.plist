@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Unfold</string>
+        <string>Favorable</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -50,11 +50,11 @@
 		</dict>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Unfold uses your camera to personalize your profile photo.</string>
+	<string>Favorable uses your camera to personalize your profile photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Unfold uses your photo library to personalize your profile photo.</string>
+	<string>Favorable uses your photo library to personalize your profile photo.</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>Unfold may use anonymous usage data to improve your experience.</string>
+	<string>Favorable may use anonymous usage data to improve your experience.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

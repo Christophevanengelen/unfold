@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "day.favorable.app",
-  appName: "Unfold",
+  appName: "Favorable",
   // L app embarque son propre code. Rien n est charge a distance au demarrage :
   // c est ce qu exigent les regles 2.5.2 et 4.2 de l App Store. Les donnees, elles,
   // viennent des API comme dans n importe quelle app (voir lib/api-client.ts).
