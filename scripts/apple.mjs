@@ -21,8 +21,15 @@
 import { createSign, createPrivateKey } from "node:crypto";
 import { execFileSync } from "node:child_process";
 
-const SERVICE = "Favorable - cle App Store Connect (envoi TestFlight)";
-const KEY_ID = "NXU52UQRN8";
+// Clef dediee au suivi, role App Manager : elle lit les builds et les
+// certificats, mais ne touche ni aux finances ni aux utilisateurs. La clef
+// d envoi du CI, elle, est Admin et vit dans les secrets GitHub — on ne s en
+// sert pas ici.
+const SERVICE = process.env.APPLE_KEY_SERVICE ?? "Favorable - cle API App Store Connect (suivi)";
+const KEY_ID = process.env.APPLE_KEY_ID ?? "CQ2G2DGBXM";
+const ISSUER_DEFAUT = "e5b862d8-37cd-432e-93db-564a94fb08c2";
+/** Favorable. Apple exige un filtre d application pour trier par version. */
+const APP = process.env.APPLE_APP_ID ?? "6807001088";
 const BASE = "https://api.appstoreconnect.apple.com/v1";
 
 function clefDepuisTrousseau() {
@@ -81,7 +88,7 @@ async function appel(issuer, chemin, options = {}) {
 }
 
 const [commande, ...reste] = process.argv.slice(2);
-const issuer = process.env.APPLE_ISSUER_ID ?? reste.find((a) => a.includes("-"));
+const issuer = process.env.APPLE_ISSUER_ID ?? reste.find((a) => a.includes("-")) ?? ISSUER_DEFAUT;
 
 if (!issuer) {
   console.error("Il manque l Issuer ID. APPLE_ISSUER_ID=... ou en argument.");
@@ -117,8 +124,42 @@ try {
     const id = reste.find((a) => !a.includes("-") || a.length < 30) ?? reste[0];
     await appel(issuer, `/certificates/${id}`, { method: "DELETE" });
     console.log(`  certificat ${id} revoque`);
+  } else if (commande === "revue") {
+    // L etat qui compte est externalBuildState, porte par buildBetaDetails :
+    // il dit ou en est la revue beta. La relation betaAppReviewSubmission, elle,
+    // ne remonte pas dans une liste de builds.
+    const r = await appel(issuer,
+      `/builds?limit=8&sort=-version&filter[app]=${APP}` +
+      "&include=buildBetaDetail" +
+      "&fields[builds]=version,processingState,buildBetaDetail" +
+      "&fields[buildBetaDetails]=externalBuildState,internalBuildState");
+    const details = Object.fromEntries(
+      (r.included ?? [])
+        .filter((i) => i.type === "buildBetaDetails")
+        .map((i) => [i.id, i.attributes]),
+    );
+    const lisible = {
+      PROCESSING: "en traitement",
+      READY_FOR_BETA_TESTING: "TESTABLE",
+      IN_BETA_TESTING: "EN TEST",
+      WAITING_FOR_BETA_REVIEW: "en attente de revue",
+      IN_BETA_REVIEW: "EN COURS DE REVUE",
+      BETA_REJECTED: "REFUSEE",
+      EXPIRED: "expiree",
+      READY_FOR_BETA_SUBMISSION: "pas soumise",
+      PROCESSING_EXCEPTION: "erreur de traitement",
+    };
+    console.log("\n  build   interne              externe");
+    for (const b of r.data) {
+      const lien = b.relationships?.buildBetaDetail?.data;
+      const d = lien ? details[lien.id] : null;
+      const int = lisible[d?.internalBuildState] ?? d?.internalBuildState ?? "?";
+      const ext = lisible[d?.externalBuildState] ?? d?.externalBuildState ?? "?";
+      console.log(`  ${String(b.attributes.version).padStart(5)}   ${int.padEnd(20)} ${ext}`);
+    }
+    console.log("");
   } else {
-    console.log("Commandes : certificats | profils | identifiants | revoquer <id>");
+    console.log("Commandes : revue | certificats | profils | identifiants | revoquer <id>");
   }
 } catch (e) {
   console.error(`\n${e.message}\n`);
