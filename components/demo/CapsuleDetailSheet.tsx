@@ -329,7 +329,14 @@ export function CapsuleDetailSheet({
         <div className="h-1 w-10 rounded-full" style={{ background: "var(--border-base)" }} />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-20">
+      {/* 80 px en dur pour degager la barre du bas : elle en fait 90 sur un
+          iPhone recent (56 plus la zone de securite), donc la derniere ligne
+          passait dessous. La feuille recouvre la barre, il suffit donc de
+          degager la barre d accueil, et de le faire avec la vraie valeur. */}
+      <div
+        className="flex-1 overflow-y-auto px-5"
+        style={{ paddingBottom: "calc(24px + var(--safe-bottom, 0px))" }}
+      >
 
         {/* ── Section 1: Context Banner ── */}
         <div
