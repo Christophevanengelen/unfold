@@ -104,7 +104,23 @@ jobs:
   ios-testflight:
     name: iOS vers TestFlight
     runs-on: macos-15
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    # L envoi ne part plus a chaque commit.
+    #
+    # Apple plafonne les envois par jour et par application. Le 31 aout 2026, ce
+    # plafond a ete atteint en une soiree : chaque correction poussee declenchait
+    # un envoi, y compris celles qui ne changeaient rien pour un testeur — un
+    # script de verification, un outil de terminal, un commentaire. Vingt-deux
+    # builds en quelques heures, et plus aucun envoi possible pendant vingt-quatre
+    # heures, y compris pour la correction qui comptait.
+    #
+    # On envoie desormais quand on decide d envoyer : soit a la main depuis
+    # l onglet Actions, soit en ecrivant [testflight] dans le message de commit.
+    # Le reste du CI, lui, tourne toujours a chaque commit : on veut savoir tout
+    # de suite si ca compile.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.ref == 'refs/heads/main' &&
+       contains(github.event.head_commit.message, '[testflight]'))
     concurrency:
       group: testflight
       cancel-in-progress: false
