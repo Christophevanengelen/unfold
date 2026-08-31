@@ -48,8 +48,15 @@ function Onglet({
       {actif && (
         <motion.span
           layoutId="nav-pastille"
-          className="absolute inset-x-1 inset-y-1 rounded-2xl"
-          style={{ background: "color-mix(in srgb, var(--accent-purple) 14%, transparent)" }}
+          // Largeur fixe plutot que toute la colonne : une pastille qui prend
+          // le tiers de l ecran ecrase le libelle au lieu de le porter.
+          className="absolute bottom-1 top-1 rounded-2xl"
+          style={{
+            left: "50%",
+            width: 84,
+            marginLeft: -42,
+            background: "color-mix(in srgb, var(--accent-purple) 14%, transparent)",
+          }}
           transition={RESSORT}
         />
       )}
