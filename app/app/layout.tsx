@@ -289,10 +289,12 @@ export default function DemoLayout({
             style={
               !isFullBleed
                 ? { paddingTop: "var(--safe-top)", paddingBottom: "var(--safe-bottom)" }
-                : isNative
-                  // Pleine largeur, mais jamais sous l ile dynamique.
-                  ? { paddingTop: "var(--safe-top)" }
-                  : undefined
+                // Pleine largeur : le contenu passe SOUS l ile et defile
+                // derriere, comme le fait iOS partout. Une marge haute ici
+                // coupait le haut des boudins au lieu de les laisser glisser
+                // dessous. Ce sont les elements poses en haut, s il y en a, qui
+                // doivent lire var(--safe-top), pas le conteneur qui defile.
+                : undefined
             }
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
