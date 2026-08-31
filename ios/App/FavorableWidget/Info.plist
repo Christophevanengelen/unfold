@@ -6,16 +6,10 @@
 	<string>Favorable</string>
 	<key>CFBundleName</key>
 	<string>FavorableWidget</string>
-	<!-- Sans CFBundleExecutable, Apple refuse le paquet : il voit un binaire
-	     seul plutot que l executable de l extension, et trois erreurs en
-	     decoulent a l envoi. Xcode le pose tout seul quand il genere le plist ;
-	     ici on l ecrit a la main, donc c est a nous. -->
-	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundlePackageType</key>
-	<string>XPC!</string>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>

@@ -48,12 +48,6 @@ const config: CapacitorConfig = {
       resizeOnFullScreen: true,
     },
     Haptics: {},
-    Preferences: {
-      // Le magasin est PARTAGE avec l extension widget. Sans ce groupe, l app
-      // ecrirait dans son propre coin et le widget lirait dans le vide, sans
-      // qu aucune erreur n apparaisse d aucun cote.
-      group: "group.day.favorable.app",
-    },
     PushNotifications: {
       // Sans cette liste, une notification recue pendant que l app est au
       // premier plan n apparait pas du tout : le greffon renvoie une liste
