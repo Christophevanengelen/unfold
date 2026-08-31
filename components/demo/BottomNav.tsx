@@ -41,8 +41,9 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="flex items-center justify-around pb-2" style={{
-      height: 56,
+    <nav className="flex items-center justify-around" style={{
+      height: "calc(56px + var(--safe-bottom, 0px))",
+      paddingBottom: "calc(8px + var(--safe-bottom, 0px))",
       background: "var(--glass-bg)",
       border: "none",
       borderTop: "1px solid var(--glass-border)",

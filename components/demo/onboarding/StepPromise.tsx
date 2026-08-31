@@ -49,12 +49,29 @@ export function StepPromise({ onNext }: StepPromiseProps) {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
       >
+        {/* La marque origami seule, puis le nom en typographie.
+            L ancien fichier logo-unfold-start.svg portait le mot « unfold »
+            dessine en courbes : impossible de le renommer sans redessiner.
+            Le nom est donc pose ici dans la police de l app, en attendant un
+            logotype dessine. Le paddingLeft compense l interlettrage final,
+            sinon le mot penche a gauche. */}
         <img
-          src="/logo-unfold-start.svg"
-          alt="Unfold"
-          width={190}
-          height={162}
+          src="/logo/icon-mark.svg"
+          alt=""
+          aria-hidden="true"
+          width={124}
+          height={124}
         />
+        <span
+          className="mt-5 select-none text-[34px] font-light leading-none"
+          style={{
+            letterSpacing: "0.26em",
+            paddingLeft: "0.26em",
+            color: "var(--text-brand)",
+          }}
+        >
+          favorable
+        </span>
       </motion.div>
 
       {/* Text zone — 38.2% */}

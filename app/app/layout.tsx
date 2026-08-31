@@ -132,8 +132,11 @@ export default function DemoLayout({
     if (typeof window === "undefined" || !window.Capacitor) return;
     import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
       const isDark = resolvedTheme !== "light";
-      // Dark mode → white text/icons on dark bg; Light mode → dark text/icons on light bg
-      StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark }).catch(() => {});
+      // Attention au nommage du greffon : Style.Dark veut dire « texte clair, pour
+      // un fond sombre », et Style.Light « texte sombre, pour un fond clair ». La
+      // ligne d avant faisait exactement l inverse, donc l heure et la batterie
+      // etaient illisibles dans les deux themes. Verifie au pixel le 31/08/2026.
+      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
       StatusBar.setBackgroundColor({ color: isDark ? "#1B1535" : "#F5F1FA" }).catch(() => {});
     });
   }, [resolvedTheme]);
@@ -198,7 +201,14 @@ export default function DemoLayout({
             className={isNative ? "h-[100dvh] w-full" : "flex min-h-screen items-center justify-center p-4"}
             style={{ backgroundColor: "#110D24" }}
           >
-            <div className={obFrameClasses} style={{ transform: "translateZ(0)" }}>
+            <div
+              className={obFrameClasses}
+              style={{
+                transform: "translateZ(0)",
+                "--safe-top": obSafeTop,
+                "--safe-bottom": obSafeBottom,
+              } as React.CSSProperties}
+            >
               <div
                 className="pointer-events-none absolute inset-0"
                 aria-hidden="true"
@@ -208,13 +218,7 @@ export default function DemoLayout({
                 }}
               />
               <PremiumTeaserContext.Provider value={() => setPremiumOpen(true)}>
-                <div
-                  className="relative flex-1 overflow-hidden"
-                  style={{
-                    "--safe-top": obSafeTop,
-                    "--safe-bottom": obSafeBottom,
-                  } as React.CSSProperties}
-                >
+                <div className="relative flex-1 overflow-hidden">
                   {children}
                 </div>
               </PremiumTeaserContext.Provider>
@@ -260,7 +264,9 @@ export default function DemoLayout({
         className={frameClasses}
         style={{
           transform: "translateZ(0)",
-        }}
+          "--safe-top": safeTop,
+          "--safe-bottom": safeBottom,
+        } as React.CSSProperties}
       >
         {/* Subtle ambient depth — monochrome purple only */}
         <div
@@ -280,11 +286,11 @@ export default function DemoLayout({
                 ? "relative overflow-hidden"
                 : "overflow-y-auto overflow-x-hidden px-5 scrollbar-none"
             }`}
-            style={{
-              "--safe-top": safeTop,
-              "--safe-bottom": safeBottom,
-              ...(!isFullBleed ? { paddingTop: safeTop, paddingBottom: safeBottom } : {}),
-            } as React.CSSProperties}
+            style={
+              !isFullBleed
+                ? { paddingTop: "var(--safe-top)", paddingBottom: "var(--safe-bottom)" }
+                : undefined
+            }
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
           </div>
