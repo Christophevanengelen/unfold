@@ -77,7 +77,6 @@ type Strings = {
     account: string;
     sign_in: string;
     sign_out: string;
-    delete_account: string;
     delete_warning: string;
     delete_confirm: string;
     delete_cancel: string;
@@ -167,7 +166,6 @@ const FR: Strings = {
     account: "Compte",
     sign_in: "Se connecter",
     sign_out: "Se déconnecter",
-    delete_account: "Supprimer mon compte",
     delete_warning: "Cela efface définitivement ta naissance, tes signaux et tes connexions. Rien n'est récupérable.",
     delete_confirm: "Oui, tout supprimer",
     delete_cancel: "Annuler",
@@ -257,7 +255,6 @@ const EN: Strings = {
     account: "Account",
     sign_in: "Sign in",
     sign_out: "Sign out",
-    delete_account: "Delete my account",
     delete_warning: "This permanently erases your birth data, your signals and your connections. Nothing can be recovered.",
     delete_confirm: "Yes, delete everything",
     delete_cancel: "Cancel",
@@ -347,7 +344,6 @@ const ES: Strings = {
     account: "Cuenta",
     sign_in: "Iniciar sesión",
     sign_out: "Cerrar sesión",
-    delete_account: "Eliminar mi cuenta",
     delete_warning: "Esto borra definitivamente tus datos de nacimiento, tus señales y tus conexiones. Nada se puede recuperar.",
     delete_confirm: "Sí, borrar todo",
     delete_cancel: "Cancelar",
@@ -437,7 +433,6 @@ const DE: Strings = {
     account: "Konto",
     sign_in: "Anmelden",
     sign_out: "Abmelden",
-    delete_account: "Mein Konto löschen",
     delete_warning: "Dies löscht deine Geburtsdaten, deine Signale und deine Verbindungen endgültig. Nichts lässt sich wiederherstellen.",
     delete_confirm: "Ja, alles löschen",
     delete_cancel: "Abbrechen",
@@ -527,7 +522,6 @@ const IT: Strings = {
     account: "Account",
     sign_in: "Accedi",
     sign_out: "Esci",
-    delete_account: "Elimina il mio account",
     delete_warning: "Questo cancella definitivamente i tuoi dati di nascita, i tuoi segnali e le tue connessioni. Nulla è recuperabile.",
     delete_confirm: "Sì, elimina tutto",
     delete_cancel: "Annulla",
@@ -617,7 +611,6 @@ const PT: Strings = {
     account: "Conta",
     sign_in: "Entrar",
     sign_out: "Sair",
-    delete_account: "Excluir minha conta",
     delete_warning: "Isso apaga definitivamente seus dados de nascimento, seus sinais e suas conexões. Nada pode ser recuperado.",
     delete_confirm: "Sim, excluir tudo",
     delete_cancel: "Cancelar",
@@ -707,7 +700,6 @@ const NL: Strings = {
     account: "Account",
     sign_in: "Inloggen",
     sign_out: "Uitloggen",
-    delete_account: "Mijn account verwijderen",
     delete_warning: "Dit wist je geboortegegevens, je signalen en je connecties definitief. Niets kan worden hersteld.",
     delete_confirm: "Ja, alles verwijderen",
     delete_cancel: "Annuleren",
@@ -797,7 +789,6 @@ const JA: Strings = {
     account: "アカウント",
     sign_in: "サインイン",
     sign_out: "サインアウト",
-    delete_account: "アカウントを削除",
     delete_warning: "出生情報、シグナル、つながりが完全に削除されます。復元はできません。",
     delete_confirm: "はい、すべて削除",
     delete_cancel: "キャンセル",
@@ -887,7 +878,6 @@ const ZH: Strings = {
     account: "账户",
     sign_in: "登录",
     sign_out: "退出",
-    delete_account: "删除我的账户",
     delete_warning: "这将永久删除您的出生信息、信号和连接。无法恢复。",
     delete_confirm: "是的，全部删除",
     delete_cancel: "取消",
@@ -977,7 +967,6 @@ const AR: Strings = {
     account: "الحساب",
     sign_in: "تسجيل الدخول",
     sign_out: "تسجيل الخروج",
-    delete_account: "حذف حسابي",
     delete_warning: "سيؤدي هذا إلى محو بيانات ميلادك وإشاراتك واتصالاتك نهائيًا. لا يمكن استرجاع أي شيء.",
     delete_confirm: "نعم، احذف كل شيء",
     delete_cancel: "إلغاء",
