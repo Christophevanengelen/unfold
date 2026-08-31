@@ -1,4 +1,24 @@
-# App Store Connect — Metadata for Submission
+# Dossier App Store — Favorable
+
+> ⚠️ **Ce fichier a ete assaini le 31 aout 2026, il n est pas encore complet.**
+>
+> Ce qui a ete corrige : le champ mots-clés anglais contenait `co-star`, le nom
+> d une application concurrente. Apple l interdit explicitement et c est un
+> motif de retrait. Les quatre listes ont ete remplacees.
+>
+> Le mot `horoscope` a ete retire des quatre listes. C est le terme au plus fort
+> volume de la categorie, et c est aussi celui qui nous fait ressembler a ce que
+> l article 4.3(b) refuse — or le relecteur lit ce champ. Il s ajoutera dans la
+> mise a jour 1.0.1, une fois l app approuvee, en remplacant `agenda` (fr) et
+> `venus` (en).
+>
+> **Ce qui reste a trancher avant de coller quoi que ce soit dans App Store
+> Connect** — voir AVANT-PUBLICATION.md :
+> - le partage exact entre gratuit et Pro, exige par l article 3.1.2(c) ;
+> - l accord de Marie-Ange pour figurer nommement sur la fiche publique ;
+> - les notifications ne doivent PAS etre mentionnees tant qu aucune n est
+>   arrivee sur un vrai telephone (article 2.3.1).
+
 
 Bundle ID: `day.favorable.app`
 Apple Team: `JG9V6PMN8T` (Zebrapad, Inc.)
@@ -65,7 +85,7 @@ Support: cve@hi-def.be
 ```
 
 **Keywords (100 chars total, comma-separated, no spaces):**
-`astrology,horoscope,natal,chart,transits,timing,zodiac,planets,co-star,compatibility,peak,daily`
+`astrology,zodiac,rising,house,planet,ephemeris,saturn,return,solar,timing,moon,birth,calendar,venus`
 
 **Support URL:** `https://unfold-nine.vercel.app/en/support` (TODO: create page)
 **Marketing URL:** `https://unfold-nine.vercel.app/en`
@@ -131,7 +151,7 @@ Support : cve@hi-def.be
 ```
 
 **Keywords:**
-`astrologie,horoscope,thème,transits,timing,zodiaque,planètes,compatibilité,signal,maison,natal,pic`
+`astrologie,zodiaque,ascendant,maison,planète,éphéméride,saturne,retour,solaire,timing,lune,agenda`
 
 ---
 
@@ -193,7 +213,7 @@ Soporte: cve@hi-def.be
 ```
 
 **Keywords:**
-`astrología,horóscopo,carta,natal,tránsitos,timing,zodiaco,planetas,compatibilidad,pico,casa,signo`
+`astrologia,zodiaco,ascendente,casa,planeta,efemerides,saturno,retorno,solar,timing,luna,agenda`
 
 ---
 
@@ -255,7 +275,7 @@ Suporte: cve@hi-def.be
 ```
 
 **Keywords:**
-`astrologia,horoscopo,mapa,natal,transitos,timing,zodiaco,planetas,compatibilidade,pico,casa,signo`
+`astrologia,zodiaco,ascendente,casa,planeta,efemerides,saturno,retorno,solar,timing,lua,agenda`
 
 ---
 
@@ -340,3 +360,53 @@ Phase 4 will add native IAP via RevenueCat in the next major update.
 ## Export Compliance
 
 ITSAppUsesNonExemptEncryption: false (set in Info.plist) — uses only standard HTTPS/TLS.
+
+---
+
+## Note au relecteur (App Review Notes)
+
+À coller dans « Notes for App Review ». L'article 2.3.1(a) exige que les
+fonctions soient décrites « with specificity » et précise que les descriptions
+génériques sont refusées. Sur un dossier 4.3(b), c'est ce texte qui décide.
+
+Il ne plaide pas, il donne un chemin de trente secondes pour vérifier.
+
+```
+Favorable is not a horoscope app and contains no horoscope, daily reading or sun
+sign content.
+
+It renders a computed calendar of astrological periods for one person, derived
+from an ephemeris engine using zodiacal releasing and planetary transits applied
+to the user's own birth date, time and place. Every period on screen carries a
+start date, an end date and a length in days.
+
+Where to see this in 30 seconds:
+1. Enter any birth date, time and place on the first screen. No account is
+   required.
+2. On the timeline, tap the period marked NOW. The detail sheet shows exact
+   start and end dates, the length in days, the life areas involved and the
+   planets at work.
+3. Scroll that sheet to "PASSES OF THE CYCLE". It lists the successive dates on
+   which the same aspect recurs. These dates are computed from ephemeris data
+   and cannot be authored in advance. This is the clearest evidence that the app
+   is a calculation tool rather than written content.
+4. A WidgetKit home screen widget shows the current period and the days it has
+   left.
+
+The app makes no prediction and no claim about future events. It states which
+period a date falls into and when that period ends.
+
+Contact: cve@hi-def.be
+```
+
+### Ce qui rend cette note vraie, et vérifiable à l'écran
+
+1. **Des intervalles bornés** — début, fin, durée en jours. Aucune app
+   d'horoscope n'a de bornes.
+2. **Les passages successifs d'un cycle, datés** — une sortie d'éphémérides,
+   impossible à rédiger d'avance.
+3. **Un widget WidgetKit** — un objet système, pas du contenu.
+4. **Aucun signe solaire nulle part.**
+
+Si l'un de ces quatre points cesse d'être vrai, la note devient un mensonge et
+il faut la réécrire avant de soumettre.
