@@ -311,6 +311,15 @@ button, a, [role="button"], [role="link"],
   --text-body-subtle: #76669E;
   --text-brand: #5C4B9B;
   --text-brand-strong: #302060;
+  /* RESERVE aux elements reellement desactives — un bouton qu on ne peut pas
+     actionner. Il vaut 1,92 de contraste en theme clair, et c est VOULU : la
+     norme exempte le texte desactive du seuil de 4,5, precisement pour qu il se
+     lise comme inactif.
+     
+     Ne jamais l employer pour du CONTENU. Le 01/09/2026 il portait les dates de
+     chaque periode, les annees de l axe et l icone de la vue inactive — donc de
+     l information, rendue invisible. Aucun controle ne pouvait le signaler,
+     puisque le jeton est legitimement exempte. */
   --text-disabled: #B7ACD0;
   --text-on-brand: #FFFFFF;
 

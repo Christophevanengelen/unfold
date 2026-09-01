@@ -666,7 +666,9 @@ function OverviewView({
                       left: 0,
                       width: 22,
                       textAlign: "right",
-                      color: isJan ? "var(--text-body-subtle)" : "var(--text-disabled)",
+                      // Meme raison : une annee sur l axe est une information,
+                      // pas un element desactive.
+                      color: isJan ? "var(--text-heading)" : "var(--text-body-subtle)",
                       fontWeight: isJan ? 600 : 400,
                       fontSize: isJan ? 8 : 7,
                     }}
@@ -1146,7 +1148,15 @@ function ListView({
                     )}
                   </div>
 
-                  <span className="mt-0.5 block text-[9px]" style={{ color: "var(--text-disabled)" }}>
+                  {/* --text-body-subtle, PAS --text-disabled.
+                      
+                      Les dates d une periode ne sont pas un etat desactive :
+                      c est l information meme que la ligne existe pour donner.
+                      --text-disabled vaut 1,92 de contraste en theme clair —
+                      pratiquement invisible — et le seuil de 4,5 EXEMPTE
+                      volontairement le texte desactive, donc aucun controle
+                      automatique ne pouvait le signaler. Vu a l ecran. */}
+                  <span className="mt-0.5 block text-[9px]" style={{ color: "var(--text-body-subtle)" }}>
                     {startLabel} — {endLabel}
                   </span>
 
@@ -1476,7 +1486,10 @@ export function MomentumTimelineV2() {
                 // La paire jeton de marque plutot que blanc sur accent-purple :
                 // celle-ci tombait a 3,23 en theme sombre. --text-on-brand et
                 // --bg-brand sont faits pour aller ensemble et sont verifies.
-                color: viewMode === mode ? "var(--text-on-brand)" : "var(--text-disabled)",
+                // L icone de la vue INACTIVE reste touchable : c est le bouton
+                // qui sert a changer de vue. La peindre en « desactive » la
+                // rendait invisible alors qu elle est la seule facon de basculer.
+                color: viewMode === mode ? "var(--text-on-brand)" : "var(--text-body-subtle)",
                 background: viewMode === mode ? "var(--bg-brand)" : "transparent",
                 // 44 points, le minimum qu Apple demande pour une cible tactile.
                 // On etait a 28.
