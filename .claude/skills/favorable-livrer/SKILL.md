@@ -45,6 +45,17 @@ heures apres l epuisement echoue a l identique. Il n y a ni file d attente, ni
 degradation progressive, ni message d avertissement quand on approche — le
 compteur est invisible jusqu au refus.
 
+**C est une fenetre glissante de 24 heures, pas un jour calendaire.** Mesure le
+1er septembre 2026 : les trois dernieres builds acceptees l ont ete entre 17 h 16
+et 17 h 57 UTC la veille ; un envoi a 08 h 39 UTC le lendemain — quinze heures
+apres — etait encore refuse. Le quota se libere donc progressivement, au fur et
+a mesure que les envois vieillissent.
+
+**Pour savoir quand reessayer :** relever l heure UTC du dernier
+« Upload succeeded » dans les journaux du CI, et ajouter vingt-quatre heures.
+
+    gh run view <id> --log | grep "Upload succeeded"
+
 **Le compteur ne se remet PAS a zero a minuit local.** Verifie le
 1er septembre a 00 h 55 heure de Bruxelles : refus identique. Le runner GitHub
 affichait alors `2026-08-31T22:55` — il tourne en UTC, ou l on etait encore la
