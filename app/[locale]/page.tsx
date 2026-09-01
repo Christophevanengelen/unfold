@@ -21,6 +21,7 @@ import { ZRSpiritTeaser } from "@/components/landing/ZRSpiritTeaser";
 import { ScienceTechnology } from "@/components/landing/ScienceTechnology";
 import { Pricing } from "@/components/landing/Pricing";
 import { FinalCTA } from "@/components/landing/FinalCTA";
+import { DesignedForClarity } from "@/components/landing/DesignedForClarity";
 
 // Native build: expose static params so Next.js knows which locales to pre-render
 export function generateStaticParams() {
@@ -121,6 +122,14 @@ export default async function LandingPage({
             "Thousands already read their signal. Here’s what they say.",
           )}
         />
+
+        {/* Le produit lui-meme, en maquette animee.
+
+            Ecrite il y a des mois, jamais montee : le site parlait du produit
+            sans jamais le MONTRER. Placee ici, apres la revelation du motif de
+            vie et avant la preuve sociale — on voit a quoi ressemble l ecran
+            avant qu on nous dise que d autres l utilisent. */}
+        <DesignedForClarity translations={translations} />
 
         {/* 5. Social proof — trust */}
         <SocialProof translations={translations} />

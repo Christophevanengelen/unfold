@@ -205,15 +205,26 @@ export default function ConnectionsPage() {
                 }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !codeSubmitting) handleCodeSubmit(); }}
                 placeholder="FAV-XXXX"
-                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-mono tracking-wider text-white placeholder:text-white/20 focus:border-accent-purple/40 focus:outline-none"
+                // Ce champ etait ecrit pour le theme sombre seulement : texte blanc, fond
+                // blanc a 5 %, bordure blanche a 10 %. En theme clair, on tapait donc
+                // du blanc sur du blanc — le code saisi etait invisible pendant qu on
+                // le tapait.
+                className="flex-1 rounded-xl border px-3 py-2.5 text-sm font-mono tracking-wider focus:outline-none"
+                style={{
+                  background: "var(--bg-secondary)",
+                  borderColor: "var(--border-muted)",
+                  color: "var(--text-heading)",
+                }}
                 maxLength={12}
                 disabled={codeSubmitting}
               />
               <button
                 onClick={handleCodeSubmit}
                 disabled={code.trim().length < 4 || codeSubmitting}
-                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all disabled:opacity-30"
-                style={{ background: "var(--accent-purple)" }}
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:opacity-30"
+                // La paire de marque : blanc sur --accent-purple donnait 4,46 en
+                // clair et 3,23 en sombre. Meme correction que la bascule de vue.
+                style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
               >
                 {codeSubmitting ? "…" : "Connecter"}
               </button>

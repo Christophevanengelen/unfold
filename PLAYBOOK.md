@@ -185,6 +185,24 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
 - [ ] **`birthday-graph` et `spirit-wave`** partent dans le binaire iOS mais
       aucune surface de l'app n'y mène. Seuls les teasers du site y renvoient.
 
+## Compatibilité — signalé le 01/09
+
+- [x] **« Code introuvable » sur un code valide.** Cause trouvée : `persistInviteCode`
+      passait par `postJson`, qui utilisait `fetch` en chemin relatif. Depuis
+      l'app native, l'enregistrement du code partait vers
+      `capacitor://localhost/api/invite/register` — une adresse qui n'existe
+      pas. Le code n'arrivait donc **jamais en base**, et la recherche de
+      l'autre personne échouait forcément. La recherche, elle, utilisait bien
+      `apiFetch` : c'est ce décalage qui rendait le bug incompréhensible.
+      Corrigé le 01/09 dans le même commit que la modification du profil.
+      **Le message d'erreur mentait aussi** : « demande à la personne de rouvrir
+      Favorable une fois pour synchroniser son code » décrit un contournement
+      d'une synchronisation qui n'a jamais fonctionné depuis le natif.
+- [x] Le champ de saisie du code était **blanc sur blanc** en thème clair : on
+      tapait un code invisible. Le bouton « Connecter » était sous le seuil.
+- [ ] Textes en dur dans cet écran : « Connecter », « Vous & … », `rel.labelFR`.
+      Le produit a dix langues.
+
 ## Notifications
 
 - [ ] **Rien ne propose jamais les notifications.** `dejaPropose()` et

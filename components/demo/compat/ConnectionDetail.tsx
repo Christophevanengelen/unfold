@@ -10,8 +10,11 @@ import { ConnectionCarousel } from "@/components/demo/compat/ConnectionCarousel"
 import { ConnectionReport } from "@/components/demo/compat/ConnectionReport";
 import { relationshipConfig } from "@/components/demo/compat/relationshipConfig";
 import { connectionHref } from "@/lib/connection-href";
+import { useTheme } from "next-themes";
+import { texteSurAplat } from "@/lib/contraste";
 
 export function ConnectionDetail({ connectionId }: { connectionId: string }) {
+  const { resolvedTheme } = useTheme();
   const router = useRouter();
 
   const [connections, setConnections] = useState<RealConnection[]>([]);
@@ -59,8 +62,13 @@ export function ConnectionDetail({ connectionId }: { connectionId: string }) {
         subtitle={rel.labelFR}
         leadingSlot={
           <div
-            className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
-            style={{ backgroundColor: rel.color }}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+            // rel.color varie a l execution : on choisit le noir ou le blanc
+            // selon ce qui contraste, au lieu de supposer le blanc.
+            style={{
+              backgroundColor: rel.color,
+              color: texteSurAplat(rel.color, resolvedTheme === "light" ? "clair" : "sombre", 1),
+            }}
           >
             {current.initial}
           </div>
