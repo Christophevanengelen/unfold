@@ -227,6 +227,18 @@ const MOTS: Record<string, Traduction> = {
                        pt:"Ver o meu sinal", nl:"Bekijk mijn signaal", ja:"シグナルを見る", zh:"查看我的信号", ar:"عرض إشارتي" },
   "scan.converge.d": { fr:"fenêtres d'intensité maximale", en:"peak intensity windows", es:"ventanas de máxima intensidad", de:"Fenster höchster Intensität", it:"finestre di massima intensità",
                        pt:"janelas de intensidade máxima", nl:"vensters van piekintensiteit", ja:"強度が最も高まる時", zh:"强度峰值窗口", ar:"نوافذ الذروة" },
+
+  // ── Proposition d activer les notifications ─────────────────────────────
+  "notif.titre":   { fr:"Te prévenir quand une période s'ouvre ?", en:"Want a heads-up when a period opens?", es:"¿Te avisamos cuando se abra un periodo?", de:"Sollen wir dich melden, wenn eine Phase beginnt?", it:"Vuoi un avviso quando si apre un periodo?",
+                     pt:"Queres ser avisado quando um período abrir?", nl:"Een seintje als er een periode begint?", ja:"時期の始まりをお知らせしますか？", zh:"周期开始时要提醒你吗？", ar:"هل نُنبّهك عند بدء فترة؟" },
+  "notif.corps":   { fr:"Une alerte à l'entrée et à la sortie de chaque période, avec sa durée, son domaine et son intensité. Une par semaine au maximum, jamais avant 8 h ni après 21 h.", en:"One alert when a period starts and ends, with its length, its area of life and its intensity. Once a week at most, never before 8am or after 9pm.", es:"Un aviso al empezar y al terminar cada periodo, con su duración, su ámbito y su intensidad. Una vez por semana como máximo, nunca antes de las 8 ni después de las 21.", de:"Eine Meldung zu Beginn und Ende jeder Phase, mit Dauer, Lebensbereich und Intensität. Höchstens einmal pro Woche, nie vor 8 und nie nach 21 Uhr.", it:"Un avviso all'inizio e alla fine di ogni periodo, con durata, ambito e intensità. Al massimo una volta a settimana, mai prima delle 8 né dopo le 21.",
+                     pt:"Um aviso no início e no fim de cada período, com a duração, a área e a intensidade. No máximo uma vez por semana, nunca antes das 8h nem depois das 21h.", nl:"Eén melding bij het begin en einde van elke periode, met duur, levensgebied en intensiteit. Hooguit één keer per week, nooit voor 8 of na 21 uur.", ja:"時期の始まりと終わりに一度ずつ、期間・分野・強さをお知らせします。週に最大1回、8時前と21時以降は送りません。", zh:"每个周期开始和结束时各提醒一次，附上时长、领域与强度。每周最多一次，不会在早8点前或晚9点后发送。", ar:"تنبيه عند بداية كل فترة ونهايتها، مع مدتها ومجالها وشدّتها. مرة واحدة أسبوعياً كحد أقصى، ولا شيء قبل الثامنة صباحاً أو بعد التاسعة مساءً." },
+  "notif.oui":     { fr:"Me prévenir", en:"Notify me", es:"Avisarme", de:"Benachrichtige mich", it:"Avvisami",
+                     pt:"Avisar-me", nl:"Waarschuw me", ja:"知らせてもらう", zh:"提醒我", ar:"نبّهني" },
+  "notif.plus_tard": { fr:"Pas maintenant", en:"Not now", es:"Ahora no", de:"Jetzt nicht", it:"Non ora",
+                     pt:"Agora não", nl:"Niet nu", ja:"あとで", zh:"暂不", ar:"ليس الآن" },
+  "notif.reglages": { fr:"Tu pourras changer d'avis dans ton profil.", en:"You can change your mind in your profile.", es:"Puedes cambiar de opinión en tu perfil.", de:"Du kannst es jederzeit im Profil ändern.", it:"Puoi cambiare idea nel tuo profilo.",
+                     pt:"Podes mudar de ideias no teu perfil.", nl:"Je kunt dit altijd in je profiel wijzigen.", ja:"あとからプロフィールで変更できます。", zh:"你可以随时在个人资料中更改。", ar:"يمكنك تغيير رأيك من ملفك الشخصي." },
 };
 
 /**

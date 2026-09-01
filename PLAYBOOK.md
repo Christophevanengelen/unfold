@@ -157,10 +157,16 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
       mais ne supprime rien.
 - [ ] **L'écran de détail par domaine** (Amour / Santé / Travail) — 1 500
       lignes, débranché. Racine : `components/demo/DomainPager.tsx`.
-- [ ] **Le sélecteur de LANGUE** — `components/LanguageSwitcher.tsx`, perdu avec
-      `Header.tsx` comme le sélecteur de thème.
-- [ ] **Le bandeau cookies** — `components/legal/CookieConsent.tsx`, jamais
-      monté. Enjeu de conformité, pas seulement de code mort.
+- [ ] **Le sélecteur de langue du SITE** — `components/LanguageSwitcher.tsx`,
+      perdu avec `Header.tsx`. Ne concerne que le site : l'app a son propre
+      réglage dans le tiroir de profil (`ProfileDrawer.tsx:498`). L'audit
+      annonçait la perte pour les deux, c'était trop large.
+- [x] **Le bandeau cookies** — vérifié le 01/09 : il ne doit PAS être monté en
+      l'état. Les seuls cookies du produit sont ceux de session Supabase, donc
+      strictement nécessaires, donc exemptés de consentement. Aucun traqueur,
+      aucun tiers, aucune analytique. Afficher « tout accepter / essentiels
+      uniquement » demanderait l'accord pour quelque chose qui n'existe pas.
+      **À monter le jour où une analytique est ajoutée**, pas avant.
 - [ ] **Les données structurées SEO** — `components/seo/StructuredData.tsx`,
       jamais rendues. Perte de visibilité.
 - [ ] **Quatre écrans d'onboarding** hors parcours, dont `StepPremium` — le seul

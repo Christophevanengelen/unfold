@@ -27,6 +27,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
 import { TimelineWelcome, shouldShowWelcome } from "./TimelineWelcome";
 import { FirstUseGuide, shouldShowFirstUseGuide, relanceDemandee } from "./FirstUseGuide";
+import { PropositionNotifications } from "./PropositionNotifications";
 import {
   type MomentumPhase,
 } from "@/lib/mock-timeline";
@@ -1382,6 +1383,17 @@ export function MomentumTimelineV2() {
           }
         }} />
       )}
+
+      {/* La proposition d activer les notifications.
+
+          Montee ici et pas ailleurs parce que le bon moment est APRES le
+          premier signal vu : avant, on demanderait une permission pour un
+          produit que la personne ne connait pas encore. Elle attend aussi que
+          l accueil et le guide soient passes — trois voiles successifs, ce
+          serait du harcelement. */}
+      <PropositionNotifications
+        pret={hasAnyData && !showWelcome && !showGuide && viewMode === "overview"}
+      />
 
       {/* ── First-use guide hints ── */}
       <AnimatePresence>
