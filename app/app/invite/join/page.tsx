@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { parseInviteParams } from "@/lib/connections-store";
 
 /**
- * /demo/invite/join?name=X&code=X&bd=X&bt=X&lat=X&lng=X&tz=X
+ * /app/invite/join?name=X&code=X&bd=X&bt=X&lat=X&lng=X&tz=X
  *
  * Landing page when someone clicks an invite link.
  * Saves the invite data to sessionStorage, then redirects to:
@@ -33,7 +33,8 @@ function JoinContent() {
     if (hasBirthData) {
       // Already onboarded — go straight to connected page
       const params = searchParams.toString();
-      router.replace(`/demo/invite/connected?${params}`);
+      // Voir la note en tete : /demo n existe pas dans le build natif.
+      router.replace(`/app/invite/connected?${params}`);
     } else {
       // Needs onboarding first — redirect there
       // After onboarding, the app will check for pending invite

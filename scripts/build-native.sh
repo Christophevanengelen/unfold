@@ -48,6 +48,12 @@ CHEMINS=(
   # dans l app : un ecran atteignable qui invente une lecture personnelle est
   # exactement ce qu on a retire avec le boudin.
   "app/app/monthly"
+  # Page de test de developpement. Elle porte deux dates de naissance REELLES
+  # ecrites en dur — 24/10/1980 Bruxelles et 02/09/1982 Anvers — et appelle le
+  # modele. Elle n a aucun lien entrant, mais elle partait dans le binaire iOS
+  # et restait donc atteignable a l adresse. C est exactement ce qu on a retire
+  # avec le boudin : un ecran qui montre la vie de quelqu un d autre.
+  "app/app/compatibility/test"
   "app/app/boudin"
   "public/boudin-sausage.html"
   "public/boudin-timeline.html"

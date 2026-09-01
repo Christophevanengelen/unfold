@@ -209,7 +209,13 @@ export function buildInviteUrl(name: string, birthData: BirthData, code: string)
     place: birthData.placeOfBirth || "",
   });
   const origin = typeof window !== "undefined" ? window.location.origin : "https://favorable.day";
-  return `${origin}/demo/invite/join?${params.toString()}`;
+  // « /app », pas « /demo ».
+  //
+  // Le prefixe /demo ne fonctionne que par les redirections de next.config.ts,
+  // et celles-ci sont DESACTIVEES pour le build natif — output: "export" les
+  // interdit. Sur le web, la redirection rattrapait l adresse ; dans l app iOS,
+  // elle n existe pas, et le parcours d invitation s arretait la.
+  return `${origin}/app/invite/join?${params.toString()}`;
 }
 
 /**
