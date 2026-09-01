@@ -38,9 +38,19 @@ function bloc(depart) {
 }
 
 function rgb(v) {
-  const m = /^#([0-9A-Fa-f]{6})$/.exec(v ?? "");
-  if (!m) return null;
-  return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16));
+  const h = /^#([0-9A-Fa-f]{6})$/.exec(v ?? "");
+  if (h) return [0, 2, 4].map((i) => parseInt(h[1].slice(i, i + 2), 16));
+  // Les voiles des pastilles sont ecrits en rgba(). On ignore l alpha : ces
+  // couches sont posees sur un fond opaque, et c est la teinte qui nous
+  // interesse.
+  const r = /^rgba?\(([^)]+)\)$/.exec((v ?? "").trim());
+  if (r) {
+    const n = r[1].split(",").map((x) => parseFloat(x));
+    if (n.length >= 3 && n.slice(0, 3).every((x) => Number.isFinite(x))) {
+      return n.slice(0, 3);
+    }
+  }
+  return null;
 }
 
 function luminosite(c) {
@@ -161,8 +171,26 @@ for (const t of themes) {
 // et cette paire-la n etait donc verifiee par personne : elle valait 4,46 en
 // theme clair, sous le seuil, sur chaque bouton du produit.
 // ─────────────────────────────────────────────────────────────────────────────
+/** Resout `color-mix(in srgb, var(--x) N%, rgba(...))` en couleur concrete. */
+function resoudreMelange(valeur, jetons) {
+  if (!valeur) return null;
+  const m = valeur.match(
+    /color-mix\(in srgb,\s*var\(--([a-z-]+)\)\s*(\d+)%,\s*(rgba?\([^)]*\)|#[0-9A-Fa-f]{6})\s*\)/,
+  );
+  if (!m) return null;
+  const teinte = rgb(jetons[m[1]]);
+  const socle = rgb(m[3]);
+  if (!teinte || !socle) return null;
+  const p = Number(m[2]) / 100;
+  return teinte.map((c, i) => c * p + socle[i] * (1 - p));
+}
+
 const PAIRES = [
   { texte: "text-on-brand", fond: "bg-brand", nom: "bouton principal" },
+  // La pastille « Now » et les fleches de navigation. Leur fond est fait de la
+  // couleur de marque a 16 % : peindre le texte avec cette meme couleur les
+  // faisait converger, 3,33 en clair et 4,02 en sombre.
+  { texte: "text-brand", fond: "glass-pill", nom: "pastille Now / fleches" },
 ];
 
 for (const t of themes) {
@@ -170,7 +198,10 @@ for (const t of themes) {
   console.log(`\n  Paires, theme ${t.nom}`);
   for (const p of PAIRES) {
     const fg = rgb(jetons[p.texte]);
-    const bg = rgb(jetons[p.fond]);
+    // Certains fonds sont des color-mix, pas des hexadecimaux : --glass-pill
+    // vaut « la couleur de marque a 16 % sur un voile ». On le resout ici,
+    // sinon le controle se tait au lieu de mesurer.
+    const bg = rgb(jetons[p.fond]) ?? resoudreMelange(jetons[p.fond], jetons);
     if (!fg || !bg) {
       console.log(`    ${p.nom.padEnd(22)} jeton manquant`);
       echecs++;

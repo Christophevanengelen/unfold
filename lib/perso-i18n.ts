@@ -247,6 +247,8 @@ const MOTS: Record<string, Traduction> = {
                    pt:"Qualquer alteração recalcula a tua timeline.", nl:"Elke wijziging herberekent je tijdlijn.", ja:"変更するとタイムラインを計算し直します。", zh:"任何修改都会重新计算你的时间线。", ar:"أي تعديل يعيد حساب مسارك الزمني." },
   "edit.cta":    { fr:"Enregistrer", en:"Save", es:"Guardar", de:"Speichern", it:"Salva",
                    pt:"Guardar", nl:"Opslaan", ja:"保存", zh:"保存", ar:"حفظ" },
+  "timeline.maintenant": { fr:"Maintenant", en:"Now", es:"Ahora", de:"Jetzt", it:"Ora",
+                   pt:"Agora", nl:"Nu", ja:"現在", zh:"当前", ar:"الآن" },
   "edit.annuler":{ fr:"Annuler", en:"Cancel", es:"Cancelar", de:"Abbrechen", it:"Annulla",
                    pt:"Cancelar", nl:"Annuleren", ja:"キャンセル", zh:"取消", ar:"إلغاء" },
 };

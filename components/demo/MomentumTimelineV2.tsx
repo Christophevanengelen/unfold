@@ -101,6 +101,7 @@ function mapHouseColor(apiColor?: string): string | undefined {
 }
 
 import { S, LAYOUT } from "@/lib/layout-constants";
+import { perso } from "@/lib/perso-i18n";
 
 // ─── Constants ──────────────────────────────────────────────
 let LANE_COUNT = 7;
@@ -199,7 +200,15 @@ const TIMELINE_PAD = 80;
 // Uses a semi-opaque dark base so small buttons stay readable over capsules
 const PILL_STYLE: React.CSSProperties = {
   background: "var(--glass-pill)",
-  color: "var(--accent-purple)",
+  // --text-brand, pas --accent-purple.
+  //
+  // Le fond de la pastille EST fait d accent-purple — glass-pill vaut cette
+  // couleur a 16 % sur un voile. Peindre le libelle avec la meme couleur les
+  // faisait converger : 3,33 en theme clair, 4,02 en sombre. Le bouton « Now »
+  // et les fleches de navigation etaient donc sous le seuil dans les DEUX
+  // themes, ce qu on ne voyait pas parce qu ils sont petits et qu on sait ou ils
+  // sont. --text-brand garde la teinte de marque et passe : 5,34 et 6,44.
+  color: "var(--text-brand)",
   border: "1px solid var(--glass-border)",
   backdropFilter: "blur(12px)",
   WebkitBackdropFilter: "blur(12px)",
@@ -795,7 +804,7 @@ function OverviewView({
             style={{ ...PILL_STYLE, bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider">{perso("timeline.maintenant", detectLocale())}</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -981,7 +990,7 @@ function ListView({
           className="absolute left-2 z-30 flex h-11 items-center justify-center rounded-full px-4"
           style={{ ...PILL_STYLE, bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
         >
-          <span className="text-[10px] font-semibold uppercase tracking-wider">Now</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider">{perso("timeline.maintenant", detectLocale())}</span>
         </button>
       )}
 
