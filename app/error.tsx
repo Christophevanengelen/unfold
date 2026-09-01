@@ -10,7 +10,7 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ backgroundColor: "var(--bg-primary, #1B1535)" }}>
+    <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ backgroundColor: "var(--bg-primary, #F5F1FA)" }}>
       <Image src="/logo/icon-mark.svg" alt="" width={48} height={48} />
       <h1 className="mt-6 font-display text-2xl font-bold text-white">
         Something went wrong

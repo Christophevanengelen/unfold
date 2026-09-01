@@ -30,7 +30,7 @@ export default function LocaleAuthCallbackRelay() {
         alignItems: "center",
         justifyContent: "center",
         height: "100vh",
-        background: "var(--bg-primary, #1B1535)",
+        background: "var(--bg-primary, #F5F1FA)",
       }}
     >
       <div

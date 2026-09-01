@@ -1,6 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo, startTransition } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, startTransition } from "react";
+
+/**
+ * useLayoutEffect, mais sans l avertissement au rendu serveur.
+ *
+ * Trois effets de ce fichier ecrivent une POSITION que la personne ne doit
+ * jamais voir fausse : la mesure de largeur du conteneur, et les deux
+ * defilements initiaux vers « maintenant ». En useEffect, le navigateur peint
+ * d abord, corrige ensuite — donc une image entiere au mauvais endroit.
+ *
+ * Concretement : les capsules etaient peintes selon une largeur de 375 points,
+ * la valeur par defaut, alors qu un iPhone recent fait 390, 393 ou 430. Elles
+ * apparaissaient decalees puis se replacaient. Et la timeline s affichait au
+ * tout debut de la vie avant de sauter a aujourd hui.
+ *
+ * useLayoutEffect s execute avant la peinture : il n y a plus d image
+ * intermediaire. Le repli sur useEffect ne sert qu au rendu serveur, ou il n y
+ * a de toute facon rien a peindre.
+ */
+const useEffetDeMiseEnPage =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { mesurer, mesurerUneFois } from "@/lib/mesure";
 import { motion, AnimatePresence } from "motion/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -349,7 +369,7 @@ function OverviewView({
 
   // Dynamic lane sizing — adapt to actual container width (responsive)
   const [containerWidth, setContainerWidth] = useState(375);
-  useEffect(() => {
+  useEffetDeMiseEnPage(() => {
     const el = scrollRef.current;
     if (!el) return;
     const measure = () => setContainerWidth(el.clientWidth || 375);
@@ -381,7 +401,7 @@ function OverviewView({
   const adjustedOffsetX = labelMargin + Math.max(0, (availableWidth - totalLanesWidth) / 2);
 
   // Auto-scroll so NOW is centered — instant on mount
-  useEffect(() => {
+  useEffetDeMiseEnPage(() => {
     if (!scrollRef.current) return;
     const viewportH = scrollRef.current.clientHeight || 700;
     const scrollTop = Math.max(0, nowY - viewportH * 0.50);
@@ -854,7 +874,7 @@ function ListView({
   });
 
   // Auto-scroll to current on mount
-  useEffect(() => {
+  useEffetDeMiseEnPage(() => {
     if (currentIndex >= 0) {
       virtualizer.scrollToIndex(currentIndex, { align: "center" });
     }
