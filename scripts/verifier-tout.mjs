@@ -34,7 +34,7 @@
 import { execFileSync } from "node:child_process";
 
 const CONTROLES = [
-  { nom: "Types", cmd: ["npx", ["tsc", "--noEmit", "-p", "tsconfig.json"]] },
+  { nom: "Types", cmd: ["npx", ["tsc", "--noEmit", "-p", "tsconfig.json"]], shell: true },
   { nom: "Contraste des deux themes", cmd: ["node", ["scripts/verifier-contraste.mjs"]] },
   { nom: "Cibles tactiles", cmd: ["node", ["scripts/verifier-cibles.mjs"]], cliquet: true },
   { nom: "Couleurs figees", cmd: ["node", ["scripts/verifier-couleurs.mjs"]], cliquet: true },
@@ -80,7 +80,12 @@ for (const c of CONTROLES) {
   let ok = true;
   try {
     sortie = String(
-      execFileSync(c.cmd[0], c.cmd[1], { stdio: "pipe", maxBuffer: 64 * 1024 * 1024 }) ?? "",
+      execFileSync(c.cmd[0], c.cmd[1], {
+        stdio: "pipe",
+        maxBuffer: 64 * 1024 * 1024,
+        // npx est un .cmd sous Windows : execFileSync sans shell le rate avec ENOENT.
+        shell: !!c.shell,
+      }) ?? "",
     );
   } catch (e) {
     ok = false;

@@ -21,6 +21,13 @@
 import { readdirSync, statSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// join() produit des backslashes sous Windows : une comparaison a une chaine
+// ecrite avec des slashes ne matche jamais, et le fichier finit par se lire
+// lui-meme (voir MOI plus bas).
+function versSlash(chemin) {
+  return chemin.split("\\").join("/");
+}
+
 /** Fournies par la plateforme, jamais a declarer. */
 const PLATEFORME = new Set([
   "NODE_ENV", "VERCEL_URL", "VERCEL_ENV", "CI", "npm_package_version",
@@ -48,7 +55,7 @@ const lues = new Set();
 const MOI = "scripts/verifier-env-exemple.mjs";
 
 for (const f of [...fichiers("app"), ...fichiers("lib"), ...fichiers("scripts"), ...fichiers("components")]) {
-  if (f === MOI) continue;
+  if (versSlash(f) === MOI) continue;
   for (const m of readFileSync(f, "utf8").matchAll(/process\.env\.([A-Z0-9_]+)/g)) {
     if (!PLATEFORME.has(m[1])) lues.add(m[1]);
   }

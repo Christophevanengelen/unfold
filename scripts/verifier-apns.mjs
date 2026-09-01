@@ -22,6 +22,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 let echecs = 0;
 const verifier = (nom, condition) => {
@@ -73,7 +74,8 @@ execFileSync(
   "npx",
   ["esbuild", "lib/apns.ts", "--bundle", "--platform=node", "--format=esm",
    `--outfile=${construit}`, "--external:node:*", "--log-level=error"],
-  { stdio: "inherit" },
+  // npx est un .cmd sous Windows : sans shell, execFileSync le rate avec ENOENT.
+  { stdio: "inherit", shell: true },
 );
 
 process.env.APNS_KEY_ID = "ABCD123XYZ";
@@ -81,7 +83,8 @@ process.env.APNS_TEAM_ID = "LD9N97K83G";
 process.env.APNS_PRIVATE_KEY = commeDansVercel;
 process.env.APNS_BUNDLE_ID = "day.favorable.app";
 
-const { surUneConnexion } = await import(construit);
+// import() dynamique refuse un chemin Windows brut (C:\...) : il lui faut une URL file://.
+const { surUneConnexion } = await import(pathToFileURL(construit));
 
 const recu = [];
 const faussaire = http2.createServer();
