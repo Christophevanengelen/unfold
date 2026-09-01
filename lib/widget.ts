@@ -18,6 +18,7 @@
 
 import { isNative } from "@/lib/platform";
 import type { MomentumPhase } from "@/types/momentum";
+import { periodeCourante, periodeSuivante } from "@/lib/periode-courante";
 
 const CLEF = "favorable_widget";
 
@@ -51,20 +52,14 @@ export async function deposerPourWidget(phases: MomentumPhase[]): Promise<void> 
   try {
     const aujourdHui = new Date().toISOString().slice(0, 10);
 
-    // « En cours » se decide sur les dates et non sur le champ status : celui-ci
-    // est calcule au chargement et peut avoir vieilli si l app est restee
-    // ouverte plusieurs jours.
-    const actuelle =
-      phases.find(
-        (p) =>
-          p.startDate?.slice(0, 10) <= aujourdHui &&
-          (!p.endDate || p.endDate.slice(0, 10) >= aujourdHui),
-      ) ?? null;
-
-    const suivante =
-      phases
-        .filter((p) => p.startDate?.slice(0, 10) > aujourdHui)
-        .sort((a, b) => a.startDate.localeCompare(b.startDate))[0] ?? null;
+    // Le choix de la periode est fait par lib/periode-courante.ts, et il n est
+    // pas anodin : plusieurs periodes se chevauchent en permanence — une de
+    // vingt ans, une de deux ans, un transit de six mois, une eclipse de trois
+    // jours. Ce code prenait la premiere du tableau, c est-a-dire une au
+    // hasard. Sur la timeline complete ça ne se voyait pas, tout etant
+    // affiche ; sur un widget de cinquante points, le choix EST le produit.
+    const actuelle = periodeCourante(phases, aujourdHui);
+    const suivante = periodeSuivante(phases, aujourdHui);
 
     if (!actuelle && !suivante) return;
 
