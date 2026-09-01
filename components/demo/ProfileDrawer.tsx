@@ -18,6 +18,7 @@ import { getStreak } from "@/lib/streak";
 import { etatPermission, demanderPuisEnregistrer, lireCadence, reglerCadence, detailEchec, type EtatPermission } from "@/lib/push";
 import type { Cadence } from "@/lib/push-planification";
 import { getDeviceId } from "@/lib/device-id";
+import { rejouerGuide } from "@/components/demo/FirstUseGuide";
 import { useBillingState } from "@/lib/premium-gate";
 import { isNative, getPlatform } from "@/lib/platform";
 import { apiFetch } from "@/lib/api-client";
@@ -276,6 +277,21 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               </div>
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => {
+              rejouerGuide();
+              onClose();
+              router.push("/app/timeline");
+            }}
+            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
+          >
+            <span className="flex items-center gap-2.5">
+              <Eye size={16} className="text-text-body-subtle" />
+              {t("guide.revoir", locale)}
+            </span>
+          </button>
 
           {/* Theme toggle */}
           <button

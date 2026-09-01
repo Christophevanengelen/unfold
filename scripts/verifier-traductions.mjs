@@ -28,7 +28,7 @@ import { execFileSync } from "node:child_process";
  * des dizaines de cas existants se fait desactiver, donc ne protege de rien.
  * Ce nombre ne peut que descendre.
  */
-const PLAFOND = 29;
+const PLAFOND = 25;
 
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [

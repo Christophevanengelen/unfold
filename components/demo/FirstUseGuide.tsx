@@ -1,215 +1,342 @@
 "use client";
 
 /**
- * FirstUseGuide — premium spotlight coach marks.
+ * Le guide de premiere utilisation.
  *
- * - Real spotlight cutout via radial-gradient mask (soft feathered edge)
- * - NO auto-advance — user taps to proceed
- * - Animated arrow pointing to target
- * - Minimal, clean tooltip
- * - One step at a time
+ * REECRIT LE 1er SEPTEMBRE 2026. L ancien mentait sur l interface qu il
+ * expliquait : son premier pas disait « cette ligne marque aujourd hui », alors
+ * que l unique ligne horizontale est un CURSEUR DE LECTURE — il affiche l age
+ * de ce qu on regarde et change a chaque defilement. La phrase etait vraie une
+ * seconde, puis fausse pour toujours. Un guide qui se trompe sur sa propre app
+ * detruit la confiance dans tout le reste.
+ *
+ * Trois principes gouvernent cette version.
+ *
+ * 1. ON MESURE, ON NE DEVINE PAS. L ancien posait son halo a « 55 % » de
+ *    largeur et 280 pixels de rayon, ecrits en dur. Ici chaque cible est
+ *    resolue par getBoundingClientRect() sur un attribut data-guide, apres que
+ *    la mise en page s est stabilisee.
+ *
+ * 2. AUCUNE COULEUR FIGEE. L ancien peignait un voile presque noir par-dessus
+ *    une app claire, et son sous-titre tombait a 1,73 de contraste. Tout vient
+ *    des jetons, donc tout suit le theme.
+ *
+ * 3. LISIBLE A L ARRET. La fleche flottante d avant portait du sens par son
+ *    mouvement ; figee par « Reduire les animations », elle devenait un
+ *    triangle decoratif qui ne designait plus rien. Ce qui designe ici est le
+ *    trou et son anneau : deux formes statiques.
  */
 
-import { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { t, detectLocale, isRTL } from "@/lib/i18n-demo";
 
-const STORAGE_KEY = "unfold_first_use_done";
-const EASE = [0.22, 1, 0.36, 1] as const;
+const CLE_FAIT = "unfold_first_use_done";
+const CLE_ESSAIS = "unfold_first_use_essais";
+const CLE_ACCUEIL = "unfold_timeline_welcomed";
 
-interface GuideStep {
-  text: string;
-  subtext: string;
-  /** Spotlight center (CSS values relative to container) */
-  spotX: string;
-  spotY: string;
-  /** Spotlight radius in px */
-  spotRadius: number;
-  /** Tooltip position */
-  tooltipSide: "above" | "below";
-  cta: string;
+/** Au-dela, la personne a repondu : elle ne veut pas du guide. */
+const ESSAIS_MAX = 3;
+
+type Pas = {
+  cible: string | null;
+  titre: string;
+  corps: string;
+  carte: "haut" | "bas";
+};
+
+type Rect = { top: number; left: number; width: number; height: number };
+
+/**
+ * Faut-il montrer le guide ?
+ *
+ * La porte est aussi importante que le contenu : un guide qui s impose au
+ * mauvais moment designe le vide. Chaque condition vient d un cas reel.
+ */
+export function shouldShowFirstUseGuide(ctx?: {
+  vue?: string;
+  aDesDonnees?: boolean;
+  chargementViager?: boolean;
+  ficheOuverte?: boolean;
+}): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (localStorage.getItem(CLE_FAIT)) return false;
+    // L accueil doit etre passe : sinon deux voiles se succedent.
+    if (localStorage.getItem(CLE_ACCUEIL) !== "true") return false;
+    if (Number(localStorage.getItem(CLE_ESSAIS) ?? 0) >= ESSAIS_MAX) return false;
+  } catch {
+    return false;
+  }
+  // La vue liste n a ni curseur d age ni capsules graphiques : le guide y
+  // pointerait le vide. Et le mode est restaure depuis le stockage, donc on
+  // peut tres bien arriver directement en liste.
+  if (ctx?.vue && ctx.vue !== "overview") return false;
+  if (ctx?.aDesDonnees === false) return false;
+  // Pendant le chargement de la vie entiere, les positions des capsules sont
+  // rebattues : mesurer maintenant, c est ancrer sur des coordonnees perimees.
+  if (ctx?.chargementViager) return false;
+  if (ctx?.ficheOuverte) return false;
+  return true;
 }
 
-const STEPS: GuideStep[] = [
-  {
-    text: "You are here.",
-    subtext: "This line marks today. Above is your future, below is your past.",
-    spotX: "55%",
-    spotY: "50%",
-    spotRadius: 280,
-    tooltipSide: "below",
-    cta: "Got it",
-  },
-  {
-    text: "Tap a capsule.",
-    subtext: "See which planets are active and what it means for you.",
-    spotX: "35%",
-    spotY: "48%",
-    spotRadius: 80,
-    tooltipSide: "below",
-    cta: "Start exploring",
-  },
-];
+export function marquerGuideVu() {
+  try {
+    localStorage.setItem(CLE_FAIT, "1");
+  } catch {
+    /* stockage refuse */
+  }
+}
 
-export function FirstUseGuide({ onDone }: { onDone: () => void }) {
-  const [step, setStep] = useState(0);
+/** Remet le guide a zero — appele depuis l ecran profil. */
+export function rejouerGuide() {
+  try {
+    localStorage.removeItem(CLE_FAIT);
+    localStorage.removeItem(CLE_ESSAIS);
+  } catch {
+    /* stockage refuse */
+  }
+}
 
-  const advance = useCallback(() => {
-    if (step < STEPS.length - 1) {
-      setStep(s => s + 1);
-    } else {
-      localStorage.setItem(STORAGE_KEY, "true");
-      onDone();
-    }
-  }, [step, onDone]);
+export function FirstUseGuide({
+  conteneur,
+  onDone,
+}: {
+  /** Le panneau de la timeline, contre lequel les cibles sont mesurees. */
+  conteneur?: React.RefObject<HTMLElement | null>;
+  onDone: () => void;
+}) {
+  const locale = detectLocale();
+  const rtl = isRTL(locale);
+  const [pas, setPas] = useState(0);
+  const [rect, setRect] = useState<Rect | null>(null);
+  const [pasUtiles, setPasUtiles] = useState<Pas[] | null>(null);
+  const compte = useRef(false);
 
-  const skip = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, "true");
+  const TOUS: Pas[] = [
+    {
+      cible: "curseur-age",
+      titre: t("guide.p1_titre", locale),
+      corps: t("guide.p1_corps", locale),
+      carte: "haut",
+    },
+    {
+      cible: null, // toute la colonne : mesuree comme l union des capsules
+      titre: t("guide.p2_titre", locale),
+      corps: t("guide.p2_corps", locale),
+      carte: "bas",
+    },
+    {
+      cible: "capsule-courante",
+      titre: t("guide.p3_titre", locale),
+      corps: t("guide.p3_corps", locale),
+      carte: "bas",
+    },
+  ];
+
+  /** Mesure une cible dans le repere du conteneur. */
+  const mesurer = useCallback(
+    (cible: string | null): Rect | null => {
+      const hote = conteneur?.current;
+      if (!hote) return null;
+      const base = hote.getBoundingClientRect();
+
+      // Le pas 2 designe la colonne entiere : l union des capsules visibles.
+      const elements = cible
+        ? Array.from(hote.querySelectorAll(`[data-guide="${cible}"]`))
+        : Array.from(hote.querySelectorAll("[data-guide]"));
+      if (elements.length === 0) return null;
+
+      let t0 = Infinity, l0 = Infinity, b0 = -Infinity, r0 = -Infinity;
+      for (const el of elements) {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        t0 = Math.min(t0, r.top); l0 = Math.min(l0, r.left);
+        b0 = Math.max(b0, r.bottom); r0 = Math.max(r0, r.right);
+      }
+      if (!Number.isFinite(t0)) return null;
+
+      const marge = 8;
+      let largeur = r0 - l0 + marge * 2;
+      let gauche = l0 - base.left - marge;
+      // Les capsules font 14 a 28 points de large. Le guide dit « touche » : la
+      // zone qu il designe doit etre atteignable, donc au moins 44.
+      if (largeur < 44) {
+        gauche -= (44 - largeur) / 2;
+        largeur = 44;
+      }
+      return {
+        top: t0 - base.top - marge,
+        left: gauche,
+        width: largeur,
+        height: b0 - t0 + marge * 2,
+      };
+    },
+    [conteneur],
+  );
+
+  // On ne garde que les pas dont la cible existe. Un pas qui pointe le vide est
+  // pire que pas de pas.
+  useEffect(() => {
+    const image = requestAnimationFrame(() => {
+      const utiles = TOUS.filter((p) => p.cible === null || mesurer(p.cible) !== null);
+      if (utiles.length === 0) {
+        marquerGuideVu();
+        onDone();
+        return;
+      }
+      setPasUtiles(utiles);
+      if (!compte.current) {
+        compte.current = true;
+        try {
+          localStorage.setItem(CLE_ESSAIS, String(Number(localStorage.getItem(CLE_ESSAIS) ?? 0) + 1));
+        } catch {
+          /* stockage refuse */
+        }
+      }
+    });
+    return () => cancelAnimationFrame(image);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Remesurer a chaque pas, et quand la fenetre change.
+  useEffect(() => {
+    if (!pasUtiles) return;
+    const relever = () => setRect(mesurer(pasUtiles[pas]?.cible ?? null));
+    relever();
+    window.addEventListener("resize", relever);
+    window.addEventListener("orientationchange", relever);
+    return () => {
+      window.removeEventListener("resize", relever);
+      window.removeEventListener("orientationchange", relever);
+    };
+  }, [pas, pasUtiles, mesurer]);
+
+  if (!pasUtiles) return null;
+  const courant = pasUtiles[pas];
+  const dernier = pas === pasUtiles.length - 1;
+
+  const terminer = () => {
+    marquerGuideVu();
     onDone();
-  }, [onDone]);
-
-  const current = STEPS[step];
-
-  // Soft spotlight: radial gradient creates a hole with feathered edges
-  const overlayBg = `radial-gradient(circle at ${current.spotX} ${current.spotY}, transparent ${current.spotRadius * 0.5}px, rgba(17, 13, 36, 0.75) ${current.spotRadius}px)`;
+  };
 
   return (
-    <motion.div
-      className="absolute inset-0 z-40"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5, ease: EASE }}
+    <div
+      className="absolute inset-0 z-50"
+      dir={rtl ? "rtl" : "ltr"}
+      role="dialog"
+      aria-label={t("guide.progression", locale)
+        .replace("{n}", String(pas + 1))
+        .replace("{total}", String(pasUtiles.length))}
     >
-      {/* Overlay with spotlight cutout */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={step}
-          className="absolute inset-0"
-          style={{ background: overlayBg }}
-          onClick={advance}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6 }}
-        />
-      </AnimatePresence>
+      {/* Le voile. Quatre bandes plutot qu un decoupage : le clip-path ne
+          laisse pas passer les evenements de pointage de facon fiable dans la
+          vue web d iOS, et on veut que le trou reste touchable. */}
+      {rect
+        ? (
+          [
+            { top: 0, left: 0, right: 0, height: Math.max(0, rect.top) },
+            { top: rect.top + rect.height, left: 0, right: 0, bottom: 0 },
+            { top: rect.top, left: 0, width: Math.max(0, rect.left), height: rect.height },
+            { top: rect.top, left: rect.left + rect.width, right: 0, height: rect.height },
+          ] as React.CSSProperties[]
+        ).map((pos, i) => (
+          <div
+            key={i}
+            className="absolute"
+            style={{
+              ...pos,
+              // La couleur de fond de l app, pas un noir plaque : c est ce qui
+              // rend le voile juste dans les deux themes.
+              background: "color-mix(in srgb, var(--bg-primary) 92%, transparent)",
+            }}
+          />
+        ))
+        : (
+          <div
+            className="absolute inset-0"
+            style={{ background: "color-mix(in srgb, var(--bg-primary) 92%, transparent)" }}
+          />
+        )}
 
-      {/* Tooltip */}
+      {/* L anneau. Il designe, a l arret, sans animation. */}
+      {rect && (
+        <div
+          className="pointer-events-none absolute"
+          style={{
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+            border: "1.5px solid var(--border-brand)",
+            borderRadius: 14,
+          }}
+        />
+      )}
+
+      {/* La carte. Opaque : un fond translucide rendrait le contraste
+          incalculable, et c est ainsi que l ancien sous-titre etait tombe a
+          1,73. */}
       <div
-        className="absolute left-5 right-5"
+        className="absolute rounded-2xl p-4"
         style={{
-          ...(current.tooltipSide === "above"
-            ? { top: "12%" }
-            : { bottom: "12%" }),
-          zIndex: 2,
+          left: 16,
+          right: 16,
+          ...(courant.carte === "haut"
+            ? { top: "calc(var(--safe-top, 0px) + 40px)" }
+            : { bottom: "calc(var(--barre-onglets, 64px) + var(--safe-bottom, 0px) + 16px)" }),
+          background: "var(--bg-primary)",
+          border: "1px solid var(--border-light)",
+          boxShadow: "0 8px 32px rgb(0 0 0 / 0.18)",
         }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            className="flex flex-col items-center gap-3"
-            initial={{ opacity: 0, y: current.tooltipSide === "above" ? -16 : 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, delay: 0.2, ease: EASE }}
+        <p className="text-base font-semibold" style={{ color: "var(--text-heading)" }}>
+          {courant.titre}
+        </p>
+        <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--text-body)" }}>
+          {courant.corps}
+        </p>
+
+        <div className="mt-4 flex items-center gap-3">
+          {/* Trois points : on doit savoir que ça dure trois taps, sinon on
+              passe sans savoir ce qu on rate. */}
+          <div className="flex gap-1.5" aria-hidden="true">
+            {pasUtiles.map((_, i) => (
+              <span
+                key={i}
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 999,
+                  background: i === pas ? "var(--border-brand)" : "var(--border-light)",
+                }}
+              />
+            ))}
+          </div>
+          <span className="flex-1" />
+          <button
+            type="button"
+            onClick={terminer}
+            className="px-2 text-sm font-medium"
+            style={{ color: "var(--text-brand)", minHeight: 44 }}
           >
-            {/* Arrow UP — when tooltip is below target */}
-            {current.tooltipSide === "below" && (
-              <motion.svg
-                width="16" height="10" viewBox="0 0 16 10" fill="none"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <path d="M8 0L16 10H0L8 0Z" fill="rgba(149, 133, 204, 0.5)" />
-              </motion.svg>
-            )}
-
-            {/* Card */}
-            <div
-              className="w-full rounded-2xl text-center"
-              style={{
-                background: "var(--glass-bg)",
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-                border: "1px solid var(--glass-border)",
-                padding: "24px 20px 20px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 18,
-                  fontWeight: 600,
-                  lineHeight: 1.3,
-                  color: "var(--text-heading)",
-                  marginBottom: 6,
-                }}
-              >
-                {current.text}
-              </p>
-
-              <p
-                style={{
-                  fontSize: 13,
-                  lineHeight: 1.5,
-                  color: "rgba(149, 133, 204, 0.7)",
-                  marginBottom: 20,
-                }}
-              >
-                {current.subtext}
-              </p>
-
-              <motion.button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); advance(); }}
-                className="w-full rounded-[16px] font-semibold"
-                style={{
-                  fontSize: 14,
-                  padding: "14px 0",
-                  background: "var(--accent-purple)",
-                  color: "var(--text-on-brand)",
-                }}
-                whileTap={{ scale: 0.97 }}
-              >
-                {current.cta}
-              </motion.button>
-
-              {step < STEPS.length - 1 && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); skip(); }}
-                  className="mt-2 w-full"
-                  style={{
-                    fontSize: 11,
-                    color: "rgba(149, 133, 204, 0.35)",
-                    padding: "10px 0",
-                  }}
-                >
-                  Skip
-                </button>
-              )}
-            </div>
-
-            {/* Arrow DOWN — when tooltip is above target */}
-            {current.tooltipSide === "above" && (
-              <motion.svg
-                width="16" height="10" viewBox="0 0 16 10" fill="none"
-                animate={{ y: [0, 5, 0] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <path d="M8 10L0 0H16L8 10Z" fill="rgba(149, 133, 204, 0.5)" />
-              </motion.svg>
-            )}
-          </motion.div>
-        </AnimatePresence>
+            {t("guide.passer", locale)}
+          </button>
+          <button
+            type="button"
+            onClick={() => (dernier ? terminer() : setPas((n) => n + 1))}
+            className="rounded-xl px-5 text-sm font-semibold"
+            style={{
+              minHeight: 48,
+              background: "var(--bg-brand-strong)",
+              color: "var(--text-on-brand)",
+              border: "1px solid var(--border-brand)",
+            }}
+          >
+            {dernier ? t("guide.commencer", locale) : t("guide.suivant", locale)}
+          </button>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
-}
-
-// ─── Gate ─────────────────────────────────────────────────
-
-export function shouldShowFirstUseGuide(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem("unfold_timeline_welcomed") === "true"
-    && !localStorage.getItem(STORAGE_KEY);
 }

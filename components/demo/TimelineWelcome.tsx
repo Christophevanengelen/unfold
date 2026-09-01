@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMomentum } from "@/lib/momentum-store";
+import { t, detectLocale } from "@/lib/i18n-demo";
 
 const EASE = [0.4, 0, 0.2, 1] as const;
 const STORAGE_KEY = "unfold_timeline_welcomed";
@@ -19,18 +20,28 @@ export function TimelineWelcome({ onDone }: { onDone: () => void }) {
   const { birthData } = useMomentum();
   const name = birthData?.nickname || "You";
 
+  const locale = detectLocale();
   const [phase, setPhase] = useState<"name" | "message" | "fade">("name");
 
   useEffect(() => {
     // name → message → fade out
-    const t1 = setTimeout(() => setPhase("message"), 3500);
-    const t2 = setTimeout(() => setPhase("fade"), 9000);
+    // L accueil durait dix secondes et demie, non interruptibles, suivies du
+    // guide huit cents millisecondes plus tard : treize secondes de voile sur
+    // un ecran qu on vient d attendre. C est la que naissait la sensation de
+    // lourdeur, et aucune retouche du guide seul ne l aurait corrigee.
+    const t1 = setTimeout(() => setPhase("message"), 3000);
+    const t2 = setTimeout(() => setPhase("fade"), 4200);
     const t3 = setTimeout(() => {
       localStorage.setItem(STORAGE_KEY, "true");
       onDone();
-    }, 10500);
+    }, 5200);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [onDone]);
+
+  const passer = () => {
+    try { localStorage.setItem(STORAGE_KEY, "true"); } catch { /* stockage refuse */ }
+    onDone();
+  };
 
   return (
     <AnimatePresence>
@@ -98,9 +109,11 @@ export function TimelineWelcome({ onDone }: { onDone: () => void }) {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.8, duration: 1, ease: EASE }}
                 >
-                  Every signal from birth to what lies ahead.
-                  <br />
-                  Tap any capsule to explore.
+                  {/* « what lies ahead » — « ce qui t attend » — promettait
+                      l avenir. Et « Tap any capsule » etait repris mot pour mot
+                      par le guide huit cent millisecondes plus tard, qui lui
+                      peut vraiment designer une capsule. */}
+                  {t("accueil.ligne", locale)}
                 </motion.p>
               </motion.div>
             )}

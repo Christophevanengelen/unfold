@@ -121,6 +121,15 @@ type Strings = {
     match: string;
     profile: string;
   };
+  accueil: { ligne: string };
+  guide: {
+    p1_titre: string; p1_corps: string;
+    p2_titre: string; p2_corps: string;
+    p3_titre: string; p3_corps: string;
+    suivant: string; commencer: string; passer: string;
+    progression: string;
+    revoir: string;
+  };
   common: {
     echec_titre: string;
     echec_corps: string;
@@ -223,6 +232,14 @@ const FR: Strings = {
     timeline: "Timeline",
     match: "Match",
     profile: "Profil",
+  },
+  accueil: { ligne: "Chaque période, de ta naissance aux mois qui viennent." },
+  guide: {
+    p1_titre: "Tu es ici, aujourd'hui.", p1_corps: "Cette ligne et ce chiffre donnent l'âge de ce que tu regardes. Fais défiler, ils suivent.",
+    p2_titre: "Ta vie, de bas en haut.", p2_corps: "En bas, ta naissance. En haut, les mois qui viennent. Chaque capsule est une période.",
+    p3_titre: "Touche une capsule.", p3_corps: "Elle ouvre la période : ses dates, les planètes qui la traversent, ce que ça déplace.",
+    suivant: "Suivant", commencer: "Commencer", passer: "Passer",
+    progression: "Étape {n} sur {total}", revoir: "Revoir le guide",
   },
   common: {
     echec_titre: "Ta timeline n'a pas pu être calculée",
@@ -327,6 +344,14 @@ const EN: Strings = {
     match: "Match",
     profile: "Profile",
   },
+  accueil: { ligne: "Every period, from your birth to the coming months." },
+  guide: {
+    p1_titre: "You are here, today.", p1_corps: "This line and this number show the age of whatever you are looking at. Scroll, they follow.",
+    p2_titre: "Your life, bottom to top.", p2_corps: "Birth at the bottom. The coming months at the top. Each capsule is one period.",
+    p3_titre: "Tap a capsule.", p3_corps: "It opens the period: its dates, the planets moving through it, what that shifts.",
+    suivant: "Next", commencer: "Start", passer: "Skip",
+    progression: "Step {n} of {total}", revoir: "Replay the guide",
+  },
   common: {
     echec_titre: "Your timeline couldn't be calculated",
     echec_corps: "The calculation didn't respond. It happens, and nothing is lost — your data is intact.",
@@ -429,6 +454,14 @@ const ES: Strings = {
     timeline: "Línea de tiempo",
     match: "Match",
     profile: "Perfil",
+  },
+  accueil: { ligne: "Cada periodo, desde tu nacimiento hasta los meses que vienen." },
+  guide: {
+    p1_titre: "Estás aquí, hoy.", p1_corps: "Esta línea y este número dan la edad de lo que miras. Desplaza, te siguen.",
+    p2_titre: "Tu vida, de abajo arriba.", p2_corps: "Abajo, tu nacimiento. Arriba, los meses que vienen. Cada cápsula es un periodo.",
+    p3_titre: "Toca una cápsula.", p3_corps: "Abre el periodo: sus fechas, los planetas que lo atraviesan, lo que mueve.",
+    suivant: "Siguiente", commencer: "Empezar", passer: "Saltar",
+    progression: "Paso {n} de {total}", revoir: "Volver a ver la guía",
   },
   common: {
     echec_titre: "No se pudo calcular tu línea de tiempo",
@@ -533,6 +566,14 @@ const DE: Strings = {
     match: "Match",
     profile: "Profil",
   },
+  accueil: { ligne: "Jede Phase, von deiner Geburt bis zu den kommenden Monaten." },
+  guide: {
+    p1_titre: "Du bist hier, heute.", p1_corps: "Diese Linie und diese Zahl zeigen das Alter dessen, was du siehst. Scrolle, sie folgen.",
+    p2_titre: "Dein Leben, von unten.", p2_corps: "Unten deine Geburt. Oben die kommenden Monate. Jede Kapsel ist eine Phase.",
+    p3_titre: "Tippe eine Kapsel an.", p3_corps: "Sie öffnet die Phase: ihre Daten, die Planeten darin, was sich verschiebt.",
+    suivant: "Weiter", commencer: "Starten", passer: "Überspringen",
+    progression: "Schritt {n} von {total}", revoir: "Anleitung erneut ansehen",
+  },
   common: {
     echec_titre: "Deine Timeline konnte nicht berechnet werden",
     echec_corps: "Die Berechnung hat nicht geantwortet. Das kommt vor, nichts ist verloren — deine Daten sind intakt.",
@@ -635,6 +676,14 @@ const IT: Strings = {
     timeline: "Timeline",
     match: "Match",
     profile: "Profilo",
+  },
+  accueil: { ligne: "Ogni periodo, dalla tua nascita ai mesi che vengono." },
+  guide: {
+    p1_titre: "Sei qui, oggi.", p1_corps: "Questa linea e questo numero danno l'età di ciò che guardi. Scorri, ti seguono.",
+    p2_titre: "La tua vita, dal basso.", p2_corps: "In basso la nascita. In alto i mesi che vengono. Ogni capsula è un periodo.",
+    p3_titre: "Tocca una capsula.", p3_corps: "Apre il periodo: le sue date, i pianeti che lo attraversano, ciò che sposta.",
+    suivant: "Avanti", commencer: "Iniziare", passer: "Salta",
+    progression: "Passo {n} di {total}", revoir: "Rivedere la guida",
   },
   common: {
     echec_titre: "Non è stato possibile calcolare la tua timeline",
@@ -739,6 +788,14 @@ const PT: Strings = {
     match: "Match",
     profile: "Perfil",
   },
+  accueil: { ligne: "Cada período, do teu nascimento aos meses que vêm." },
+  guide: {
+    p1_titre: "Estás aqui, hoje.", p1_corps: "Esta linha e este número dão a idade do que estás a ver. Desliza, acompanham.",
+    p2_titre: "A tua vida, de baixo.", p2_corps: "Em baixo o nascimento. Em cima os meses que vêm. Cada cápsula é um período.",
+    p3_titre: "Toca numa cápsula.", p3_corps: "Abre o período: as suas datas, os planetas que o atravessam, o que desloca.",
+    suivant: "Seguinte", commencer: "Começar", passer: "Saltar",
+    progression: "Passo {n} de {total}", revoir: "Rever o guia",
+  },
   common: {
     echec_titre: "Não foi possível calcular a tua linha do tempo",
     echec_corps: "O cálculo não respondeu. Acontece, e nada se perdeu — os teus dados estão intactos.",
@@ -841,6 +898,14 @@ const NL: Strings = {
     timeline: "Tijdlijn",
     match: "Match",
     profile: "Profiel",
+  },
+  accueil: { ligne: "Elke periode, van je geboorte tot de komende maanden." },
+  guide: {
+    p1_titre: "Je bent hier, vandaag.", p1_corps: "Deze lijn en dit getal tonen de leeftijd van wat je ziet. Scroll, ze volgen.",
+    p2_titre: "Je leven, van onderaf.", p2_corps: "Onderaan je geboorte. Bovenaan de komende maanden. Elke capsule is een periode.",
+    p3_titre: "Tik op een capsule.", p3_corps: "Ze opent de periode: de data, de planeten erdoorheen, wat er verschuift.",
+    suivant: "Volgende", commencer: "Beginnen", passer: "Overslaan",
+    progression: "Stap {n} van {total}", revoir: "Gids opnieuw bekijken",
   },
   common: {
     echec_titre: "Je tijdlijn kon niet worden berekend",
@@ -945,6 +1010,14 @@ const JA: Strings = {
     match: "マッチ",
     profile: "プロフィール",
   },
+  accueil: { ligne: "誕生からこれからの数か月まで、すべての期間。" },
+  guide: {
+    p1_titre: "今日のあなたはここ。", p1_corps: "この線と数字は、見ている場所の年齢です。スクロールすると一緒に動きます。",
+    p2_titre: "下から上へ、あなたの人生。", p2_corps: "下が誕生。上がこれからの数か月。カプセル一つが一つの期間です。",
+    p3_titre: "カプセルに触れる。", p3_corps: "期間が開きます。日付、通過する惑星、何が動くか。",
+    suivant: "次へ", commencer: "はじめる", passer: "スキップ",
+    progression: "{total} 中 {n} 番目", revoir: "ガイドをもう一度",
+  },
   common: {
     echec_titre: "タイムラインを計算できませんでした",
     echec_corps: "計算が応答しませんでした。よくあることで、データは失われていません。",
@@ -1048,6 +1121,14 @@ const ZH: Strings = {
     match: "匹配",
     profile: "个人资料",
   },
+  accueil: { ligne: "从出生到接下来的月份，每一个阶段。" },
+  guide: {
+    p1_titre: "你在这里，今天。", p1_corps: "这条线和这个数字显示你正在看的年龄。滚动时它们会跟随。",
+    p2_titre: "你的一生，由下而上。", p2_corps: "下方是出生。上方是接下来的月份。每个胶囊是一个阶段。",
+    p3_titre: "点一个胶囊。", p3_corps: "它会打开这个阶段：日期、经过的行星、以及带来的变化。",
+    suivant: "下一步", commencer: "开始", passer: "跳过",
+    progression: "第 {n} 步，共 {total} 步", revoir: "重看引导",
+  },
   common: {
     echec_titre: "无法计算你的时间线",
     echec_corps: "计算没有响应。这种情况会发生，你的数据没有丢失。",
@@ -1150,6 +1231,14 @@ const AR: Strings = {
     timeline: "الجدول الزمني",
     match: "مطابقة",
     profile: "الملف الشخصي",
+  },
+  accueil: { ligne: "كل فترة، من ميلادك إلى الأشهر القادمة." },
+  guide: {
+    p1_titre: "أنت هنا، اليوم.", p1_corps: "هذا الخط وهذا الرقم يعطيان عمر ما تنظر إليه. مرّر، وسيتبعانك.",
+    p2_titre: "حياتك، من الأسفل.", p2_corps: "في الأسفل ميلادك. في الأعلى الأشهر القادمة. كل كبسولة فترة.",
+    p3_titre: "المس كبسولة.", p3_corps: "تفتح الفترة: تواريخها، الكواكب التي تعبرها، وما تحرّكه.",
+    suivant: "التالي", commencer: "ابدأ", passer: "تخطّي",
+    progression: "الخطوة {n} من {total}", revoir: "إعادة عرض الدليل",
   },
   common: {
     echec_titre: "تعذّر حساب مخططك الزمني",

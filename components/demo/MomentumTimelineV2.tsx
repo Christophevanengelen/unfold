@@ -650,6 +650,9 @@ function OverviewView({
             const oCapPad = w / 2;
             return (
             <motion.button
+              // Repere pour le guide : la periode en cours est la seule cible
+              // qu il peut designer honnetement.
+              data-guide={capsule.isCurrent ? "capsule-courante" : undefined}
               key={capsule.id}
               type="button"
               onClick={() => onTapCapsule(capsule)}
@@ -1143,7 +1146,8 @@ export function MomentumTimelineV2() {
   }, []);
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleData | null>(null);
   const [showWelcome, setShowWelcome] = useState(() => shouldShowWelcome());
-  const [showGuide, setShowGuide] = useState(() => !shouldShowWelcome() && shouldShowFirstUseGuide());
+  const panneauRef = useRef<HTMLDivElement>(null);
+  const [showGuide, setShowGuide] = useState(false);
   const [briefingDismissed, setBriefingDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
     const stored = localStorage.getItem("unfold_briefing_dismissed");
@@ -1318,13 +1322,20 @@ export function MomentumTimelineV2() {
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
+    <div ref={panneauRef} className="relative h-full w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
       {/* ── First-time welcome overlay ── */}
       {showWelcome && (
         <TimelineWelcome onDone={() => {
           setShowWelcome(false);
           // After welcome fades, show the guide
-          if (shouldShowFirstUseGuide()) {
+          if (
+            shouldShowFirstUseGuide({
+              vue: viewMode,
+              aDesDonnees: hasAnyData,
+              chargementViager: isLoadingLifetime,
+              ficheOuverte: selectedCapsule !== null,
+            })
+          ) {
             setTimeout(() => setShowGuide(true), 800);
           }
         }} />
@@ -1333,7 +1344,7 @@ export function MomentumTimelineV2() {
       {/* ── First-use guide hints ── */}
       <AnimatePresence>
         {showGuide && (
-          <FirstUseGuide onDone={() => setShowGuide(false)} />
+          <FirstUseGuide conteneur={panneauRef} onDone={() => setShowGuide(false)} />
         )}
       </AnimatePresence>
 
@@ -1438,6 +1449,10 @@ export function MomentumTimelineV2() {
         const isToday = visibleAge === currentAge;
         return (
         <div
+          // Repere pour le guide de premiere utilisation, qui mesure cet
+          // element au lieu de deviner sa position. Il posait auparavant un
+          // spot a « 55 % » ecrit en dur, jamais confronte a un element reel.
+          data-guide="curseur-age"
           className="pointer-events-none absolute left-0 right-0 z-20"
           style={{ top: "calc(50% + 20px)" }}
         >
