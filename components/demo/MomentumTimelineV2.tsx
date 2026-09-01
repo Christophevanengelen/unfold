@@ -26,7 +26,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
 import { TimelineWelcome, shouldShowWelcome } from "./TimelineWelcome";
-import { FirstUseGuide, shouldShowFirstUseGuide, relanceDemandee } from "./FirstUseGuide";
+import { FirstUseGuide, shouldShowFirstUseGuide, relanceDemandee, EVENEMENT_RELANCE } from "./FirstUseGuide";
 import { PropositionNotifications } from "./PropositionNotifications";
 import {
   type MomentumPhase,
@@ -1170,27 +1170,7 @@ export function MomentumTimelineV2() {
   const panneauRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);
 
-  // « Revoir le guide » depuis le profil. Le guide etait jusqu ici monte
-  // uniquement dans le onDone de l ecran d accueil — un evenement qui ne peut
-  // plus se produire une fois l accueil passe. Le bouton etait donc inerte.
-  useEffect(() => {
-    if (!relanceDemandee()) return;
-    const t = setTimeout(() => {
-      if (
-        shouldShowFirstUseGuide({
-          vue: viewMode,
-          aDesDonnees: hasAnyData,
-          chargementViager: isLoadingLifetime,
-          ficheOuverte: selectedCapsule !== null,
-        })
-      ) {
-        setShowGuide(true);
-      }
-    }, 400);
-    return () => clearTimeout(t);
-    // Volontairement au montage seulement : la demande est consommee une fois.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
   const [briefingDismissed, setBriefingDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
     const stored = localStorage.getItem("unfold_briefing_dismissed");
@@ -1310,6 +1290,32 @@ export function MomentumTimelineV2() {
   // Show spinner only when we have NO data at all.
   // If year data (phases) arrived, show timeline immediately — lifetime loads in background.
   const hasAnyData = phases.length > 0 || timelinePhases.length > 0;
+
+  // « Revoir le guide » depuis le profil.
+  //
+  // Deux chemins, parce qu il y a deux situations reelles :
+  //
+  //   - On arrive sur la timeline depuis un autre ecran : la demande deposee
+  //     dans le stockage est lue au montage.
+  //   - On est DEJA sur la timeline quand on appuie : rien ne remonte, donc le
+  //     montage ne rejoue pas. C est le cas le plus frequent, et c est celui
+  //     que la premiere correction avait manque. L evenement le couvre.
+  //
+  // Dans les deux cas on ne consulte QUE les conditions de contexte — la bonne
+  // vue, des donnees presentes, aucune fiche ouverte. Les conditions de
+  // stockage (« deja vu », « trois refus ») ne s appliquent pas : la personne
+  // vient de demander explicitement a le revoir.
+  useEffect(() => {
+    const montrer = () => {
+      if (!hasAnyData || viewMode !== "overview" || selectedCapsule !== null) return;
+      setShowWelcome(false);
+      setTimeout(() => setShowGuide(true), 250);
+    };
+    if (relanceDemandee()) montrer();
+    const surRelance = () => montrer();
+    window.addEventListener(EVENEMENT_RELANCE, surRelance);
+    return () => window.removeEventListener(EVENEMENT_RELANCE, surRelance);
+  }, [hasAnyData, viewMode, selectedCapsule]);
 
   // Le moment ou la personne voit son signal pour la premiere fois : c est
   // l aboutissement du parcours, et le seul evenement qui dit si le produit a

@@ -102,6 +102,8 @@ export function marquerGuideVu() {
  * On pose desormais une demande explicite, que la timeline lit a son montage.
  * Le guide ne depend plus d un evenement qui ne peut plus se produire.
  */
+export const EVENEMENT_RELANCE = "unfold:rejouer-guide";
+
 export function rejouerGuide() {
   try {
     localStorage.removeItem(CLE_FAIT);
@@ -109,6 +111,19 @@ export function rejouerGuide() {
     localStorage.setItem(CLE_RELANCE, "1");
   } catch {
     /* stockage refuse */
+  }
+  // On PREVIENT, on ne se contente pas de deposer une demande.
+  //
+  // La premiere correction posait la demande et laissait la timeline la lire a
+  // son montage. Mais quand on appuie sur « revoir le guide » depuis le profil,
+  // on est deja SUR la timeline : elle ne remonte pas, l effet de montage ne
+  // rejoue pas, et rien ne se passe. Exactement la meme faute que celle qu on
+  // venait de corriger — un declencheur suspendu a un evenement qui ne peut pas
+  // survenir — deplacee d un cran.
+  try {
+    window.dispatchEvent(new CustomEvent(EVENEMENT_RELANCE));
+  } catch {
+    /* pas de fenetre */
   }
 }
 
