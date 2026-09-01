@@ -5,6 +5,8 @@ import Link from "next/link";
 import type { RealConnection } from "@/lib/connections-store";
 import { relationshipConfig } from "./relationshipConfig";
 import { RelationshipAvatar } from "./RelationshipAvatar";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface ConnectionStripProps {
   connections: RealConnection[];
@@ -21,6 +23,7 @@ interface ConnectionStripProps {
  * Last slot is always "Invite someone" — turns dead-end list into growth.
  */
 export function ConnectionStrip({ connections, currentId, onSelect }: ConnectionStripProps) {
+  const locale = detectLocale();
   if (connections.length <= 1) return null;
   return (
     <div
@@ -83,7 +86,7 @@ export function ConnectionStrip({ connections, currentId, onSelect }: Connection
             className="text-[9px] font-medium"
             style={{ color: "var(--text-body-subtle)" }}
           >
-            Inviter
+            {perso("compat.inviter", locale)}
           </span>
         </Link>
       </div>

@@ -12,6 +12,8 @@ import type { MatchingWindow, RelationshipType } from "@/lib/matching-narratives
 import type { RealConnection } from "@/lib/connections-store";
 import type { BirthData } from "@/lib/birth-data";
 import { relationshipConfig } from "./relationshipConfig";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface ConnectionReportProps {
   connection: RealConnection;
@@ -26,6 +28,7 @@ interface ConnectionReportProps {
  * rendered standalone OR inside ConnectionCarousel for swipeable detail.
  */
 export function ConnectionReport({ connection, myBirthData, embedded }: ConnectionReportProps) {
+  const locale = detectLocale();
   const [windows, setWindows] = useState<MatchingWindow[]>([]);
   const [periods, setPeriods] = useState<ActivePeriod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,6 +139,7 @@ function WindowCard({
   myBirthData: BirthData | null;
   theirBirthData: BirthData;
 }) {
+  const locale = detectLocale();
   const [del, setDel] = useState<ConnectionDelineation | null>(null);
   const [delLoading, setDelLoading] = useState(true);
 
@@ -188,7 +192,7 @@ function WindowCard({
             className="text-[10px] font-bold uppercase tracking-widest"
             style={{ color: isActive ? w.tierColor : "var(--text-body-subtle)" }}
           >
-            {isActive ? "Actif maintenant" : w.status === "past" ? "Passé" : "À venir"}
+            {isActive ? perso("compat.actif", locale) : w.status === "past" ? "Passé" : "À venir"}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -305,7 +309,7 @@ function WindowCard({
           }}
         >
           <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: w.tierColor }}>
-            À faire ensemble
+            {perso("compat.ensemble", locale)}
           </p>
           {delLoading ? (
             <div className="space-y-1">

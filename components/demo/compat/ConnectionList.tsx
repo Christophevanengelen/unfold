@@ -10,6 +10,8 @@ import type { BirthData } from "@/lib/birth-data";
 import { ConnectionRow } from "./ConnectionRow";
 import { ConnectionListSection } from "./ConnectionListSection";
 import { ConnectionActionSheet } from "./ConnectionActionSheet";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface ConnectionListProps {
   connections: RealConnection[];
@@ -25,6 +27,7 @@ interface ConnectionListProps {
  * only owns the list itself.
  */
 export function ConnectionList({ connections, myBirthData, onDeleted }: ConnectionListProps) {
+  const locale = detectLocale();
   const [sheetConn, setSheetConn] = useState<RealConnection | null>(null);
 
   // Group summaries by status once they're loaded.
@@ -69,7 +72,7 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
         </div>
       )}
 
-      <ConnectionListSection title="Actif maintenant" count={groups.active.length}>
+      <ConnectionListSection title={perso("compat.actif", locale)} count={groups.active.length}>
         {groups.active.map(({ conn, summary }) => (
           <ConnectionRow
             key={conn.id}
@@ -80,7 +83,7 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
         ))}
       </ConnectionListSection>
 
-      <ConnectionListSection title="Bientôt" count={groups.upcoming.length}>
+      <ConnectionListSection title={perso("compat.bientot", locale)} count={groups.upcoming.length}>
         {groups.upcoming.map(({ conn, summary }) => (
           <ConnectionRow
             key={conn.id}
@@ -91,7 +94,7 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
         ))}
       </ConnectionListSection>
 
-      <ConnectionListSection title="Calme" count={groups.calm.length} subtle>
+      <ConnectionListSection title={perso("compat.calme", locale)} count={groups.calm.length} subtle>
         {groups.calm.map(({ conn, summary }) => (
           <ConnectionRow
             key={conn.id}
@@ -114,7 +117,7 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
       {/* API-error hint — shows when at least one brief failed */}
       {Object.values(summaries).some((s) => s.error) && (
         <p className="mt-4 text-center text-[10px] text-text-body-subtle">
-          Signal partiel — certaines données sont en cache
+          {perso("compat.partiel", locale)}
         </p>
       )}
 

@@ -15,10 +15,13 @@ import { getBirthDataSync, type BirthData } from "@/lib/birth-data";
 import { ConnectionList } from "@/components/demo/compat/ConnectionList";
 import { apiFetch } from "@/lib/api-client";
 import { connectionHref } from "@/lib/connection-href";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 const LONG_PRESS_HINT_KEY = "unfold_longpress_hint_seen_v1";
 
 export default function ConnectionsPage() {
+  const locale = detectLocale();
   const router = useRouter();
   const [connections, setConnections] = useState<RealConnection[]>([]);
   const [myBirthData, setMyBirthData] = useState<BirthData | null>(null);
@@ -114,7 +117,7 @@ export default function ConnectionsPage() {
         <p className="text-xs text-text-body-subtle">
           {connections.length > 0
             ? `${connections.length} connecté${connections.length !== 1 ? "s" : ""}`
-            : "Invitez quelqu'un pour commencer"}
+            : perso("compat.invitez", locale)}
         </p>
       </div>
 
@@ -226,7 +229,7 @@ export default function ConnectionsPage() {
                 // clair et 3,23 en sombre. Meme correction que la bascule de vue.
                 style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
               >
-                {codeSubmitting ? "…" : "Connecter"}
+                {codeSubmitting ? "…" : perso("compat.connecter", locale)}
               </button>
             </div>
             {codeError ? (

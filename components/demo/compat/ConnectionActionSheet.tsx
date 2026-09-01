@@ -12,6 +12,8 @@ import {
   type RealConnection,
 } from "@/lib/connections-store";
 import { relationshipConfig, relationshipOrder } from "./relationshipConfig";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface ConnectionActionSheetProps {
   open: boolean;
@@ -36,6 +38,7 @@ export function ConnectionActionSheet({
   connection,
   onDeleted,
 }: ConnectionActionSheetProps) {
+  const locale = detectLocale();
   const [view, setView] = useState<View>("menu");
   const [nameDraft, setNameDraft] = useState("");
   const [deleteHoldProgress, setDeleteHoldProgress] = useState(0);
@@ -119,24 +122,24 @@ export function ConnectionActionSheet({
           <div className="space-y-1">
             <ActionRow
               icon={<Pen width={16} height={16} />}
-              label="Renommer"
+              label={perso("compat.renommer", locale)}
               onClick={() => setView("rename")}
             />
             <ActionRow
               icon={<UserEdit width={16} height={16} />}
-              label="Modifier la relation"
+              label={perso("compat.modifier_rel", locale)}
               onClick={() => setView("relationship")}
               subtitle={rel.labelFR}
             />
             <ActionRow
               icon={<ShareNodes width={16} height={16} />}
-              label="Partager le rapport"
+              label={perso("compat.partager_rap", locale)}
               onClick={handleShare}
             />
             <div className="my-2 h-px" style={{ background: "var(--border-base)" }} />
             <ActionRow
               icon={<TrashBin width={16} height={16} />}
-              label="Supprimer la connexion"
+              label={perso("compat.supprimer", locale)}
               onClick={() => setView("confirmDelete")}
               destructive
             />
@@ -146,7 +149,7 @@ export function ConnectionActionSheet({
         {view === "rename" && (
           <div>
             <label className="mb-2 block text-[11px] font-semibold uppercase tracking-widest text-text-body-subtle">
-              Nouveau nom
+              {perso("compat.nouveau_nom", locale)}
             </label>
             <input
               value={nameDraft}
@@ -170,7 +173,7 @@ export function ConnectionActionSheet({
                 className="flex-1 rounded-full py-2.5 text-xs font-semibold"
                 style={{ background: "var(--surface-light)", color: "var(--text-body)" }}
               >
-                Annuler
+                {perso("compat.annuler", locale)}
               </button>
               <button
                 onClick={handleRename}
@@ -178,7 +181,7 @@ export function ConnectionActionSheet({
                 className="flex-1 rounded-full py-2.5 text-xs font-semibold disabled:opacity-50"
                 style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
               >
-                Enregistrer
+                {perso("compat.enregistrer", locale)}
               </button>
             </div>
           </div>
@@ -187,7 +190,7 @@ export function ConnectionActionSheet({
         {view === "relationship" && (
           <div>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-text-body-subtle">
-              Type de relation
+              {perso("compat.type_relation", locale)}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {relationshipOrder.map((key) => {
@@ -218,7 +221,7 @@ export function ConnectionActionSheet({
               className="mt-4 w-full rounded-full py-2.5 text-xs font-semibold"
               style={{ background: "var(--surface-light)", color: "var(--text-body)" }}
             >
-              Retour
+              {perso("compat.retour", locale)}
             </button>
           </div>
         )}
@@ -229,7 +232,7 @@ export function ConnectionActionSheet({
               Supprimer {connection.name} ?
             </p>
             <p className="mt-1 text-[11px] text-text-body-subtle">
-              Le rapport ne sera plus visible. Action irréversible.
+              {perso("compat.irreversible", locale)}
             </p>
             <HoldToConfirmButton
               onConfirm={handleDelete}
@@ -241,7 +244,7 @@ export function ConnectionActionSheet({
               className="mt-3 w-full rounded-full py-2.5 text-xs font-semibold"
               style={{ background: "var(--surface-light)", color: "var(--text-body)" }}
             >
-              Annuler
+              {perso("compat.annuler", locale)}
             </button>
           </div>
         )}
@@ -305,6 +308,7 @@ function HoldToConfirmButton({
   progress: number;
   setProgress: (n: number) => void;
 }) {
+  const locale = detectLocale();
   const HOLD_MS = 1000;
   const [holding, setHolding] = useState(false);
 
@@ -349,10 +353,10 @@ function HoldToConfirmButton({
       />
       <span className="relative">
         {progress >= 1
-          ? "Suppression…"
+          ? perso("compat.suppression", locale)
           : holding
-            ? "Maintiens pour confirmer"
-            : "Maintenir pour supprimer"}
+            ? perso("compat.maintiens", locale)
+            : perso("compat.maintenir", locale)}
       </span>
     </button>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import type { ConnectionSummary } from "@/lib/connection-summary";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface WindowMicroPreviewProps {
   summary: ConnectionSummary | undefined;
@@ -12,13 +14,14 @@ interface WindowMicroPreviewProps {
  * Examples:
  *   "Fenêtre forte maintenant · Vénus"
  *   "Alignement clair dans 3 j · Saturne"
- *   "Calme ce mois"
+ *   perso("compat.calme_mois", locale)
  */
 export function WindowMicroPreview({ summary, loading }: WindowMicroPreviewProps) {
+  const locale = detectLocale();
   if (loading) {
     return (
       <span
-        aria-label="Chargement"
+        aria-label={perso("compat.chargement", locale)}
         className="inline-block h-2.5 w-32 rounded animate-pulse"
         style={{ background: "var(--surface-medium)" }}
       />

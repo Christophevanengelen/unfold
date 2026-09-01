@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface ConnectionListSectionProps {
   title: string;
@@ -11,7 +13,7 @@ interface ConnectionListSectionProps {
 
 /**
  * Section header + children wrapper for the rhythm inbox.
- * Sections: "Actif maintenant" / "Bientôt" / "Calme".
+ * Sections: perso("compat.actif", locale) / perso("compat.bientot", locale) / perso("compat.calme", locale).
  */
 export function ConnectionListSection({
   title,
@@ -19,6 +21,7 @@ export function ConnectionListSection({
   subtle,
   children,
 }: ConnectionListSectionProps) {
+  const locale = detectLocale();
   if (count === 0) return null;
   return (
     <section className="mt-5 first:mt-4">

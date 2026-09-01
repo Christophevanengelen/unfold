@@ -12,8 +12,11 @@ import { relationshipConfig } from "@/components/demo/compat/relationshipConfig"
 import { connectionHref } from "@/lib/connection-href";
 import { useTheme } from "next-themes";
 import { texteSurAplat } from "@/lib/contraste";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 export function ConnectionDetail({ connectionId }: { connectionId: string }) {
+  const locale = detectLocale();
   const { resolvedTheme } = useTheme();
   const router = useRouter();
 
@@ -47,7 +50,7 @@ export function ConnectionDetail({ connectionId }: { connectionId: string }) {
   if (connections.length === 0 || !current) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-text-body-subtle">Connexion introuvable</p>
+        <p className="text-sm text-text-body-subtle">{perso("compat.introuvable", locale)}</p>
       </div>
     );
   }
