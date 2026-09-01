@@ -47,6 +47,24 @@ export default async function LocaleLayout({
       className="flex min-h-screen flex-col"
       style={{ backgroundColor: "var(--bg-primary, #1B1535)" }}
     >
+      {/* Lien d evitement.
+          
+          Il existait dans components/layout/Header.tsx, l en-tete abandonne en
+          avril : sa disparition a emporte avec elle la seule facon d atteindre
+          le contenu sans traverser toute la page au clavier. Le site a bien un
+          <main id="main">, mais plus rien n y menait.
+          
+          Il reste invisible jusqu au premier appui sur Tab, donc il ne change
+          rien au dessin de la page — contrairement a l en-tete lui-meme, dont
+          le retour serait une decision de design. */}
+      <a
+        href="#main"
+        className="sr-only rounded-lg px-4 py-2 text-sm font-medium focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50"
+        style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
+      >
+        {locale === "fr" ? "Aller au contenu" : "Skip to content"}
+      </a>
+
       {/* Donnees structurees. Ecrites il y a des mois, jamais montees : le
           site declarait donc au moteur de recherche une application sans nom,
           sans categorie et sans offre. Verifie avant de le brancher — les prix

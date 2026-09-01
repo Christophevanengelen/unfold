@@ -152,38 +152,31 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
 
 ## Perte de fonctionnalité — le plus grave
 
-- [ ] **17 composants débranchés** (23 au matin du 01/09). Cinq ont été
-      supprimés — quatre primitives d'interface jamais importées et un doublon
-      de barre de navigation. Les autres portent une fonctionnalité, et les
-      supprimer est **une décision produit, pas technique** :
+- [x] **3 661 lignes de code mort supprimées** le 01/09, par vagues, en ne
+      touchant à chaque tour que les racines à zéro import.
 
-      | Quoi | Lignes | La question |
-      |---|---|---|
-      | `DomainPager` + 6 composants | ~900 | L'écran de détail par domaine. On le rebranche ou on l'abandonne ? |
-      | `StepPremium` | 226 | Le seul moment de vente de l'onboarding. Volontairement retiré ? |
-      | `StepCompatibility`, `StepHabit`, `StepPersonalize` | 512 | Retirés du parcours en même temps. |
-      | `DesignedForClarity` | 353 | Une section entière du site, jamais montée. |
-      | `SignalPager`, `LifeTimeline` | 453 | Deux vues alternatives de la timeline. |
-      | `Header` + `ThemeToggle` | 73 | Le site n'a plus d'en-tête. Voulu ? |
-      | `CookieConsent` | 83 | À garder tel quel — voir plus bas. |
-- [ ] **L'écran de détail par domaine** (Amour / Santé / Travail) — 1 500
-      lignes, débranché. Racine : `components/demo/DomainPager.tsx`.
-- [ ] **Le sélecteur de langue du SITE** — `components/LanguageSwitcher.tsx`,
-      perdu avec `Header.tsx`. Ne concerne que le site : l'app a son propre
-      réglage dans le tiroir de profil (`ProfileDrawer.tsx:498`). L'audit
-      annonçait la perte pour les deux, c'était trop large.
-- [x] **Le bandeau cookies** — vérifié le 01/09 : il ne doit PAS être monté en
-      l'état. Les seuls cookies du produit sont ceux de session Supabase, donc
-      strictement nécessaires, donc exemptés de consentement. Aucun traqueur,
-      aucun tiers, aucune analytique. Afficher « tout accepter / essentiels
-      uniquement » demanderait l'accord pour quelque chose qui n'existe pas.
-      **À monter le jour où une analytique est ajoutée**, pas avant.
-- [ ] **Les données structurées SEO** — `components/seo/StructuredData.tsx`,
-      jamais rendues. Perte de visibilité.
-- [ ] **Quatre écrans d'onboarding** hors parcours, dont `StepPremium` — le seul
-      moment de vente pendant l'inscription.
-- [ ] **`birthday-graph` et `spirit-wave`** partent dans le binaire iOS mais
-      aucune surface de l'app n'y mène. Seuls les teasers du site y renvoient.
+      L'élément déclencheur : `DomainPager` ne pouvait pas être rebranché. Il
+      fait `mockStructuredInsights[timeView].overall` sur un **tableau** — donc
+      `undefined.overall`, une exception au premier rendu. Du code abandonné en
+      cours de refonte, pas du code débranché qui marche.
+
+      Sont partis avec lui : tout le sous-arbre de l'écran de détail par
+      domaine, celui de `LifeTimeline`, et surtout **`lib/mock-data.ts`** — 739
+      lignes de scores inventés, de lectures astrologiques écrites à la main, et
+      d'un **thème natal fixe** servi comme contexte pour les événements de
+      n'importe qui. La source des données fabriquées n'existe plus.
+
+- [ ] **Sept composants restent, et ce sont des décisions produit :**
+
+      | Quoi | Lignes | État réel | La question |
+      |---|---|---|---|
+      | `StepPremium` | 258 | **Prêt.** Branché sur les vraies phases le 01/09. | C'est le seul moment de vente. L'ajouter au tunnel change la conversion — ton appel, une ligne. |
+      | `StepHabit` | 208 | **Prêt.** Vraies données aussi. | Idem. |
+      | `SignalPager` | 312 | **Fonctionne.** Vraies phases, code propre. | Carrousel des signaux. Il n'a pas de place dans la navigation actuelle. |
+      | `StepCompatibility`, `StepPersonalize` | 333 | Propres, pure interface. | Sortis du tunnel, sans trace de la raison. |
+      | `Header` | 40 | Son lien d'évitement a été récupéré. | Remonter un en-tête collant sur une page-récit est une décision de design. |
+      | `CookieConsent` | 83 | **À laisser.** | Aucun cookie non essentiel dans le produit — voir plus bas. |
+
 
 ## Compatibilité — signalé le 01/09
 
