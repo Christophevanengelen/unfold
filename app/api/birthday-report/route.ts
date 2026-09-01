@@ -365,7 +365,7 @@ body{background:#F5F1FA;color:#150F2A;font-family:'Inter',system-ui,sans-serif;
   <div class="section-title">Year-by-year breakdown — newest first</div>
   <div class="grid">${cardsHtml}</div>
 
-  <div class="footer">Birthday Graph · Unfold · Solar Return data</div>
+  <div class="footer">Birthday Graph · Favorable · Solar Return data</div>
 </div>
 
 <script>

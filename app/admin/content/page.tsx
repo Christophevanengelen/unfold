@@ -7,7 +7,7 @@ export default function ContentPage() {
       </p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-border-light bg-bg-primary p-6">
-          <h3 className="font-display text-lg font-semibold text-text-heading">Unfold</h3>
+          <h3 className="font-display text-lg font-semibold text-text-heading">Favorable</h3>
           <p className="mt-1 text-sm text-text-body-subtle">First app in the platform</p>
           <div className="mt-4 space-y-2 text-sm text-text-body">
             <div className="flex justify-between">

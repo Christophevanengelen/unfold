@@ -30,8 +30,8 @@ export async function generateMetadata({
   const { locale } = await params;
   const doc = termsOfService[locale] ?? termsOfService.en;
   return {
-    title: `${doc.title} — Unfold`,
-    description: "Terms of Service for using the Unfold personal timing application.",
+    title: `${doc.title} — Favorable`,
+    description: "Terms of Service for using the Favorable personal timing application.",
   };
 }
 

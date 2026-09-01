@@ -30,8 +30,8 @@ export async function generateMetadata({
   const { locale } = await params;
   const doc = privacyPolicy[locale] ?? privacyPolicy.en;
   return {
-    title: `${doc.title} — Unfold`,
-    description: "How Unfold collects, uses, and protects your personal information.",
+    title: `${doc.title} — Favorable`,
+    description: "How Favorable collects, uses, and protects your personal information.",
   };
 }
 

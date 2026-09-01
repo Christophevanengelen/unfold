@@ -82,15 +82,30 @@ export function setPremiumStatus(plan: PlanType): void {
 //     user legitimately has premium cached)
 //  3. On mount: fetches /api/billing/me for verified server state
 //  4. Re-runs when "unfold:plan-changed" event fires (e.g. post-purchase)
+// Le contournement de developpement sort APRES les hooks, pas avant.
+//
+// Ecrit en premier, `if (DEV_FORCE_PREMIUM) return true;` sautait useState,
+// useRef et useEffect. Cela ne casse rien aujourd hui parce que le drapeau est
+// une constante de build : l ordre des hooks reste le meme a chaque rendu.
+//
+// Mais c est une regle de React, pas un detail de style. Le jour ou ce drapeau
+// devient dynamique — un reglage, un essai gratuit, une bascule a distance —
+// l ordre des hooks change en cours de vie du composant, et React associe alors
+// l etat d un hook a un autre. Le bug qui en resulte ne ressemble pas a un bug
+// de permission : c est un compteur qui affiche la mauvaise valeur, un champ
+// qui garde le texte d un autre. On ne le relie jamais a cette ligne.
+//
+// Les hooks s executent donc toujours ; seule la VALEUR RENVOYEE change.
 export function usePremiumStatus(): boolean {
-  // Dev bypass — instant premium, no API call
-  if (DEV_FORCE_PREMIUM) return true;
-
   // Start false — never assume premium before verification
   const [isPrem, setIsPrem] = useState(false);
   const fetchedRef = useRef(false);
 
   useEffect(() => {
+    // Le hook tourne toujours — c est le point — mais son CORPS ne fait rien en
+    // mode contournement : la promesse « no API call » est conservee.
+    if (DEV_FORCE_PREMIUM) return;
+
     // Step 1: Instant pre-flight from memory or localStorage
     const cached = isPremium();
     setIsPrem(cached);
@@ -126,6 +141,8 @@ export function usePremiumStatus(): boolean {
     return () => window.removeEventListener("unfold:plan-changed", handleChange);
   }, []);
 
+  // Dev bypass — instant premium, no API call. Voir la note ci-dessus.
+  if (DEV_FORCE_PREMIUM) return true;
   return isPrem;
 }
 
@@ -143,11 +160,6 @@ export interface BillingState {
 }
 
 export function useBillingState(): BillingState {
-  // Dev bypass — instant premium, no API call
-  if (DEV_FORCE_PREMIUM) {
-    return { isPremium: true, status: "active", loading: false };
-  }
-
   const [state, setState] = useState<BillingState>({
     isPremium: false,
     status: "none",
@@ -156,6 +168,8 @@ export function useBillingState(): BillingState {
   const fetchedRef = useRef(false);
 
   useEffect(() => {
+    if (DEV_FORCE_PREMIUM) return;
+
     const cached = isPremium();
     setState((s) => ({ ...s, isPremium: cached }));
 
@@ -199,6 +213,11 @@ export function useBillingState(): BillingState {
     return () => window.removeEventListener("unfold:plan-changed", handleChange);
   }, []);
 
+  // Dev bypass — voir la note au-dessus de usePremiumStatus : les hooks
+  // tournent toujours, seule la valeur renvoyee change.
+  if (DEV_FORCE_PREMIUM) {
+    return { isPremium: true, status: "active", loading: false };
+  }
   return state;
 }
 

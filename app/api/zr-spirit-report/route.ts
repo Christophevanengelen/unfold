@@ -553,7 +553,7 @@ body{background:#1B1535;color:#E6E2F2;font-family:'Inter',system-ui,sans-serif;m
 
 <div class="section-title">ZR Part d'Esprit · L1 &rarr; L2 détail</div>
 <div class="grid">${cardsHtml}</div>
-<div class="footer">Unfold &middot; ${name} &middot; ${birthDate} ${birthTime} &middot; ${city}${country ? ", " + country : ""} &middot; ${fromLotFr}</div>
+<div class="footer">Favorable &middot; ${name} &middot; ${birthDate} ${birthTime} &middot; ${city}${country ? ", " + country : ""} &middot; ${fromLotFr}</div>
 </div>
 
 <script>

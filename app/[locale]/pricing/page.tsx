@@ -8,7 +8,7 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: "Plans — Unfold",
+  title: "Plans — Favorable",
   description: "Commence gratuitement. Passe en Pro pour débloquer ton momentum complet.",
 };
 

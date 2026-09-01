@@ -1,7 +1,7 @@
 import { Sidebar } from "@/components/admin/Sidebar";
 
 export const metadata = {
-  title: "Unfold Admin",
+  title: "Favorable Admin",
 };
 
 export default function AdminLayout({
