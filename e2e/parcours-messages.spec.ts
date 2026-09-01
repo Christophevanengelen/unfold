@@ -81,6 +81,75 @@ test("ouvrir la boite eteint le point de non-lu, et ca tient", async ({ page }) 
   await expect(pointNonLu(page)).toHaveCount(0);
 });
 
+/**
+ * OU la feuille se dessine — pas seulement si elle est la.
+ *
+ * Ce test manquait, et c est PRECISEMENT pourquoi le defaut du 01/09 a vecu
+ * sous une suite verte. `toBeVisible()` de Playwright demande une boite non
+ * vide et `visibility: visible` : une feuille rabotee a 4 points de large,
+ * coincee en haut a droite, le satisfait sans broncher. Une assertion de
+ * VISIBILITE n est pas une assertion de MISE EN PAGE.
+ *
+ * Le defaut : `PastilleMessages` et `FeuilleMessages` etaient montees ensemble
+ * dans la boite `absolute` de 44x44 du coin haut droit. BottomSheet se pose en
+ * `absolute inset-x-0 bottom-0`, donc contre son plus proche ancetre
+ * POSITIONNE — ce carre de 44 points, et non le panneau. Mesure du jour :
+ * titre « Messages » large de 4 px a x=322.
+ *
+ * On verifie donc le MECANISME et non le symptome : `offsetParent`, c est le
+ * bloc conteneur tel que le navigateur le calcule vraiment. Remonter la feuille
+ * dans n importe quel conteneur positionne le change aussitot, et ce test
+ * tombe.
+ */
+async function feuilleEtHote(page: Page) {
+  return page.evaluate(() => {
+    const feuille = document.querySelector('[role="dialog"]') as HTMLElement | null;
+    if (!feuille) throw new Error("aucune feuille ouverte");
+    const hote = feuille.offsetParent as HTMLElement | null;
+    if (!hote) throw new Error("la feuille n a pas d ancetre positionne");
+    const f = feuille.getBoundingClientRect();
+    const h = hote.getBoundingClientRect();
+    return {
+      largeurFeuille: Math.round(f.width),
+      gaucheFeuille: Math.round(f.left),
+      basFeuille: Math.round(f.bottom),
+      largeurHote: Math.round(h.width),
+      gaucheHote: Math.round(h.left),
+      basHote: Math.round(h.bottom),
+    };
+  });
+}
+
+for (const theme of ["light", "dark"] as const) {
+  test(`la feuille monte du bas sur toute la largeur — theme ${theme}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: theme });
+    await semer(page, { messages: messagesDEssai() });
+    await aller(page, "/app/timeline");
+
+    const pastille = page.getByRole("button", { name: "Open messages" });
+    await expect(pastille).toBeVisible({ timeout: 30_000 });
+    await pastille.click();
+    await expect(page.getByText(CORPS_JOUR)).toBeVisible();
+
+    // Le ressort de motion part de `y: 100%`. Mesurer avant qu il se pose
+    // lirait la position de depart et non la position finale.
+    await expect
+      .poll(async () => (await feuilleEtHote(page)).basFeuille - (await feuilleEtHote(page)).basHote)
+      .toBe(0);
+
+    const m = await feuilleEtHote(page);
+
+    // Toute la largeur de l hote, et cale a gauche sur lui. On compare a l HOTE
+    // plutot qu a 375 en dur : le cadre telephone de la page vitrine change ces
+    // nombres sans rien changer a ce qu on veut prouver.
+    expect(m.largeurFeuille).toBe(m.largeurHote);
+    expect(m.gaucheFeuille).toBe(m.gaucheHote);
+
+    // Et surtout : elle est LARGE. 44 points serait le defaut du 01/09 revenu.
+    expect(m.largeurFeuille).toBeGreaterThan(200);
+  });
+}
+
 test("la feuille fermee ne recouvre plus rien", async ({ page }) => {
   // LE test de la regle 1. Deux cartes plein ecran a z-30 vivaient ici ; si
   // quoi que ce soit de la feuille survit a sa fermeture, le clic sur la
