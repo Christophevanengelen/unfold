@@ -1393,31 +1393,43 @@ export function MomentumTimelineV2() {
         </div>
       )}
 
-      {/* Both views stay mounted — crossfade transition for premium feel */}
-      <div
-        className="absolute inset-0 pt-9"
-        style={{
-          opacity: viewMode === "overview" ? 1 : 0,
-          scale: viewMode === "overview" ? "1" : "0.97",
-          pointerEvents: viewMode === "overview" ? "auto" : "none",
-          transition: "opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), scale 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-          willChange: "opacity, transform",
-        }}
-      >
-        <OverviewView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
-      </div>
-      <div
-        className="absolute inset-0 pt-9"
-        style={{
-          opacity: viewMode === "list" ? 1 : 0,
-          scale: viewMode === "list" ? "1" : "0.97",
-          pointerEvents: viewMode === "list" ? "auto" : "none",
-          transition: "opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), scale 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-          willChange: "opacity, transform",
-        }}
-      >
-        <ListView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
-      </div>
+      {/* Les deux vues restent montees, mais elles ne se croisent PAS.
+          
+          Elles se fondaient l une dans l autre sur la meme duree et la meme
+          courbe : a mi-parcours, les deux etaient a cinquante pour cent
+          d opacite EN MEME TEMPS, et on voyait les boudins de la timeline
+          par-dessus les lignes de la liste. Ce sont les « blocs parasites »
+          apparaissant une demi-seconde a chaque bascule.
+
+          Un fondu croise ne fonctionne qu entre deux images proches. Ces deux
+          mises en page n ont rien de commun, donc on enchaine au lieu de
+          superposer : la sortante s efface vite, l entrante arrive apres.
+          La somme reste sous les 0,35 s d origine, donc la bascule n est pas
+          plus lente — elle est seulement propre.
+
+          `visibility` acheve le travail : une vue a opacite zero peut encore
+          etre peinte, et ses ombres deborder. Cachee, elle ne peut plus rien. */}
+      {(() => {
+        const vue = (actif: boolean) => ({
+          opacity: actif ? 1 : 0,
+          scale: actif ? "1" : "0.98",
+          pointerEvents: actif ? ("auto" as const) : ("none" as const),
+          visibility: actif ? ("visible" as const) : ("hidden" as const),
+          transition: actif
+            ? "opacity 0.22s ease-out 0.12s, scale 0.22s ease-out 0.12s, visibility 0s 0.12s"
+            : "opacity 0.12s ease-in, scale 0.12s ease-in, visibility 0s 0.12s",
+        });
+        return (
+          <>
+            <div className="absolute inset-0 pt-9" style={vue(viewMode === "overview")}>
+              <OverviewView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
+            </div>
+            <div className="absolute inset-0 pt-9" style={vue(viewMode === "list")}>
+              <ListView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
+            </div>
+          </>
+        );
+      })()}
 
       {/* Fixed age indicator — minimal, premium.
           A thin line across the screen with the age on the right.
