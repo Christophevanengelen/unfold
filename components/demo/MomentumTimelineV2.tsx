@@ -1808,7 +1808,7 @@ export function MomentumTimelineV2() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 z-[55]"
-              style={{ background: "rgba(0,0,0,0.4)" }}
+              style={{ background: "var(--voile-feuille)" }}
               onClick={() => setSelectedCapsule(null)}
             />
             <CapsuleDetailSheet capsule={selectedCapsule} isFuture={selectedCapsule.isFuture} onClose={() => setSelectedCapsule(null)} onNavigateToCapsule={handleNavigateToCapsule} />

@@ -79,12 +79,12 @@ export default function AuthCallbackPage() {
         alignItems: "center",
         justifyContent: "center",
         height: "100vh",
-        background: "var(--bg-primary, #F5F1FA)",
+        background: "var(--bg-primary)",
       }}
     >
       <div
         style={{
-          color: "var(--text-body-subtle, rgba(255,255,255,0.5))",
+          color: "var(--text-body-subtle)",
           fontSize: 14,
           fontFamily: "Inter, sans-serif",
           letterSpacing: "0.02em",

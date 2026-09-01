@@ -1,24 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { EcranRapportVide } from "@/components/demo/EcranRapportVide";
+import { useRapportStocke } from "../_rapport-stocke";
 
 const SESSION_KEY = "report:birthday-graph";
 
 export default function BirthdayGraphPage() {
-  const [html, setHtml] = useState<string | null>(null);
-  const [checked, setChecked] = useState(false);
+  // null = l hydratation n est pas passee, on ne rend rien ; "" = aucun rapport
+  // en attente. Voir _rapport-stocke.ts pour la raison des trois etats.
+  const html = useRapportStocke(SESSION_KEY, "local");
 
-  useEffect(() => {
-    const stored = localStorage.getItem(SESSION_KEY);
-    if (stored) {
-      setHtml(stored);
-      localStorage.removeItem(SESSION_KEY);
-    }
-    setChecked(true);
-  }, []);
-
-  if (!checked) return null;
+  if (html === null) return null;
 
   if (!html) return <EcranRapportVide nom="Birthday Graph" />;
 

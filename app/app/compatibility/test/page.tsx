@@ -40,7 +40,7 @@ const PERSON_B = {
   placeOfBirth: "Antwerp",
 };
 
-const REL_COLOR = "#D89EA0";
+const REL_COLOR = "var(--echantillon-rose)";
 
 // ─── Card with delineation ───────────────────────────────
 
@@ -286,7 +286,7 @@ export default function ConnectionBriefTestPage() {
 
       {error && (
         <div className="rounded-xl px-4 py-3 text-sm"
-          style={{ background: "color-mix(in srgb, #D89EA0 15%, transparent)", color: "#D89EA0" }}>
+          style={{ background: "color-mix(in srgb, var(--echantillon-rose) 15%, transparent)", color: "var(--echantillon-rose)" }}>
           {error}
         </div>
       )}

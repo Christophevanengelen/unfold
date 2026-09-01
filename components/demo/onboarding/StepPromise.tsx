@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { mesurerUneFois } from "@/lib/mesure";
 import { motion } from "motion/react";
 import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
-import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { t } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 /* eslint-disable @next/next/no-img-element */
 
 interface StepPromiseProps {
@@ -23,8 +24,11 @@ interface StepPromiseProps {
  */
 export function StepPromise({ onNext }: StepPromiseProps) {
   useEffect(() => { mesurerUneFois("onboarding_demarre"); }, []);
-  const [locale, setLocale] = useState<Locale>("en");
-  useEffect(() => { setLocale(detectLocale()); }, []);
+  // La langue passe par useLocale : elle est lue HORS de React, donc par
+  // useSyncExternalStore. Le useState + useEffect d avant rendait cet ecran une
+  // premiere fois EN ANGLAIS puis se corrigeait — un scintillement de langue
+  // sur le premier ecran que la personne voit du produit.
+  const locale = useLocale();
 
   return (
     <div className="flex h-full flex-col items-center text-center">

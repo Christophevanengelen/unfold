@@ -3,11 +3,17 @@
 /**
  * La carte de partage.
  *
- * Sa palette est ecrite en dur VOLONTAIREMENT : la carte porte son propre
- * degrade sombre (#1B1535 -> #2A1F4E) et represente le produit chez quelqu un
- * d autre. Elle ne doit donc pas suivre le theme de qui la regarde — ce qu on
- * partage doit etre identique pour tout le monde. C est la seule partie de
- * l app ou une couleur figee est le bon choix.
+ * Sa palette ne suit pas le theme, VOLONTAIREMENT : la carte porte son propre
+ * degrade sombre et represente le produit chez quelqu un d autre. Ce qu on
+ * partage doit etre identique pour tout le monde.
+ *
+ * Ce n est pas une raison de l ecrire ici. Elle vivait en dix-neuf valeurs
+ * figees dans ce fichier, donc en dehors du seul endroit qui fait autorite sur
+ * les couleurs ; le 02/09/2026 elles sont devenues la famille --partage-* de
+ * app/globals.css, aux memes chiffres. « Fixe » et « ecrit en dur » sont deux
+ * choses differentes : la famille est declaree dans :root et n est PAS
+ * redeclaree dans .dark — c est ce qui la rend fixe, exactement comme
+ * --echantillon-* et --element-*.
  *
  * En revanche, une palette fixe ne dispense pas d etre lisible. Mesure du
  * 01/09/2026 sur le point le plus clair du degrade, la ou un texte clair
@@ -26,11 +32,11 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ShareNodes, ClipboardCheck, Close, Link } from "flowbite-react-icons/outline";
-import { planetConfig, houseConfig, getPlanetLabel, type PlanetKey, type HouseNumber } from "@/lib/domain-config";
+import { planetConfig, houseConfig, getPlanetLabel, type PlanetKey } from "@/lib/domain-config";
 import { useLocale } from "@/lib/use-locale";
 import { perso } from "@/lib/perso-i18n";
 import { getTierLabel, domainKeyToHouseOrNull } from "@/lib/detail-helpers";
-import { jourMoisAnnee, jourMoisAnneeCourt, moisCourt } from "@/lib/dates-i18n";
+import { jourMoisAnnee } from "@/lib/dates-i18n";
 
 // ─── Types (mirrors CapsuleDetailSheet) ──────────────────
 interface CapsuleData {
@@ -90,9 +96,9 @@ const SHARE_URL = "https://favorable.day/?utm_source=share&utm_medium=signal";
 
 // ─── Tier glow colors ────────────────────────────────────
 function getTierGlow(tier: CapsuleData["tier"]): string {
-  if (tier === "toctoctoc") return "rgba(155, 133, 196, 0.5)";
-  if (tier === "toctoc") return "rgba(155, 133, 196, 0.3)";
-  return "rgba(155, 133, 196, 0.15)";
+  if (tier === "toctoctoc") return "var(--partage-halo-fort)";
+  if (tier === "toctoc") return "var(--partage-halo-moyen)";
+  return "var(--partage-halo-doux)";
 }
 
 // ─── Main Component ──────────────────────────────────────
@@ -121,7 +127,7 @@ export function ShareSignalCard({
   // maison : elle ne pretend rien.
   const house = domainKeyToHouseOrNull(phase?.domain);
   const houseMeta = house !== null ? houseConfig[house] : undefined;
-  const houseColor = capsule.color ?? houseMeta?.color ?? "#9B85C4";
+  const houseColor = capsule.color ?? houseMeta?.color ?? "var(--partage-accent)";
 
   // Date labels
   const startLabel = jourMoisAnnee(capsule.startDate, locale);
@@ -129,6 +135,25 @@ export function ShareSignalCard({
 
   // Display text: AI subtitle first, then phase title
   const displayText = phase?.subtitle || phase?.title || "";
+
+  // Copy handler
+  //
+  // Declare AVANT handleShare, qui s en sert comme repli. L ordre inverse
+  // marchait par accident : la fermeture capturait le `handleCopy` de la
+  // portee, mais celui du PREMIER rendu, puisqu il ne figurait pas dans les
+  // dependances de handleShare. React 19 le refuse
+  // (react-hooks/immutability) — a juste titre : le jour ou handleCopy
+  // dependra d une valeur qui change, le repli du partage annulerait avec
+  // l ancienne.
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(SHARE_URL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable
+    }
+  }, []);
 
   // Share handler
   const handleShare = useCallback(async () => {
@@ -148,18 +173,7 @@ export function ShareSignalCard({
     } else {
       handleCopy();
     }
-  }, [tierLabel, displayText]);
-
-  // Copy handler
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(SHARE_URL);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard API unavailable
-    }
-  }, []);
+  }, [tierLabel, displayText, handleCopy]);
 
   return (
     <AnimatePresence>
@@ -169,7 +183,7 @@ export function ShareSignalCard({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
         className="absolute inset-0 z-[60] flex items-end justify-center"
-        style={{ background: "rgba(10, 6, 20, 0.75)", backdropFilter: "blur(8px)" }}
+        style={{ background: "var(--partage-voile)", backdropFilter: "blur(8px)" }}
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
         <motion.div
@@ -191,7 +205,7 @@ export function ShareSignalCard({
               // Le lisere ET le « 0 0 0 1px » de l ombre etaient deux traits
               // superposes sur le meme bord ; les deux partent, l ombre de
               // profondeur reste.
-              background: "linear-gradient(165deg, #1B1535 0%, #2A1F4E 55%, #1B1535 100%)",
+              background: "var(--partage-carte)",
               boxShadow: "0 24px 64px rgba(10, 6, 20, 0.6)",
             }}
           >
@@ -211,13 +225,13 @@ export function ShareSignalCard({
               <div
                 className="h-5 w-5 rounded-full"
                 style={{
-                  background: "linear-gradient(135deg, #9B85C4 0%, #7C6BBF 100%)",
+                  background: "var(--partage-pastille-marque)",
                   boxShadow: "0 0 12px rgba(124, 107, 191, 0.4)",
                 }}
               />
               <span
                 className="text-[11px] font-medium tracking-wide"
-                style={{ color: "rgba(195, 185, 215, 0.7)" }}
+                style={{ color: "var(--partage-texte-doux)" }}
               >
                 favorable.day
               </span>
@@ -232,7 +246,7 @@ export function ShareSignalCard({
                   // Le badge a un fond opaque teinte de la couleur de maison,
                   // et un halo qui lui appartient depuis toujours. Le lisere
                   // etait la couche de trop.
-                  background: `color-mix(in srgb, ${houseColor} 12%, rgba(27, 21, 53, 0.8))`,
+                  background: `color-mix(in srgb, ${houseColor} 12%, var(--partage-fond-badge))`,
                   boxShadow: `0 0 20px ${getTierGlow(capsule.tier)}`,
                 }}
               >
@@ -268,7 +282,7 @@ export function ShareSignalCard({
                       style={{
                         // Fond propre a la pastille, teinte de la planete :
                         // il la decoupe deja sur la carte sombre.
-                        background: `color-mix(in srgb, ${pc.color} 10%, rgba(27, 21, 53, 0.6))`,
+                        background: `color-mix(in srgb, ${pc.color} 10%, var(--partage-fond-pastille))`,
                       }}
                     >
                       <div
@@ -296,7 +310,7 @@ export function ShareSignalCard({
                 <p
                   className="text-center text-sm leading-relaxed font-medium px-2 mb-5"
                   style={{
-                    color: "rgba(225, 218, 240, 0.9)",
+                    color: "var(--partage-texte)",
                     maxHeight: 80,
                     overflow: "hidden",
                     display: "-webkit-box",
@@ -311,7 +325,7 @@ export function ShareSignalCard({
               {/* Date range */}
               <span
                 className="text-[10px] tabular-nums tracking-wide"
-                style={{ color: "rgba(195, 185, 215, 0.7)" }}
+                style={{ color: "var(--partage-texte-doux)" }}
               >
                 {startLabel} — {endLabel}
               </span>
@@ -321,18 +335,18 @@ export function ShareSignalCard({
             <div
               className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1.5 pb-6 pt-10"
               style={{
-                background: "linear-gradient(to top, rgba(27, 21, 53, 0.95) 40%, transparent 100%)",
+                background: "var(--partage-voile-bas)",
               }}
             >
               <span
                 className="text-[11px] font-medium"
-                style={{ color: "rgba(195, 185, 215, 0.7)" }}
+                style={{ color: "var(--partage-texte-doux)" }}
               >
                 {perso("partage.rythme", locale)}
               </span>
               <span
                 className="text-[11px] font-semibold"
-                style={{ color: "#9B85C4" }}
+                style={{ color: "var(--partage-accent)" }}
               >
                 favorable.day
               </span>
@@ -350,13 +364,13 @@ export function ShareSignalCard({
                 // c est la surface qui reprend le poids que le trait portait.
                 // Meme teinte, aucune couleur nouvelle. Sur le voile sombre a
                 // 0,75, un bouton laisse a 0,15 sans contour se serait efface.
-                background: "rgba(155, 133, 196, 0.20)",
-                color: "#C3B9D7",
+                background: "var(--partage-bouton)",
+                color: "var(--partage-texte-bouton)",
               }}
             >
               <ShareNodes size={16} />
               <span className="text-[12px] font-medium">
-                {shared ? "Partage en cours..." : "Partager"}
+                {shared ? perso("partage.en_cours", locale) : perso("partage.partager", locale)}
               </span>
             </button>
 
@@ -369,14 +383,14 @@ export function ShareSignalCard({
                 // sous le bouton principal a 0,20. La hierarchie entre les
                 // deux est desormais portee par la densite des fonds seule.
                 background: copied
-                  ? "rgba(124, 107, 191, 0.25)"
-                  : "rgba(155, 133, 196, 0.14)",
-                color: copied ? "#9B85C4" : "rgba(195, 185, 215, 0.7)",
+                  ? "var(--partage-bouton-copie)"
+                  : "var(--partage-bouton-doux)",
+                color: copied ? "var(--partage-accent)" : "var(--partage-texte-doux)",
               }}
             >
               {copied ? <ClipboardCheck size={16} /> : <Link size={16} />}
               <span className="text-[12px] font-medium">
-                {copied ? "Copie !" : "Copier le lien"}
+                {copied ? perso("partage.copie", locale) : perso("partage.copier", locale)}
               </span>
             </button>
           </div>
@@ -389,8 +403,8 @@ export function ShareSignalCard({
             style={{
               // Meme montee que le bouton secondaire : 0,08 -> 0,14. Une cible
               // de 44 points posee sur un voile a 0,75 doit se voir sans trait.
-              background: "rgba(155, 133, 196, 0.14)",
-              color: "rgba(195, 185, 215, 0.7)",
+              background: "var(--partage-bouton-doux)",
+              color: "var(--partage-texte-doux)",
             }}
           >
             <Close size={18} />

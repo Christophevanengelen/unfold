@@ -14,9 +14,16 @@ export function ThemeToggle() {
   if (!mounted) return <div className="h-9 w-9" />;
 
   return (
+    // Le bouton DESSINE fait 36 points, la zone qu on peut toucher en fait 44.
+    //
+    // Apple demande 44 au minimum, et en dessous on vise a cote — mais
+    // agrandir le rond a 44 aurait epaissi la barre d en-tete et decale le
+    // selecteur de langue a cote. Le pseudo-element `before:-inset-1` ajoute
+    // les 4 points manquants sur chaque bord SANS rien changer a l image :
+    // 36 + 4 + 4 = 44. `relative` sert d ancre a ce pseudo-element.
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="flex h-9 w-9 items-center justify-center rounded-full border border-border-light bg-bg-secondary text-text-body transition-colors hover:bg-bg-brand-soft"
+      className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border-light bg-bg-secondary text-text-body transition-colors before:absolute before:-inset-1 before:content-[''] hover:bg-bg-brand-soft"
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
       {theme === "dark" ? (

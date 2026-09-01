@@ -8,7 +8,7 @@
  * Premium-only — free users are redirected to /app/pricing.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "flowbite-react-icons/outline";
 import { usePremiumStatus } from "@/lib/premium-gate";
@@ -16,6 +16,7 @@ import { SAFE_TOP } from "@/lib/layout-constants";
 import { isNative } from "@/lib/platform";
 import { t } from "@/lib/i18n-demo";
 import { useLocale } from "@/lib/use-locale";
+import { useHydrate } from "../_hydrate";
 
 function hasCouponAccess(): boolean {
   try { return localStorage.getItem("unfold_chart_access") === "true"; } catch { return false; }
@@ -25,19 +26,21 @@ export default function BoudinPage() {
   const router = useRouter();
   const locale = useLocale();
   const isPremium = usePremiumStatus();
-  const [mounted, setMounted] = useState(false);
   const native = isNative();
-
-  useEffect(() => { setMounted(true); }, []);
+  // hasCouponAccess() lit localStorage : le serveur ne peut pas repondre. Ce
+  // booleen remplace le couple useState/useEffect qui allumait « mounted »
+  // apres le montage — meme deux passes, mais declarees a React au lieu de lui
+  // etre imposees par un setState dans un effet. Voir _hydrate.ts.
+  const monte = useHydrate();
 
   // Don't gate during SSR. Allow access if premium OR has a valid coupon.
   useEffect(() => {
-    if (mounted && !isPremium && !hasCouponAccess()) {
+    if (monte && !isPremium && !hasCouponAccess()) {
       router.replace("/app/pricing");
     }
-  }, [mounted, isPremium, router]);
+  }, [monte, isPremium, router]);
 
-  if (!mounted || (!isPremium && !hasCouponAccess())) {
+  if (!monte || (!isPremium && !hasCouponAccess())) {
     return (
       <div className="flex h-full items-center justify-center">
         <div
@@ -64,7 +67,10 @@ export default function BoudinPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex h-7 w-7 items-center justify-center rounded-full transition-opacity hover:opacity-70"
+          // Zone etendue plutot que h-11 : ce bouton vit dans une barre de
+          // 28 px de haut, l agrandir pousserait toute la barre. Le carre
+          // dessine reste a 28, la zone touchable fait 28 + 2x8 = 44.
+          className="relative flex h-7 w-7 items-center justify-center rounded-full transition-opacity hover:opacity-70 before:absolute before:-inset-2 before:content-['']"
           style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}
           aria-label={t("common.back", locale)}
         >

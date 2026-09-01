@@ -135,6 +135,15 @@ for (const f of fichiers) {
     // TOUTES les occurrences de la ligne, pas seulement la premiere : une
     // ligne portait deux fuites et n en declarait qu une.
     for (const m of ligne.matchAll(SUSPECT)) {
+      // La transparence totale n est pas une couleur.
+      //
+      // `StatusBar.setBackgroundColor({ color: "#00000000" })` passe un
+      // litteral ARGB a une API Capacitor : les deux derniers chiffres sont
+      // l alpha, ici zero. Ca ne peint rien, ca DEMANDE a ne rien peindre, et
+      // aucun jeton CSS ne peut porter cette valeur — l API veut une chaine.
+      // Voir app/app/layout.tsx, ou cet appel sert justement a laisser le
+      // contenu passer sous l heure.
+      if (/#0{8}\b/.test(m[0])) continue;
       fuites.push({ f, ligne: i + 1, quoi: m[0].trim().slice(0, 120) });
     }
   });
@@ -234,7 +243,7 @@ if (inconnus.length) {
  * Quand tu corriges des couleurs, baisse ce nombre du meme compte. Le message
  * d erreur te dit lequel ecrire.
  */
-const PLAFOND = 37;
+const PLAFOND = 0;
 
 if (fuites.length === 0) {
   console.log("\n  Aucune couleur ecrite en dur. Le theme tient.\n");

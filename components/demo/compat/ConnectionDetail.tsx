@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { PageHeader } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
-import { getConnections, type RealConnection } from "@/lib/connections-store";
+import { useConnexions } from "@/components/demo/use-connexions";
 import { ConnectionStrip } from "@/components/demo/compat/ConnectionStrip";
 import { ConnectionCarousel } from "@/components/demo/compat/ConnectionCarousel";
 import { ConnectionReport } from "@/components/demo/compat/ConnectionReport";
@@ -20,10 +20,10 @@ export function ConnectionDetail({ connectionId }: { connectionId: string }) {
   const { resolvedTheme } = useTheme();
   const router = useRouter();
 
-  const [connections, setConnections] = useState<RealConnection[]>([]);
-  useEffect(() => {
-    setConnections(getConnections());
-  }, []);
+  // La liste vit dans localStorage, donc hors de React : voir use-connexions.
+  // Avec un useState vide + useEffect, cet ecran rendait une premiere fois SANS
+  // connexion — donc l ecran « introuvable » — avant de se corriger.
+  const connections = useConnexions();
 
   const { birthData: myBirthData } = useMomentum();
 

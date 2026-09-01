@@ -269,32 +269,34 @@ export default function TransitTimeControls({
   const [aspectCriteria, setAspectCriteria] = useState<AspectJumpCriterion[]>([
     createAspectCriterion(),
   ]);
-  const [dateDraft, setDateDraft] = useState(() => formatTransitDateInput(date));
-  const [dateDraftFocused, setDateDraftFocused] = useState(false);
   const calendarInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!dateDraftFocused) {
-      setDateDraft(formatTransitDateInput(date));
-    }
-  }, [date, dateDraftFocused]);
+  // Le champ n a d etat PROPRE que pendant la saisie.
+  //
+  // Il en avait un en permanence, recopie depuis `date` par un effet des que le
+  // champ n avait pas le focus. Chaque pas de transit rendait donc le champ
+  // avec l ancienne date, puis l effet le corrigeait — le scintillement que
+  // React 19 signale, sur un controle qu on actionne en rafale.
+  //
+  // `saisie` ne vaut autre chose que null que le temps d une frappe. Hors
+  // saisie, la valeur affichee se DERIVE de `date` : il n y a plus deux
+  // sources a garder d accord, donc plus rien a resynchroniser.
+  const [saisie, setSaisie] = useState<string | null>(null);
+  const dateDraft = saisie ?? formatTransitDateInput(date);
 
   const commitDateDraft = () => {
+    // Rendre la main au rendu derive : que la date soit acceptee ou non, ce qui
+    // s affiche ensuite est la date REELLE, y compris quand elle a ete bornee.
+    setSaisie(null);
     const parsed = parseTransitDateInput(dateDraft);
     if (parsed) {
-      const normalized = clampTransitDate(parsed);
-      onDateChange(normalized);
-      setDateDraft(formatTransitDateInput(normalized));
-      return;
+      onDateChange(clampTransitDate(parsed));
     }
-    setDateDraft(formatTransitDateInput(date));
   };
 
   const applyCalendarDate = (isoDate: string) => {
-    const normalized = clampTransitDate(isoDate);
-    onDateChange(normalized);
-    setDateDraft(formatTransitDateInput(normalized));
-    setDateDraftFocused(false);
+    setSaisie(null);
+    onDateChange(clampTransitDate(isoDate));
   };
 
   const openCalendarPicker = () => {
@@ -478,12 +480,8 @@ export default function TransitTimeControls({
               <input
                 type="text"
                 value={dateDraft}
-                onChange={(event) => setDateDraft(formatEuropeanDateDraft(event.target.value))}
-                onFocus={() => setDateDraftFocused(true)}
-                onBlur={() => {
-                  setDateDraftFocused(false);
-                  commitDateDraft();
-                }}
+                onChange={(event) => setSaisie(formatEuropeanDateDraft(event.target.value))}
+                onBlur={commitDateDraft}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.currentTarget.blur();
@@ -589,7 +587,7 @@ export default function TransitTimeControls({
                   className={`w-16 ${fieldClass}`}
                   aria-label="Minute in sign"
                 />
-                <span className="text-xs font-semibold text-[#8C7FAE]">'</span>
+                <span className="text-xs font-semibold text-[#8C7FAE]">&apos;</span>
                 <select
                   value={row.sign}
                   onChange={(event) =>

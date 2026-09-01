@@ -21,7 +21,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
-const PLAFOND = 2;
+const PLAFOND = 0;
 
 const fichiers = execFileSync("git", ["ls-files", "components", "app"], { encoding: "utf8" })
   .split("\n")

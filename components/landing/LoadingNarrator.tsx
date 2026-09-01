@@ -33,15 +33,21 @@ const SCAN_STEPS: ScanStep[] = [
 // ─── Component ────────────────────────────────────────────
 
 export function LoadingNarrator({ done }: LoadingNarratorProps) {
-  const [visibleCount, setVisibleCount] = useState(0);
+  // Ce que les MINUTERIES ont revele. `done` n en fait pas partie : il vient des
+  // props, donc il se DERIVE pendant le rendu.
+  //
+  // Avant, l effet faisait `setVisibleCount(SCAN_STEPS.length)` quand `done`
+  // passait a vrai. Le premier rendu montrait donc encore la sequence en cours,
+  // et le suivant la corrigeait : une image de scintillement au moment precis ou
+  // l attente se termine, la plus visible de toutes. React 19 le signale.
+  const [reveleParMinuterie, setReveleParMinuterie] = useState(0);
+  const visibleCount = done ? SCAN_STEPS.length : reveleParMinuterie;
 
   useEffect(() => {
-    if (done) {
-      setVisibleCount(SCAN_STEPS.length);
-      return;
-    }
+    // Quand c est fini, il n y a plus rien a compter : la valeur derivee suffit.
+    if (done) return;
     const timers = SCAN_STEPS.map((step, i) =>
-      setTimeout(() => setVisibleCount((c) => Math.max(c, i + 1)), step.delayMs),
+      setTimeout(() => setReveleParMinuterie((c) => Math.max(c, i + 1)), step.delayMs),
     );
     return () => timers.forEach(clearTimeout);
   }, [done]);

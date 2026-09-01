@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * Smart App Store + Play Store badges with regional URLs.
@@ -58,12 +58,42 @@ function detectCountry(): string {
   return "us";
 }
 
-export function AppStoreBadges() {
-  const [country, setCountry] = useState("us");
+/**
+ * Le pays vient de `navigator`, donc de HORS de React, et il ne change plus
+ * apres le chargement de la page.
+ *
+ * Il etait lu par useState("us") + useEffect : les deux badges rendaient donc
+ * d abord des liens vers la boutique AMERICAINE, puis se corrigeaient. Un clic
+ * rapide partait sur la mauvaise boutique — mauvais classement de recherche,
+ * mauvaise devise, attribution d installation perdue — et React 19 signale le
+ * rendu en trop.
+ *
+ * useSyncExternalStore est le motif du depot pour ca, voir lib/use-locale.ts :
+ * le serveur rend « us », le client rend le vrai pays des la premiere image.
+ */
+let paysCache: string | null = null;
 
-  useEffect(() => {
-    setCountry(detectCountry());
-  }, []);
+function lirePays(): string {
+  // Memoise : useSyncExternalStore compare le resultat par identite entre deux
+  // lectures et rappelle getSnapshot a chaque rendu.
+  if (paysCache === null) paysCache = detectCountry();
+  return paysCache;
+}
+
+function lirePaysServeur(): string {
+  // Le serveur n a pas de `navigator`. « us » est la boutique de repli, celle
+  // que LOCALE_TO_COUNTRY donne aussi par defaut.
+  return "us";
+}
+
+function abonnerPays(): () => void {
+  // La langue du navigateur ne change pas en cours de session : aucun
+  // evenement a ecouter, seulement la fonction de desabonnement exigee.
+  return () => {};
+}
+
+export function AppStoreBadges() {
+  const country = useSyncExternalStore(abonnerPays, lirePays, lirePaysServeur);
 
   // Tant que l app n est pas publiee, on n affiche rien plutot que deux boutons
   // qui menent a une page d erreur. Une promesse non tenue des le premier clic

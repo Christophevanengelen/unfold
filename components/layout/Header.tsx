@@ -9,7 +9,10 @@ interface HeaderProps {
 
 export function Header({ locale }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl" style={{ backgroundColor: "color-mix(in srgb, var(--bg-primary, #1B1535) 60%, transparent)" }}>
+    // Le repli #1B1535 etait une copie de --bg-primary sombre. Le jeton est
+    // toujours declare, dans les deux themes : le repli ne servait qu a figer
+    // le theme sombre si quelqu un le lisait, jamais de filet de securite.
+    <header className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl" style={{ backgroundColor: "color-mix(in srgb, var(--bg-primary) 60%, transparent)" }}>
       <a
         href="#main"
         className="sr-only rounded-lg bg-accent-purple px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50"

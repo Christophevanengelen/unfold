@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useMomentum } from "@/lib/momentum-store";
 import { getMyInviteCode, buildInviteUrl } from "@/lib/connections-store";
@@ -12,16 +12,22 @@ export default function InviteShare() {
   const locale = useLocale();
   const { birthData } = useMomentum();
   const [copied, setCopied] = useState(false);
-  const [inviteCode, setInviteCode] = useState("...");
-  const [inviteUrl, setInviteUrl] = useState("");
 
-  useEffect(() => {
-    const code = getMyInviteCode();
-    setInviteCode(code);
-    if (birthData) {
-      setInviteUrl(buildInviteUrl(birthData.nickname || t("connexions.moi", locale), birthData, code));
-    }
-  }, [birthData, locale]);
+  // Le code d invitation ne change plus apres le montage : l initialiseur
+  // PARESSEUX de useState le lit une fois. Il etait lu par un effet qui
+  // appelait ensuite setState, donc l ecran affichait « ... » puis se
+  // corrigeait — le scintillement que React 19 signale.
+  //
+  // getMyInviteCode() rend « FAV-XXXX » sans navigateur, et le layout de /app
+  // ne monte pas ses enfants avant l hydratation : rien ne peut differer entre
+  // les deux rendus.
+  const [inviteCode] = useState(getMyInviteCode);
+
+  // L adresse se DERIVE du code, des donnees de naissance et de la langue.
+  // Un etat de plus n aurait fait que la recopier avec un rendu de retard.
+  const inviteUrl = birthData
+    ? buildInviteUrl(birthData.nickname || t("connexions.moi", locale), birthData, inviteCode)
+    : "";
 
   const handleCopy = async () => {
     const textToCopy = inviteUrl || inviteCode;

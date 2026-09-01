@@ -449,26 +449,42 @@ function EclipseSeriesFilterBar({
 }
 
 export default function EclipsesPage() {
-  const [series, setSeries] = useState<EclipseSeries[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [seriesFilter, setSeriesFilter] = useState<SeriesFilter>("active");
 
   const reloadKey = useAstrolearnSubjectReload();
   const { referenceDate } = useAstrolearnSessionTime();
 
+  // Le chargement est DERIVE, il n est plus allume par un setState en tete
+  // d effet.
+  //
+  // L effet commencait par setLoading(true) et setError("") : a chaque
+  // changement de date, React rendait donc l ecran avec les ANCIENNES eclipses
+  // avant de le rendre en chargement. Deux images pour un seul fait, ce que
+  // React 19 signale.
+  //
+  // La reponse est rangee AVEC la clef qui l a demandee. Tant que la clef
+  // courante ne correspond pas, on charge — c est vrai des le premier rendu.
+  // Au passage, une reponse arrivee en retard ne peut plus ecraser la suivante.
+  const cle = `${reloadKey}|${referenceDate}`;
+  const [reponse, setReponse] = useState<{
+    cle: string;
+    series: EclipseSeries[];
+    erreur: string;
+  } | null>(null);
+
+  const loading = reponse?.cle !== cle;
+  const error = loading ? "" : reponse.erreur;
+  const series = loading ? [] : reponse.series;
+
   useEffect(() => {
-    setLoading(true);
-    setError("");
     fetch(`/api/astrolearn/eclipses?date=${referenceDate}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.error) setError(d.error);
-        else setSeries(Array.isArray(d.data) ? d.data : []);
+        if (d.error) setReponse({ cle, series: [], erreur: d.error });
+        else setReponse({ cle, series: Array.isArray(d.data) ? d.data : [], erreur: "" });
       })
-      .catch(() => setError("Failed to load eclipse series"))
-      .finally(() => setLoading(false));
-  }, [reloadKey, referenceDate]);
+      .catch(() => setReponse({ cle, series: [], erreur: "Failed to load eclipse series" }));
+  }, [cle, referenceDate]);
 
   const activeSeries = series.filter((item) => classifySeries(item, referenceDate) === "active");
   const upcomingSeries = series.filter((item) => classifySeries(item, referenceDate) === "upcoming");

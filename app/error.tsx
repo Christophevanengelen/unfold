@@ -15,7 +15,7 @@ export default function ErrorBoundary({
   // tomber, on n y ajoute pas d abonnement.
   const locale = detectLocale();
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ backgroundColor: "var(--bg-primary, #F5F1FA)" }}>
+    <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ backgroundColor: "var(--bg-primary)" }}>
       <Image src="/logo/icon-mark.svg" alt="" width={48} height={48} />
       {/* text-white sur --bg-primary, qui vaut #F5F1FA en theme clair :
           du blanc sur du blanc casse. Cet ecran est le SEUL que quelqu un voit

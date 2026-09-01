@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
-import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { t } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 import { perso } from "@/lib/perso-i18n";
 
 interface StepSignalPreviewProps {
@@ -78,8 +79,11 @@ const PHASE_BOUDIN_SPOTLIGHT = PHASE_NOW_HIGHLIGHT + 1.5; // 5.2s
 const PHASE_CTA_REVEAL = PHASE_BOUDIN_SPOTLIGHT + 1.5;    // 6.7s
 
 export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
-  const [locale, setLocale] = useState<Locale>("en");
-  useEffect(() => { setLocale(detectLocale()); }, []);
+  // La langue passe par useLocale : elle est lue HORS de React, donc par
+  // useSyncExternalStore. Le useState + useEffect d avant rendait cet ecran une
+  // premiere fois EN ANGLAIS puis se corrigeait — un scintillement de langue
+  // sur le premier ecran que la personne voit du produit.
+  const locale = useLocale();
   // Staged highlight phases
   const [phase, setPhase] = useState(0);
 

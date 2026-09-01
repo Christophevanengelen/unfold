@@ -37,21 +37,25 @@ function ConnectedContent() {
   const searchParams = useSearchParams();
   const partnerName = searchParams.get("name") ?? t("connexions.quelquun", locale);
   const [selectedRelation, setSelectedRelation] = useState<RelationshipType | null>(null);
-  const [connectionId, setConnectionId] = useState<string | null>(null);
 
-  // On mount, parse invite params and create connection
-  useEffect(() => {
+  // La connexion se cree une seule fois, au montage, a partir des parametres du
+  // lien qui a amene ici — ils ne changent pas tant qu on reste sur l ecran.
+  //
+  // L initialiseur PARESSEUX de useState fait ce travail DES le premier rendu.
+  // Il etait fait par un effet suivi d un setState : l ecran rendait donc une
+  // premiere fois sans identifiant de connexion, puis se corrigeait, ce que
+  // React 19 signale. Rejouer l initialiseur est sans danger, addConnection
+  // dedoublonne par code d invitation et rend la connexion existante.
+  const [connectionId] = useState<string | null>(() => {
     const parsed = parseInviteParams(searchParams);
-    if (parsed) {
-      const conn = addConnection({
-        name: parsed.name,
-        relationship: "friend", // default, updated when user picks
-        birthData: parsed.birthData,
-        inviteCode: parsed.code,
-      });
-      setConnectionId(conn.id);
-    }
-  }, [searchParams]);
+    if (!parsed) return null;
+    return addConnection({
+      name: parsed.name,
+      relationship: "friend", // default, updated when user picks
+      birthData: parsed.birthData,
+      inviteCode: parsed.code,
+    }).id;
+  });
 
   // Update relationship when user picks one
   useEffect(() => {

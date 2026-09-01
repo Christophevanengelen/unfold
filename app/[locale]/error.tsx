@@ -21,7 +21,7 @@ export default function LocaleErrorBoundary({
       <button
         onClick={reset}
         className="mt-6 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
-        style={{ backgroundColor: "var(--accent-purple, #7C6BBF)" }}
+        style={{ backgroundColor: "var(--accent-purple)" }}
       >
         Try again
       </button>
