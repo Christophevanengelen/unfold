@@ -16,12 +16,15 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const dossier = mkdtempSync(join(tmpdir(), "prev-"));
+// npx est un .cmd sous Windows : sans shell, execFileSync le rate avec ENOENT.
 execFileSync("npx", ["esbuild", "lib/prevision-semaine.ts", "--bundle",
   "--platform=node", "--format=esm", `--outfile=${join(dossier, "p.mjs")}`,
-  "--log-level=error"], { stdio: "inherit" });
-const { previsionSemaine, scoresDuJour, phaseDominante, prochainePeriodeForte } = await import(join(dossier, "p.mjs"));
+  "--log-level=error"], { stdio: "inherit", shell: true });
+// import() dynamique refuse un chemin Windows brut (C:\...) : il lui faut une URL file://.
+const { previsionSemaine, scoresDuJour, phaseDominante, prochainePeriodeForte } = await import(pathToFileURL(join(dossier, "p.mjs")));
 
 let echecs = 0;
 const verifier = (nom, condition) => {

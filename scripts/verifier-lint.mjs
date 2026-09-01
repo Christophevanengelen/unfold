@@ -22,13 +22,19 @@ const PLAFOND = 36;
 
 let sortie = "[]";
 try {
+  // npx est un .cmd sous Windows : sans shell, execFileSync le rate avec ENOENT.
   sortie = execFileSync("npx", ["eslint", "lib", "app", "components", "--ext", ".ts,.tsx", "-f", "json"], {
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
+    shell: true,
   });
 } catch (e) {
-  // ESLint sort en erreur des qu il trouve quelque chose : c est attendu.
-  sortie = e.stdout || "[]";
+  // ESLint sort en erreur des qu il trouve quelque chose : c est attendu, et il
+  // ecrit alors son JSON sur stdout. Un spawn rate (ENOENT, permission) n a pas
+  // de stdout du tout : le confondre avec « zero erreur » est le bug qu on
+  // corrige ici, pas un cas a tolerer en silence.
+  if (!e.stdout) throw e;
+  sortie = e.stdout;
 }
 
 let erreurs = 0;

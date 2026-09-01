@@ -16,6 +16,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const dossier = mkdtempSync(join(tmpdir(), "liens-"));
 
@@ -31,14 +32,16 @@ export const supabaseAuth = {
 `);
 writeFileSync(join(dossier, "faux-platform.ts"), `export const isNative = () => false;\n`);
 
+// npx est un .cmd sous Windows : sans shell, execFileSync le rate avec ENOENT.
 execFileSync("npx", ["esbuild", "lib/deep-links.ts", "--bundle", "--platform=node",
   "--format=esm", `--outfile=${join(dossier, "liens.mjs")}`, "--log-level=error",
   `--alias:@/lib/supabase-auth=${join(dossier, "faux-supabase.ts")}`,
   `--alias:@/lib/platform=${join(dossier, "faux-platform.ts")}`,
-  "--external:@capacitor/*"], { stdio: "inherit" });
+  "--external:@capacitor/*"], { stdio: "inherit", shell: true });
 
-const { ouvrirSessionDepuisAdresse, RETOUR_NATIF } = await import(join(dossier, "liens.mjs"));
-const { appels } = await import(join(dossier, "liens.mjs")).then(() => import(join(dossier, "faux-supabase.ts")).catch(() => ({ appels: [] })));
+// import() dynamique refuse un chemin Windows brut (C:\...) : il lui faut une URL file://.
+const { ouvrirSessionDepuisAdresse, RETOUR_NATIF } = await import(pathToFileURL(join(dossier, "liens.mjs")));
+const { appels } = await import(pathToFileURL(join(dossier, "liens.mjs"))).then(() => import(pathToFileURL(join(dossier, "faux-supabase.ts"))).catch(() => ({ appels: [] })));
 
 let echecs = 0;
 const verifier = (nom, condition) => {

@@ -16,6 +16,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const REFERENCE = "scripts/reference-zr.json";
 if (!existsSync(REFERENCE)) {
@@ -25,11 +26,13 @@ if (!existsSync(REFERENCE)) {
 
 const dossier = mkdtempSync(join(tmpdir(), "plan-"));
 for (const f of ["push-planification", "push-textes"]) {
+  // npx est un .cmd sous Windows : sans shell, execFileSync le rate avec ENOENT.
   execFileSync("npx", ["esbuild", `lib/${f}.ts`, "--bundle", "--platform=node",
-    "--format=esm", `--outfile=${join(dossier, f)}.mjs`, "--log-level=error"], { stdio: "inherit" });
+    "--format=esm", `--outfile=${join(dossier, f)}.mjs`, "--log-level=error"], { stdio: "inherit", shell: true });
 }
-const { planifier, ESPACEMENT_MINIMUM } = await import(join(dossier, "push-planification.mjs"));
-const { ecrire, LANGUES } = await import(join(dossier, "push-textes.mjs"));
+// import() dynamique refuse un chemin Windows brut (C:\...) : il lui faut une URL file://.
+const { planifier, ESPACEMENT_MINIMUM } = await import(pathToFileURL(join(dossier, "push-planification.mjs")));
+const { ecrire, LANGUES } = await import(pathToFileURL(join(dossier, "push-textes.mjs")));
 
 const JOUR = 86_400_000;
 let echecs = 0;
