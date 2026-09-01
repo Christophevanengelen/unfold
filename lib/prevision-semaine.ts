@@ -87,3 +87,57 @@ export function previsionSemaine(
       b.momentum > bruts[i + 1].momentum,
   }));
 }
+
+/** Les trois domaines du produit, plus la synthese. */
+export interface ScoresJour {
+  overall: number;
+  love: number;
+  health: number;
+  work: number;
+}
+
+/** Le meme calcul, restreint aux phases d un domaine. */
+function scoreDomaine(phases: MomentumPhase[], jour: string, domaine?: string): number {
+  const actifs = actives(phases, jour)
+    .filter((p) => (domaine ? p.domain === domaine : true))
+    .map((p) => p.intensity)
+    .sort((a, b) => b - a);
+  let score = BASE;
+  actifs.forEach((intensite, rang) => {
+    score += (intensite - BASE) / Math.pow(2, rang);
+  });
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+/**
+ * Les scores d une journee, par domaine.
+ *
+ * Remplace mockToday, qui portait un score global et trois scores par domaine
+ * entierement inventes — les memes pour chaque personne. Ils etaient montres
+ * pendant l onboarding, c est-a-dire au moment ou le produit promet justement
+ * de lire le rythme PROPRE a quelqu un.
+ */
+export function scoresDuJour(phases: MomentumPhase[], jour: Date): ScoresJour {
+  const iso = jour.toISOString().slice(0, 10);
+  return {
+    overall: scoreDomaine(phases, iso),
+    love: scoreDomaine(phases, iso, "love"),
+    health: scoreDomaine(phases, iso, "health"),
+    work: scoreDomaine(phases, iso, "work"),
+  };
+}
+
+/**
+ * La phase la plus intense active ce jour-la, ou null.
+ *
+ * Sert a remplacer `mockToday.insight` — une phrase d analyse ecrite en dur,
+ * identique pour tout le monde, affichee pendant l onboarding. Aucune formule
+ * ne peut fabriquer une analyse honnete a sa place ; en revanche on peut dire
+ * ce qui est VRAI : quelle periode est ouverte aujourd hui. Et quand il n y en
+ * a aucune, on ne dit rien plutot que d inventer.
+ */
+export function phaseDominante(phases: MomentumPhase[], jour: Date): MomentumPhase | null {
+  const iso = jour.toISOString().slice(0, 10);
+  const actifs = actives(phases, iso).sort((a, b) => b.intensity - a.intensity);
+  return actifs[0] ?? null;
+}

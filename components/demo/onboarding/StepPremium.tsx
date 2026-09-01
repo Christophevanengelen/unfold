@@ -4,7 +4,10 @@ import { motion } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { CalendarMonth, Clock, ChartPie } from "flowbite-react-icons/outline";
-import { mockForecast } from "@/lib/mock-data";
+import { useMemo } from "react";
+import { useMomentum } from "@/lib/momentum-store";
+import { detectLocale } from "@/lib/i18n-demo";
+import { previsionSemaine } from "@/lib/prevision-semaine";
 
 interface StepPremiumProps {
   onNext: () => void;
@@ -18,21 +21,44 @@ const features = [
 ];
 
 /**
- * Forecast timeline — 7 dots sized by momentum, peaks get glow.
- * Uses real mockForecast data for credibility.
+ * Les sept prochains jours, calcules depuis les VRAIES phases.
+ *
+ * Cet ecran affichait mockForecast — lundi 78, mardi 82, mercredi 91 avec un
+ * pic — les memes chiffres pour tout le monde, et le commentaire d origine
+ * disait sans ironie « uses real mockForecast data for credibility ».
+ *
+ * C est l ecran de VENTE. Montrer de faux pics pour convaincre quelqu un de
+ * payer n est pas une approximation d interface : c est une preuve fabriquee,
+ * presentee au moment precis ou la personne decide de faire confiance. C est la
+ * raison pour laquelle cet ecran ne pouvait pas etre remis dans le parcours en
+ * l etat, quoi qu on veuille par ailleurs.
+ *
+ * Les jours sont nommes par Intl, donc dans la langue de la personne, et ils
+ * correspondent aux VRAIES dates a venir — la liste figee « Mon, Tue… » ne
+ * s alignait meme pas sur le jour ou l on se trouvait.
  */
 function ForecastTimeline() {
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const { phases } = useMomentum();
+  const locale = detectLocale();
+  const prevision = useMemo(() => {
+    const debut = new Date();
+    debut.setHours(0, 0, 0, 0);
+    return previsionSemaine(phases ?? [], debut);
+  }, [phases]);
+  const nomJour = useMemo(
+    () => new Intl.DateTimeFormat(locale, { weekday: "short" }),
+    [locale],
+  );
 
   return (
     <div className="flex items-end justify-between px-2">
-      {mockForecast.map((day: { date: string; momentum: number; isPeak: boolean }, i: number) => {
+      {prevision.map((day, i) => {
         // Map momentum (60-100) to dot size (6-16px)
-        const dotSize = 6 + ((day.momentum - 60) / 40) * 10;
+        const dotSize = 6 + ((Math.max(60, day.momentum) - 60) / 40) * 10;
 
         return (
           <motion.div
-            key={day.date}
+            key={i}
             className="flex flex-col items-center gap-2"
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -46,7 +72,7 @@ function ForecastTimeline() {
             {/* Momentum dot */}
             <div className="relative flex items-center justify-center">
               {/* Glow ring for peak days */}
-              {day.isPeak && (
+              {day.estPic && (
                 <motion.div
                   className="absolute rounded-full"
                   style={{
@@ -72,7 +98,7 @@ function ForecastTimeline() {
                 style={{
                   width: dotSize,
                   height: dotSize,
-                  backgroundColor: day.isPeak
+                  backgroundColor: day.estPic
                     ? "var(--accent-purple)"
                     : "var(--brand-6)",
                 }}
@@ -82,12 +108,18 @@ function ForecastTimeline() {
             {/* Day label */}
             <span
               className="text-[9px] font-medium"
+              // --text-brand et non --accent-purple a 50 % d opacite : dilue de
+              // moitie sur le fond de page, le libelle passait sous le seuil.
               style={{
-                color: "var(--accent-purple)",
-                opacity: day.isPeak ? 0.7 : 0.5,
+                color: "var(--text-brand)",
+                opacity: day.estPic ? 1 : 0.75,
               }}
             >
-              {days[i]}
+              {(() => {
+                const d = new Date();
+                d.setDate(d.getDate() + i);
+                return nomJour.format(d);
+              })()}
             </span>
           </motion.div>
         );
@@ -97,7 +129,7 @@ function ForecastTimeline() {
 }
 
 /**
- * Screen 4 — Future Peaks: Real forecast timeline from mockForecast.
+ * Screen 4 — Future Peaks : prevision reelle, calculee depuis les phases.
  * Credibility first — shows the actual product component, not a prettier concept.
  */
 export function StepPremium({ onNext, onBack }: StepPremiumProps) {

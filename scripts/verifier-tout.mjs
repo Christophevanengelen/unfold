@@ -26,6 +26,7 @@ const CONTROLES = [
   { nom: "Erreurs de lint (cliquet)", cmd: ["node", ["scripts/verifier-lint.mjs"]] },
   { nom: "Notifications APNs", cmd: ["node", ["scripts/verifier-apns.mjs"]] },
   { nom: "Choix des notifications", cmd: ["node", ["scripts/verifier-planification.mjs"]] },
+  { nom: "Prevision de la semaine", cmd: ["node", ["scripts/verifier-prevision.mjs"]] },
   { nom: "Liens magiques", cmd: ["node", ["scripts/verifier-liens-profonds.mjs"]] },
 ];
 

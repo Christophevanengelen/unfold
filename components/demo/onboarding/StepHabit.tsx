@@ -7,7 +7,9 @@ import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { ScoreRing } from "@/components/demo/ScoreRing";
 import { SatelliteScores } from "@/components/demo/SatelliteScores";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
-import { mockToday, mockDeltas } from "@/lib/mock-data";
+import { useMemo } from "react";
+import { useMomentum } from "@/lib/momentum-store";
+import { previsionSemaine, scoresDuJour, phaseDominante } from "@/lib/prevision-semaine";
 
 interface StepHabitProps {
   onNext: () => void;
@@ -20,6 +22,26 @@ interface StepHabitProps {
  * same design, same animations, no container wrapping.
  */
 export function StepHabit({ onNext, onBack }: StepHabitProps) {
+  const { phases } = useMomentum();
+  const { scoreDuJour, ecartVeille, aujourdhui, ecarts, dominante } = useMemo(() => {
+    const hier = new Date();
+    hier.setHours(0, 0, 0, 0);
+    hier.setDate(hier.getDate() - 1);
+    const ce = new Date(hier);
+    ce.setDate(ce.getDate() + 1);
+    const p = previsionSemaine(phases ?? [], hier, 2);
+    const h = scoresDuJour(phases ?? [], hier);
+    const a = scoresDuJour(phases ?? [], ce);
+    return {
+      scoreDuJour: p[1].momentum,
+      ecartVeille: p[1].momentum - p[0].momentum,
+      aujourdhui: a,
+      // Ce qui est vrai aujourd hui, plutot qu une analyse fabriquee.
+      dominante: phaseDominante(phases ?? [], ce),
+      ecarts: { love: a.love - h.love, health: a.health - h.health, work: a.work - h.work },
+    };
+  }, [phases]);
+
   // Delay activation by one frame to avoid React Strict Mode double-effect
   // cancelling the animation before it starts (same issue as main app swipe).
   const [active, setActive] = useState(false);
@@ -79,13 +101,20 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
       >
         {/* ScoreRing + big animated number — exact same as OverallPage */}
         <ScoreRing
-          score={mockToday.overall}
+          // Le vrai score du jour, calcule depuis les phases de la personne.
+          //
+          // C etait mockToday.overall : un chiffre invente, le meme pour tout
+          // le monde, montre pendant l onboarding comme si c etait le sien. La
+          // promesse du produit est de lire SON rythme ; commencer par un
+          // chiffre fabrique la contredit des la premiere seconde.
+          score={scoreDuJour}
           color="var(--accent-purple)"
           size={130}
           strokeWidth={1.5}
           isActive={active}
           delay={0.4}
-          delta={mockDeltas.overall}
+          // L ecart avec la veille, reel lui aussi.
+          delta={ecartVeille}
         >
           <span
             className="font-display leading-none"
@@ -97,7 +126,7 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
             }}
           >
             <AnimatedNumber
-              value={mockToday.overall}
+              value={scoreDuJour}
               duration={1.8}
               delay={0.4}
               isActive={active}
@@ -121,14 +150,10 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
         {/* SatelliteScores — same component as main app */}
         <div className="mt-5">
           <SatelliteScores
-            love={mockToday.scores.love.value}
-            health={mockToday.scores.health.value}
-            work={mockToday.scores.work.value}
-            deltas={{
-              love: mockDeltas.love,
-              health: mockDeltas.health,
-              work: mockDeltas.work,
-            }}
+            love={aujourdhui.love}
+            health={aujourdhui.health}
+            work={aujourdhui.work}
+            deltas={ecarts}
             isActive={active}
           />
         </div>
@@ -136,12 +161,16 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
         {/* Insight line */}
         <motion.p
           className="mt-5 max-w-[260px] text-center text-[11px] leading-relaxed"
-          style={{ color: "var(--accent-purple)", opacity: 0.5 }}
+          // --text-brand : accent-purple a 50 % d opacite passait sous le seuil.
+          style={{ color: "var(--text-brand)", opacity: 0.85 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.5 }}
         >
-          {mockToday.insight}
+          {/* Le titre de la periode reellement ouverte. Quand il n y en a
+              aucune, la ligne disparait — c est plus honnete qu une phrase
+              generique, et cela n arrive que les jours effectivement calmes. */}
+          {dominante?.title ?? ""}
         </motion.p>
       </motion.div>
 
