@@ -80,13 +80,26 @@ function AvatarButton({ onClick }: { onClick: () => void }) {
  * Enables fullscreen mode (no phone frame, real safe areas).
  */
 function useIsNative() {
-  const [isNative, setIsNative] = useState(false);
+  // La valeur de DEPART vient de la constante de compilation, pas de false.
+  //
+  // Elle demarrait a false et un effet la corrigeait apres le montage. Chaque
+  // lancement de l app rendait donc un premier ecran en « mode web » — cadre de
+  // telephone, fausses zones de securite — avant de basculer. Sur le layout
+  // racine, donc sur TOUS les ecrans, a chaque demarrage.
+  //
+  // NEXT_PUBLIC_NATIVE est remplacee a la compilation : elle vaut la meme chose
+  // cote serveur et cote client dans un meme paquet, donc l hydratation reste
+  // coherente et le paquet natif n a plus de premiere image fausse.
+  //
+  // L effet ne sert plus qu au cas restant : une page web ouverte a l interieur
+  // d une coque Capacitor, ou seul `window.Capacitor` le dit.
+  const [isNative, setIsNative] = useState(
+    process.env.NEXT_PUBLIC_NATIVE === "true",
+  );
   useEffect(() => {
-    const native =
-      typeof window !== "undefined" &&
-      ("Capacitor" in window || process.env.NEXT_PUBLIC_NATIVE === "true");
-    setIsNative(native);
-  }, []);
+    if (isNative) return;
+    if (typeof window !== "undefined" && "Capacitor" in window) setIsNative(true);
+  }, [isNative]);
   return isNative;
 }
 
