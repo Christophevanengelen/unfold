@@ -38,6 +38,7 @@ import {
   type TimeContext,
 } from "@/lib/detail-helpers";
 import type { HouseNumber } from "@/lib/domain-config";
+import { trackDomainFeedback } from "@/lib/observed-profile";
 
 // ─── Types (imported from timeline) ──────────────────────
 interface CapsuleData {
@@ -916,7 +917,21 @@ export function CapsuleDetailSheet({
                 <ShareNodes size={14} />
               </button>
             )}
-            <FeedbackThumb capsuleId={capsule.id} />
+            {/* onFeedback etait absent, donc la branche `if (next && onFeedback)`
+                de FeedbackThumb ne s executait jamais : le pouce s affichait,
+                reagissait au doigt, ecrivait dans localStorage — et la donnee
+                ne quittait jamais l appareil. On demandait un avis qu on ne
+                recueillait pas. */}
+            <FeedbackThumb
+              capsuleId={capsule.id}
+              onFeedback={(positive) => {
+                // Une capsule peut porter plusieurs domaines : on enregistre l avis
+                // pour chacun, sinon le signal serait attribue au hasard.
+                for (const d of capsule.domains ?? []) {
+                  void trackDomainFeedback(d.domain, capsule.id, positive);
+                }
+              }}
+            />
           </div>
         )}
 
