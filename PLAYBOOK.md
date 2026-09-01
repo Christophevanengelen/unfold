@@ -152,9 +152,20 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
 
 ## Perte de fonctionnalité — le plus grave
 
-- [ ] **~6 550 lignes jamais atteintes.** 23 composants qu'aucun fichier
-      n'importe. `npm run verifier` refuse maintenant que le nombre augmente,
-      mais ne supprime rien.
+- [ ] **17 composants débranchés** (23 au matin du 01/09). Cinq ont été
+      supprimés — quatre primitives d'interface jamais importées et un doublon
+      de barre de navigation. Les autres portent une fonctionnalité, et les
+      supprimer est **une décision produit, pas technique** :
+
+      | Quoi | Lignes | La question |
+      |---|---|---|
+      | `DomainPager` + 6 composants | ~900 | L'écran de détail par domaine. On le rebranche ou on l'abandonne ? |
+      | `StepPremium` | 226 | Le seul moment de vente de l'onboarding. Volontairement retiré ? |
+      | `StepCompatibility`, `StepHabit`, `StepPersonalize` | 512 | Retirés du parcours en même temps. |
+      | `DesignedForClarity` | 353 | Une section entière du site, jamais montée. |
+      | `SignalPager`, `LifeTimeline` | 453 | Deux vues alternatives de la timeline. |
+      | `Header` + `ThemeToggle` | 73 | Le site n'a plus d'en-tête. Voulu ? |
+      | `CookieConsent` | 83 | À garder tel quel — voir plus bas. |
 - [ ] **L'écran de détail par domaine** (Amour / Santé / Travail) — 1 500
       lignes, débranché. Racine : `components/demo/DomainPager.tsx`.
 - [ ] **Le sélecteur de langue du SITE** — `components/LanguageSwitcher.tsx`,

@@ -1108,11 +1108,14 @@ function ListView({
                         className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wider"
                         style={{
                           background: "color-mix(in srgb, var(--accent-purple) 30%, transparent)",
-                          color: "#C1A7FF",
+                          // #C1A7FF donnait 1,29 en theme clair : le badge du
+                          // signal EN COURS etait un rectangle vide. Il n a
+                          // jamais ete revu depuis le theme sombre d origine.
+                          color: "var(--text-brand)",
                           border: "1px solid color-mix(in srgb, var(--accent-purple) 40%, transparent)",
                         }}
                       >
-                        NOW
+                        {perso("timeline.maintenant", detectLocale())}
                       </span>
                     )}
                   </div>
