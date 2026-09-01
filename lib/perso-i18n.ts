@@ -239,6 +239,16 @@ const MOTS: Record<string, Traduction> = {
                      pt:"Agora não", nl:"Niet nu", ja:"あとで", zh:"暂不", ar:"ليس الآن" },
   "notif.reglages": { fr:"Tu pourras changer d'avis dans ton profil.", en:"You can change your mind in your profile.", es:"Puedes cambiar de opinión en tu perfil.", de:"Du kannst es jederzeit im Profil ändern.", it:"Puoi cambiare idea nel tuo profilo.",
                      pt:"Podes mudar de ideias no teu perfil.", nl:"Je kunt dit altijd in je profiel wijzigen.", ja:"あとからプロフィールで変更できます。", zh:"你可以随时在个人资料中更改。", ar:"يمكنك تغيير رأيك من ملفك الشخصي." },
+
+  // ── Edition des donnees de naissance, depuis le profil ──────────────────
+  "edit.titre":  { fr:"Tes données de naissance", en:"Your birth details", es:"Tus datos de nacimiento", de:"Deine Geburtsdaten", it:"I tuoi dati di nascita",
+                   pt:"Os teus dados de nascimento", nl:"Je geboortegegevens", ja:"出生情報", zh:"你的出生信息", ar:"بيانات ميلادك" },
+  "edit.sous":   { fr:"Toute correction relance le calcul de ta timeline.", en:"Any change recomputes your timeline.", es:"Cualquier cambio recalcula tu línea de tiempo.", de:"Jede Änderung berechnet deine Timeline neu.", it:"Ogni modifica ricalcola la tua timeline.",
+                   pt:"Qualquer alteração recalcula a tua timeline.", nl:"Elke wijziging herberekent je tijdlijn.", ja:"変更するとタイムラインを計算し直します。", zh:"任何修改都会重新计算你的时间线。", ar:"أي تعديل يعيد حساب مسارك الزمني." },
+  "edit.cta":    { fr:"Enregistrer", en:"Save", es:"Guardar", de:"Speichern", it:"Salva",
+                   pt:"Guardar", nl:"Opslaan", ja:"保存", zh:"保存", ar:"حفظ" },
+  "edit.annuler":{ fr:"Annuler", en:"Cancel", es:"Cancelar", de:"Abbrechen", it:"Annulla",
+                   pt:"Cancelar", nl:"Annuleren", ja:"キャンセル", zh:"取消", ar:"إلغاء" },
 };
 
 /**

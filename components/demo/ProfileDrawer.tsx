@@ -23,6 +23,7 @@ import { useBillingState } from "@/lib/premium-gate";
 import { isNative, getPlatform } from "@/lib/platform";
 import { apiFetch } from "@/lib/api-client";
 import { mesurer } from "@/lib/mesure";
+import { EditionNaissance } from "@/components/demo/EditionNaissance";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -63,6 +64,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   const [authOpen, setAuthOpen] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
   const [locale, setLocaleState] = useState<Locale>("en");
+  const [editionOuverte, setEditionOuverte] = useState(false);
   const [langPickerOpen, setLangPickerOpen] = useState(false);
   const billing = useBillingState();
   const native = isNative();
@@ -166,7 +168,16 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           {/* Edit birth data */}
           <button
             type="button"
-            onClick={() => { onClose(); router.push("/app/onboarding"); }}
+            // Ouvre la feuille d edition au lieu de renvoyer dans l onboarding
+            // complet avec un formulaire vide. Corriger une minute d heure de
+            // naissance demandait jusqu ici de refaire tout le parcours.
+            //
+            // Le renvoi reste pour qui n a PAS encore de donnees : dans ce cas
+            // il n y a rien a corriger, c est une premiere saisie.
+            onClick={() => {
+              if (birthData?.birthDate) setEditionOuverte(true);
+              else { onClose(); router.push("/app/onboarding"); }
+            }}
             className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
           >
             <span className="flex items-center gap-2.5">
@@ -178,7 +189,12 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             </span>
           </button>
 
-          {/* Full timeline chart — premium only */}
+          {/* Edition des donnees de naissance. */}
+      {editionOuverte && (
+        <EditionNaissance ouvert onFermer={() => setEditionOuverte(false)} />
+      )}
+
+      {/* Full timeline chart — premium only */}
           {billing.isPremium && (
             <button
               type="button"

@@ -75,7 +75,16 @@ export function StepInput({
   onChange,
   onNext,
   onBack,
-}: StepInputProps) {
+  // « edition » quand l ecran sert a CORRIGER ses donnees depuis le profil, et
+  // non a les saisir la premiere fois. Seuls les libelles changent : les champs,
+  // la validation et la recherche de ville sont exactement les memes.
+  //
+  // Reutiliser ce composant plutot que d en ecrire un second evite une
+  // troisieme copie du champ ville — il en existait deja deux, dont une bien
+  // meilleure que l autre, et c est precisement ce qui avait laisse la version
+  // d onboarding se degrader.
+  mode = "onboarding",
+}: StepInputProps & { mode?: "onboarding" | "edition" }) {
   const locale = detectLocale();
   const fields = champs(locale);
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
@@ -223,7 +232,7 @@ export function StepInput({
         transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
       >
         <ChevronLeft size={14} />
-        {t("onboarding.back", locale)}
+        {mode === "edition" ? perso("edit.annuler", locale) : t("onboarding.back", locale)}
       </motion.button>
 
       {/* Headline */}
@@ -234,7 +243,7 @@ export function StepInput({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        {t("onboarding.p5_headline", locale)}
+        {mode === "edition" ? perso("edit.titre", locale) : t("onboarding.p5_headline", locale)}
       </motion.h1>
       <motion.p
         className="mt-1.5 text-sm"
@@ -243,7 +252,7 @@ export function StepInput({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        {t("onboarding.p5_sub", locale)}
+        {mode === "edition" ? perso("edit.sous", locale) : t("onboarding.p5_sub", locale)}
       </motion.p>
 
       {/* Form fields */}
@@ -477,7 +486,7 @@ export function StepInput({
               : "cursor-not-allowed bg-brand-4 text-text-disabled"
           }`}
         >
-          {t("onboarding.p5_cta", locale)}
+          {mode === "edition" ? perso("edit.cta", locale) : t("onboarding.p5_cta", locale)}
         </button>
       </motion.div>
     </motion.div>
