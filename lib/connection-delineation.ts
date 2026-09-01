@@ -11,6 +11,7 @@ import { storage } from "@/lib/storage";
 import type { ActivePeriod } from "@/lib/connection-brief-api";
 import type { RelationshipType } from "@/lib/matching-narratives";
 import { apiFetch } from "@/lib/api-client";
+import { detectLocale } from "@/lib/i18n-demo";
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -115,7 +116,9 @@ export async function getConnectionDelineation(
     const res = await apiFetch("/api/openai/connection-delineation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      // La langue de la personne, sinon le rapport de compatibilite revient en
+      // francais quelle que soit l app qu elle lit.
+      body: JSON.stringify({ ...payload, locale: detectLocale() }),
     });
 
     if (!res.ok) return null;

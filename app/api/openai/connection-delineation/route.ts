@@ -23,6 +23,7 @@ import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
 import { enforceFeature, enforceQuota, RequiresPlanError, QuotaExceededError } from "@/lib/billing/enforce";
 import { corsHandler, corsPreflightResponse } from "@/lib/cors";
 import { isInternalCall } from "@/lib/internal-call";
+import { instructionLangue } from "@/lib/instruction-langue";
 import {
   enforceAiBudget,
   applyGuardCookie,
@@ -151,6 +152,8 @@ interface RequestBody {
   monthKey?: string;
   personA?: PayloadPerson;
   personB?: PayloadPerson;
+  /** La langue de la personne. Sans elle, le modele repond dans celle du prompt. */
+  locale?: string;
   [k: string]: unknown;
 }
 
@@ -268,7 +271,7 @@ async function handlePost(req: NextRequest) {
       response_format: { type: "json_object" },
       max_tokens: 1200,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: SYSTEM_PROMPT + instructionLangue(body.locale) },
         { role: "user", content: JSON.stringify(body) },
       ],
     }),

@@ -17,6 +17,7 @@ import { useMomentum } from "@/lib/momentum-store";
 import { storage } from "@/lib/storage";
 import type { BirthData } from "@/lib/birth-data";
 import { S } from "@/lib/layout-constants";
+import { detectLocale } from "@/lib/i18n-demo";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -114,7 +115,9 @@ function useBriefingData(birthData: BirthData | null, endpoint: string, cachePre
         const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ birthData }),
+          // La langue part avec la requete. Sans elle, le modele repondait
+          // dans celle de son prompt systeme — le francais — a tout le monde.
+          body: JSON.stringify({ birthData, locale: detectLocale() }),
         });
         if (!res.ok) throw new Error(`API ${res.status}`);
         const result: BriefingData = await res.json();

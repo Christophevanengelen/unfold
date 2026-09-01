@@ -26,6 +26,7 @@ import {
   type AiGuardResult,
 } from "@/lib/ai-guard";
 import { corsHandler, corsPreflightResponse } from "@/lib/cors";
+import { instructionLangue } from "@/lib/instruction-langue";
 
 export const runtime = "nodejs";                  // crypto + Supabase admin client
 
@@ -142,7 +143,7 @@ async function handlePost(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { birthData } = body as { birthData: BirthDataPayload };
+    const { birthData, locale } = body as { birthData: BirthDataPayload; locale?: string };
 
     if (!birthData?.birthDate || !birthData?.birthTime) {
       return NextResponse.json({ error: "Missing birthData" }, { status: 400 });
@@ -199,7 +200,10 @@ ${signalDetails.map((s, i) => `--- Signal ${i + 1} ---\n${s}`).join("\n\n")}`;
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages: [
-          { role: "system", content: BRIEFING_SYSTEM_PROMPT },
+          // Le prompt systeme est ecrit en francais, donc le modele repondait
+          // en francais A TOUT LE MONDE — y compris a qui lit l app en japonais
+          // ou en arabe. Et c est ce texte-la qui porte la valeur du produit.
+          { role: "system", content: BRIEFING_SYSTEM_PROMPT + instructionLangue(locale) },
           { role: "user", content: userMessage },
         ],
         response_format: { type: "json_object" },
