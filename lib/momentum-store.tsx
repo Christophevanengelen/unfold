@@ -23,7 +23,7 @@ import {
   type ReactNode,
 } from "react";
 import useSWR from "swr";
-import { getBirthData, getBirthDataSync, saveBirthData, type BirthData } from "@/lib/birth-data";
+import { getBirthData, getBirthDataSync, saveBirthData, birthHash, type BirthData } from "@/lib/birth-data";
 import { migrateFromLocalStorage, storage } from "@/lib/storage";
 import { fetchYearData, fetchAppData } from "@/lib/momentum-api";
 import { yearDataToPhases, appDataToPhases } from "@/lib/momentum-adapter";
@@ -34,8 +34,20 @@ import { deposerPourWidget, deposerBascules } from "@/lib/widget";
 
 // ─── Cache layer — dual-write (IndexedDB + localStorage) ──────
 
-const CACHE_YEAR = "unfold_cache_year_phases_v4";
-const CACHE_LIFETIME = "unfold_cache_lifetime_phases_v4";
+// Les caches d affichage portent desormais l empreinte de la naissance.
+//
+// Ils etaient globaux et rien ne les invalidait jamais. Apres avoir corrige sa
+// date, la personne revoyait donc les phases de l ANCIENNE date pendant tout le
+// recalcul — et definitivement si le moteur echouait, puisque le repli les
+// resservait. « Je modifie, rien ne change » : c est exactement ce qui etait
+// decrit.
+//
+// L empreinte couvre date + heure + latitude + longitude, donc corriger sa
+// seule heure de naissance change aussi la clef.
+const CACHE_YEAR_BASE = "unfold_cache_year_phases_v5";
+const CACHE_LIFETIME_BASE = "unfold_cache_lifetime_phases_v5";
+const cleAnnee = (b: BirthData | null) => `${CACHE_YEAR_BASE}_${b ? birthHash(b) : "vide"}`;
+const cleViager = (b: BirthData | null) => `${CACHE_LIFETIME_BASE}_${b ? birthHash(b) : "vide"}`;
 
 function readSync(key: string): MomentumPhase[] {
   if (typeof window === "undefined") return [];
@@ -57,7 +69,7 @@ async function fetchYear(bd: BirthData): Promise<MomentumPhase[]> {
   if (!res?.data?.success) throw new Error("Year API failed");
   const phases = yearDataToPhases(res);
   if (phases.length === 0) throw new Error("No signals found");
-  persist(CACHE_YEAR, phases);
+  persist(cleAnnee(bd), phases);
   // Le widget iOS lit un resume depose ici. Ce sont les phases de l annee qui
   // l alimentent et non celles de la vie entiere : le widget ne montre que la
   // periode en cours et la suivante, et celles-la arrivent en deux secondes au
@@ -73,7 +85,7 @@ async function fetchLifetime(bd: BirthData): Promise<MomentumPhase[]> {
   const res = await fetchAppData(bd);
   const phases = appDataToPhases(res);
   if (phases.length > 0) {
-    persist(CACHE_LIFETIME, phases);
+    persist(cleViager(bd), phases);
     console.log("[Momentum] Lifetime cached:", phases.length, "phases");
   }
   return phases;
@@ -136,10 +148,13 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     isValidating: isLoadingYear,
     mutate: rechargerAnnee,
   } = useSWR(
-    birthData ? ["year-phases", birthData.birthDate] : null,
+    // L empreinte, pas la date seule : le resultat du moteur depend aussi de
+    // l heure et du lieu. Avec la date seule, corriger son heure de naissance
+    // ne declenchait AUCUNE revalidation.
+    birthData ? ["year-phases", birthHash(birthData)] : null,
     () => fetchYear(birthData!),
     {
-      fallbackData: readSync(CACHE_YEAR),
+      fallbackData: readSync(cleAnnee(birthData)),
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
       dedupingInterval: 60_000, // don't refetch within 1 min
@@ -151,18 +166,18 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     data: lifetimePhases,
     isValidating: isLoadingLifetime,
   } = useSWR(
-    birthData ? ["lifetime-phases", birthData.birthDate] : null,
+    birthData ? ["lifetime-phases", birthHash(birthData)] : null,
     () => fetchLifetime(birthData!),
     {
-      fallbackData: readSync(CACHE_LIFETIME),
+      fallbackData: readSync(cleViager(birthData)),
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       dedupingInterval: 300_000, // don't refetch within 5 min
     }
   );
 
-  const phases = yearPhases ?? readSync(CACHE_YEAR);
-  const timelinePhases = lifetimePhases ?? readSync(CACHE_LIFETIME);
+  const phases = yearPhases ?? readSync(cleAnnee(birthData));
+  const timelinePhases = lifetimePhases ?? readSync(cleViager(birthData));
 
   const state: LoadState = yearError
     ? "error"

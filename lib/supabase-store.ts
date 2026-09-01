@@ -19,9 +19,23 @@ import { apiFetch } from "@/lib/api-client";
 
 // ─── Utilities ──────────────────────────────────────────
 
+/**
+ * `apiFetch`, PAS `fetch`.
+ *
+ * Ce fichier importe apiFetch depuis toujours et s en sert partout ailleurs.
+ * Ici seulement, l appel partait en chemin relatif. Sur le web cela marche ;
+ * dans l app native, l origine est capacitor://localhost, et la requete allait
+ * donc vers capacitor://localhost/api/profile/upsert — une adresse qui
+ * n existe pas. Aucune modification de profil n a jamais atteint le serveur
+ * depuis le telephone.
+ *
+ * C est le cousin du defaut de CORS qui avait bloque les profils pendant des
+ * mois : meme symptome — la route est saine, la requete ne l atteint pas — et
+ * meme silence, puisque l echec finit en console.warn que personne ne lit.
+ */
 async function postJson(path: string, body: unknown): Promise<boolean> {
   try {
-    const res = await fetch(path, {
+    const res = await apiFetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
