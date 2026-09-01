@@ -3,12 +3,15 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMomentum } from "@/lib/momentum-store";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 /**
  * Redirects to /demo/onboarding if no birth data exists.
  * Shows a smooth loading skeleton while data loads — no blank flash.
  */
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
+  const locale = detectLocale();
   const { needsOnboarding, state, isLive, timelinePhases } = useMomentum();
   const router = useRouter();
 
@@ -47,7 +50,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
           className="rounded-full px-4 py-2 text-xs font-medium"
           style={{ background: "var(--surface-light)", color: "var(--accent-purple)" }}
         >
-          Réessayer
+          {perso("garde.reessayer", locale)}
         </button>
       </div>
     );
@@ -57,7 +60,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   if (timelinePhases.length === 0 && !isLive) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-text-body-subtle">Aucun signal détecté</p>
+        <p className="text-sm text-text-body-subtle">{perso("garde.aucun", locale)}</p>
       </div>
     );
   }

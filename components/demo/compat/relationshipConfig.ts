@@ -16,7 +16,15 @@ import type { RelationshipType } from "@/lib/connections-store";
 
 export interface RelationshipDescriptor {
   key: RelationshipType;
-  labelFR: string;
+  /**
+   * La CLEF de traduction, pas un libelle.
+   *
+   * Le champ s appelait labelFR et contenait « Partenaire », « Ami·e »,
+   * « Famille », « Collegue » — du francais en dur, dans une structure de
+   * donnees, pour un produit a dix langues. Le nom du champ disait la faute
+   * a voix haute et personne ne l entendait.
+   */
+  cleLabel: string;
   color: string;
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
 }
@@ -24,25 +32,25 @@ export interface RelationshipDescriptor {
 export const relationshipConfig: Record<RelationshipType, RelationshipDescriptor> = {
   partner: {
     key: "partner",
-    labelFR: "Partenaire",
+    cleLabel: "relation.partner",
     color: "#D89EA0",
     Icon: Heart,
   },
   friend: {
     key: "friend",
-    labelFR: "Ami·e",
+    cleLabel: "relation.friend",
     color: "#50C4D6",
     Icon: Star,
   },
   family: {
     key: "family",
-    labelFR: "Famille",
+    cleLabel: "relation.family",
     color: "#6BA89A",
     Icon: Home,
   },
   colleague: {
     key: "colleague",
-    labelFR: "Collègue",
+    cleLabel: "relation.colleague",
     color: "#9585CC",
     Icon: Briefcase,
   },

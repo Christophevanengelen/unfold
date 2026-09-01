@@ -12,6 +12,8 @@ import {
 } from "@/lib/connections-store";
 import { relationshipConfig, relationshipOrder } from "@/components/demo/compat/relationshipConfig";
 import { connectionHref } from "@/lib/connection-href";
+import { perso } from "@/lib/perso-i18n";
+import { detectLocale } from "@/lib/i18n-demo";
 
 const CONFETTI_COLORS = [
   "#B07CC2", "#D89EA0", "#6BA89A", "#9585CC", "#50C4D6", "#C4A86B",
@@ -30,6 +32,7 @@ const PARTICLES = Array.from({ length: 16 }, (_, i) => {
 });
 
 function ConnectedContent() {
+  const locale = detectLocale();
   const searchParams = useSearchParams();
   const partnerName = searchParams.get("name") ?? "quelqu'un";
   const [selectedRelation, setSelectedRelation] = useState<RelationshipType | null>(null);
@@ -112,7 +115,7 @@ function ConnectedContent() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
       >
-        Vos timelines sont liées. Dites-nous quel type de relation c&apos;est pour personnaliser vos insights.
+              {perso("invite.liees", locale)}
       </motion.p>
 
       {/* Relationship selector */}
@@ -140,7 +143,7 @@ function ConnectedContent() {
               }}
             >
               <Icon width={14} height={14} style={{ color: rel.color }} />
-              {rel.labelFR}
+              {perso(rel.cleLabel, locale)}
             </button>
           );
         })}
@@ -163,7 +166,7 @@ function ConnectedContent() {
             opacity: selectedRelation ? 1 : 0.5,
           }}
         >
-          Voir vos fenêtres de timing
+          {perso("invite.voir", locale)}
         </Link>
       </motion.div>
 

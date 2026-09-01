@@ -133,7 +133,7 @@ export default function ConnectionsPage() {
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <span>Astuce : restez appuyé sur une connexion pour la modifier ou la supprimer.</span>
+          <span>{perso("compat.astuce", locale)}</span>
           <span className="text-[10px] font-semibold" style={{ color: "var(--accent-purple)" }}>
             Compris
           </span>
@@ -166,7 +166,7 @@ export default function ConnectionsPage() {
           <div className="flex-1">
             <p className="text-[13px] font-semibold text-text-heading">Partager votre code</p>
             <p className="text-[11px] text-text-body-subtle">
-              Invitez quelqu&apos;un à comparer vos rythmes
+              {perso("compat.invitez_comparer", locale)}
             </p>
           </div>
           <span
@@ -186,7 +186,7 @@ export default function ConnectionsPage() {
               color: "var(--accent-purple)",
             }}
           >
-            Entrer un code reçu
+            {perso("compat.entrer_code", locale)}
           </button>
         ) : (
           <motion.div

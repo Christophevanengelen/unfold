@@ -41,6 +41,7 @@ import type { HouseNumber } from "@/lib/domain-config";
 import { trackDomainFeedback } from "@/lib/observed-profile";
 import { useTheme } from "next-themes";
 import { texteLisible, type ThemeLisible } from "@/lib/contraste";
+import { perso } from "@/lib/perso-i18n";
 
 // ─── Types (imported from timeline) ──────────────────────
 interface CapsuleData {
@@ -103,6 +104,7 @@ const MONTH_NAMES = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "
 
 // ─── Context Banner Icons ────────────────────────────────
 function BannerIcon({ icon, size = 14 }: { icon: string; size?: number }) {
+  const locale = detectLocale();
   if (icon === "bolt") return <Fire size={size} />;
   if (icon === "calendar") return <CalendarMonth size={size} />;
   return <Clock size={size} />;
@@ -120,6 +122,7 @@ export function CapsuleDetailSheet({
   onClose: () => void;
   onNavigateToCapsule?: (date: Date) => void;
 }) {
+  const locale = detectLocale();
   const { resolvedTheme } = useTheme();
   // Gate: blur AI sections for free users on future capsules.
   // usePremiumStatus() fetches /api/billing/me on mount — not spoofable via localStorage.
@@ -702,7 +705,7 @@ export function CapsuleDetailSheet({
                           color: "var(--text-body-subtle)",
                         }}
                       >
-                        passé
+                        {perso("fiche.passe", locale)}
                       </span>
                     )}
                     {isCurrent && (
@@ -735,7 +738,7 @@ export function CapsuleDetailSheet({
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
                   <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                    Pour te préparer
+                    {perso("fiche.preparer", locale)}
                   </span>
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
@@ -754,7 +757,7 @@ export function CapsuleDetailSheet({
             <div className="flex items-center gap-1.5 mb-1.5">
               <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
               <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                {tc.context === "past" ? "Avec le recul" : tc.context === "current" ? "En pratique" : "Pour te préparer"}
+                {tc.context === "past" ? "Avec le recul" : tc.context === "current" ? "En pratique" : perso("fiche.preparer", locale)}
               </span>
             </div>
             {aiLoading && !guidanceText ? (
@@ -954,7 +957,7 @@ export function CapsuleDetailSheet({
             <ChevronDown size={14} style={{ color: "var(--text-body-subtle)" }} />
           </motion.div>
           <span className="text-[10px] font-medium" style={{ color: "var(--text-body-subtle)" }}>
-            Plus de détails
+            {perso("fiche.plus", locale)}
           </span>
         </button>
 
@@ -969,8 +972,8 @@ export function CapsuleDetailSheet({
             >
               <div className="space-y-2 pb-4 pt-1">
                 <DetailRow label="Score" value={`${phase?.score ?? "—"} / 4`} />
-                <DetailRow label="Intensité" value={`${phase?.intensity ?? "—"} / 100`} />
-                <DetailRow label="Durée" value={`${capsule.phases[0]?.durationWeeks ?? "—"} semaines`} />
+                <DetailRow label={perso("fiche.intensite", locale)} value={`${phase?.intensity ?? "—"} / 100`} />
+                <DetailRow label={perso("fiche.duree", locale)} value={`${capsule.phases[0]?.durationWeeks ?? "—"} semaines`} />
                 {displayLifetimeNum && displayLifetimeTotal && displayLifetimeTotal > 0 && (
                   <DetailRow
                     label="Dans ta vie"
@@ -978,7 +981,7 @@ export function CapsuleDetailSheet({
                   />
                 )}
                 {phase?.apiCategory && (
-                  <DetailRow label="Catégorie" value={phase.apiCategory} />
+                  <DetailRow label={perso("fiche.categorie", locale)} value={phase.apiCategory} />
                 )}
                 {phase?.transitPlanet && phase?.natalPoint && (
                   <DetailRow label="Transit" value={`${phase.transitPlanet} → ${phase.natalPoint}`} />
@@ -996,16 +999,16 @@ export function CapsuleDetailSheet({
                   <DetailRow label="Station" value={phase.stationType === "SR" ? "Reprise directe" : "Pause rétrograde"} />
                 )}
                 {phase?.windowStart && phase?.windowEnd && (
-                  <DetailRow label="Fenêtre" value={`${phase.windowStart} → ${phase.windowEnd}`} />
+                  <DetailRow label={perso("fiche.fenetre", locale)} value={`${phase.windowStart} → ${phase.windowEnd}`} />
                 )}
                 {phase?.parileDate && (
-                  <DetailRow label="Pic d'intensité" value={phase.parileDate} />
+                  <DetailRow label={perso("fiche.pic", locale)} value={phase.parileDate} />
                 )}
                 {phase?.exactDates && phase.exactDates.length > 1 && (
                   <DetailRow label="Dates exactes" value={phase.exactDates.join(", ")} />
                 )}
                 {phase?.eclipseType && (
-                  <DetailRow label="Éclipse" value={phase.eclipseType === "solar" ? "Solaire (nouveau départ)" : "Lunaire (point culminant)"} />
+                  <DetailRow label={perso("fiche.eclipse", locale)} value={phase.eclipseType === "solar" ? "Solaire (nouveau départ)" : "Lunaire (point culminant)"} />
                 )}
                 {phase?.markers && phase.markers.length > 0 && (
                   <DetailRow label="Marqueurs" value={phase.markers.map((m: string) =>
@@ -1018,14 +1021,14 @@ export function CapsuleDetailSheet({
                   <>
                     <DetailRow label="Passage" value={`${phase.cycle.hitNumber} / ${phase.cycle.totalHits}`} />
                     {phase.cycle.pattern && (
-                      <DetailRow label="Schéma" value={phase.cycle.pattern} />
+                      <DetailRow label={perso("fiche.schema", locale)} value={phase.cycle.pattern} />
                     )}
                   </>
                 )}
                 {capsule.phases.length > 1 && (
                   <div className="mt-3">
                     <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                      Signaux combinés
+                      {perso("fiche.combines", locale)}
                     </span>
                     {capsule.phases.map((p, i) => (
                       <p key={i} className="text-[11px] mt-1" style={{ color: "var(--text-body-subtle)" }}>

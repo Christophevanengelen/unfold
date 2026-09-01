@@ -114,7 +114,7 @@ export function ConnectionActionSheet({
             <p className="truncate text-sm font-semibold text-text-heading">
               {connection.name}
             </p>
-            <p className="text-[11px] text-text-body-subtle">{rel.labelFR}</p>
+            <p className="text-[11px] text-text-body-subtle">{perso(rel.cleLabel, locale)}</p>
           </div>
         </div>
 
@@ -129,7 +129,7 @@ export function ConnectionActionSheet({
               icon={<UserEdit width={16} height={16} />}
               label={perso("compat.modifier_rel", locale)}
               onClick={() => setView("relationship")}
-              subtitle={rel.labelFR}
+              subtitle={perso(rel.cleLabel, locale)}
             />
             <ActionRow
               icon={<ShareNodes width={16} height={16} />}
@@ -211,7 +211,7 @@ export function ConnectionActionSheet({
                     }}
                   >
                     <Icon width={14} height={14} style={{ color: r.color }} />
-                    {r.labelFR}
+                    {perso(r.cleLabel, locale)}
                   </button>
                 );
               })}

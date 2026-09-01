@@ -11,6 +11,8 @@ import { RelationshipAvatar } from "./RelationshipAvatar";
 import { TierPulse } from "./TierPulse";
 import { WindowMicroPreview } from "./WindowMicroPreview";
 import { connectionHref } from "@/lib/connection-href";
+import { detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface ConnectionRowProps {
   connection: RealConnection;
@@ -28,6 +30,7 @@ interface ConnectionRowProps {
  * Ordering + sectioning is handled by ConnectionList, not here.
  */
 export function ConnectionRow({ connection, summary, loading, onLongPress }: ConnectionRowProps) {
+  const locale = detectLocale();
   const router = useRouter();
   const rel = relationshipConfig[connection.relationship];
   const lp = useLongPress(onLongPress);
@@ -56,7 +59,7 @@ export function ConnectionRow({ connection, summary, loading, onLongPress }: Con
       onClick={handleClick}
       role="link"
       tabIndex={0}
-      aria-label={`${connection.name}, ${rel.labelFR}`}
+      aria-label={`${connection.name}, ${perso(rel.cleLabel, locale)}`}
       className="group relative flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 transition-all select-none active:scale-[0.995]"
       style={{
         background: "var(--bg-secondary)",
@@ -80,7 +83,7 @@ export function ConnectionRow({ connection, summary, loading, onLongPress }: Con
         </div>
         <div className="mt-0.5 flex items-center gap-2">
           <span className="text-[10px] uppercase tracking-widest text-text-body-subtle">
-            {rel.labelFR}
+            {perso(rel.cleLabel, locale)}
           </span>
           <span
             className="inline-block h-0.5 w-0.5 rounded-full"

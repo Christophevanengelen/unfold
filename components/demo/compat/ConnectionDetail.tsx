@@ -62,7 +62,7 @@ export function ConnectionDetail({ connectionId }: { connectionId: string }) {
       <PageHeader
         backHref="/app/compatibility"
         title={`Vous & ${current.name}`}
-        subtitle={rel.labelFR}
+        subtitle={perso(rel.cleLabel, locale)}
         leadingSlot={
           <div
             className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
