@@ -40,13 +40,19 @@ export async function POST(req: NextRequest) {
     return withCors(req, NextResponse.json({ error: "cadence_inconnue" }, { status: 400 }));
   }
 
+  // supabase-js ne rejette pas sur erreur Postgres : il resout avec { error }.
+  // Le try/catch ci-dessous n attrapait donc rien, et la route repondait 204
+  // meme quand l ecriture avait echoue. Le silence etait volontaire ; l aveu-
+  // glement, non.
   try {
-    await getAdminClient().rpc("regler_cadence_push", {
+    const { error } = await getAdminClient().rpc("regler_cadence_push", {
       p_device_id: deviceId,
       p_cadence: cadence,
     });
-  } catch {
-    // silence volontaire : l app renverra le reglage au prochain demarrage
+    if (error) throw new Error(error.message);
+  } catch (e) {
+    // L app renverra le reglage au prochain demarrage, donc on ne bloque pas.
+    console.error("reglage de cadence refuse :", e instanceof Error ? e.message : String(e));
   }
 
   return withCors(

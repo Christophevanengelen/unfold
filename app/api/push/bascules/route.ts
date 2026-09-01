@@ -66,14 +66,21 @@ export async function POST(req: NextRequest) {
     );
   });
 
+  // supabase-js ne rejette pas sur erreur Postgres : il resout avec { error }.
+  // Le try/catch ci-dessous n attrapait donc rien, et la route repondait 204
+  // meme quand l ecriture avait echoue. Le silence etait volontaire ; l aveu-
+  // glement, non.
   try {
-    await getAdminClient().rpc("deposer_bascules", {
+    const { error } = await getAdminClient().rpc("deposer_bascules", {
       p_device_id: deviceId,
       p_bascules: propres,
     });
-  } catch {
-    // Silence volontaire : l app rappelle cette route au prochain chargement
-    // de timeline. Une ecriture ratee se repare toute seule.
+    if (error) throw new Error(error.message);
+  } catch (e) {
+    // On ne casse pas l app : elle rappelle cette route au prochain chargement
+    // de timeline, donc une ecriture ratee se repare toute seule. Mais on la
+    // journalise, sinon on ne saura jamais qu elle a rate.
+    console.error("depot des bascules refuse :", e instanceof Error ? e.message : String(e));
   }
 
   return withCors(

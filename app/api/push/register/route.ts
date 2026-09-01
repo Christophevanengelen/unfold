@@ -92,7 +92,14 @@ export async function POST(req: NextRequest) {
 
   try {
     const supabase = getAdminClient();
-    await supabase.rpc("enregistrer_push_jeton", {
+    // supabase-js NE REJETTE PAS sur une erreur Postgres : il resout avec un
+    // objet { error }. Un try/catch autour de l appel n attrape donc RIEN —
+    // fonction absente, droit refuse, contrainte violee, tout passait et la
+    // route repondait 204 sans une ligne de journal.
+    //
+    // C est le meme piege que partout ailleurs aujourd hui : le code a l air de
+    // gerer l erreur, et il ne la voit pas. Il faut LIRE error.
+    const { error } = await supabase.rpc("enregistrer_push_jeton", {
       p_jeton: jeton,
       p_fournisseur: fournisseur,
       p_plateforme: plateforme,
@@ -100,6 +107,7 @@ export async function POST(req: NextRequest) {
       p_fuseau: fuseau,
       p_locale: typeof locale === "string" ? locale : null,
     });
+    if (error) throw new Error(error.message);
   } catch (e) {
     // On ne casse toujours pas l app — voir l en-tete, l enregistrement se
     // rejoue au prochain demarrage. Mais on ne perd plus l information que
