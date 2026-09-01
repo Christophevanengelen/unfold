@@ -237,7 +237,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
       const resolved = formData?.resolvedCoords;
       const coords = resolved
         ? { lat: resolved.lat, lng: resolved.lng, tz: resolved.timezone }
-        : resolveCity(formData?.placeOfBirth || "Brussels");
+        : resolveCity(formData?.placeOfBirth ?? "");
       // Aucune valeur de repli sur les donnees de naissance.
       //
       // Ce bloc inventait une date (15 janvier 1990), une heure (midi) et un
@@ -249,6 +249,18 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
       // ici sans eux, c est un defaut de navigation : on renvoie la personne
       // les saisir plutot que de fabriquer une reponse.
       if (!formData?.dob || !formData?.timeOfBirth || !formData?.placeOfBirth) {
+        router.replace("/app/onboarding");
+        return;
+      }
+
+      // Le lieu n a pas pu etre situe : ni le geocodage, ni la table locale.
+      //
+      // Avant, resolveCity renvoyait Bruxelles dans ce cas et on continuait.
+      // Le theme entier partait alors sur les coordonnees d une ville ou la
+      // personne n est pas nee, sans aucun signe. On la renvoie desormais au
+      // formulaire, comme pour un champ manquant : c est la meme faute, elle
+      // etait seulement une couche plus bas.
+      if (!coords) {
         router.replace("/app/onboarding");
         return;
       }

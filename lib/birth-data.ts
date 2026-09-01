@@ -111,11 +111,27 @@ export const CITY_COORDS: Record<
 };
 
 /** Resolve a city name to coordinates. Returns Brussels as fallback. */
+/**
+ * Les coordonnees d une ville, ou null si on ne la connait pas.
+ *
+ * Cette fonction renvoyait BRUXELLES pour toute ville inconnue. Le 31/08 on a
+ * retire d ici les fausses date et heure de naissance, mais ce repli-la avait
+ * survecu une couche plus bas, et il produisait exactement le meme dommage :
+ * quelqu un qui tape « Liege » sans choisir de suggestion — ou dont le
+ * geocodage echoue faute de reseau — voyait TOUT son theme calcule sur les
+ * coordonnees de Bruxelles, presente comme le sien, sans un mot.
+ *
+ * Un theme faux est pire qu un theme absent : la personne le lit, s y
+ * reconnait ou non, et en tire des conclusions sur sa vie. Rien dans l ecran ne
+ * lui permet de soupconner l erreur.
+ *
+ * On renvoie donc null, et c est a l appelant de refuser d avancer.
+ */
 export function resolveCity(city: string): {
   lat: number;
   lng: number;
   tz: string;
-} {
+} | null {
   const cleaned = city.trim();
   // Exact match
   if (CITY_COORDS[cleaned]) return CITY_COORDS[cleaned];
@@ -139,8 +155,13 @@ export function resolveCity(city: string): {
     ([k]) => lower.includes(k.toLowerCase()) || k.toLowerCase().includes(lower)
   );
   if (fuzzy) return fuzzy[1];
-  // Fallback
-  return CITY_COORDS.Brussels;
+  // Pas de repli. Voir l en-tete : inventer un lieu fabrique un faux theme.
+  return null;
+}
+
+/** La ville est-elle resolvable sans reseau ? Sert a garder le formulaire. */
+export function villeConnue(nom: string): boolean {
+  return resolveCity(nom) !== null;
 }
 
 /** Get autocomplete suggestions for a city query */

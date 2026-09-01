@@ -7,6 +7,7 @@ import { ChevronLeft } from "flowbite-react-icons/outline";
 import { DateInput } from "@/components/ui/DateInput";
 import { searchCities, type GeoResult } from "@/lib/geocode";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { villeConnue } from "@/lib/birth-data";
 
 export interface OnboardingFormData {
   nickname: string;
@@ -94,11 +95,26 @@ export function StepInput({
   // Le code substituait auparavant « 12:00 » et « Brussels » en silence. La
   // personne recevait alors un resultat qui n etait pas le sien, sans que rien
   // ne l en avertisse.
+  // Le lieu doit etre SITUE, pas seulement saisi.
+  //
+  // Exiger une chaine non vide ne suffisait pas : « Liege » tape sans choisir
+  // de suggestion passait la validation avec des coordonnees absentes, et
+  // l ecran suivant repliait alors sur Bruxelles en silence. Le commentaire
+  // ci-dessus disait vrai pour la date et l heure, faux pour le lieu — la
+  // substitution vivait une couche plus bas.
+  //
+  // On accepte deux preuves : des coordonnees rendues par le geocodage, ou une
+  // ville que la table locale sait situer sans reseau. Sans l une des deux, on
+  // ne laisse pas avancer.
+  const lieuSitue =
+    formData.resolvedCoords !== undefined || villeConnue(formData.placeOfBirth);
+
   const isValid =
     formData.nickname.trim() !== "" &&
     formData.dob !== "" &&
     formData.timeOfBirth !== "" &&
-    formData.placeOfBirth.trim() !== "";
+    formData.placeOfBirth.trim() !== "" &&
+    lieuSitue;
 
   const handleChange = (key: keyof OnboardingFormData, value: string) => {
     if (key === "placeOfBirth") {
@@ -308,6 +324,10 @@ export function StepInput({
       >
         <button
           type="button"
+          // Le bouton etait seulement STYLE en desactive : il restait tapable
+          // et focalisable, et un tap ne produisait rien ni aucune explication.
+          disabled={!isValid}
+          aria-disabled={!isValid}
           onClick={() => isValid && onNext()}
           className={`flex w-full items-center justify-center rounded-full py-3.5 text-sm font-semibold transition-all ${
             isValid
