@@ -197,24 +197,67 @@ function getLaneX(lane: number, capsules: CapsuleData[], gap: number): number {
 
 const TIMELINE_PAD = 80;
 
+/**
+ * Le voile bas, sous la bande de controles flottants.
+ *
+ * Il empeche le texte de la liste de percuter les boutons en defilant
+ * dessous : les lignes s estompent en approchant au lieu d entrer dedans.
+ *
+ * ─── POURQUOI IL VIT DANS CHAQUE VUE, ET PAS DANS LE PANNEAU ───
+ *
+ * Il etait pose au niveau du PANNEAU, a z-10. Les boutons flottants, eux,
+ * vivent DANS les vues, a z-30. Un z-30 imbrique ne peut pas passer au-dessus
+ * d un z-10 parent : le z-index ne se compare qu entre freres d un meme
+ * contexte d empilement. Le voile passait donc par-dessus les boutons, et
+ * c est ce qu on voyait a l ecran — le bouton rond a moitie efface.
+ *
+ * Le mettre dans la vue met les trois choses dans le MEME contexte, ou l ordre
+ * devient evident et ne se discute plus :
+ *
+ *     contenu defilant  (auto)  <  voile (z-20)  <  boutons (z-30)
+ *
+ * Aucun arbitrage entre parents, aucun z-index a remonter le jour ou on ajoute
+ * un bouton. C est la seule raison pour laquelle il est duplique dans les deux
+ * vues plutot que factorise plus haut.
+ *
+ * Non interactif : il ne prend aucun geste a la liste.
+ */
+function VoileBas() {
+  return (
+    <div
+      className="pointer-events-none absolute left-0 right-0 z-20"
+      style={{
+        bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px))",
+        height: 96,
+        background:
+          "linear-gradient(to top, var(--bg-primary) 35%, color-mix(in srgb, var(--bg-primary) 65%, transparent) 70%, transparent)",
+      }}
+    />
+  );
+}
+
 // ─── Shared glass pill style (matches ViewToggle glass effect) ──────────────
 // Uses a semi-opaque dark base so small buttons stay readable over capsules
+// ─── La pastille flottante ──────────────────────────────────────────────────
+//
+// La MATIERE est celle du design d origine : verre teinte translucide, liseré
+// discret, aucun aplat. C est le parti pris du produit et il ne bouge pas.
+//
+// Seul le LIBELLE change : --text-brand au lieu de --accent-purple. Le fond de
+// la pastille est fait d accent-purple a 16 % ; peindre le texte avec la meme
+// couleur les fait converger par construction, et le libelle « MAINTENANT »
+// tombait a 3,33 en clair sur du 10 px. --text-brand est la meme teinte, plus
+// sombre : le texte se lit, la matiere est intacte.
+//
+// C est la correction qu il fallait faire du premier coup. J avais a la place
+// blanchi la pastille, pousse le liseré a 90 % de violet, ajoute une ombre puis
+// un voile degrade de 96 px — quatre couches empilees pour un probleme de
+// couleur de texte. Apple appelle cet empilement « stacked glass layers » et le
+// deconseille explicitement.
 const PILL_STYLE: React.CSSProperties = {
   background: "var(--glass-pill)",
-  // --text-brand, pas --accent-purple.
-  //
-  // Le fond de la pastille EST fait d accent-purple — glass-pill vaut cette
-  // couleur a 16 % sur un voile. Peindre le libelle avec la meme couleur les
-  // faisait converger : 3,33 en theme clair, 4,02 en sombre. Le bouton « Now »
-  // et les fleches de navigation etaient donc sous le seuil dans les DEUX
-  // themes, ce qu on ne voyait pas parce qu ils sont petits et qu on sait ou ils
-  // sont. --text-brand garde la teinte de marque et passe : 5,34 et 6,44.
   color: "var(--text-brand)",
   border: "1px solid var(--glass-border)",
-  // Une ombre portee, comme les boutons flottants d iOS. Sur un fond clair,
-  // c est elle qui dit « ceci flotte au-dessus du contenu » — la teinte seule
-  // n y suffit pas, et c est ce qui rendait ces boutons invisibles.
-  boxShadow: "0 2px 10px color-mix(in srgb, var(--brand-12) 18%, transparent)",
   backdropFilter: "blur(12px)",
   WebkitBackdropFilter: "blur(12px)",
 };
@@ -612,6 +655,7 @@ function OverviewView({
 
   return (
     <div className="relative flex h-full flex-col">
+      <VoileBas />
       {/* Scrollable timeline */}
       <div
         ref={scrollRef}
@@ -1009,6 +1053,7 @@ function ListView({
 
   return (
     <div className="relative h-full">
+      <VoileBas />
       {/* NOW button — absolute, centered bottom */}
       {isAwayFromNow && (
         <button
@@ -1510,34 +1555,6 @@ export function MomentumTimelineV2() {
            telephone, il fallait la deuxieme main. Elle descend juste au-dessus
            de la barre d onglets, dans la zone que le pouce atteint sans effort.
            Masquee pendant l accueil et le guide. ── */}
-      {/* Un voile degrade sous la bande de controles.
-
-          Trois boutons flottent au-dessus de la liste — « Maintenant », la
-          bascule, les fleches — et le texte leur passait derriere en s y
-          cognant : « Pause et révisi… » coupee en deux par la pastille,
-          « Tension électrique » barree par une fleche. C est le genre de detail
-          qui fait dire « pas fini » sans qu on sache le nommer.
-
-          Le rembourrage ajoute plus tot laisse le contenu se degager EN FIN de
-          liste ; il ne peut rien pour le milieu, ou les lignes continuent de
-          defiler dessous. Un voile qui va du fond transparent au fond opaque
-          resout les deux : le texte s estompe en approchant des boutons au lieu
-          de les percuter. C est ce que fait iOS partout ou une barre flotte
-          au-dessus d un contenu defilant.
-
-          Non interactif, donc il ne vole aucun geste a la liste. */}
-      {!showWelcome && !showGuide && (
-        <div
-          className="pointer-events-none absolute left-0 right-0 z-10"
-          style={{
-            bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px))",
-            height: 96,
-            background:
-              "linear-gradient(to top, var(--bg-primary) 35%, color-mix(in srgb, var(--bg-primary) 65%, transparent) 70%, transparent)",
-          }}
-        />
-      )}
-
       {!showWelcome && !showGuide && <div className="absolute left-0 right-0 z-20 flex items-center justify-center" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)", paddingInline: S.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"

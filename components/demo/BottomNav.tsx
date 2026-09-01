@@ -118,6 +118,9 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
         paddingTop: 6,
         background: "var(--glass-bg)",
         border: "none",
+        // Ce lisere fait partie du design d origine. Ce qui l avait rendu
+        // voyant n est pas lui : c est --glass-border pousse de 22 % a 90 %.
+        // Le jeton est revenu a sa valeur, le trait redevient un lisere.
         borderTop: "1px solid var(--glass-border)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
