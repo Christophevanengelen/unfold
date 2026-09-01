@@ -15,6 +15,8 @@ import type {
   StressLevel,
   CurrentGoalPreset,
 } from "@/types/user-profile";
+import { detectLocale, type Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 // ─── Props ───────────────────────────────────────────────
 interface PersonalizeFlowProps {
@@ -25,62 +27,62 @@ interface PersonalizeFlowProps {
 
 // ─── Chip Configs ────────────────────────────────────────
 
-const LIFE_PHASES: { value: LifePhase; label: string }[] = [
-  { value: "stable", label: "Stable" },
-  { value: "transition", label: "En transition" },
-  { value: "crisis", label: "En crise" },
-  { value: "reconstruction", label: "Reconstruction" },
-  { value: "expansion", label: "Expansion" },
+const LIFE_PHASES = (l: Locale): { value: LifePhase; label: string }[] => [
+  { value: "stable", label: perso("phase.stable", l) },
+  { value: "transition", label: perso("phase.transition", l) },
+  { value: "crisis", label: perso("phase.crisis", l) },
+  { value: "reconstruction", label: perso("phase.reconstruction", l) },
+  { value: "expansion", label: perso("phase.expansion", l) },
 ];
 
-const WORK_STATUSES: { value: WorkStatus; label: string }[] = [
-  { value: "employee", label: "Salarié" },
-  { value: "freelance", label: "Freelance" },
-  { value: "entrepreneur", label: "Entrepreneur" },
-  { value: "student", label: "Étudiant" },
-  { value: "job_seeking", label: "En recherche" },
-  { value: "career_transition", label: "En transition pro" },
+const WORK_STATUSES = (l: Locale): { value: WorkStatus; label: string }[] => [
+  { value: "employee", label: perso("travail.employee", l) },
+  { value: "freelance", label: perso("travail.freelance", l) },
+  { value: "entrepreneur", label: perso("travail.entrepreneur", l) },
+  { value: "student", label: perso("travail.student", l) },
+  { value: "job_seeking", label: perso("travail.job_seeking", l) },
+  { value: "career_transition", label: perso("travail.career_transition", l) },
 ];
 
-const RELATIONSHIP_STATUSES: { value: RelationshipStatus; label: string }[] = [
-  { value: "single", label: "Célibataire" },
-  { value: "in_relationship", label: "En couple" },
-  { value: "unclear", label: "C'est flou" },
-  { value: "separation", label: "Séparation" },
-  { value: "other", label: "Autre" },
+const RELATIONSHIP_STATUSES = (l: Locale): { value: RelationshipStatus; label: string }[] => [
+  { value: "single", label: perso("relation.single", l) },
+  { value: "in_relationship", label: perso("relation.in_relationship", l) },
+  { value: "unclear", label: perso("relation.unclear", l) },
+  { value: "separation", label: perso("relation.separation", l) },
+  { value: "other", label: perso("relation.other", l) },
 ];
 
-const PRIORITIES: { value: PriorityDomain; label: string; color: string }[] = [
-  { value: "love", label: "Amour", color: "#E87E9A" },
-  { value: "career", label: "Carrière", color: "#7C6BBF" },
-  { value: "money", label: "Argent", color: "#D4A843" },
-  { value: "family", label: "Famille", color: "#6BAF92" },
-  { value: "health_energy", label: "Santé & énergie", color: "#5BA3CF" },
-  { value: "creativity", label: "Créativité", color: "#CF7E5B" },
-  { value: "home", label: "Logement", color: "#8B9B6B" },
-  { value: "friends_network", label: "Amis & réseau", color: "#9B7ECF" },
-  { value: "meaning_spirituality", label: "Sens & spiritualité", color: "#B08DAF" },
+const PRIORITIES = (l: Locale): { value: PriorityDomain; label: string; color: string }[] => [
+  { value: "love", label: perso("priorite.love", l), color: "#E87E9A" },
+  { value: "career", label: perso("priorite.career", l), color: "#7C6BBF" },
+  { value: "money", label: perso("priorite.money", l), color: "#D4A843" },
+  { value: "family", label: perso("priorite.family", l), color: "#6BAF92" },
+  { value: "health_energy", label: perso("priorite.health_energy", l), color: "#5BA3CF" },
+  { value: "creativity", label: perso("priorite.creativity", l), color: "#CF7E5B" },
+  { value: "home", label: perso("priorite.home", l), color: "#8B9B6B" },
+  { value: "friends_network", label: perso("priorite.friends_network", l), color: "#9B7ECF" },
+  { value: "meaning_spirituality", label: perso("priorite.meaning_spirituality", l), color: "#B08DAF" },
 ];
 
-const GUIDANCE_STYLES: { value: GuidanceStyle; label: string; desc: string }[] = [
-  { value: "direct", label: "Direct", desc: "Net et sans détour" },
-  { value: "reassuring", label: "Rassurant", desc: "Doux et contenant" },
-  { value: "inspiring", label: "Inspirant", desc: "Mobilisateur et visionnaire" },
-  { value: "pragmatic", label: "Pragmatique", desc: "Concret et actionnable" },
+const GUIDANCE_STYLES = (l: Locale): { value: GuidanceStyle; label: string; desc: string }[] => [
+  { value: "direct", label: perso("style.direct", l), desc: perso("style.direct.desc", l) },
+  { value: "reassuring", label: perso("style.reassuring", l), desc: perso("style.reassuring.desc", l) },
+  { value: "inspiring", label: perso("style.inspiring", l), desc: perso("style.inspiring.desc", l) },
+  { value: "pragmatic", label: perso("style.pragmatic", l), desc: perso("style.pragmatic.desc", l) },
 ];
 
-const STRESS_LEVELS: { value: StressLevel; label: string }[] = [
-  { value: "low", label: "Calme" },
-  { value: "medium", label: "Modéré" },
-  { value: "high", label: "Élevé" },
+const STRESS_LEVELS = (l: Locale): { value: StressLevel; label: string }[] => [
+  { value: "low", label: perso("stress.low", l) },
+  { value: "medium", label: perso("stress.medium", l) },
+  { value: "high", label: perso("stress.high", l) },
 ];
 
-const GOAL_PRESETS: { value: CurrentGoalPreset; label: string }[] = [
-  { value: "stabilize", label: "Stabiliser" },
-  { value: "clarify", label: "Clarifier" },
-  { value: "advance", label: "Avancer" },
-  { value: "protect", label: "Protéger" },
-  { value: "change", label: "Changer" },
+const GOAL_PRESETS = (l: Locale): { value: CurrentGoalPreset; label: string }[] => [
+  { value: "stabilize", label: perso("objectif.stabilize", l) },
+  { value: "clarify", label: perso("objectif.clarify", l) },
+  { value: "advance", label: perso("objectif.advance", l) },
+  { value: "protect", label: perso("objectif.protect", l) },
+  { value: "change", label: perso("objectif.change", l) },
 ];
 
 // ─── Max priorities ──────────────────────────────────────
@@ -89,6 +91,7 @@ const MAX_PRIORITIES = 3;
 // ─── Component ───────────────────────────────────────────
 
 export function PersonalizeFlow({ open, onClose, onComplete }: PersonalizeFlowProps) {
+  const l = detectLocale();
   const [screen, setScreen] = useState<1 | 2>(1);
 
   // Screen 1 state
@@ -241,7 +244,7 @@ export function PersonalizeFlow({ open, onClose, onComplete }: PersonalizeFlowPr
                 opacity: screen1Valid ? 1 : 0.5,
               }}
             >
-              Suivant
+              {perso("bouton.suivant", l)}
             </button>
           ) : (
             <button
@@ -258,7 +261,7 @@ export function PersonalizeFlow({ open, onClose, onComplete }: PersonalizeFlowPr
                 opacity: canSubmit ? 1 : 0.5,
               }}
             >
-              C&apos;est parti
+              {perso("bouton.partir", l)}
             </button>
           )}
         </div>
@@ -290,6 +293,7 @@ function ScreenReality({
   priorities,
   togglePriority,
 }: ScreenRealityProps) {
+  const l = detectLocale();
   return (
     <motion.div variants={staggerFast} initial="hidden" animate="visible">
       {/* Title */}
@@ -298,17 +302,17 @@ function ScreenReality({
           className="font-display text-xl font-bold"
           style={{ color: "var(--text-heading)" }}
         >
-          Personnalise tes interprétations
+          {perso("ecran1.titre", l)}
         </h2>
         <p className="mt-1 text-sm" style={{ color: "var(--text-body-subtle)" }}>
-          Pour que les insights correspondent à ta vie.
+          {perso("ecran1.sous", l)}
         </p>
       </motion.div>
 
       {/* Life phase */}
-      <FieldGroup label="Phase de vie" required>
+      <FieldGroup label={perso("groupe.phase", l)} required>
         <div className="flex flex-wrap gap-2">
-          {LIFE_PHASES.map((item) => (
+          {LIFE_PHASES(l).map((item) => (
             <Chip
               key={item.value}
               label={item.label}
@@ -320,9 +324,9 @@ function ScreenReality({
       </FieldGroup>
 
       {/* Work status */}
-      <FieldGroup label="Situation pro">
+      <FieldGroup label={perso("groupe.travail", l)}>
         <div className="flex flex-wrap gap-2">
-          {WORK_STATUSES.map((item) => (
+          {WORK_STATUSES(l).map((item) => (
             <Chip
               key={item.value}
               label={item.label}
@@ -334,9 +338,9 @@ function ScreenReality({
       </FieldGroup>
 
       {/* Relationship */}
-      <FieldGroup label="Situation relationnelle">
+      <FieldGroup label={perso("groupe.relation", l)}>
         <div className="flex flex-wrap gap-2">
-          {RELATIONSHIP_STATUSES.map((item) => (
+          {RELATIONSHIP_STATUSES(l).map((item) => (
             <Chip
               key={item.value}
               label={item.label}
@@ -348,9 +352,9 @@ function ScreenReality({
       </FieldGroup>
 
       {/* Priorities */}
-      <FieldGroup label={`Tes priorités (max ${MAX_PRIORITIES})`} required>
+      <FieldGroup label={`${perso("groupe.priorites", l)} (max ${MAX_PRIORITIES})`} required>
         <div className="flex flex-wrap gap-2">
-          {PRIORITIES.map((item) => (
+          {PRIORITIES(l).map((item) => (
             <ColorChip
               key={item.value}
               label={item.label}
@@ -389,6 +393,7 @@ function ScreenStyle({
   goalFreeText,
   setGoalFreeText,
 }: ScreenStyleProps) {
+  const l = detectLocale();
   return (
     <motion.div variants={staggerFast} initial="hidden" animate="visible">
       {/* Title */}
@@ -397,17 +402,17 @@ function ScreenStyle({
           className="font-display text-xl font-bold"
           style={{ color: "var(--text-heading)" }}
         >
-          Comment tu veux être guidé
+          {perso("ecran2.titre", l)}
         </h2>
         <p className="mt-1 text-sm" style={{ color: "var(--text-body-subtle)" }}>
-          On adapte le ton à ta façon de recevoir les messages.
+          {perso("ecran2.sous", l)}
         </p>
       </motion.div>
 
       {/* Guidance style — illustrated cards */}
-      <FieldGroup label="Style" required>
+      <FieldGroup label={perso("groupe.style", l)} required>
         <div className="grid grid-cols-2 gap-2.5">
-          {GUIDANCE_STYLES.map((item) => (
+          {GUIDANCE_STYLES(l).map((item) => (
             <StyleCard
               key={item.value}
               label={item.label}
@@ -421,9 +426,9 @@ function ScreenStyle({
       </FieldGroup>
 
       {/* Stress level */}
-      <FieldGroup label="Stress actuel">
+      <FieldGroup label={perso("groupe.stress", l)}>
         <div className="flex gap-2">
-          {STRESS_LEVELS.map((item) => (
+          {STRESS_LEVELS(l).map((item) => (
             <Chip
               key={item.value}
               label={item.label}
@@ -436,9 +441,9 @@ function ScreenStyle({
       </FieldGroup>
 
       {/* Current goal */}
-      <FieldGroup label="Objectif actuel">
+      <FieldGroup label={perso("groupe.objectif", l)}>
         <div className="flex flex-wrap gap-2">
-          {GOAL_PRESETS.map((item) => (
+          {GOAL_PRESETS(l).map((item) => (
             <Chip
               key={item.value}
               label={item.label}
@@ -457,7 +462,7 @@ function ScreenStyle({
             setGoalFreeText(e.target.value);
             if (e.target.value.trim()) setGoalPreset(undefined);
           }}
-          placeholder="Ou en quelques mots..."
+          placeholder={perso("champ.libre", l)}
           maxLength={100}
           className="mt-2.5 w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-colors placeholder:opacity-40"
           style={{

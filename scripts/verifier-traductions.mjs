@@ -28,7 +28,30 @@ import { execFileSync } from "node:child_process";
  * des dizaines de cas existants se fait desactiver, donc ne protege de rien.
  * Ce nombre ne peut que descendre.
  */
-const PLAFOND = 21;
+// ─────────────────────────────────────────────────────────────────────────────
+// Les cles de lib/perso-i18n.ts appelees depuis le code existent-elles ?
+//
+// perso() renvoie la cle brute quand elle est inconnue : une faute de frappe
+// afficherait « phase.stbale » dans une liste de choix, sans rien casser. Le
+// controle vit ici plutot qu a l execution, pour que l erreur arrive pendant la
+// compilation et non sous les yeux de quelqu un.
+// ─────────────────────────────────────────────────────────────────────────────
+function verifierClesPerso() {
+  const module = readFileSync("lib/perso-i18n.ts", "utf8");
+  const connues = new Set(
+    [...module.matchAll(/^ {2}"([a-z0-9._]+)":/gm)].map((m) => m[1]),
+  );
+  const fautives = [];
+  for (const fichier of fichiers) {
+    const src = readFileSync(fichier, "utf8");
+    for (const m of src.matchAll(/\bperso\(\s*"([^"]+)"/g)) {
+      if (!connues.has(m[1])) fautives.push(`${fichier} : perso("${m[1]}")`);
+    }
+  }
+  return { connues: connues.size, fautives };
+}
+
+const PLAFOND = 12;
 
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [
@@ -84,6 +107,18 @@ for (const f of fichiers) {
       if (ressembleAUnTexte(m[2])) fuites.push({ f, ligne: i + 1, prop: m[1], texte: m[2] });
     }
   });
+}
+
+// Une cle inconnue passee a perso() s afficherait telle quelle a l ecran.
+const { connues, fautives } = verifierClesPerso();
+if (fautives.length > 0) {
+  console.log(`\n  Cle(s) inexistante(s) dans lib/perso-i18n.ts (${connues} connues) :\n`);
+  for (const x of fautives) console.log(`    ${x}`);
+  console.log(`
+  perso() renvoie la cle telle quelle quand elle est inconnue : ces appels
+  afficheraient un identifiant technique dans l interface, sans rien casser.
+`);
+  process.exit(1);
 }
 
 if (fuites.length <= PLAFOND) {
