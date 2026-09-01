@@ -61,8 +61,8 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const tryCode = () => {
-    const etat = verifierCode(code);
+  const tryCode = async () => {
+    const etat = await verifierCode(code);
     if (etat === "ok") {
       try { localStorage.setItem(CLE_ACCES, "true"); } catch {}
       setHasAccess(true);

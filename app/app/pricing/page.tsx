@@ -510,8 +510,8 @@ export default function DemoPricingPage() {
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState(false);
 
-  const tryCoupon = () => {
-    const etat = verifierCode(couponCode);
+  const tryCoupon = async () => {
+    const etat = await verifierCode(couponCode);
     if (etat === "ok") {
       try { localStorage.setItem(CLE_ACCES, "true"); } catch {}
       setCouponSuccess(true);
