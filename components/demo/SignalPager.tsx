@@ -174,8 +174,11 @@ export function SignalPager() {
         <motion.div
           className="mx-5 mb-2 flex items-center gap-3 rounded-xl px-3.5 py-2.5"
           style={{
-            background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--accent-purple) 10%, transparent)",
+            // Cette carte tenait sur un fond a 6 % — presque rien — et sur un
+            // lisere a 10 %. Le trait retire, c est la surface qui doit porter :
+            // --surface-strong, le cran existant juste au-dessus (12 %). Meme
+            // teinte, une densite de plus, aucune couleur nouvelle.
+            background: "var(--surface-strong)",
             zIndex: 25,
           }}
           initial={{ opacity: 0, y: 8 }}
@@ -231,8 +234,10 @@ export function SignalPager() {
               className="absolute inset-x-0 bottom-0 z-50 overflow-hidden"
               style={{
                 borderRadius: "1.5rem 1.5rem 0 0",
+                // Meme raison que la feuille de periode : --bg-secondary est
+                // deja un cran au-dessus du fond de page, le filet du haut ne
+                // faisait que doubler ce decalage.
                 background: "var(--bg-secondary)",
-                borderTop: "1px solid var(--border-muted)",
                 maxHeight: "65%",
               }}
             >
@@ -264,8 +269,11 @@ export function SignalPager() {
                         key={planet}
                         className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
                         style={{
+                          // 01/09/2026 : plus de lisere. La pastille a deja un
+                          // fond a elle, d une teinte differente de la surface
+                          // qui la porte — c est ce fond qui la decoupe. Le
+                          // trait redisait la meme separation en plus dur.
                           background: `color-mix(in srgb, ${pc.color} 12%, transparent)`,
-                          border: `1px solid color-mix(in srgb, ${pc.color} 25%, transparent)`,
                         }}
                       >
                         <div className="h-2 w-2 rounded-full" style={{ background: pc.color, boxShadow: `0 0 6px ${pc.color}` }} />

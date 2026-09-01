@@ -42,6 +42,7 @@ import { trackDomainFeedback } from "@/lib/observed-profile";
 import { useTheme } from "next-themes";
 import { texteLisible, type ThemeLisible } from "@/lib/contraste";
 import { perso } from "@/lib/perso-i18n";
+import { jourMoisAnnee, jourMoisAnneeCourt, moisCourt } from "@/lib/dates-i18n";
 
 // ─── Types (imported from timeline) ──────────────────────
 interface CapsuleData {
@@ -100,7 +101,9 @@ interface CapsuleData {
   color?: string;
 }
 
-const MONTH_NAMES = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+// Les mois abreges vivaient ici, en francais, servis aux dix langues. Ils sont
+// desormais dans lib/dates-i18n.ts, qui laisse Intl decider du nom ET de
+// l ordre — « 22 Oct 2026 » ne se dit pas dans cet ordre en japonais.
 
 // ─── Context Banner Icons ────────────────────────────────
 function BannerIcon({ icon, size = 14 }: { icon: string; size?: number }) {
@@ -239,8 +242,8 @@ export function CapsuleDetailSheet({
   }, [loadAiText]);
 
   const phase = capsule.phases[0];
-  const tc = getTimeContext(capsule.isCurrent, capsule.isFuture);
-  const tierLabel = getTierLabel(capsule.tier);
+  const tc = getTimeContext(capsule.isCurrent, capsule.isFuture, locale);
+  const tierLabel = getTierLabel(capsule.tier, locale);
   // `?? "work"` transformait toute capsule sans domaine en maison 10 : la fiche
   // affichait la pastille « Carriere » et son recit — « Ta carriere est sous
   // les projecteurs… » — pour un signal dont le domaine etait inconnu. Le
@@ -257,7 +260,7 @@ export function CapsuleDetailSheet({
   const themeLisible: ThemeLisible = resolvedTheme === "light" ? "clair" : "sombre";
   const houseTexte = texteLisible(houseColor, themeLisible);
   const progress = getProgressPercent(capsule.startDate, capsule.endDate);
-  const duration = formatDuration(capsule.startDate, capsule.endDate);
+  const duration = formatDuration(capsule.startDate, capsule.endDate, locale);
   // Prefer API lifetime data (from boudin-detail via OpenAI call),
   // then phase lifetime data (from toctoc-app-short).
   // IMPORTANT: never fall back to tierOccurrence/tierTotal (those are NOT lifetime counts).
@@ -268,15 +271,15 @@ export function CapsuleDetailSheet({
   const displayLifetimeNum = apiLifetimeNum ?? phaseLifetimeNum;
   const displayLifetimeTotal = apiLifetimeTotal ?? phaseLifetimeTotal;
   const rarityText = (displayLifetimeNum && displayLifetimeTotal)
-    ? getRarityText(displayLifetimeNum, displayLifetimeTotal, "toctoctoc")
+    ? getRarityText(displayLifetimeNum, displayLifetimeTotal, "toctoctoc", locale)
     : null;
-  const domainNarrative = getDomainNarrative(domain, tc.context);
-  const transitNarrative = getTransitNarrative(phase);
-  const planetNarrative = transitNarrative || getPlanetNarrative(capsule.planets);
-  const topicsNarrative = getTopicsNarrative(phase?.apiTopics, tc.context);
-  const cycleNarrative = getCycleNarrative(phase);
-  const lifetimeNarrative = getLifetimeNarrative(phase);
-  const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment, phase?.apiTopics);
+  const domainNarrative = getDomainNarrative(domain, tc.context, locale);
+  const transitNarrative = getTransitNarrative(phase, locale);
+  const planetNarrative = transitNarrative || getPlanetNarrative(capsule.planets, locale);
+  const topicsNarrative = getTopicsNarrative(phase?.apiTopics, tc.context, locale);
+  const cycleNarrative = getCycleNarrative(phase, locale);
+  const lifetimeNarrative = getLifetimeNarrative(phase, locale);
+  const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment, phase?.apiTopics, locale);
 
   // Texte IA d abord, puis les replis calcules sur la donnee du moteur. Chacun
   // de ces replis peut valoir null : « toujours visible » n est plus une regle,
@@ -326,11 +329,16 @@ export function CapsuleDetailSheet({
     ?? cycleFromExactDates;
 
   // Date formatting — exact day/month/year, always show start → end
-  const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
-  const endDateLabel = `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} ${capsule.endDate.getFullYear()}`;
-  const endLabel = capsule.isCurrent ? "maintenant" : endDateLabel;
+  const startLabel = jourMoisAnnee(capsule.startDate, locale);
+  const endDateLabel = jourMoisAnnee(capsule.endDate, locale);
+  // « maintenant » et « Prévu » etaient ecrits en dur, en francais, dans une
+  // phrase dont les DATES viennent d Intl. Un lecteur japonais lisait donc
+  // « Prévu 2026年10月22日 ». La clef existe en dix langues et sert deja au
+  // meme cas dans MomentumTimelineV2.
+  const maintenant = perso("timeline.maintenant", locale).toLowerCase();
+  const endLabel = capsule.isCurrent ? maintenant : endDateLabel;
   const dateLabel = tc.context === "future"
-    ? `Prévu ${startLabel} — ${endDateLabel}`
+    ? `${perso("fiche.prevu", locale)} ${startLabel} — ${endDateLabel}`
     : tc.context === "current"
       ? `${startLabel} — ${endDateLabel}`
       : `${startLabel} — ${endDateLabel}`;
@@ -344,8 +352,10 @@ export function CapsuleDetailSheet({
       className="absolute inset-x-0 bottom-0 z-[60] flex flex-col"
       style={{
         borderRadius: "1.5rem 1.5rem 0 0",
+        // La feuille est deja un cran au-dessus du fond de page :
+        // --bg-secondary contre --bg-primary. C est ce decalage de surface qui
+        // dit ou elle commence, pas un filet de 1 px sur son bord haut.
         background: "var(--bg-secondary)",
-        borderTop: "1px solid var(--border-muted)",
         maxHeight: "85%",
       }}
     >
@@ -367,8 +377,9 @@ export function CapsuleDetailSheet({
         <div
           className="flex items-center gap-2 rounded-full px-3 py-1.5 mb-4"
           style={{
+            // Le bandeau a son propre fond, teinte de la couleur de maison :
+            // il se detache de la feuille sans avoir besoin d etre cerne.
             background: `color-mix(in srgb, ${houseColor} 10%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${houseColor} 20%, transparent)`,
             width: "fit-content",
           }}
         >
@@ -472,8 +483,11 @@ export function CapsuleDetailSheet({
                 return hm ? (
                   <div key={i} className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
                     style={{
+                      // 01/09/2026 : plus de lisere. La pastille a deja un
+                      // fond a elle, d une teinte differente de la surface
+                      // qui la porte — c est ce fond qui la decoupe. Le
+                      // trait redisait la meme separation en plus dur.
                       background: `color-mix(in srgb, ${topic.color} 10%, transparent)`,
-                      border: `1px solid color-mix(in srgb, ${topic.color} 20%, transparent)`,
                     }}>
                     <div className="h-2 w-2 rounded-full" style={{ background: topic.color }} />
                     <span className="text-[11px] font-medium" style={{ color: topic.color }}>{hm.label}</span>
@@ -489,8 +503,11 @@ export function CapsuleDetailSheet({
           <div className="mb-5">
             <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 w-fit mb-2"
               style={{
+                // 01/09/2026 : plus de lisere. La pastille a deja un
+                // fond a elle, d une teinte differente de la surface
+                // qui la porte — c est ce fond qui la decoupe. Le
+                // trait redisait la meme separation en plus dur.
                 background: `color-mix(in srgb, ${houseColor} 10%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${houseColor} 20%, transparent)`,
               }}>
               <div className="h-2 w-2 rounded-full" style={{ background: houseColor }} />
               <span className="text-[11px] font-medium" style={{ color: houseColor }}>{houseMeta.label}</span>
@@ -515,8 +532,11 @@ export function CapsuleDetailSheet({
                   transition={{ type: "spring", stiffness: 300 }}
                   className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
                   style={{
+                    // 01/09/2026 : plus de lisere. La pastille a deja un
+                    // fond a elle, d une teinte differente de la surface
+                    // qui la porte — c est ce fond qui la decoupe. Le
+                    // trait redisait la meme separation en plus dur.
                     background: `color-mix(in srgb, ${pc.color} 12%, transparent)`,
-                    border: `1px solid color-mix(in srgb, ${pc.color} 25%, transparent)`,
                   }}
                 >
                   <div
@@ -576,7 +596,7 @@ export function CapsuleDetailSheet({
             {/* Show translated API label — the real transit name */}
             {phase.apiLabel && (
               <p className="mt-1 text-[11px] font-medium" style={{ color: houseColor, opacity: 0.8 }}>
-                {translateApiLabel(phase.apiLabel)}
+                {translateApiLabel(phase.apiLabel, locale)}
               </p>
             )}
             {aiText?.titre && (
@@ -681,7 +701,7 @@ export function CapsuleDetailSheet({
             <div className="mt-2 space-y-1.5">
               {cyclePasses.allHits.map((hit, i) => {
                 const d = new Date(hit.date);
-                const label = `${MONTH_NAMES[d.getMonth()]} ${d.getDate().toString().padStart(2, "0")} '${String(d.getFullYear()).slice(2)}`;
+                const label = jourMoisAnneeCourt(d, locale);
                 // Le passage en cours n est marque que si le moteur a donne un
                 // numero de passage. Sans lui, aucun passage n est « maintenant ».
                 const isCurrent =
@@ -804,7 +824,7 @@ export function CapsuleDetailSheet({
           >
             <div className="flex items-center gap-1.5 mb-1.5">
               <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-                Dans ta vie
+                {perso("fiche.dans_ta_vie", locale)}
               </span>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
@@ -829,14 +849,14 @@ export function CapsuleDetailSheet({
         {lifetimePeriods && lifetimePeriods.length >= 1 && (displayLifetimeTotal ?? 99) <= 10 && (
           <div className="mb-4">
             <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
-              {phase?.apiLabel ? translateApiLabel(phase.apiLabel) : "Ce signal"} ({lifetimePeriods.length})
+              {phase?.apiLabel ? translateApiLabel(phase.apiLabel, locale) : perso("fiche.ce_signal", locale)} ({lifetimePeriods.length})
             </span>
             <div className="mt-2 space-y-1.5">
               {lifetimePeriods.map((p, i) => {
                 const start = new Date(p.date);
                 const end = p.endDate ? new Date(p.endDate) : start;
-                const startLabel = `${MONTH_NAMES[start.getMonth()]} ${start.getDate().toString().padStart(2, "0")} '${String(start.getFullYear()).slice(2)}`;
-                const endLabel = `${MONTH_NAMES[end.getMonth()]} ${end.getDate().toString().padStart(2, "0")} '${String(end.getFullYear()).slice(2)}`;
+                const startLabel = jourMoisAnneeCourt(start, locale);
+                const endLabel = jourMoisAnneeCourt(end, locale);
                 const isCurrent = p.isCurrent;
                 const canNavigate = !isCurrent && !!onNavigateToCapsule;
                 return (
@@ -932,7 +952,7 @@ export function CapsuleDetailSheet({
               {startLabel}
             </span>
             <span className="text-[9px] tabular-nums" style={{ color: tc.context === "current" ? houseColor : "var(--text-body-subtle)" }}>
-              {capsule.isCurrent ? "maintenant" : endLabel}
+              {endLabel}
             </span>
           </div>
         </div>
@@ -1064,7 +1084,7 @@ export function CapsuleDetailSheet({
                     </span>
                     {capsule.phases.map((p, i) => (
                       <p key={i} className="text-[11px] mt-1" style={{ color: "var(--text-body-subtle)" }}>
-                        {translateApiLabel(p.apiLabel) || p.title}
+                        {translateApiLabel(p.apiLabel, locale) || p.title}
                       </p>
                     ))}
                   </div>

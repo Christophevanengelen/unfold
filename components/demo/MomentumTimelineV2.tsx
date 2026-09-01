@@ -35,6 +35,8 @@ import { useMomentum } from "@/lib/momentum-store";
 import { t, detectLocale } from "@/lib/i18n-demo";
 import { CapsuleDetailSheet } from "./CapsuleDetailSheet";
 import { DailyBriefing } from "./DailyBriefing";
+import { PastilleMessages, FeuilleMessages } from "./CentreMessages";
+import { marquerToutLu } from "@/lib/messages";
 import { usePremiumStatus } from "@/lib/premium-gate";
 import { formatEuropeanDisplayDate } from "@/lib/european-date";
 import { usePremiumTeaser } from "./PremiumTeaserContext";
@@ -103,6 +105,8 @@ function mapHouseColor(apiColor?: string): string | undefined {
 import { S, LAYOUT } from "@/lib/layout-constants";
 import { perso } from "@/lib/perso-i18n";
 import { intentionEnAttente } from "@/lib/retour-apres-achat";
+import { moisAnnee, moisCourt, jourMoisAnneeCourt } from "@/lib/dates-i18n";
+import { useLocale } from "@/lib/use-locale";
 
 // ─── Constants ──────────────────────────────────────────────
 let LANE_COUNT = 7;
@@ -240,11 +244,13 @@ function VoileBas() {
 // Uses a semi-opaque dark base so small buttons stay readable over capsules
 // ─── La pastille flottante ──────────────────────────────────────────────────
 //
-// La MATIERE est celle du design d origine : verre teinte translucide, liseré
-// discret, aucun aplat. C est le parti pris du produit et il ne bouge pas.
+// La MATIERE est celle du design d origine : verre teinte translucide, aucun
+// aplat. C est le parti pris du produit et il ne bouge pas. Le lisere discret
+// qui l accompagnait, lui, est parti le 01/09/2026 — voir plus bas.
 //
 // Seul le LIBELLE change : --text-brand au lieu de --accent-purple. Le fond de
-// la pastille est fait d accent-purple a 16 % ; peindre le texte avec la meme
+// la pastille est fait d accent-purple a 16 % (24 % depuis le passage a
+// --glass-pill-strong) ; peindre le texte avec la meme
 // couleur les fait converger par construction, et le libelle « MAINTENANT »
 // tombait a 3,33 en clair sur du 10 px. --text-brand est la meme teinte, plus
 // sombre : le texte se lit, la matiere est intacte.
@@ -254,10 +260,17 @@ function VoileBas() {
 // un voile degrade de 96 px — quatre couches empilees pour un probleme de
 // couleur de texte. Apple appelle cet empilement « stacked glass layers » et le
 // deconseille explicitement.
+//
+// 01/09/2026 — le lisere part. « Les strokes sont nos ennemis, un bon design
+// minimaliste ne les utilise pas, il gere bien les couleurs des bg et des fonds
+// de cellules. » Ces pastilles FLOTTENT au-dessus de la timeline : ce qui les
+// detache est leur matiere, et --glass-pill-strong est le meme verre teinte
+// d un cran plus dense et plus opaque que --glass-pill. On monte d un cran de
+// fond au lieu de garder un trait — pas d ombre ajoutee, ce serait la couche
+// de trop.
 const PILL_STYLE: React.CSSProperties = {
-  background: "var(--glass-pill)",
+  background: "var(--glass-pill-strong)",
   color: "var(--text-brand)",
-  border: "1px solid var(--glass-border)",
   backdropFilter: "blur(12px)",
   WebkitBackdropFilter: "blur(12px)",
 };
@@ -305,7 +318,7 @@ function parseDate(s: string): Date {
   return new Date(s + "T00:00:00");
 }
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// Les mois abreges vivent dans lib/dates-i18n.ts. Ceux-ci etaient en anglais.
 
 /** Number of dots for a capsule (topics from API, or fallback to planets) */
 function getDotCount(c: CapsuleData): number {
@@ -413,6 +426,7 @@ function OverviewView({
   onTapCapsule: (capsule: CapsuleData) => void;
   onAgeChange: (age: number) => void;
 }) {
+  const locale = useLocale();
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowY = dateToY(new Date());
   const [isAwayFromNow, setIsAwayFromNow] = useState(false);
@@ -574,7 +588,7 @@ function OverviewView({
     while (cursor <= timelineEndDate) {
       const y = dateToY(cursor);
       labels.push({
-        month: MONTH_NAMES[cursor.getMonth()],
+        month: moisCourt(cursor, locale),
         year: cursor.getFullYear(),
         y,
         isJan: cursor.getMonth() === 0,
@@ -584,7 +598,9 @@ function OverviewView({
     }
     return labels;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [capsules]); // recalculate when data (and thus initDates) changes
+  // locale en dependance : les mois de l axe sont formates ici, ils doivent se
+  // redessiner quand on change de langue depuis le profil.
+  }, [capsules, locale]);
 
   // Snap points: capsule tops (first planet position) + NOW
   const PLANET_OFFSET = 0;
@@ -766,8 +782,13 @@ function OverviewView({
                 width: w,
                 height: capsuleH,
                 borderRadius: w / 2,
-                background: `color-mix(in srgb, ${hc ?? "var(--accent-purple)"} ${capsule.isCurrent ? "12" : "8"}%, transparent)`,
-                border: `1.5px solid color-mix(in srgb, ${hc ?? "var(--accent-purple)"} ${capsule.isCurrent ? "30" : "18"}%, transparent)`,
+                // La capsule etait un remplissage tres pale (8-12 %) tenu par
+                // un lisere de 1,5 px a 18-30 % : c est le TRAIT qui la faisait
+                // exister, pas sa surface. Le trait retire, la surface reprend
+                // le poids qu il portait — 20 % pour la periode en cours,
+                // 13 % pour les autres. La teinte ne change pas, c est toujours
+                // la couleur de maison ; seule sa densite monte.
+                background: `color-mix(in srgb, ${hc ?? "var(--accent-purple)"} ${capsule.isCurrent ? "20" : "13"}%, transparent)`,
                 backdropFilter: "blur(8px)",
                 WebkitBackdropFilter: "blur(8px)",
                 boxShadow: capsule.isCurrent
@@ -830,9 +851,9 @@ function OverviewView({
                 fontWeight: 400,
               }}
             >
-              You weren&apos;t even crawling yet.
+              {perso("accueil.pas_encore", detectLocale())}
               <br />
-              But the planets were already busy.
+              {perso("accueil.deja_occupe", detectLocale())}
             </p>
 
             {/* Divider line */}
@@ -916,6 +937,7 @@ function ListView({
   onTapCapsule: (capsule: CapsuleData) => void;
   onAgeChange?: (age: number) => void;
 }) {
+  const locale = useLocale();
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentRef = useRef<HTMLButtonElement>(null);
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -927,20 +949,35 @@ function ListView({
   }, [capsules]);
 
   // Flatten sorted capsules into a list of { type: "header" | "capsule" } items for virtualization
-  type FlatItem = { type: "header"; monthKey: string } | { type: "capsule"; capsule: CapsuleData };
+  /**
+   * L en-tete de mois porte SA DONNEE et son libelle, separement.
+   *
+   * Il ne portait qu une chaine, « Oct 2026 », qui servait aux trois usages a
+   * la fois : afficher, dedoublonner, et retrouver l annee par
+   * `monthKey.split(" ").pop()`. Le format etait donc porteur de sens, et le
+   * traduire l aurait casse en silence — « 2026年10月 » n a pas d espace et ne
+   * finit pas par l annee.
+   */
+  type FlatItem =
+    | { type: "header"; cle: string; annee: number; libelle: string }
+    | { type: "capsule"; capsule: CapsuleData };
   const flatItems = useMemo<FlatItem[]>(() => {
     const items: FlatItem[] = [];
     let lastMonthKey = "";
     for (const capsule of sorted) {
-      const monthKey = `${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
-      if (monthKey !== lastMonthKey) {
-        items.push({ type: "header", monthKey });
-        lastMonthKey = monthKey;
+      const d = capsule.startDate;
+      // La clef est stable et non traduite : elle ne sert qu a dedoublonner.
+      const cle = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (cle !== lastMonthKey) {
+        items.push({ type: "header", cle, annee: d.getFullYear(), libelle: moisAnnee(d, locale) });
+        lastMonthKey = cle;
       }
       items.push({ type: "capsule", capsule });
     }
     return items;
-  }, [sorted]);
+  // locale en dependance pour la meme raison : le libelle des en-tetes de mois
+  // est calcule ici.
+  }, [sorted, locale]);
 
   // Find the index of the current capsule for initial scroll
   const currentIndex = useMemo(() => {
@@ -1032,8 +1069,8 @@ function ListView({
     for (let i = centerIdx; i >= 0; i--) {
       const fi = flatItems[i];
       if (fi?.type === "header") {
-        const y = parseInt(fi.monthKey.split(" ").pop() || "");
-        if (!isNaN(y)) { currentYear = y; break; }
+        currentYear = fi.annee;
+        break;
       }
       if (fi?.type === "capsule") {
         currentYear = fi.capsule.startDate.getFullYear();
@@ -1044,7 +1081,7 @@ function ListView({
     const targetYear = direction === "future" ? currentYear + 1 : currentYear - 1;
     // Find header for target year
     const targetIdx = flatItems.findIndex(
-      (fi) => fi.type === "header" && fi.monthKey.endsWith(String(targetYear))
+      (fi) => fi.type === "header" && fi.annee === targetYear
     );
     if (targetIdx >= 0) {
       virtualizer.scrollToIndex(targetIdx, { align: "start", behavior: "smooth" });
@@ -1124,7 +1161,7 @@ function ListView({
                   <div className="mt-4 mb-2 ml-4">
                     <span className="text-[10px] font-semibold uppercase tracking-wider"
                       style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
-                      {item.monthKey}
+                      {item.libelle}
                     </span>
                   </div>
                 </div>
@@ -1136,12 +1173,12 @@ function ListView({
             if (!phase) return null;
 
             const tierLabel = capsule.tier === "toctoctoc" ? "PEAK" : capsule.tier === "toctoc" ? "CLEAR" : "SUBTLE";
-            const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} '${String(capsule.startDate.getFullYear()).slice(2)}`;
+            const startLabel = jourMoisAnneeCourt(capsule.startDate, locale);
             const endLabel = capsule.isCurrent
               // « now » etait en anglais dans une interface francaise, juste
               // sous le titre du signal en cours. Vu a l ecran, pas dans le code.
               ? perso("timeline.maintenant", detectLocale()).toLowerCase()
-              : `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} '${String(capsule.endDate.getFullYear()).slice(2)}`;
+              : jourMoisAnneeCourt(capsule.endDate, locale);
             const maxIntensity = Math.max(...capsule.phases.map(p => p.intensity));
             const dotColors = capsule.topicColors?.length ? capsule.topicColors : capsule.planets.map(p => planetConfig[p].color);
 
@@ -1204,7 +1241,9 @@ function ListView({
                           // signal EN COURS etait un rectangle vide. Il n a
                           // jamais ete revu depuis le theme sombre d origine.
                           color: "var(--text-brand)",
-                          border: "1px solid color-mix(in srgb, var(--accent-purple) 40%, transparent)",
+                          // Le fond a 30 % suffit a decouper le badge dans la
+                          // ligne, qui n a aucune surface a elle. Le lisere a
+                          // 40 % ne faisait que doubler ce contour de couleur.
                         }}
                       >
                         {perso("timeline.maintenant", detectLocale())}
@@ -1293,11 +1332,9 @@ export function MomentumTimelineV2() {
   const [showGuide, setShowGuide] = useState(false);
 
 
-  const [briefingDismissed, setBriefingDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const stored = localStorage.getItem("unfold_briefing_dismissed");
-    return stored === new Date().toISOString().slice(0, 10);
-  });
+  // L etat « briefing rejete » a disparu avec les cartes qu il pilotait.
+  // Un message ne se ferme plus, il se lit — voir lib/messages.ts.
+  const [messagesOuverts, setMessagesOuverts] = useState(false);
 
   // Initialize date helpers from birth data
   useMemo(() => initDates(birthDateStr), [birthDateStr]);
@@ -1506,7 +1543,7 @@ export function MomentumTimelineV2() {
           style={{ borderTopColor: "var(--accent-purple)", borderRightColor: "var(--accent-purple)" }}
         />
         <p className="text-xs text-text-body-subtle">
-          {isLoadingLifetime ? "Construction de votre timeline..." : "Chargement de votre timeline..."}
+          {perso(isLoadingLifetime ? "timeline.construction" : "timeline.chargement", detectLocale())}
         </p>
       </div>
     );
@@ -1603,40 +1640,49 @@ export function MomentumTimelineV2() {
         </div>
       </div>}
 
-      {/* Daily Briefing — pinned at top, only after welcome + guide are done */}
-      {/* LES « deux blocs parasites ». Ce bloc etait monte CONDITIONNELLEMENT
-          sur viewMode, donc passer de la liste a la timeline le remontait a
-          neuf. DailyBriefing rend exactement deux cartes, chacune repartant a
-          l etat « idle », et l etat « idle » rend un BriefingSkeleton : un
-          rectangle gris pulse. Deux cartes, deux rectangles, au milieu de
-          l ecran, par-dessus la timeline.
+      {/* ── Les messages ──────────────────────────────────────────────────
+          Ce bloc montait DEUX cartes en `absolute inset-0 z-30 flex
+          items-center justify-center` : centrees par-dessus la timeline
+          entiere, chacune avec sa croix, les deux en meme temps.
 
-          Ils restaient visibles le temps que useBriefingData reponde — une
-          lecture IndexedDB, donc asynchrone meme quand la donnee est en cache.
-          D ou la demi-seconde decrite.
+            « foutre 25 fenetres a cliquer pour les closer, c est pas de l UX,
+              c est de la punition pour user. »  — Christophe, 01/09/2026
 
-          La correction du 31/08 visait les conteneurs de vue et ne pouvait pas
-          l attraper : le probleme qu elle reglait etait reel, mais ce n etait
-          pas celui-la.
+          Desormais : `DailyBriefing` ne rend rien et se contente d aller
+          chercher les briefings pour les deposer dans lib/messages.ts. Une
+          pastille dans la bande du haut ouvre la boite quand on le decide.
+          Rien ne recouvre le produit, il n y a plus rien a fermer.
 
-          On ne le demonte donc plus. Il reste monte et devient invisible, ce
-          qui preserve l etat des deux cartes : au retour, elles ont deja leurs
-          donnees et n affichent aucun squelette. Cela vaut aussi a la fermeture
-          du guide et de l accueil, qui provoquaient le meme remontage. */}
-      {(() => {
-        const visible = viewMode === "overview" && !showWelcome && !showGuide;
-        return (
-          <div
-            className="absolute inset-0 z-30 flex items-center justify-center px-5 pointer-events-none"
-            style={{ visibility: visible ? "visible" : "hidden" }}
-            aria-hidden={!visible}
-          >
-            <div className="pointer-events-auto w-full">
-              <DailyBriefing onDismiss={() => setBriefingDismissed(true)} />
-            </div>
-          </div>
-        );
-      })()}
+          La collecte est montee sans condition d ecran : elle n affiche rien,
+          donc elle n a pas a attendre l accueil ni le guide, et les messages
+          sont prets quand on ouvre la boite. */}
+      <DailyBriefing />
+
+      {/* La pastille et la feuille sont montees SEPAREMENT, et ce n est pas un
+          detail de style.
+
+          BottomSheet se positionne en `absolute inset-x-0 bottom-0`, donc
+          relativement a son plus proche ancetre positionne. Les deux etaient
+          d abord montes ensemble dans la boite de 44x44 collee en haut a
+          droite : la feuille s ancrait DANS ce carre, large de 44 px, et
+          sortait decoupee en haut de l ecran.
+
+          La pastille vit donc dans son coin, la feuille au niveau du panneau. */}
+      {!showWelcome && !showGuide && (
+        <div
+          className="absolute z-40"
+          style={{ top: "calc(var(--safe-top, 0px) + 6px)", insetInlineEnd: 12 }}
+        >
+          <PastilleMessages
+            onOuvrir={() => {
+              setMessagesOuverts(true);
+              marquerToutLu();
+            }}
+          />
+        </div>
+      )}
+
+      <FeuilleMessages ouvert={messagesOuverts} onFermer={() => setMessagesOuverts(false)} />
 
       {/* Les deux vues restent montees, mais elles ne se croisent PAS.
           
@@ -1723,12 +1769,13 @@ export function MomentumTimelineV2() {
               minWidth: 32,
               height: 28,
               padding: "0 10px",
+              // Deux crans de verre au lieu d un verre plus un lisere :
+              // aujourd hui prend le verre dense, les autres ages le verre
+              // ordinaire. La difference entre les deux etats reste lisible,
+              // et elle est portee par la matiere.
               background: isToday
                 ? "var(--glass-pill-strong)"
                 : "var(--glass-pill)",
-              border: `1px solid ${isToday
-                ? "color-mix(in srgb, var(--accent-purple) 40%, transparent)"
-                : "color-mix(in srgb, var(--accent-purple) 30%, transparent)"}`,
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
               transition: "all 0.5s ease-out",

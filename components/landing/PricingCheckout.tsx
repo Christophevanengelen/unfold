@@ -76,7 +76,7 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
                 className="rounded-full px-5 py-2 text-[13px] font-semibold transition-all"
                 style={{
                   background: billing === plan ? "var(--accent-purple)" : "transparent",
-                  color: billing === plan ? "#fff" : "var(--text-body-subtle)",
+                  color: billing === plan ? "var(--site-texte-sur-aplat)" : "var(--text-body-subtle)",
                 }}
               >
                 {plan === "monthly" ? "Mensuel" : (
@@ -84,7 +84,7 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
                     Annuel
                     <span
                       className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                      style={{ background: "#22c55e20", color: "#22c55e" }}
+                      style={{ background: "var(--site-fond-succes)", color: "var(--site-texte-succes)" }}
                     >
                       -25%
                     </span>
@@ -98,7 +98,7 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
 
       {/* Savings callout */}
       {billing === "annual" && !ios && (
-        <p className="mb-6 text-center text-[12px] font-medium" style={{ color: "#22c55e" }}>
+        <p className="mb-6 text-center text-[12px] font-medium" style={{ color: "var(--site-texte-succes)" }}>
           Tu économises {savings} € par an
         </p>
       )}
@@ -109,7 +109,14 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
         <div
           className="rounded-2xl border p-6"
           style={{
-            background: "var(--bg-card)",
+            // Le jeton s appelle --card-bg, pas --bg-card. La faute de
+            // frappe ne casse rien bruyamment : un var() inconnu et sans
+            // repli rend la propriete invalide, donc la carte n avait
+            // AUCUN fond, dans les deux themes, en silence.
+            // Christophe, 01/09 : « un bon design minimaliste gere bien
+            // les couleurs des bg et des fonds de cellules ». Celle-ci
+            // n en avait pas.
+            background: "var(--card-bg)",
             borderColor: "color-mix(in srgb, var(--accent-purple) 12%, transparent)",
           }}
         >
@@ -152,7 +159,7 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
           {/* Badge */}
           <span
             className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[11px] font-bold"
-            style={{ background: "#fff", color: "var(--accent-purple)" }}
+            style={{ background: "var(--site-surface-inverse)", color: "var(--accent-purple)" }}
           >
             Le plus populaire
           </span>
@@ -201,7 +208,7 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
               onClick={() => handleCheckout(billing)}
               disabled={loading !== null}
               className="mt-6 w-full rounded-xl py-3 text-[14px] font-bold transition-opacity disabled:opacity-60"
-              style={{ background: "#fff", color: "var(--accent-purple)" }}
+              style={{ background: "var(--site-surface-inverse)", color: "var(--accent-purple)" }}
             >
               {loading === billing
                 ? "Redirection..."
@@ -212,7 +219,7 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
           {ios && (
             <button
               className="mt-6 w-full rounded-xl py-3 text-[14px] font-bold"
-              style={{ background: "#fff", color: "var(--accent-purple)" }}
+              style={{ background: "var(--site-surface-inverse)", color: "var(--accent-purple)" }}
             >
               Continuer
             </button>
@@ -221,7 +228,7 @@ export function PricingCheckout({ showAnnualToggle = true }: PricingCheckoutProp
       </div>
 
       {error && (
-        <p className="mt-4 text-center text-[12px] font-medium" style={{ color: "#f17e7a" }}>
+        <p className="mt-4 text-center text-[12px] font-medium" style={{ color: "var(--site-texte-erreur-achat)" }}>
           {error}
         </p>
       )}

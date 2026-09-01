@@ -15,6 +15,8 @@ import { PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitive
 import { fetchConnectionBrief, type ActivePeriod } from "@/lib/connection-brief-api";
 import { getConnectionDelineation, type ConnectionDelineation } from "@/lib/connection-delineation";
 import type { MatchingWindow } from "@/lib/matching-narratives";
+import { perso } from "@/lib/perso-i18n";
+import { useLocale } from "@/lib/use-locale";
 
 // ─── Test birth data ─────────────────────────────────────
 
@@ -51,6 +53,7 @@ function WindowCard({
   period: ActivePeriod;
   i: number;
 }) {
+  const locale = useLocale();
   const [del, setDel] = useState<ConnectionDelineation | null>(null);
   const [delLoading, setDelLoading] = useState(true);
 
@@ -198,7 +201,7 @@ function WindowCard({
             border: `1px solid color-mix(in srgb, ${w.tierColor} 15%, transparent)`,
           }}>
           <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: w.tierColor }}>
-            À faire ensemble
+            {perso("compat.ensemble", locale)}
           </p>
           {delLoading ? (
             <div className="space-y-1">

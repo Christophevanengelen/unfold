@@ -15,7 +15,7 @@ import { getBirthDataSync, type BirthData } from "@/lib/birth-data";
 import { ConnectionList } from "@/components/demo/compat/ConnectionList";
 import { apiFetch } from "@/lib/api-client";
 import { connectionHref } from "@/lib/connection-href";
-import { detectLocale } from "@/lib/i18n-demo";
+import { detectLocale, t } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 
 const LONG_PRESS_HINT_KEY = "unfold_longpress_hint_seen_v1";
@@ -54,12 +54,12 @@ export default function ConnectionsPage() {
 
     // Prevent adding yourself
     if (trimmed === myCode) {
-      setCodeError("C'est votre propre code.");
+      setCodeError(t("connexions.code_soi", locale));
       return;
     }
     // Prevent duplicate
     if (connections.some((c) => c.inviteCode === trimmed)) {
-      setCodeError("Déjà connecté avec ce code.");
+      setCodeError(t("connexions.code_deja", locale));
       return;
     }
 
@@ -73,11 +73,11 @@ export default function ConnectionsPage() {
       });
 
       if (res.status === 404) {
-        setCodeError("Code introuvable. Demande à la personne de rouvrir Favorable une fois pour synchroniser son code.");
+        setCodeError(t("connexions.code_introuvable", locale));
         return;
       }
       if (!res.ok) {
-        setCodeError("Erreur de connexion. Réessaie dans un instant.");
+        setCodeError(t("connexions.code_erreur", locale));
         return;
       }
 
@@ -99,7 +99,7 @@ export default function ConnectionsPage() {
       setShowCodeInput(false);
       router.push(connectionHref(newConn.id));
     } catch {
-      setCodeError("Erreur réseau. Réessaie dans un instant.");
+      setCodeError(t("connexions.code_reseau", locale));
     } finally {
       setCodeSubmitting(false);
     }
@@ -113,10 +113,10 @@ export default function ConnectionsPage() {
     <div>
       {/* Header */}
       <div className="mb-1 text-center">
-        <h1 className="font-display text-2xl font-bold text-text-heading">Connexions</h1>
+        <h1 className="font-display text-2xl font-bold text-text-heading">{t("connexions.titre", locale)}</h1>
         <p className="text-xs text-text-body-subtle">
           {connections.length > 0
-            ? `${connections.length} connecté${connections.length !== 1 ? "s" : ""}`
+            ? t("connexions.compte", locale).replace("{n}", String(connections.length))
             : perso("compat.invitez", locale)}
         </p>
       </div>
@@ -135,7 +135,7 @@ export default function ConnectionsPage() {
         >
           <span>{perso("compat.astuce", locale)}</span>
           <span className="text-[10px] font-semibold" style={{ color: "var(--accent-purple)" }}>
-            Compris
+            {t("connexions.compris", locale)}
           </span>
         </motion.button>
       )}
@@ -164,7 +164,7 @@ export default function ConnectionsPage() {
             <ShareNodes size={16} style={{ color: "var(--accent-purple)" }} />
           </div>
           <div className="flex-1">
-            <p className="text-[13px] font-semibold text-text-heading">Partager votre code</p>
+            <p className="text-[13px] font-semibold text-text-heading">{perso("compat.partager_code", locale)}</p>
             <p className="text-[11px] text-text-body-subtle">
               {perso("compat.invitez_comparer", locale)}
             </p>
@@ -196,7 +196,7 @@ export default function ConnectionsPage() {
             animate={{ opacity: 1, y: 0 }}
           >
             <p className="text-[10px] font-semibold uppercase tracking-widest text-text-body-subtle mb-2">
-              Entrez leur code
+              {perso("compat.entrez_code", locale)}
             </p>
             <div className="flex gap-2">
               <input
@@ -238,7 +238,7 @@ export default function ConnectionsPage() {
               </p>
             ) : (
               <p className="mt-2 text-[10px] text-text-body-subtle">
-                Ou demande le lien d&apos;invitation complet pour une connexion sans code.
+                {t("connexions.code_ou_lien", locale)}
               </p>
             )}
           </motion.div>

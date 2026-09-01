@@ -14,7 +14,7 @@ interface Props {
 }
 
 // App design system — accent purple (matches globals.css --violet-9 / --accent-purple)
-const ACCENT = "#7C6BBF";
+const ACCENT = "var(--site-accent)";
 
 // Static wave preview — SVG path approximating a ZR spirit wave
 const WAVE_PATH =
@@ -90,6 +90,11 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
     if (!time)           { setFormError("Please enter your birth time."); return; }
     if (!selectedCity)   { setFormError("Please select a city from the list."); return; }
 
+    // La page d attente est ecrite dans un DOCUMENT SEPARE (window.open), qui
+    // ne charge ni app/globals.css ni le theme. Ses couleurs ne peuvent donc
+    // PAS etre des jetons : var(--x) n y resoudrait rien et tout tomberait en
+    // noir sur transparent. C est la seule dispense de ce fichier, et elle est
+    // structurelle, pas de confort.
     // Open blank tab immediately (avoids popup blocker)
     const win = typeof window !== "undefined" ? window.open("", "_blank") : null;
     if (win) {
@@ -140,9 +145,9 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
   };
 
   const inputStyle: React.CSSProperties = {
-    background: `color-mix(in srgb, ${ACCENT} 7%, var(--bg-primary, #1B1535))`,
+    background: `color-mix(in srgb, ${ACCENT} 7%, var(--bg-primary))`,
     border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
-    color: "var(--text-heading, #E6E2F2)",
+    color: "var(--text-heading)",
     borderRadius: 10,
     outline: "none",
     width: "100%",
@@ -171,7 +176,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
     <div
       className="relative rounded-3xl border text-left"
       style={{
-        background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary, #1B1535))`,
+        background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary))`,
         borderColor: `color-mix(in srgb, ${ACCENT} 20%, transparent)`,
       }}
     >
@@ -179,7 +184,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
       <div className="absolute right-4 top-4 md:right-6 md:top-6">
         <span
           className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
-          style={{ background: ACCENT, color: "#F5F1FA" }}
+          style={{ background: ACCENT, color: "var(--site-texte-sur-accent)" }}
         >
           Premium
         </span>
@@ -192,11 +197,11 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
         </p>
         <h2
           className="mt-3 font-display text-[24px] font-bold leading-tight md:text-[30px]"
-          style={{ color: "var(--text-heading, #E6E2F2)", letterSpacing: -0.5 }}
+          style={{ color: "var(--text-heading)", letterSpacing: -0.5 }}
         >
           {title}
         </h2>
-        <p className="mt-3 max-w-lg text-[14px] leading-relaxed" style={{ color: "var(--text-body-subtle, #BFB6D6)" }}>
+        <p className="mt-3 max-w-lg text-[14px] leading-relaxed" style={{ color: "var(--text-body-subtle)" }}>
           {sub}
         </p>
 
@@ -207,7 +212,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                 type="button"
                 onClick={() => setShowForm(true)}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[13px] font-semibold transition-transform hover:scale-105 md:w-auto md:justify-start md:py-3"
-                style={{ background: ACCENT, color: "#F5F1FA" }}
+                style={{ background: ACCENT, color: "var(--site-texte-sur-accent)" }}
               >
                 {cta}
                 <span aria-hidden>→</span>
@@ -215,7 +220,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
               <Link
                 href="/app/pricing"
                 className="py-2 text-center text-[13px] font-medium transition-opacity hover:opacity-70 md:py-0"
-                style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
+                style={{ color: "var(--text-body-subtle)" }}
               >
                 Subscribe →
               </Link>
@@ -236,7 +241,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
               <div
                 className="mt-6 rounded-2xl p-4 md:p-6"
                 style={{
-                  background: `color-mix(in srgb, ${ACCENT} 5%, var(--bg-primary, #1B1535))`,
+                  background: `color-mix(in srgb, ${ACCENT} 5%, var(--bg-primary))`,
                   border: `1px solid color-mix(in srgb, ${ACCENT} 16%, transparent)`,
                 }}
               >
@@ -312,7 +317,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                           marginTop: 6, listStyle: "none", padding: 0,
                           border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
                           borderRadius: 10,
-                          background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary, #F5F1FA))`,
+                          background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary))`,
                         }}
                       >
                         {suggestions.map((c) => (
@@ -323,7 +328,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                               className="px-[14px] py-3 text-[14px] md:py-[10px] md:text-[13px]"
                               style={{
                                 width: "100%", textAlign: "left",
-                                color: "var(--text-heading, #150F2A)",
+                                color: "var(--text-heading)",
                                 background: "none", border: "none", cursor: "pointer", fontFamily: "inherit",
                               }}
                               onMouseEnter={(e) => (e.currentTarget.style.background = `color-mix(in srgb, ${ACCENT} 12%, transparent)`)}
@@ -344,7 +349,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                 </div>
 
                 {formError && (
-                  <p className="mt-3 text-[12px]" style={{ color: "#e57373" }}>{formError}</p>
+                  <p className="mt-3 text-[12px]" style={{ color: "var(--site-texte-erreur)" }}>{formError}</p>
                 )}
 
                 <div className="mt-5 flex flex-col items-stretch gap-3 md:flex-row md:items-center">
@@ -353,7 +358,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                     onClick={handleSubmit}
                     disabled={isLoading}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-center text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 md:w-auto md:justify-start md:py-3"
-                    style={{ background: ACCENT, color: "#F5F1FA" }}
+                    style={{ background: ACCENT, color: "var(--site-texte-sur-accent)" }}
                   >
                     {isLoading ? (
                       <>
@@ -372,7 +377,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
                       type="button"
                       onClick={() => { setShowForm(false); setFormError(""); }}
                       className="py-2 text-[12px] transition-opacity hover:opacity-60 md:py-0"
-                      style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
+                      style={{ color: "var(--text-body-subtle)" }}
                     >
                       Cancel
                     </button>
@@ -394,7 +399,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
         <div
           className="h-full px-3 pt-4 md:px-5 md:pt-[18px]"
           style={{
-            background: "linear-gradient(180deg, #090d1e, #070a19)",
+            background: "linear-gradient(180deg, var(--site-fond-graphe-haut), var(--site-fond-graphe-bas))",
           }}
         >
           {/* Mini header */}
@@ -404,7 +409,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
             </span>
             {/* Secondary label has no room next to the title on a phone — the
                 scroll affordance for the wave strip takes its place instead. */}
-            <span className="hidden md:inline" style={{ fontSize: 9, color: "#374151" }}>L1 bands · Cu markers</span>
+            <span className="hidden md:inline" style={{ fontSize: 9, color: "var(--site-graphe-axe)" }}>L1 bands · Cu markers</span>
             <span className="shrink-0 md:hidden" style={{ fontSize: 9, color: ACCENT, opacity: 0.7 }}>swipe →</span>
           </div>
 
@@ -420,6 +425,13 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
             className="w-[560px] max-w-none md:w-full"
             style={{ height: "120px", display: "block" }}
           >
+            {/* Les attributs de presentation SVG — fill=, stroke=, stopColor= —
+                n acceptent pas var() : ce sont des attributs XML, pas des
+                declarations CSS. Les valeurs ci-dessous sont donc figees, et
+                c est la deuxieme dispense reconnue par le contrat des jetons.
+                Elles reprennent --element-feu / -eau / -terre / -air et
+                --site-accent : si l une bouge dans globals.css, il faut la
+                reporter ici a la main. */}
             {/* L1 background bands */}
             <rect x="0"   y="0" width="180" height="90" fill="rgba(249,115,22,0.07)" />
             <rect x="180" y="0" width="220" height="90" fill="rgba(96,165,250,0.07)" />
@@ -459,11 +471,11 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
           {/* Mini legend */}
           <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
             {[
-              { color: "#ffffff", label: "Cu culmination" },
-              { color: "#ffffff", label: "LB loosing ✿" },
-              { color: "#7C6BBF", label: "current" },
+              { color: "var(--site-marqueur)", label: "Cu culmination" },
+              { color: "var(--site-marqueur)", label: "LB loosing ✿" },
+              { color: "var(--site-accent)", label: "current" },
             ].map(({ color, label }) => (
-              <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 9, color: "#4b5563" }}>
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 9, color: "var(--site-graphe-legende)" }}>
                 <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }} />
                 {label}
               </div>
@@ -475,7 +487,7 @@ export function ZRSpiritTeaser({ eyebrow, title, sub, cta }: Props) {
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-16"
           style={{
-            background: `linear-gradient(to bottom, transparent, color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary, #1B1535)))`,
+            background: `linear-gradient(to bottom, transparent, color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary)))`,
           }}
         />
       </div>

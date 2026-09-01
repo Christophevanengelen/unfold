@@ -165,8 +165,8 @@ function MiniDailyBriefing() {
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className="mx-4 mb-3 rounded-xl px-3.5 py-3"
       style={{
-        background: "rgba(124, 107, 191, 0.06)",
-        border: "1px solid rgba(124, 107, 191, 0.12)",
+        background: "var(--site-tuile-violet)",
+        border: "1px solid var(--site-tuile-violet-bord)",
         backdropFilter: "blur(12px)",
       }}
     >
@@ -262,7 +262,7 @@ function CapsuleRow({
 
         {/* Title */}
         <span className="text-[11px] font-semibold leading-tight block"
-          style={{ color: isCurrent ? "#fff" : "var(--text-heading)" }}>
+          style={{ color: isCurrent ? "var(--site-texte-sur-aplat)" : "var(--text-heading)" }}>
           {capsule.title}
         </span>
 
@@ -320,7 +320,7 @@ function PreviewDetailSheet({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
         className="absolute inset-0 z-40"
-        style={{ background: "rgba(0,0,0,0.45)" }}
+        style={{ background: "var(--site-voile-modale)" }}
         onClick={onClose}
       />
 
@@ -340,7 +340,7 @@ function PreviewDetailSheet({
       >
         {/* Drag handle */}
         <div className="flex justify-center py-2.5">
-          <div className="h-1 w-10 rounded-full" style={{ background: "var(--border-base, rgba(149,133,204,0.2))" }} />
+          <div className="h-1 w-10 rounded-full" style={{ background: "var(--border-base)" }} />
         </div>
 
         <div className="overflow-y-auto px-5 pb-6" style={{ maxHeight: "calc(78vh - 20px)" }}>
@@ -500,7 +500,7 @@ function PreviewPremiumOverlay() {
       className="absolute inset-x-0 bottom-0 z-40 flex flex-col items-center justify-center gap-3 px-6 text-center"
       style={{
         top: "35%",
-        background: "linear-gradient(160deg, rgba(27,21,53,0.8) 0%, rgba(27,21,53,0.6) 50%, rgba(124,107,191,0.15) 100%)",
+        background: "var(--site-voile-premium)",
         backdropFilter: "blur(6px)",
         borderRadius: "1.25rem 1.25rem 0 0",
       }}
@@ -530,7 +530,7 @@ function PreviewPremiumOverlay() {
         className="rounded-full px-5 py-2 text-[10px] font-semibold"
         style={{
           background: "var(--accent-purple)",
-          color: "#fff",
+          color: "var(--site-texte-sur-aplat)",
           boxShadow: "0 0 20px color-mix(in srgb, var(--accent-purple) 40%, transparent), 0 2px 8px rgba(0,0,0,0.3)",
         }}
       >

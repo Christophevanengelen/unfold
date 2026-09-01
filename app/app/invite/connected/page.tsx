@@ -13,7 +13,8 @@ import {
 import { relationshipConfig, relationshipOrder } from "@/components/demo/compat/relationshipConfig";
 import { connectionHref } from "@/lib/connection-href";
 import { perso } from "@/lib/perso-i18n";
-import { detectLocale } from "@/lib/i18n-demo";
+import { detectLocale, t } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 
 const CONFETTI_COLORS = [
   "#B07CC2", "#D89EA0", "#6BA89A", "#9585CC", "#50C4D6", "#C4A86B",
@@ -34,7 +35,7 @@ const PARTICLES = Array.from({ length: 16 }, (_, i) => {
 function ConnectedContent() {
   const locale = detectLocale();
   const searchParams = useSearchParams();
-  const partnerName = searchParams.get("name") ?? "quelqu'un";
+  const partnerName = searchParams.get("name") ?? t("connexions.quelquun", locale);
   const [selectedRelation, setSelectedRelation] = useState<RelationshipType | null>(null);
   const [connectionId, setConnectionId] = useState<string | null>(null);
 
@@ -106,7 +107,7 @@ function ConnectedContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        Connecté avec {partnerName}
+        {t("connexions.connecte_avec", locale).replace("{name}", partnerName)}
       </motion.h1>
 
       <motion.p
@@ -177,7 +178,7 @@ function ConnectedContent() {
         transition={{ delay: 1.2 }}
       >
         <Link href="/app/compatibility" className="text-xs text-text-body-subtle">
-          Retour aux connexions
+          {t("connexions.retour_liste", locale)}
         </Link>
       </motion.div>
     </div>
@@ -185,8 +186,9 @@ function ConnectedContent() {
 }
 
 export default function ConnectedPage() {
+  const locale = useLocale();
   return (
-    <Suspense fallback={<div className="flex h-full items-center justify-center"><p className="text-sm text-text-body-subtle">Chargement...</p></div>}>
+    <Suspense fallback={<div className="flex h-full items-center justify-center"><p className="text-sm text-text-body-subtle">{perso("compat.chargement", locale)}</p></div>}>
       <ConnectedContent />
     </Suspense>
   );

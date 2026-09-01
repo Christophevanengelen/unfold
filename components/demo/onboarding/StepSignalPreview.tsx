@@ -17,28 +17,34 @@ interface StepSignalPreviewProps {
  * The strip scrolls upward from birth to now. A fixed NOW line sits
  * at the center. Each boudin highlights as it passes the line, then
  * fades back. The last one (current) stays lit.
- * A year counter on the left counts up from birth to present.
+ *
+ * Frise DESSINEE, et rien d autre : cet ecran arrive avant qu on ait demande
+ * la date de naissance, donc il n a aucune donnee sur la personne. Il porte la
+ * mention « Exemple ». Ne pas y remettre d annee : les treize capsules
+ * portaient chacune la sienne, de 1985 a 2036, et un compteur affichait une
+ * annee de naissance inventee. Elles ne servaient plus a rien et n attendaient
+ * qu un rebranchement pour redevenir la vie de quelqu un d autre.
  */
 
 // y=0 = NOW. Positive y = PAST (below NOW). Negative y = FUTURE (above NOW).
 // Matches the timeline: past goes down, future goes up.
 const BOUDINS = [
   // Future (above NOW)
-  { y: -200, w: 24, h: 36,  color: "#C4A86B", opacity: 0.2,  dots: 2, year: 2036 },
-  { y: -150, w: 16, h: 20,  color: "#50C4D6", opacity: 0.25, dots: 1, year: 2032 },
-  { y: -100, w: 26, h: 40,  color: "#6BA89A", opacity: 0.35, dots: 3, year: 2029 },
+  { y: -200, w: 24, h: 36,  color: "#C4A86B", opacity: 0.2,  dots: 2 },
+  { y: -150, w: 16, h: 20,  color: "#50C4D6", opacity: 0.25, dots: 1 },
+  { y: -100, w: 26, h: 40,  color: "#6BA89A", opacity: 0.35, dots: 3 },
   // NOW
-  { y: -35,  w: 38, h: 64,  color: "#B07CC2", opacity: 1,    dots: 4, year: 2026, isCurrent: true },
+  { y: -35,  w: 38, h: 64,  color: "#B07CC2", opacity: 1,    dots: 4, isCurrent: true },
   // Past (below NOW) — each boudin spaced so none overlap (min 16px gap)
-  { y: 90,   w: 28, h: 44,  color: "#6BA89A", opacity: 0.7,  dots: 3, year: 2020 },  // bottom: 134
-  { y: 150,  w: 24, h: 36,  color: "#D89EA0", opacity: 0.6,  dots: 2, year: 2016 },  // bottom: 186
-  { y: 202,  w: 30, h: 50,  color: "#9585CC", opacity: 0.6,  dots: 3, year: 2011 },  // bottom: 252
-  { y: 268,  w: 20, h: 30,  color: "#6BA89A", opacity: 0.5,  dots: 2, year: 2007 },  // bottom: 298
-  { y: 314,  w: 26, h: 44,  color: "#B07CC2", opacity: 0.5,  dots: 2, year: 2003 },  // bottom: 358
-  { y: 374,  w: 22, h: 36,  color: "#C4A86B", opacity: 0.5,  dots: 2, year: 1999 },  // bottom: 410
-  { y: 426,  w: 16, h: 22,  color: "#9585CC", opacity: 0.4,  dots: 1, year: 1995 },  // bottom: 448
-  { y: 464,  w: 18, h: 28,  color: "#6BA89A", opacity: 0.4,  dots: 1, year: 1990 },  // bottom: 492
-  { y: 508,  w: 14, h: 20,  color: "#8B7FC2", opacity: 0.4,  dots: 1, year: 1985 },  // bottom: 528
+  { y: 90,   w: 28, h: 44,  color: "#6BA89A", opacity: 0.7,  dots: 3 },  // bottom: 134
+  { y: 150,  w: 24, h: 36,  color: "#D89EA0", opacity: 0.6,  dots: 2 },  // bottom: 186
+  { y: 202,  w: 30, h: 50,  color: "#9585CC", opacity: 0.6,  dots: 3 },  // bottom: 252
+  { y: 268,  w: 20, h: 30,  color: "#6BA89A", opacity: 0.5,  dots: 2 },  // bottom: 298
+  { y: 314,  w: 26, h: 44,  color: "#B07CC2", opacity: 0.5,  dots: 2 },  // bottom: 358
+  { y: 374,  w: 22, h: 36,  color: "#C4A86B", opacity: 0.5,  dots: 2 },  // bottom: 410
+  { y: 426,  w: 16, h: 22,  color: "#9585CC", opacity: 0.4,  dots: 1 },  // bottom: 448
+  { y: 464,  w: 18, h: 28,  color: "#6BA89A", opacity: 0.4,  dots: 1 },  // bottom: 492
+  { y: 508,  w: 14, h: 20,  color: "#8B7FC2", opacity: 0.4,  dots: 1 },  // bottom: 528
 ];
 
 const SCROLL_DISTANCE = 580;
@@ -74,31 +80,8 @@ const PHASE_CTA_REVEAL = PHASE_BOUDIN_SPOTLIGHT + 1.5;    // 6.7s
 export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
   const [locale, setLocale] = useState<Locale>("en");
   useEffect(() => { setLocale(detectLocale()); }, []);
-  // Year counter
-  const [displayYear, setDisplayYear] = useState(1985);
   // Staged highlight phases
   const [phase, setPhase] = useState(0);
-
-  useEffect(() => {
-    const startYear = 1985;
-    const endYear = 2026;
-    const duration = SCROLL_DURATION * 1000;
-    const startTime = Date.now() + 300; // slight delay
-
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      // Apply easing (approximate)
-      const eased = progress < 0.5
-        ? 2 * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-      const year = Math.round(startYear + (endYear - startYear) * eased);
-      setDisplayYear(year);
-      if (progress >= 1) clearInterval(interval);
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Phase timers — sequential spotlight
   useEffect(() => {
@@ -237,9 +220,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                     background: s.isCurrent
                       ? `linear-gradient(135deg, ${s.color}, color-mix(in srgb, ${s.color} 60%, transparent))`
                       : `linear-gradient(135deg, color-mix(in srgb, ${s.color} 50%, transparent), color-mix(in srgb, ${s.color} 20%, transparent))`,
-                    border: s.isCurrent
-                      ? `1.5px solid ${s.color}`
-                      : `1px solid color-mix(in srgb, ${s.color} 30%, transparent)`,
+                    // Les barres sont des aplats degrades pleins — de 100 % a
+                    // 20 % de leur couleur. Elles n ont jamais eu besoin d etre
+                    // cernees pour se voir.
                   }}
                   animate={{
                     boxShadow: isLast
@@ -308,8 +291,9 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                   // pale sur un mauve pale devenait illisible en clair. Les
                   // trois derivent maintenant du theme.
                   color: "var(--text-heading)",
+                  // Fond opaque a 20 % de violet sur le fond de page : la
+                  // pastille est deja decoupee. Le lisere a 45 % la durcissait.
                   background: "color-mix(in srgb, var(--accent-purple) 20%, var(--bg-primary))",
-                  border: "1px solid color-mix(in srgb, var(--accent-purple) 45%, transparent)",
                   backdropFilter: "blur(8px)",
                 }}>
                 {/* « Exemple », et non « Ton signal est actif ».

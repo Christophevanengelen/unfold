@@ -106,6 +106,12 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
       </ConnectionListSection>
 
       <ConnectionActionSheet
+        // Une cle par connexion : la feuille se remonte quand on en ouvre une
+        // autre, donc son etat interne — vue courante, nom en cours de saisie,
+        // appui en cours — repart de zero au lieu d etre reinitialise par un
+        // effet. C est ce qui permet de retirer la remise a zero qui se
+        // declenchait a chaque rafraichissement SWR et effacait la saisie.
+        key={sheetConn?.id ?? "aucune"}
         open={sheetConn !== null}
         onClose={() => setSheetConn(null)}
         connection={sheetConn}

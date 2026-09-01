@@ -234,7 +234,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             >
               <span className="flex items-center gap-2.5">
                 <Eye size={16} className="text-accent-purple" />
-                Full timeline chart
+                {perso("profil.graphique", locale)}
               </span>
               {/* « Sausage » etait le nom interne du graphique. Un mot d atelier
                   n a rien a faire sous les yeux de la personne. */}

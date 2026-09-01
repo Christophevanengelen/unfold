@@ -179,8 +179,12 @@ function WindowCard({
     <motion.div
       className="rounded-2xl overflow-hidden"
       style={{
-        background: "var(--surface-subtle)",
-        border: `1px solid color-mix(in srgb, ${w.tierColor} ${isActive ? "25" : "12"}%, transparent)`,
+        // La carte tenait sur --surface-subtle (4 % de violet translucide) et
+        // sur un lisere a la couleur du palier. Le trait retire, c est le fond
+        // qui porte les deux roles : --fond-cellule le pose franchement sur la
+        // page, et la teinte du palier — 10 % si actif, 4 % sinon — dit l etat
+        // la ou le lisere le disait. Meme couleur, autre support.
+        background: `color-mix(in srgb, ${w.tierColor} ${isActive ? "10" : "4"}%, var(--fond-cellule))`,
       }}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -321,8 +325,9 @@ function WindowCard({
         <div
           className="mt-2 rounded-xl px-3.5 py-2.5"
           style={{
+            // Encart pose DANS la carte : son propre fond a 10 % suffit a le
+            // detacher de la surface qui le contient.
             background: `color-mix(in srgb, ${w.tierColor} 10%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${w.tierColor} 15%, transparent)`,
           }}
         >
           <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: w.tierColor }}>

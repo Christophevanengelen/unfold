@@ -28,7 +28,7 @@ export function PricingToggle({
       <div className="mt-10 flex justify-center">
         <div
           className="inline-flex items-center gap-1 rounded-full p-1"
-          style={{ background: "color-mix(in srgb, white 6%, transparent)" }}
+          style={{ background: "color-mix(in srgb, var(--site-marqueur) 6%, transparent)" }}
         >
           <button
             onClick={() => setYearly(false)}
@@ -71,8 +71,8 @@ export function PricingToggle({
             className="landing-glass relative overflow-hidden p-8"
             style={{
               borderWidth: 2,
-              borderColor: "#9585CC",
-              boxShadow: "0 0 50px color-mix(in srgb, #9585CC 20%, transparent), inset 0 1px 0 0 color-mix(in srgb, white 5%, transparent)",
+              borderColor: "var(--site-accent-violet)",
+              boxShadow: "0 0 50px color-mix(in srgb, var(--site-accent-violet) 20%, transparent), inset 0 1px 0 0 color-mix(in srgb, var(--site-marqueur) 5%, transparent)",
             }}
           >
             {premiumCard}

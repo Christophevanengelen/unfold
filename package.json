@@ -10,10 +10,12 @@
     "db:migrate": "node supabase/migrate.mjs",
     "db:verify": "node supabase/verify.mjs",
     "build:native": "NEXT_PUBLIC_NATIVE=true next build",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed",
-    "verifier": "node scripts/verifier-tout.mjs"
+    "test:e2e": "playwright test --project=parcours",
+    "test:e2e:moteur": "playwright test --project=moteur",
+    "test:e2e:ui": "playwright test --project=parcours --ui",
+    "test:e2e:headed": "playwright test --project=parcours --headed",
+    "verifier": "node scripts/verifier-tout.mjs",
+    "avant-build": "node scripts/verifier-tout.mjs && playwright test --project=parcours"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",

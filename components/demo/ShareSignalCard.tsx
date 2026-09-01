@@ -28,7 +28,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { ShareNodes, ClipboardCheck, Close, Link } from "flowbite-react-icons/outline";
 import { planetConfig, houseConfig, getPlanetLabel, type PlanetKey, type HouseNumber } from "@/lib/domain-config";
 import { useLocale } from "@/lib/use-locale";
+import { perso } from "@/lib/perso-i18n";
 import { getTierLabel, domainKeyToHouseOrNull } from "@/lib/detail-helpers";
+import { jourMoisAnnee, jourMoisAnneeCourt, moisCourt } from "@/lib/dates-i18n";
 
 // ─── Types (mirrors CapsuleDetailSheet) ──────────────────
 interface CapsuleData {
@@ -79,7 +81,7 @@ interface CapsuleData {
   color?: string;
 }
 
-const MONTH_NAMES = ["Jan", "Fev", "Mar", "Avr", "Mai", "Jun", "Jul", "Aou", "Sep", "Oct", "Nov", "Dec"];
+// Mois abreges : voir lib/dates-i18n.ts. Ceux-ci etaient en francais.
 
 // Chaque carte partagee envoyait vers unfold.app, qui appartient a une autre
 // application. Les gens faisaient donc de la publicite pour un tiers en
@@ -104,9 +106,9 @@ export function ShareSignalCard({
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
 
-  const phase = capsule.phases[0];
-  const tierLabel = getTierLabel(capsule.tier);
   const locale = useLocale();
+  const phase = capsule.phases[0];
+  const tierLabel = getTierLabel(capsule.tier, locale);
 
   // Une capsule sans domaine ne devient plus une capsule de CARRIERE.
   //
@@ -122,8 +124,8 @@ export function ShareSignalCard({
   const houseColor = capsule.color ?? houseMeta?.color ?? "#9B85C4";
 
   // Date labels
-  const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
-  const endLabel = `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} ${capsule.endDate.getFullYear()}`;
+  const startLabel = jourMoisAnnee(capsule.startDate, locale);
+  const endLabel = jourMoisAnnee(capsule.endDate, locale);
 
   // Display text: AI subtitle first, then phase title
   const displayText = phase?.subtitle || phase?.title || "";
@@ -185,9 +187,12 @@ export function ShareSignalCard({
               width: 300,
               height: 533,
               borderRadius: 24,
+              // La carte flotte au-dessus du voile : son elevation la porte.
+              // Le lisere ET le « 0 0 0 1px » de l ombre etaient deux traits
+              // superposes sur le meme bord ; les deux partent, l ombre de
+              // profondeur reste.
               background: "linear-gradient(165deg, #1B1535 0%, #2A1F4E 55%, #1B1535 100%)",
-              border: "1px solid rgba(155, 133, 196, 0.15)",
-              boxShadow: "0 24px 64px rgba(10, 6, 20, 0.6), 0 0 0 1px rgba(155, 133, 196, 0.08)",
+              boxShadow: "0 24px 64px rgba(10, 6, 20, 0.6)",
             }}
           >
             {/* Ambient glow */}
@@ -224,8 +229,10 @@ export function ShareSignalCard({
               <div
                 className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-6"
                 style={{
+                  // Le badge a un fond opaque teinte de la couleur de maison,
+                  // et un halo qui lui appartient depuis toujours. Le lisere
+                  // etait la couche de trop.
                   background: `color-mix(in srgb, ${houseColor} 12%, rgba(27, 21, 53, 0.8))`,
-                  border: `1px solid color-mix(in srgb, ${houseColor} 25%, transparent)`,
                   boxShadow: `0 0 20px ${getTierGlow(capsule.tier)}`,
                 }}
               >
@@ -259,8 +266,9 @@ export function ShareSignalCard({
                       key={planet}
                       className="flex items-center gap-1.5 rounded-full px-3 py-1"
                       style={{
+                        // Fond propre a la pastille, teinte de la planete :
+                        // il la decoupe deja sur la carte sombre.
                         background: `color-mix(in srgb, ${pc.color} 10%, rgba(27, 21, 53, 0.6))`,
-                        border: `1px solid color-mix(in srgb, ${pc.color} 20%, transparent)`,
                       }}
                     >
                       <div
@@ -320,7 +328,7 @@ export function ShareSignalCard({
                 className="text-[11px] font-medium"
                 style={{ color: "rgba(195, 185, 215, 0.7)" }}
               >
-                Quel est ton rythme ?
+                {perso("partage.rythme", locale)}
               </span>
               <span
                 className="text-[11px] font-semibold"
@@ -338,8 +346,11 @@ export function ShareSignalCard({
               onClick={handleShare}
               className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 transition-all duration-200"
               style={{
-                background: "rgba(155, 133, 196, 0.15)",
-                border: "1px solid rgba(155, 133, 196, 0.2)",
+                // Contour retire, densite du fond montee de 0,15 a 0,20 :
+                // c est la surface qui reprend le poids que le trait portait.
+                // Meme teinte, aucune couleur nouvelle. Sur le voile sombre a
+                // 0,75, un bouton laisse a 0,15 sans contour se serait efface.
+                background: "rgba(155, 133, 196, 0.20)",
                 color: "#C3B9D7",
               }}
             >
@@ -354,10 +365,12 @@ export function ShareSignalCard({
               onClick={handleCopy}
               className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 transition-all duration-200"
               style={{
+                // Bouton secondaire : il monte de 0,08 a 0,14, soit un cran
+                // sous le bouton principal a 0,20. La hierarchie entre les
+                // deux est desormais portee par la densite des fonds seule.
                 background: copied
                   ? "rgba(124, 107, 191, 0.25)"
-                  : "rgba(155, 133, 196, 0.08)",
-                border: `1px solid ${copied ? "rgba(124, 107, 191, 0.4)" : "rgba(155, 133, 196, 0.12)"}`,
+                  : "rgba(155, 133, 196, 0.14)",
                 color: copied ? "#9B85C4" : "rgba(195, 185, 215, 0.7)",
               }}
             >
@@ -374,8 +387,9 @@ export function ShareSignalCard({
             onClick={onClose}
             className="flex items-center justify-center h-11 w-11 rounded-full transition-colors duration-200"
             style={{
-              background: "rgba(155, 133, 196, 0.08)",
-              border: "1px solid rgba(155, 133, 196, 0.1)",
+              // Meme montee que le bouton secondaire : 0,08 -> 0,14. Une cible
+              // de 44 points posee sur un voile a 0,75 doit se voir sans trait.
+              background: "rgba(155, 133, 196, 0.14)",
               color: "rgba(195, 185, 215, 0.7)",
             }}
           >

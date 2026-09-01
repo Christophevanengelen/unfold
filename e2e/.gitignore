@@ -1,0 +1,4 @@
+# Traces, captures et rapports produits par Playwright.
+# Voir playwright.config.ts : outputDir et le rapport HTML pointent ici.
+.resultats/
+.rapport/

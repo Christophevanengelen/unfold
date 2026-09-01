@@ -93,11 +93,12 @@ installation précédente masque le comportement réel.
 ## Produit — en cours
 
 
-- [ ] **Notification : durée, type, intensité.** Les douze domaines sont traduits
-      (`lib/maisons-i18n.ts`). Reste à les faire porter par le texte.
-- [ ] **Charger une fois, les dates déclenchent.** `supabase/013_bascules.sql`
-      est écrit et éprouvé, **pas encore appliqué**. Le cron rappelle toujours le
-      moteur une fois par personne et par jour.
+- [x] **Notification : durée, type, intensité.** Fait. `lib/push-textes.ts`
+      `ecrireBascule` compose domaine · durée · intensité, et le cron l'appelle
+      (`app/api/cron/push/route.ts:127`). Vérifié le 01/09.
+- [x] **Charger une fois, les dates déclenchent.** Fait. `push_bascules` est
+      appliquée en production (109 lignes le 01/09), les trois fonctions
+      existent, `app/api/push/bascules/route.ts` dépose et le cron lit.
 - [x] **Prix « à vie » retiré** le 01/09. Vérifié avant : zéro achat à vie en
       base, donc personne ne perd d'accès. Le statut `lifetime` reste reconnu
       par `entitlement.ts` — c'est l'offre qui disparaît, pas la reconnaissance.
@@ -284,8 +285,18 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
       763 occurrences.
 - [x] `SausageCard` a été supprimé avec le sous-arbre de `LifeTimeline`.
 - [ ] `app/app/astro/*` — écrans entièrement sombres en dur (outil interne).
-- [ ] Le `LaunchScreen` iOS n'a qu'une seule image pour les deux thèmes :
-      séquence blanc → violet foncé → clair au démarrage à froid.
+- [x] **`LaunchScreen` iOS — le clignotement au démarrage à froid.** Corrigé le
+      01/09. Cause mesurée : l'image `Splash` est un carré de 2732 px
+      **entièrement blanc** (#FFFFFF, marque à peine visible au centre à
+      #E9F5FF), posé sur `systemBackgroundColor` — blanc en thème clair. Puis le
+      greffon Capacitor peignait `#1B1535`, puis l'app son fond clair. Trois
+      fonds à la suite.
+      L'image est retirée, le fond devient le jeu de couleurs `SplashFond`
+      (clair #F5F1FA, sombre #1B1535) qui suit le thème système.
+      **Reste :** `ios.backgroundColor` dans `capacitor.config.ts` ne prend
+      qu'une valeur et vaut `#1B1535`. Elle n'est visible qu'avant la première
+      peinture de la vue web. Non touchée : le commentaire en place dit qu'elle
+      a corrigé un vrai défaut le 31/08.
 
 ## Onboarding
 
@@ -309,3 +320,129 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
 - [ ] Logotype `logo-dark.svg` — « unfold » vectorisé.
 - [ ] Statut DSA, questionnaire App Privacy, accord de Marie-Ange.
 - [ ] Android : aucune configuration de signature.
+
+---
+
+# 1er septembre 2026 — releve de Christophe, soiree
+
+Tout ce qu il a signale, ecrit avant de corriger, pour que rien ne se perde.
+
+## L ecran de briefing — « c est quoi cet ecran de merde »
+
+Sa capture montre deux cartes superposees a la timeline, qui la recouvrent
+entierement.
+
+1. **Deux cartes empilees.** `DailyBriefing` monte systematiquement `DailyCard`
+   (route `/api/openai/daily-brief`) ET `PeriodCard` (route
+   `/api/openai/daily-briefing`). Aucune hierarchie, aucune condition.
+2. **Le repli d echec est servi comme une carte normale.**
+   `daily-briefing/route.ts:79-85` — « Le calcul n a pas abouti » sort avec
+   l etoile, le bandeau et le bouton d action, indiscernable d une vraie
+   lecture. `:232` fait `parsed.summary ?? FALLBACK_BRIEFING.summary`.
+   Meme faute dans `daily-brief/route.ts:59-63, 218-220`.
+3. **Les deux cartes se contredisent.** La premiere annonce que le calcul a
+   echoue, la seconde affiche du contenu.
+4. **Le texte n est pas borne.** Le prompt demande « Maximum 80 mots total »
+   (`:66`) et rien ne le verifie. La carte de la capture en fait environ 90.
+5. **Le jargon est exige par le prompt.** `:45` « Nomme les planetes
+   concernees », `:73` « chaque phrase doit etre ancree dans planete + aspect +
+   maison ». D ou « Neptune en carre avec ton Neptune natal dans ta 8e maison
+   intensifie les reflexions sur les ressources partagees ». Ce n est pas une
+   lecture, c est un cours.
+6. **Debordement.** Le texte est coupe a « tout en explorant », derriere la
+   barre d onglets.
+7. **Bandeaux en dur.** « Aujourd hui » et « En ce moment » ecrits en francais
+   dans `DailyBriefing.tsx:293, 322`, servis aux dix langues.
+
+## Le verdict, et ce qu il impose
+
+> « puis foutre 25 fenetres a cliquer pour les closer c est pas de la UX, c est
+> de la punition pour user et un killing de l entrepreneur. Tu veux ajouter et
+> conserver ca, tu me crees un vrai systeme de notification qui vient pas par
+> dessus tout et mal implemente. »
+
+> « c est pas du design premium ca, c est du fourre-tout de junior »
+
+**Consigne retenue :** un vrai centre de messages. Rien ne se superpose au
+produit. Rien a fermer une par une.
+
+## Le design, plus tot dans la soiree
+
+> « t as pourri le design tout seul, on est passe de minimaliste a surcharge »
+> « des strokes DEGEULASSE » — « une grosse ligne de separation pour delimiter
+> le menu, la HONTE » — « TU AS DOWNGRADE LE LOOK AND FEEL JE T AI RIEN DEMANDE »
+
+Corrige et verifie a l ecran. Cause inscrite dans
+`.claude/skills/favorable-design/SKILL.md` : un seuil de contraste de TEXTE
+applique a un CONTROLE, puis quatre couches empilees pour sauver le chiffre.
+
+## Encore ouvert
+
+- **Le build sur TestFlight contient l ancien design.** Termine a 17 h 30,
+  avant les corrections. Marie-Ange verrait la version rejetee.
+- **Systeme de gestion des modales mal integre** — signale plusieurs fois,
+  jamais traite de fond. Le centre de messages en retire une partie ; les
+  feuilles empilees restent a reprendre.
+- **Le « 49 EUR a vie »** est incoherent avec 39,99 EUR/an. Decision produit,
+  pas technique.
+- **Le jargon du prompt** — decision produit a prendre avec Marie-Ange : le
+  moteur est le sien, la voix aussi.
+
+---
+
+# Relevé de Christophe — soirée du 1er septembre, suite
+
+## Design — règles posées, à appliquer partout
+
+- [ ] **« Les strokes sont nos ennemis. »** Un bon design minimaliste n'utilise
+      pas de contours : il gère les couleurs des fonds et des fonds de cellules.
+      49 occurrences relevées dans `components/demo/**` et `components/ui/**`.
+      Chantier en cours. La règle est inscrite dans
+      `.claude/skills/favorable-design/SKILL.md`.
+      **Un contour retiré doit être REMPLACÉ**, jamais seulement supprimé : par
+      un fond d'un cran différent du parent, une élévation si l'élément flotte,
+      ou de l'espace. Gardent leur contour : les champs de saisie vides et
+      l'anneau de foyer clavier.
+- [x] **Le haut de l'écran n'avait aucun traitement** alors que le bas avait son
+      dégradé. Corrigé le 01/09 : voile symétrique dans la coquille
+      (`app/app/layout.tsx`), donc valable sur tous les écrans pleine largeur, et
+      `StatusBar.setBackgroundColor` passé au transparent — il repeignait un
+      aplat qui annulait `overlaysWebView: true`.
+
+## Landing
+
+- [ ] **Les vrais écrans de l'app dans la page d'accueil.** Aujourd'hui
+      `components/landing/**` montre des maquettes dessinées à la main qui ne
+      correspondent pas à l'app. Deux voies : des captures de l'app réelle, ou
+      le montage des vrais composants avec un jeu de données d'exemple. La
+      seconde ne dérive jamais mais demande de sortir les composants de leurs
+      fournisseurs de contexte.
+
+## Dépôt
+
+- [ ] **Le dépôt est public.** `Christophevanengelen/unfold`. Le code du produit
+      est lisible par n'importe qui et l'API du moteur y est appelée à
+      découvert. `.env.example` est suivi mais ne contient aucune vraie clé
+      (vérifié le 01/09).
+      La commande a été refusée à l'assistant, elle est donc à lancer par
+      Christophe :
+
+          gh repo edit Christophevanengelen/unfold --visibility private \
+            --accept-visibility-change-consequences
+
+      **Conséquence à connaître avant :** sur un dépôt privé, GitHub Actions
+      consomme des minutes payantes, et les exécutants macOS comptent ×10. Le
+      CI compile l'app iOS à chaque commit — c'est ce poste qu'il faut regarder
+      avant de basculer.
+
+## Onboarding de Marie-Ange
+
+- [x] **Le briefing est écrit** : `BRIEFING-MARIE-ANGE.md` à la racine. Accès,
+      installation en 4 étapes, les 5 règles du dépôt, ce que déclenche chaque
+      geste de livraison, et un bloc de consignes à coller dans son assistant de
+      code.
+- [x] `.env.example` est bien suivi par git malgré le `.env*` du `.gitignore` :
+      elle l'aura en clonant.
+- [ ] **Reste à faire par Christophe :** l'invitation GitHub en *write* (il faut
+      l'identifiant de Marie-Ange), l'invitation Vercel (son adresse mail), et
+      l'envoi du `.env.local` en main propre.

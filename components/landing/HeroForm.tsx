@@ -166,7 +166,7 @@ export function HeroForm({ onSubmit, ctaLabel, privacyNotice, isSubmitting }: He
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.12 }}
-                className="absolute left-0 right-0 z-30 mt-1 max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1530] py-1 shadow-2xl"
+                className="absolute left-0 right-0 z-30 mt-1 max-h-48 overflow-y-auto rounded-xl border border-white/10 bg-[var(--site-fond-liste)] py-1 shadow-2xl"
                 role="listbox"
               >
                 {suggestions.map((s, i) => (
@@ -177,7 +177,7 @@ export function HeroForm({ onSubmit, ctaLabel, privacyNotice, isSubmitting }: He
                       onClick={() => selectCity(s)}
                       onMouseEnter={() => setHighlightedIdx(i)}
                       className="block w-full px-3 py-2 text-left text-sm text-white/90 transition-colors hover:bg-white/5"
-                      style={i === highlightedIdx ? { background: "rgba(255,255,255,0.06)" } : undefined}
+                      style={i === highlightedIdx ? { background: "var(--site-survol)" } : undefined}
                     >
                       <span className="font-medium">{s.name}</span>
                       <span className="ml-2 text-[11px] text-white/40">

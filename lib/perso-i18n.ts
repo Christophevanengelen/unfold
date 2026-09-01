@@ -283,7 +283,7 @@ const MOTS: Record<string, Traduction> = {
   "fiche.eclipse":    { fr:"Éclipse", en:"Eclipse", es:"Eclipse", de:"Finsternis", it:"Eclissi", pt:"Eclipse", nl:"Eclips", ja:"食", zh:"食相", ar:"خسوف" },
   "compat.astuce":    { fr:"Astuce : restez appuyé sur une connexion pour la modifier ou la supprimer", en:"Tip: press and hold a connection to edit or remove it", es:"Consejo: mantén pulsada una conexión para editarla o eliminarla", de:"Tipp: Verbindung gedrückt halten, um sie zu ändern oder zu löschen", it:"Suggerimento: tieni premuta una connessione per modificarla o eliminarla", pt:"Dica: mantém premida uma ligação para a editar ou remover", nl:"Tip: houd een verbinding ingedrukt om te bewerken of verwijderen", ja:"ヒント：つながりを長押しすると編集・削除できます", zh:"提示：长按一个连接可修改或删除", ar:"نصيحة: اضغط مطوّلاً على اتصال لتعديله أو حذفه" },
   "compat.entrer_code":{ fr:"Entrer un code reçu", en:"Enter a code you received", es:"Introducir un código recibido", de:"Erhaltenen Code eingeben", it:"Inserisci un codice ricevuto", pt:"Introduzir um código recebido", nl:"Een ontvangen code invoeren", ja:"受け取ったコードを入力", zh:"输入收到的代码", ar:"أدخل رمزاً استلمته" },
-  "invite.voir":      { fr:"Voir vos fenêtres de timing", en:"See your timing windows", es:"Ver vuestras ventanas de timing", de:"Eure Zeitfenster ansehen", it:"Vedi le vostre finestre", pt:"Ver as vossas janelas", nl:"Bekijk jullie vensters", ja:"ふたりのタイミングを見る", zh:"查看你们的时机窗口", ar:"اطّلع على نوافذ التوقيت" },
+  "invite.voir":      { fr:"Voir tes fenêtres de timing", en:"See your timing windows", es:"Ver vuestras ventanas de timing", de:"Eure Zeitfenster ansehen", it:"Vedi le vostre finestre", pt:"Ver as vossas janelas", nl:"Bekijk jullie vensters", ja:"ふたりのタイミングを見る", zh:"查看你们的时机窗口", ar:"اطّلع على نوافذ التوقيت" },
   "invite.liees":     { fr:"Vos timelines sont liées. Dites-nous quel type de relation c'est.", en:"Your timelines are linked. Tell us what kind of relationship this is.", es:"Vuestras líneas están unidas. Dinos qué tipo de relación es.", de:"Eure Timelines sind verbunden. Sag uns, um welche Beziehung es geht.", it:"Le vostre timeline sono collegate. Dicci che tipo di relazione è.", pt:"As vossas timelines estão ligadas. Diz-nos que tipo de relação é.", nl:"Jullie tijdlijnen zijn verbonden. Vertel ons om wat voor relatie het gaat.", ja:"タイムラインがつながりました。どんな関係か教えてください。", zh:"你们的时间线已连接。告诉我们这是什么关系。", ar:"ارتبط مساراكما الزمنيان. أخبرنا بنوع العلاقة." },
   "garde.aucun":      { fr:"Aucun signal détecté", en:"No signal detected", es:"No se detectó señal", de:"Kein Signal erkannt", it:"Nessun segnale rilevato", pt:"Nenhum sinal detetado", nl:"Geen signaal gevonden", ja:"シグナルが見つかりません", zh:"未检测到信号", ar:"لم يتم رصد إشارة" },
   "garde.reessayer":  { fr:"Réessayer", en:"Try again", es:"Reintentar", de:"Erneut versuchen", it:"Riprova", pt:"Tentar de novo", nl:"Opnieuw proberen", ja:"もう一度", zh:"重试", ar:"أعد المحاولة" },
@@ -327,9 +327,9 @@ const MOTS: Record<string, Traduction> = {
   "compat.suppression": { fr:"Suppression…", en:"Deleting…", es:"Eliminando…", de:"Wird gelöscht…", it:"Eliminazione…", pt:"A eliminar…", nl:"Verwijderen…", ja:"削除中…", zh:"删除中…", ar:"جارٍ الحذف…" },
   "compat.maintiens":    { fr:"Maintiens pour confirmer", en:"Hold to confirm", es:"Mantén para confirmar", de:"Halten zum Bestätigen", it:"Tieni premuto per confermare", pt:"Mantém para confirmar", nl:"Houd vast om te bevestigen", ja:"長押しで確定", zh:"长按确认", ar:"اضغط مطولاً للتأكيد" },
   "compat.maintenir":    { fr:"Maintenir pour supprimer", en:"Hold to delete", es:"Mantén para eliminar", de:"Halten zum Löschen", it:"Tieni premuto per eliminare", pt:"Mantém para eliminar", nl:"Houd vast om te verwijderen", ja:"長押しで削除", zh:"长按删除", ar:"اضغط مطولاً للحذف" },
-  "compat.partager_code":{ fr:"Partager votre code", en:"Share your code", es:"Comparte tu código", de:"Teile deinen Code", it:"Condividi il tuo codice", pt:"Partilha o teu código", nl:"Deel je code", ja:"コードを共有", zh:"分享你的代码", ar:"شارك رمزك" },
+  "compat.partager_code":{ fr:"Partager ton code", en:"Share your code", es:"Comparte tu código", de:"Teile deinen Code", it:"Condividi il tuo codice", pt:"Partilha o teu código", nl:"Deel je code", ja:"コードを共有", zh:"分享你的代码", ar:"شارك رمزك" },
   "compat.entrez_code":  { fr:"Entrez leur code", en:"Enter their code", es:"Introduce su código", de:"Gib ihren Code ein", it:"Inserisci il loro codice", pt:"Introduz o código deles", nl:"Voer hun code in", ja:"相手のコードを入力", zh:"输入对方的代码", ar:"أدخل رمزهم" },
-  "compat.invitez_comparer": { fr:"Invitez quelqu'un à comparer vos rythmes", en:"Invite someone to compare your rhythms", es:"Invita a alguien a comparar vuestros ritmos", de:"Lade jemanden ein, eure Rhythmen zu vergleichen", it:"Invita qualcuno a confrontare i vostri ritmi", pt:"Convida alguém para comparar os vossos ritmos", nl:"Nodig iemand uit om jullie ritmes te vergelijken", ja:"リズムを比べる相手を招待", zh:"邀请他人比较你们的节奏", ar:"ادعُ شخصاً لمقارنة إيقاعيكما" },
+  "compat.invitez_comparer": { fr:"Invite quelqu'un à comparer vos rythmes", en:"Invite someone to compare your rhythms", es:"Invita a alguien a comparar vuestros ritmos", de:"Lade jemanden ein, eure Rhythmen zu vergleichen", it:"Invita qualcuno a confrontare i vostri ritmi", pt:"Convida alguém para comparar os vossos ritmos", nl:"Nodig iemand uit om jullie ritmes te vergelijken", ja:"リズムを比べる相手を招待", zh:"邀请他人比较你们的节奏", ar:"ادعُ شخصاً لمقارنة إيقاعيكما" },
   "timeline.maintenant": { fr:"Maintenant", en:"Now", es:"Ahora", de:"Jetzt", it:"Ora",
                    pt:"Agora", nl:"Nu", ja:"現在", zh:"当前", ar:"الآن" },
   "edit.annuler":{ fr:"Annuler", en:"Cancel", es:"Cancelar", de:"Abbrechen", it:"Annulla",
@@ -441,6 +441,70 @@ const MOTS: Record<string, Traduction> = {
   // ── Garde d entree de l app ─────────────────────────────────────────────
   "garde.connexion_perdue": { fr:"Connexion perdue", en:"Connection lost", es:"Conexión perdida", de:"Verbindung verloren", it:"Connessione persa",
                               pt:"Ligação perdida", nl:"Verbinding verbroken", ja:"接続が切れました", zh:"连接已断开", ar:"انقطع الاتصال" },
+
+  // ── Le centre de messages ───────────────────────────────────────────────
+  //
+  // Le briefing s affichait en deux cartes superposees a la timeline, chacune
+  // avec sa croix. Il tombe desormais dans une boite qu on ouvre. Voir
+  // lib/messages.ts pour la regle : rien ne se superpose, rien a fermer.
+  "messages.titre":     { fr:"Messages", en:"Messages", es:"Mensajes", de:"Nachrichten", it:"Messaggi",
+                          pt:"Mensagens", nl:"Berichten", ja:"メッセージ", zh:"消息", ar:"الرسائل" },
+  "messages.vide":      { fr:"Rien pour le moment.", en:"Nothing yet.", es:"Nada por ahora.", de:"Noch nichts.", it:"Ancora nulla.",
+                          pt:"Nada por enquanto.", nl:"Nog niets.", ja:"まだ何もありません。", zh:"暂时没有内容。", ar:"لا شيء بعد." },
+  "messages.vide_sous": { fr:"Ton signal du jour arrivera ici.", en:"Your daily signal will land here.", es:"Tu señal del día llegará aquí.", de:"Dein Tagessignal erscheint hier.", it:"Il tuo segnale del giorno arriverà qui.",
+                          pt:"O teu sinal do dia chegará aqui.", nl:"Je signaal van de dag komt hier.", ja:"その日のシグナルはここに届きます。", zh:"你当天的信号会出现在这里。", ar:"ستصلك إشارة يومك هنا." },
+  "messages.ouvrir":    { fr:"Ouvrir les messages", en:"Open messages", es:"Abrir mensajes", de:"Nachrichten öffnen", it:"Apri i messaggi",
+                          pt:"Abrir mensagens", nl:"Berichten openen", ja:"メッセージを開く", zh:"打开消息", ar:"فتح الرسائل" },
+  "messages.jour":      { fr:"Aujourd\u2019hui", en:"Today", es:"Hoy", de:"Heute", it:"Oggi",
+                          pt:"Hoje", nl:"Vandaag", ja:"今日", zh:"今天", ar:"اليوم" },
+  "messages.periode":   { fr:"En ce moment", en:"Right now", es:"Ahora mismo", de:"Gerade jetzt", it:"In questo momento",
+                          pt:"Neste momento", nl:"Op dit moment", ja:"現在", zh:"此刻", ar:"في الوقت الحالي" },
+  "messages.notif":     { fr:"Notification", en:"Notification", es:"Notificación", de:"Mitteilung", it:"Notifica",
+                          pt:"Notificação", nl:"Melding", ja:"通知", zh:"通知", ar:"إشعار" },
+  "messages.hier":      { fr:"Hier", en:"Yesterday", es:"Ayer", de:"Gestern", it:"Ieri",
+                          pt:"Ontem", nl:"Gisteren", ja:"昨日", zh:"昨天", ar:"أمس" },
+
+  // ── Les deux ecrans d erreur ────────────────────────────────────────────
+  //
+  // Ils s affichaient en anglais aux dix langues. Ce sont les seuls ecrans que
+  // quelqu un voit quand tout le reste a echoue : les laisser dans une langue
+  // qu il ne lit pas, c est ajouter une panne a une panne.
+  "erreur.titre":      { fr:"Quelque chose n'a pas fonctionné", en:"Something went wrong", es:"Algo no ha funcionado", de:"Etwas ist schiefgelaufen", it:"Qualcosa non ha funzionato",
+                         pt:"Algo correu mal", nl:"Er ging iets mis", ja:"問題が発生しました", zh:"出了点问题", ar:"حدث خطأ ما" },
+  "erreur.corps":      { fr:"Une erreur inattendue s'est produite. Réessaie.", en:"An unexpected error occurred. Please try again.", es:"Se ha producido un error inesperado. Vuelve a intentarlo.", de:"Ein unerwarteter Fehler ist aufgetreten. Versuche es erneut.", it:"Si è verificato un errore imprevisto. Riprova.",
+                         pt:"Ocorreu um erro inesperado. Tenta novamente.", nl:"Er is een onverwachte fout opgetreden. Probeer het opnieuw.", ja:"予期しないエラーが発生しました。もう一度お試しください。", zh:"发生了意外错误，请重试。", ar:"حدث خطأ غير متوقع. حاول مرة أخرى." },
+  "erreur.reessayer":  { fr:"Réessayer", en:"Try again", es:"Reintentar", de:"Erneut versuchen", it:"Riprova",
+                         pt:"Tentar de novo", nl:"Opnieuw proberen", ja:"再試行", zh:"重试", ar:"إعادة المحاولة" },
+  "erreur.introuvable":{ fr:"Cette page n'existe pas.", en:"This page doesn't exist.", es:"Esta página no existe.", de:"Diese Seite existiert nicht.", it:"Questa pagina non esiste.",
+                         pt:"Esta página não existe.", nl:"Deze pagina bestaat niet.", ja:"このページは存在しません。", zh:"此页面不存在。", ar:"هذه الصفحة غير موجودة." },
+  "erreur.accueil":    { fr:"Retour à l'accueil", en:"Back to home", es:"Volver al inicio", de:"Zurück zur Startseite", it:"Torna alla home", 
+                         pt:"Voltar ao início", nl:"Terug naar start", ja:"ホームに戻る", zh:"返回首页", ar:"العودة إلى الرئيسية" },
+
+  // ── Phrases restees en dur dans les ecrans de l app ─────────────────────
+  "capsule.suivante":  { fr:"Ta prochaine période se forme", en:"Your next momentum is forming", es:"Tu próximo periodo se está formando", de:"Deine nächste Phase entsteht", it:"Il tuo prossimo periodo si sta formando",
+                         pt:"O teu próximo período está a formar-se", nl:"Je volgende periode vormt zich", ja:"次の時期が形になりつつあります", zh:"你的下一个时期正在成形", ar:"فترتك القادمة تتشكّل" },
+  "accueil.deja_occupe":{ fr:"Mais le ciel, lui, était déjà à l'œuvre.", en:"But the planets were already busy.", es:"Pero el cielo ya estaba en marcha.", de:"Doch der Himmel war bereits am Werk.", it:"Ma il cielo era già all'opera.",
+                         pt:"Mas o céu já estava a trabalhar.", nl:"Maar de hemel was al aan het werk.", ja:"けれど空はすでに動いていました。", zh:"但天空早已在运作。", ar:"لكن السماء كانت تعمل بالفعل." },
+  "profil.graphique":  { fr:"Graphique de toute ta vie", en:"Full timeline chart", es:"Gráfico de toda tu vida", de:"Diagramm deines ganzen Lebens", it:"Grafico di tutta la tua vita",
+                         pt:"Gráfico de toda a tua vida", nl:"Grafiek van je hele leven", ja:"人生全体のチャート", zh:"完整人生图表", ar:"مخطط حياتك الكاملة" },
+  "partage.rythme":    { fr:"Quel est ton rythme ?", en:"What's your rhythm?", es:"¿Cuál es tu ritmo?", de:"Was ist dein Rhythmus?", it:"Qual è il tuo ritmo?",
+                         pt:"Qual é o teu ritmo?", nl:"Wat is jouw ritme?", ja:"あなたのリズムは？", zh:"你的节奏是什么？", ar:"ما هو إيقاعك؟" },
+  "accueil.ton_rythme":{ fr:"Voici ton rythme.", en:"This is your rhythm.", es:"Este es tu ritmo.", de:"Das ist dein Rhythmus.", it:"Questo è il tuo ritmo.",
+                         pt:"Este é o teu ritmo.", nl:"Dit is jouw ritme.", ja:"これがあなたのリズムです。", zh:"这就是你的节奏。", ar:"هذا هو إيقاعك." },
+  "fiche.dans_ta_vie": { fr:"Dans ta vie", en:"In your life", es:"En tu vida", de:"In deinem Leben", it:"Nella tua vita",
+                         pt:"Na tua vida", nl:"In jouw leven", ja:"あなたの人生で", zh:"在你的人生中", ar:"في حياتك" },
+  "prep.toi":              { fr:"Toi", en:"You", es:"Tú", de:"Du", it:"Tu",
+                             pt:"Tu", nl:"Jij", ja:"あなた", zh:"你", ar:"أنت" },
+  "fiche.prevu":           { fr:"Prévu", en:"Planned", es:"Previsto", de:"Geplant", it:"Previsto",
+                             pt:"Previsto", nl:"Gepland", ja:"予定", zh:"预计", ar:"مقرر" },
+  "fiche.ce_signal":       { fr:"Ce signal", en:"This signal", es:"Esta señal", de:"Dieses Signal", it:"Questo segnale",
+                             pt:"Este sinal", nl:"Dit signaal", ja:"このシグナル", zh:"这个信号", ar:"هذه الإشارة" },
+  "timeline.chargement":   { fr:"Chargement de ta timeline…", en:"Loading your timeline…", es:"Cargando tu línea de tiempo…", de:"Deine Timeline wird geladen…", it:"Caricamento della tua timeline…",
+                             pt:"A carregar a tua linha do tempo…", nl:"Je tijdlijn wordt geladen…", ja:"タイムラインを読み込んでいます…", zh:"正在加载你的时间线…", ar:"جارٍ تحميل مخططك الزمني…" },
+  "timeline.construction": { fr:"Construction de ta timeline…", en:"Building your timeline…", es:"Construyendo tu línea de tiempo…", de:"Deine Timeline wird erstellt…", it:"Costruzione della tua timeline…",
+                             pt:"A construir a tua linha do tempo…", nl:"Je tijdlijn wordt opgebouwd…", ja:"タイムラインを作成しています…", zh:"正在构建你的时间线…", ar:"جارٍ بناء مخططك الزمني…" },
+  "accueil.pas_encore": { fr:"Tu ne marchais même pas encore.", en:"You weren't even crawling yet.", es:"Todavía ni gateabas.", de:"Du bist noch nicht einmal gekrabbelt.", it:"Non gattonavi nemmeno ancora.",
+                          pt:"Ainda nem gatinhavas.", nl:"Je kroop nog niet eens.", ja:"まだハイハイもしていませんでした。", zh:"那时你还不会爬。", ar:"لم تكن قد بدأت الحبو بعد." },
 };
 
 /**

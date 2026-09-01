@@ -81,14 +81,18 @@ export const PLANS = {
     priceEUR: 5.99,
     period: "month" as const,
   },
+  // Les trois valeurs derivees qui vivaient ici — monthlyEquivalent, savingsEUR,
+  // savingsPct — ont ete retirees le 01/09/2026. Elles etaient ecrites a la
+  // main a cote des prix dont elles decoulent : deux verites pour un seul fait,
+  // et rien pour les tenir ensemble quand un prix bouge. Personne ne les lisait
+  // (verifie), et l ecran des prix affichait pendant ce temps un « -25% » ecrit
+  // en dur dans les dix langues alors que l economie reelle est de 44 %.
+  // Voir economieAnnuelle() plus bas : elle se calcule, donc elle ne ment pas.
   annual: {
     id: "annual",
     label: "Annuel",
     priceEUR: 39.99,
     period: "year" as const,
-    monthlyEquivalent: 3.33,
-    savingsEUR: 31.89,
-    savingsPct: 44,
   },
   // Paiement unique, acces permanent (period_end = 2099-12-31).
   //
@@ -105,6 +109,21 @@ export const PLANS = {
     period: undefined as never,
   },
 };
+
+/**
+ * Ce que l annuel fait economiser, CALCULE a partir des deux prix.
+ *
+ * Rien ici n est un montant nouveau : c est la soustraction des deux tarifs
+ * ci-dessus. Un chiffre d economie ecrit a la main derive du jour ou un prix
+ * change, et il derive silencieusement — c est exactement ce qui s etait passe.
+ *
+ *   5,99 x 12 = 71,88   contre   39,99   =>   31,89 economises, soit 44 %
+ */
+export function economieAnnuelle(): { euros: number; pourcent: number } {
+  const douzeMois = PLANS.monthly.priceEUR * 12;
+  const euros = douzeMois - PLANS.annual.priceEUR;
+  return { euros, pourcent: Math.round((euros / douzeMois) * 100) };
+}
 
 /** ISO week start (Mon 00:00 UTC) for a given date. */
 export function weekStart(d: Date = new Date()): Date {

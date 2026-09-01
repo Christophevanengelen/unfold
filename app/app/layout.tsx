@@ -192,7 +192,20 @@ export default function DemoLayout({
       // ligne d avant faisait exactement l inverse, donc l heure et la batterie
       // etaient illisibles dans les deux themes. Verifie au pixel le 31/08/2026.
       StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
-      StatusBar.setBackgroundColor({ color: isDark ? "#1B1535" : "#F5F1FA" }).catch(() => {});
+      // Fond TRANSPARENT, pas une couleur.
+      //
+      // On peignait ici un aplat, ce qui redonnait a la barre d etat la bande
+      // pleine qu `overlaysWebView: true` sert justement a supprimer : le
+      // contenu passait dessous, mais un rectangle opaque le recouvrait. La
+      // separation entre l app et le systeme redevenait visible, et elle ne
+      // suivait le theme qu au prix de deux valeurs figees ici, hors du
+      // systeme de jetons.
+      //
+      // Transparent, le contenu glisse reellement sous l heure, et c est le
+      // voile du haut (plus bas dans ce fichier) qui garantit qu elle reste
+      // lisible. Sans effet sur iOS ou l appel est ignore ; c est Android que
+      // cela corrige.
+      StatusBar.setBackgroundColor({ color: "#00000000" }).catch(() => {});
     });
     // Le clavier aussi. capacitor.config le fige a « DARK », donc en theme
     // clair on tapait sa date de naissance au-dessus d un clavier noir.
@@ -369,6 +382,38 @@ export default function DemoLayout({
             }
           >
             {isOnboarding ? children : <OnboardingGuard>{children}</OnboardingGuard>}
+
+            {/* ── Le voile du haut ────────────────────────────────────────
+                Le bas de l ecran avait son degrade sous la bande de controles ;
+                le haut n avait rien. Le contenu passe sous l heure et la
+                batterie — c est ce que fait iOS partout et c est voulu
+                (`overlaysWebView: true`) — mais il y arrivait a pleine
+                opacite, et une capsule pouvait finir derriere le chiffre des
+                minutes.
+
+                Un degrade qui va du fond opaque, sous l ile, au transparent :
+                l heure repose toujours sur une surface propre, et le contenu
+                s estompe en montant au lieu de la percuter.
+
+                Il vit dans la COQUILLE et non dans la timeline : le probleme
+                est celui de tous les ecrans pleine largeur, pas d un seul.
+
+                Hauteur = la zone de securite plus 20 px. Sur un appareil sans
+                encoche, `env(safe-area-inset-top)` vaut 0 et il ne reste qu un
+                voile de 20 px, ce qui est exactement ce qu il faut.
+
+                Non interactif : il ne prend aucun geste au contenu. */}
+            {isFullBleed && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute left-0 right-0 top-0 z-20"
+                style={{
+                  height: "calc(var(--safe-top, 0px) + 20px)",
+                  background:
+                    "linear-gradient(to bottom, var(--bg-primary) 55%, color-mix(in srgb, var(--bg-primary) 55%, transparent) 80%, transparent)",
+                }}
+              />
+            )}
           </div>
         </PremiumTeaserContext.Provider>
 

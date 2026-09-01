@@ -43,9 +43,9 @@ export function CelebPicker({ accent, onSelect }: Props) {
         }
       }}
       style={{
-        background: `color-mix(in srgb, ${accent} 8%, #1B1535)`,
+        background: `color-mix(in srgb, ${accent} 8%, var(--site-fond-carte))`,
         border: `1px solid color-mix(in srgb, ${accent} 28%, transparent)`,
-        color: `color-mix(in srgb, ${accent} 90%, #E6E2F2)`,
+        color: `color-mix(in srgb, ${accent} 90%, var(--site-neutre-12))`,
         borderRadius: 8,
         padding: "4px 8px",
         fontSize: 11,

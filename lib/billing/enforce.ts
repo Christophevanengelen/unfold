@@ -22,7 +22,8 @@ export class RequiresPlanError extends Error {
     return {
       error: this.code,
       feature: this.feature,
-      message: FEATURES[this.feature].label,
+      // Meme raison : `label` est un nom interne de fonctionnalite, pas une
+      // phrase. `feature` porte deja l information, en clef stable.
     };
   }
 }
@@ -45,7 +46,14 @@ export class QuotaExceededError extends Error {
       count: this.count,
       limit: this.limit,
       period: this.period,
-      message: `Limite ${FEATURES[this.feature].label.toLowerCase()} atteinte`,
+      // PAS de phrase toute faite ici.
+      //
+      // Cette ligne produisait « Limite delineation ia atteinte » : du jargon,
+      // en francais, servi aux dix langues du produit, depuis une route d API.
+      // Un serveur n a pas a ecrire ce que lit quelqu un — il n a ni sa langue
+      // ni son ecran. Il renvoie de quoi composer la phrase ; le client la
+      // compose. Les trois champs ci-dessus (feature, count, limit, period)
+      // suffisent, et ils sont deja la.
     };
   }
 }

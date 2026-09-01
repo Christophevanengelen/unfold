@@ -8,9 +8,9 @@ interface ScienceTechnologyProps {
 
 export function ScienceTechnology({ t, translations }: ScienceTechnologyProps) {
   const items = [
-    { title: t("science.pattern.title", "High-precision data"), desc: t("science.pattern.desc", "Built on JPL/NASA ephemerides and real-time planetary calculations."), color: "#9585CC" },
-    { title: t("science.personal.title", "Personal models"), desc: t("science.personal.desc", "Proprietary AI models adapt to your rhythm over time."), color: "#5B7FEE" },
-    { title: t("science.privacy.title", "Private by design"), desc: t("science.privacy.desc", "Your personal data stays personal."), color: "#3CB179" },
+    { title: t("science.pattern.title", "High-precision data"), desc: t("science.pattern.desc", "Built on JPL/NASA ephemerides and real-time planetary calculations."), color: "var(--site-accent-violet)" },
+    { title: t("science.personal.title", "Personal models"), desc: t("science.personal.desc", "Proprietary AI models adapt to your rhythm over time."), color: "var(--site-accent-bleu)" },
+    { title: t("science.privacy.title", "Private by design"), desc: t("science.privacy.desc", "Your personal data stays personal."), color: "var(--site-accent-vert)" },
   ];
 
   return (

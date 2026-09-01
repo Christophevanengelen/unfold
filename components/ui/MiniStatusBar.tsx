@@ -14,8 +14,10 @@ export function MiniStatusBar() {
       <div
         className="h-5 w-5 rounded-full"
         style={{
+          // La pastille d avatar est un disque plein : son fond suffit a la
+          // faire exister. Le contour, plus PALE que le fond qu il entourait,
+          // ne servait qu a l adoucir — c est du decor.
           background: "color-mix(in srgb, var(--brand-6) 30%, transparent)",
-          border: "1px solid color-mix(in srgb, var(--brand-6) 20%, transparent)",
         }}
       />
     </div>

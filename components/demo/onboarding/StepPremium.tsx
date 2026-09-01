@@ -170,8 +170,9 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
         className="mt-6 overflow-hidden rounded-2xl px-4 py-6"
         style={{
           background:
+            // Le degrade part d un violet a 10 % sur --bg-secondary : la carte
+            // a deja une surface a elle, distincte du fond de page.
             "linear-gradient(135deg, color-mix(in srgb, var(--accent-purple) 10%, var(--bg-secondary)), var(--bg-secondary))",
-          border: "1px solid var(--border-light)",
         }}
         variants={fadeInUp}
       >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { UserEdit, Pen, ShareNodes, TrashBin } from "flowbite-react-icons/outline";
@@ -47,13 +47,27 @@ export function ConnectionActionSheet({
   const [nameDraft, setNameDraft] = useState("");
   const [deleteHoldProgress, setDeleteHoldProgress] = useState(0);
 
-  // Reset view when sheet opens for a different connection
+  // Reset view when sheet opens for a different connection.
+  //
+  // POURQUOI on suit l IDENTIFIANT et pas l objet : `connection` vient d une
+  // liste qui se recalcule (SWR rafraichit les resumes en continu). Avec
+  // l objet en dependance, la moindre remise a jour de la liste rejouait cet
+  // effet et ramenait la vue a « menu » en effacant le nom en cours de saisie —
+  // un etat pose a l entree du geste, ecrase par un evenement etranger au
+  // geste. On ne reinitialise donc que pour une vraie ouverture, ou pour une
+  // autre connexion.
+  const connexionInitialisee = useRef<string | null>(null);
   useEffect(() => {
-    if (open && connection) {
-      setView("menu");
-      setNameDraft(connection.name);
-      setDeleteHoldProgress(0);
+    if (!open) {
+      connexionInitialisee.current = null;
+      return;
     }
+    if (!connection) return;
+    if (connexionInitialisee.current === connection.id) return;
+    connexionInitialisee.current = connection.id;
+    setView("menu");
+    setNameDraft(connection.name);
+    setDeleteHoldProgress(0);
   }, [open, connection]);
 
   if (!connection) {
@@ -143,7 +157,12 @@ export function ConnectionActionSheet({
               label={perso("compat.partager_rap", locale)}
               onClick={handleShare}
             />
-            <div className="my-2 h-px" style={{ background: "var(--border-base)" }} />
+            {/* CONSERVE, mais adouci. Ce filet separe l action destructrice du
+                reste du menu : le supprimer collerait « Supprimer » a
+                « Partager » sans rien entre les deux. Il passe de
+                --border-base a --border-muted, le cran ou un separateur
+                redevient discret au lieu de decouper le menu. */}
+            <div className="my-2 h-px" style={{ background: "var(--border-muted)" }} />
             <ActionRow
               icon={<TrashBin width={16} height={16} />}
               label={perso("compat.supprimer", locale)}
@@ -165,6 +184,8 @@ export function ConnectionActionSheet({
               maxLength={40}
               className="w-full rounded-xl px-4 py-3 text-sm outline-none"
               style={{
+                // EXCEPTION ASSUMEE : champ de saisie. Le contour violet est
+                // ce qui montre ou l on tape le nouveau nom.
                 background: "var(--surface-light)",
                 color: "var(--text-heading)",
                 border: "1.5px solid var(--accent-purple)",
@@ -213,9 +234,10 @@ export function ConnectionActionSheet({
                       background: isCurrent
                         ? `color-mix(in srgb, ${r.color} 20%, transparent)`
                         : "var(--surface-light)",
-                      // La bordure garde la couleur pure : c est l identite du
-                      // type de relation, et une bordure n est pas du texte.
-                      border: `1.5px solid ${isCurrent ? r.color : "transparent"}`,
+                      // Plus de bordure. La tuile choisie porte 20 % de sa
+                      // couleur, les autres --surface-light : ce sont deux
+                      // fonds nettement differents, et le lisere ne servait
+                      // qu a redire lequel est choisi.
                       // Le libelle, lui, converge avec sa propre tuile. C etait
                       // la puce SELECTIONNEE — celle qu on vient de choisir —
                       // qui etait la moins lisible des quatre.
@@ -255,6 +277,7 @@ export function ConnectionActionSheet({
               {perso("compat.irreversible", locale)}
             </p>
             <HoldToConfirmButton
+              actif={open}
               onConfirm={handleDelete}
               progress={deleteHoldProgress}
               setProgress={setDeleteHoldProgress}
@@ -329,43 +352,113 @@ function ActionRow({
 // ─── Hold-to-confirm ─────────────────────────────────────
 
 function HoldToConfirmButton({
+  actif,
   onConfirm,
   progress,
   setProgress,
 }: {
+  /** Faux des que la feuille se ferme : l appui doit alors etre relache. */
+  actif: boolean;
   onConfirm: () => void;
   progress: number;
   setProgress: (n: number) => void;
 }) {
   const locale = detectLocale();
   const HOLD_MS = 1000;
-  const [holding, setHolding] = useState(false);
+  const [appuiPose, setAppuiPose] = useState(false);
+
+  // L appui n est reel que si la feuille l est encore. Derive au rendu, et non
+  // remis a zero dans un effet : la fermeture doit compter TOUT DE SUITE, sans
+  // attendre un rendu de plus pendant lequel la minuterie continuerait.
+  const holding = appuiPose && actif;
+
+  // POURQUOI onConfirm passe par une reference : c est une fonction flechee
+  // recreee a chaque rendu du parent, et chaque tick met a jour `progress`, qui
+  // vit dans le parent. L effet ci-dessous avait donc `onConfirm` en dependance
+  // et se rejouait toutes les 16 ms, remettant `t0` a l instant present. La
+  // jauge repartait de zero a chaque image : l appui prolonge N ABOUTISSAIT
+  // JAMAIS. Corriger le relachement sans corriger cela laisserait le bouton
+  // inoperant ; corriger cela sans corriger le relachement rendrait la
+  // suppression accidentelle possible. Les deux vont ensemble.
+  const onConfirmRef = useRef(onConfirm);
+  useEffect(() => {
+    onConfirmRef.current = onConfirm;
+  }, [onConfirm]);
+
+  // Une suppression et une seule. Le tick tourne toutes les 16 ms et
+  // `setAppuiPose(false)` n arrete l intervalle qu au rendu suivant : sans ce
+  // verrou, deux ticks peuvent appeler onConfirm.
+  const dejaConfirme = useRef(false);
+
+  // L appui se pose sur un seul geste et doit se relacher sur TOUS les chemins
+  // de sortie, pas seulement sur onTouchEnd :
+  //   - le systeme interrompt le toucher (appel entrant, notification, geste
+  //     systeme) -> touchcancel arrive, touchend n arrive JAMAIS ;
+  //   - l application passe en arriere-plan -> ni l un ni l autre ;
+  //   - la feuille est fermee pendant l appui (voile, Escape, retour) -> le
+  //     bouton reste monte le temps de l animation de sortie et l intervalle
+  //     continuerait de courir.
+  // Dans les trois cas l etat restait bloque sur « en cours d appui » et la
+  // minuterie allait au bout : une connexion supprimee que personne n a voulu
+  // supprimer. C est irreversible. Le troisieme cas est traite par `actif`
+  // ci-dessus, les deux autres par les ecouteurs de fenetre ci-dessous.
+  useEffect(() => {
+    if (!holding) return;
+    const relacher = () => setAppuiPose(false);
+    const surVisibilite = () => {
+      if (document.visibilityState !== "visible") setAppuiPose(false);
+    };
+    // Au niveau de la fenetre : un relachement ou une interruption hors du
+    // bouton n atteindrait pas ses propres gestionnaires.
+    window.addEventListener("pointerup", relacher);
+    window.addEventListener("pointercancel", relacher);
+    window.addEventListener("touchend", relacher);
+    window.addEventListener("touchcancel", relacher);
+    window.addEventListener("blur", relacher);
+    document.addEventListener("visibilitychange", surVisibilite);
+    return () => {
+      window.removeEventListener("pointerup", relacher);
+      window.removeEventListener("pointercancel", relacher);
+      window.removeEventListener("touchend", relacher);
+      window.removeEventListener("touchcancel", relacher);
+      window.removeEventListener("blur", relacher);
+      document.removeEventListener("visibilitychange", surVisibilite);
+    };
+  }, [holding]);
 
   useEffect(() => {
-    if (!holding) {
+    if (!holding || !actif) {
       setProgress(0);
+      dejaConfirme.current = false;
       return;
     }
     const t0 = Date.now();
     const tick = () => {
       const p = Math.min(1, (Date.now() - t0) / HOLD_MS);
       setProgress(p);
-      if (p >= 1) {
-        onConfirm();
-        setHolding(false);
+      if (p >= 1 && !dejaConfirme.current) {
+        dejaConfirme.current = true;
+        onConfirmRef.current();
+        setAppuiPose(false);
       }
     };
     const id = setInterval(tick, 16);
     return () => clearInterval(id);
-  }, [holding, onConfirm, setProgress]);
+  }, [holding, actif, setProgress]);
 
   return (
     <button
-      onMouseDown={() => setHolding(true)}
-      onMouseUp={() => setHolding(false)}
-      onMouseLeave={() => setHolding(false)}
-      onTouchStart={() => setHolding(true)}
-      onTouchEnd={() => setHolding(false)}
+      type="button"
+      onMouseDown={() => setAppuiPose(true)}
+      onMouseUp={() => setAppuiPose(false)}
+      onMouseLeave={() => setAppuiPose(false)}
+      onTouchStart={() => setAppuiPose(true)}
+      onTouchEnd={() => setAppuiPose(false)}
+      onTouchCancel={() => setAppuiPose(false)}
+      onPointerCancel={() => setAppuiPose(false)}
+      // Le menu contextuel d appui long de la WebView vole le toucher sans
+      // emettre touchend : on l empeche plutot que de le subir.
+      onContextMenu={(e) => e.preventDefault()}
       className="relative mt-5 w-full overflow-hidden rounded-full py-3 text-sm font-semibold"
       // C est LE bouton de confirmation de suppression. Il peignait --danger
       // sur une tuile faite de --danger : convergence de la regle 3, sur une

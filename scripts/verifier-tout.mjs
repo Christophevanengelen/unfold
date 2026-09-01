@@ -46,6 +46,9 @@ const CONTROLES = [
   { nom: "Prevision de la semaine", cmd: ["node", ["scripts/verifier-prevision.mjs"]] },
   { nom: "Liens magiques", cmd: ["node", ["scripts/verifier-liens-profonds.mjs"]] },
   { nom: "Cibles du guide", cmd: ["node", ["scripts/verifier-guide.mjs"]] },
+  { nom: "Recits en dix langues", cmd: ["node", ["scripts/verifier-recits.mjs"]] },
+  { nom: "Pages jetables", cmd: ["node", ["scripts/verifier-pages-jetables.mjs"]] },
+  { nom: "Gabarit d environnement", cmd: ["node", ["scripts/verifier-env-exemple.mjs"]] },
 ];
 
 /**
@@ -117,6 +120,19 @@ if (echecs) {
   console.log("");
   process.exit(1);
 }
+
+// Ces treize controles sont STATIQUES. Aucun n ouvre l app, aucun ne clique.
+//
+// C est leur limite, et elle a coute cher : un bouton de relance branche sur une
+// clef qu il n effacait pas, un guide suspendu a un evenement devenu impossible,
+// un reglage qui n enregistrait rien, une route qui lisait la reponse du moteur
+// un niveau trop haut. Les quatre compilaient. Les quatre passaient ici.
+//
+// Les parcours vivent dans e2e/ et s executent en 36 secondes. Ils ne sont pas
+// dans cette suite parce qu ils ont besoin d un serveur, mais ils sont dans
+// `npm run avant-build`, qui est la commande a lancer avant de livrer.
+console.log("  Ces controles sont statiques : aucun n ouvre l app.");
+console.log("  Avant de livrer : npm run avant-build  (ceux-ci + les 21 parcours)\n");
 
 if (dette.length) {
   const total = dette.reduce((s, d) => s + d.restant, 0);

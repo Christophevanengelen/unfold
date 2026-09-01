@@ -9,7 +9,10 @@ export function MockBottomNav({ active = "timeline" }: { active?: "home" | "time
   return (
     <div
       className="flex items-center justify-around px-6 py-3"
-      style={{ borderTop: "1px solid color-mix(in srgb, var(--brand-6) 12%, transparent)" }}
+      // La barre se detache du contenu par sa SURFACE, pas par un filet de
+      // 1 px pose en travers de la maquette. Un fond legerement decale du fond
+      // de page dit la meme chose et tient sur toute la hauteur de la barre.
+      style={{ background: "color-mix(in srgb, var(--brand-6) 10%, transparent)" }}
     >
       {/* Home */}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color("home")} strokeWidth="1.5">

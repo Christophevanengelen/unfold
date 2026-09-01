@@ -126,7 +126,20 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         animate={{ opacity: 0.85 }}
         transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        {t("onboarding.p3_sub", locale)}
+        {/* « Voici a quoi ressemble un rythme », et non « Certaines sont
+            actives en ce moment ».
+
+            Les quatre planetes allumees plus bas sont ecrites en dur dans
+            PLANETS : les memes pour tout le monde, et cet ecran arrive AVANT
+            qu on ait demande la date de naissance. Annoncer que certaines
+            sont actives MAINTENANT faisait de ce dessin une lecture, alors
+            qu on n a rien pour la faire. La phrase dit desormais ce que le
+            dessin est : un exemple de rythme. La question qui suit —
+            « Lesquelles sont les tiennes ? » — garde tout son sens.
+
+            Clef composee depuis perso-i18n plutot qu ajoutee a i18n-demo :
+            d autres agents travaillent sur ces fichiers en meme temps. */}
+        {perso("demo.ton_rythme", locale)}
       </motion.p>
 
       <div className="flex-1 relative overflow-hidden">

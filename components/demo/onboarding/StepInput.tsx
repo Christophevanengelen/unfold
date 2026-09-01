@@ -325,6 +325,9 @@ export function StepInput({
             <motion.div
               key={field.key}
               ref={isPlaceField ? placeRef : undefined}
+              // EXCEPTION ASSUMEE : c est un champ de saisie. Son contour dit
+              // ou taper, et le passage a --accent-purple au focus est
+              // l indication de foyer. Les deux restent — fonction, pas decor.
               className="relative rounded-2xl border border-border-light bg-bg-secondary px-4 py-3.5 transition-colors duration-200 focus-within:border-accent-purple"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -473,14 +476,18 @@ export function StepInput({
                     <motion.div
                       id="villes-suggerees"
                       role="listbox"
-                      className="absolute left-0 right-0 z-50 rounded-xl border overflow-y-auto"
+                      // Le panneau de suggestions FLOTTE au-dessus du
+                      // formulaire : c est le seul cas ou l elevation est la
+                      // bonne reponse, et .shadow-elevated existe deja. Son
+                      // fond --bg-secondary le pose, l ombre le decolle. Plus
+                      // de cadre.
+                      className="absolute left-0 right-0 z-50 rounded-xl overflow-y-auto shadow-elevated"
                       style={{
                         ...(versLeHaut
                           ? { bottom: "100%", marginBottom: 4 }
                           : { top: "100%", marginTop: 4 }),
                         maxHeight: 220,
                         background: "var(--bg-secondary)",
-                        borderColor: "var(--border-light)",
                       }}
                       initial={{ opacity: 0, y: versLeHaut ? 4 : -4 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -512,9 +519,12 @@ export function StepInput({
                             type="button"
                             onMouseEnter={() => setSurvol(index)}
                             onClick={() => selectCity(city)}
-                            className="flex min-h-11 w-full flex-col justify-center border-b px-4 py-2 text-left transition-colors last:border-b-0"
+                            // Plus de filet entre les villes. Chaque ligne
+                            // fait au moins 44 points de haut et la ligne
+                            // survolee prend --bg-tertiary : c est le fond qui
+                            // designe, comme partout ailleurs.
+                            className="flex min-h-11 w-full flex-col justify-center px-4 py-2 text-left transition-colors"
                             style={{
-                              borderColor: "var(--border-muted)",
                               background:
                                 survol === index ? "var(--bg-tertiary)" : "transparent",
                             }}

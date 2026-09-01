@@ -100,6 +100,7 @@ type Strings = {
     streak_day: string;       // "Day {n}" — status bar streak counter
   };
   auth: {
+    signing_in: string;
     title: string;
     sub: string;
     email_placeholder: string;
@@ -161,6 +162,32 @@ type Strings = {
     p6_heure_aide: string; p6_lieu: string; p6_lieu_ex: string; p6_lieu_aide: string;
     p6_error: string; p6_signal_active: string; p6_built_real: string; p6_built_sample: string;
   };
+  connexions: {
+    titre: string;
+    compte: string;
+    compris: string;
+    code_soi: string;
+    code_deja: string;
+    code_introuvable: string;
+    code_erreur: string;
+    code_reseau: string;
+    code_ou_lien: string;
+    partage_sous: string;
+    votre_code: string;
+    bouton_sms: string;
+    copier: string;
+    copie: string;
+    retour_liste: string;
+    partage_message: string;
+    partage_sujet: string;
+    moi: string;
+    quelquun: string;
+    connexion_en_cours: string;
+    connecte_avec: string;
+  };
+  boudin: {
+    titre: string;
+  };
 };
 
 const FR: Strings = {
@@ -215,6 +242,7 @@ const FR: Strings = {
     streak_day: "Jour {n}",
   },
   auth: {
+    signing_in: "Connexion en cours…",
     title: "Connexion",
     sub: "Reçois un lien magique par email — sans mot de passe.",
     email_placeholder: "ton@email.com",
@@ -273,6 +301,32 @@ const FR: Strings = {
     p6_heure_aide: "Requis — l'heure change tout le calcul", p6_lieu: "Lieu de naissance", p6_lieu_ex: "Ville, pays", p6_lieu_aide: "Requis — tape et choisis dans la liste",
     p6_error: "Problème de connexion. Données d'exemple utilisées.", p6_signal_active: "Ton signal est actif", p6_built_real: "Calculé depuis les données planétaires exactes de ta naissance.", p6_built_sample: "Explore avec des données d'exemple. Saisis ta naissance pour une lecture personnelle.",
   },
+  connexions: {
+    titre: "Connexions",
+    compte: "{n} connecté(s)",
+    compris: "Compris",
+    code_soi: "C'est votre propre code.",
+    code_deja: "Déjà connecté avec ce code.",
+    code_introuvable: "Code introuvable. Demande à la personne de rouvrir Favorable une fois pour synchroniser son code.",
+    code_erreur: "Erreur de connexion. Réessaie dans un instant.",
+    code_reseau: "Erreur réseau. Réessaie dans un instant.",
+    code_ou_lien: "Ou demande le lien d'invitation complet pour une connexion sans code.",
+    partage_sous: "Envoyez ce lien pour comparer vos rythmes.",
+    votre_code: "Votre code",
+    bouton_sms: "Message",
+    copier: "Copier le lien",
+    copie: "Copié !",
+    retour_liste: "Retour aux connexions",
+    partage_message: "Je compare nos rythmes sur Favorable. Clique ici pour voir notre compatibilité : {url}",
+    partage_sujet: "Comparons nos rythmes sur Favorable",
+    moi: "Moi",
+    quelquun: "quelqu'un",
+    connexion_en_cours: "Connexion en cours…",
+    connecte_avec: "Connecté avec {name}",
+  },
+  boudin: {
+    titre: "Timeline de vie",
+  },
 };
 
 const EN: Strings = {
@@ -327,6 +381,7 @@ const EN: Strings = {
     streak_day: "Day {n}",
   },
   auth: {
+    signing_in: "Signing you in…",
     title: "Sign in",
     sub: "Get a magic link by email — no password.",
     email_placeholder: "you@email.com",
@@ -385,6 +440,32 @@ const EN: Strings = {
     p6_heure_aide: "Required — the time changes the whole calculation", p6_lieu: "Place of birth", p6_lieu_ex: "City, country", p6_lieu_aide: "Required — type and pick from the list",
     p6_error: "Connection issue. Using sample data instead.", p6_signal_active: "Your signal is active", p6_built_real: "Built from real planetary data for your exact birth moment.", p6_built_sample: "Explore with sample data. Enter your birth info for a personal reading.",
   },
+  connexions: {
+    titre: "Connections",
+    compte: "{n} connected",
+    compris: "Got it",
+    code_soi: "That's your own code.",
+    code_deja: "Already connected with this code.",
+    code_introuvable: "Code not found. Ask the other person to open Favorable once so their code syncs.",
+    code_erreur: "Connection error. Try again in a moment.",
+    code_reseau: "Network error. Try again in a moment.",
+    code_ou_lien: "Or ask for the full invite link to connect without a code.",
+    partage_sous: "Send this link to compare your rhythms.",
+    votre_code: "Your code",
+    bouton_sms: "Message",
+    copier: "Copy link",
+    copie: "Copied!",
+    retour_liste: "Back to connections",
+    partage_message: "I'm comparing our rhythms on Favorable. Click here to see how we match: {url}",
+    partage_sujet: "Let's compare our rhythms on Favorable",
+    moi: "Me",
+    quelquun: "someone",
+    connexion_en_cours: "Connecting…",
+    connecte_avec: "Connected with {name}",
+  },
+  boudin: {
+    titre: "Lifetime timeline",
+  },
 };
 
 const ES: Strings = {
@@ -439,6 +520,7 @@ const ES: Strings = {
     streak_day: "Día {n}",
   },
   auth: {
+    signing_in: "Iniciando sesión…",
     title: "Iniciar sesión",
     sub: "Recibe un enlace mágico por email — sin contraseña.",
     email_placeholder: "tu@email.com",
@@ -497,6 +579,32 @@ const ES: Strings = {
     p6_heure_aide: "Obligatorio — la hora cambia todo el cálculo", p6_lieu: "Lugar de nacimiento", p6_lieu_ex: "Ciudad, país", p6_lieu_aide: "Obligatorio — escribe y elige de la lista",
     p6_error: "Problema de conexión. Usando datos de ejemplo.", p6_signal_active: "Tu señal está activa", p6_built_real: "Basado en datos planetarios reales de tu momento de nacimiento exacto.", p6_built_sample: "Explora con datos de ejemplo. Ingresa tus datos de nacimiento para una lectura personal.",
   },
+  connexions: {
+    titre: "Conexiones",
+    compte: "{n} conectado(s)",
+    compris: "Entendido",
+    code_soi: "Ese es tu propio código.",
+    code_deja: "Ya estás conectado con este código.",
+    code_introuvable: "Código no encontrado. Pídele a la otra persona que abra Favorable una vez para sincronizar su código.",
+    code_erreur: "Error de conexión. Inténtalo de nuevo en un momento.",
+    code_reseau: "Error de red. Inténtalo de nuevo en un momento.",
+    code_ou_lien: "O pide el enlace de invitación completo para conectar sin código.",
+    partage_sous: "Envía este enlace para comparar vuestros ritmos.",
+    votre_code: "Tu código",
+    bouton_sms: "Mensaje",
+    copier: "Copiar el enlace",
+    copie: "¡Copiado!",
+    retour_liste: "Volver a las conexiones",
+    partage_message: "Estoy comparando nuestros ritmos en Favorable. Haz clic aquí para ver nuestra compatibilidad: {url}",
+    partage_sujet: "Comparemos nuestros ritmos en Favorable",
+    moi: "Yo",
+    quelquun: "alguien",
+    connexion_en_cours: "Conectando…",
+    connecte_avec: "Conectado con {name}",
+  },
+  boudin: {
+    titre: "Línea de tiempo de vida",
+  },
 };
 
 const DE: Strings = {
@@ -551,6 +659,7 @@ const DE: Strings = {
     streak_day: "Tag {n}",
   },
   auth: {
+    signing_in: "Anmeldung läuft…",
     title: "Anmelden",
     sub: "Erhalte einen magischen Link per E-Mail — kein Passwort.",
     email_placeholder: "du@email.com",
@@ -609,6 +718,32 @@ const DE: Strings = {
     p6_heure_aide: "Erforderlich — die Zeit ändert die ganze Berechnung", p6_lieu: "Geburtsort", p6_lieu_ex: "Stadt, Land", p6_lieu_aide: "Erforderlich — tippe und wähle aus der Liste",
     p6_error: "Verbindungsproblem. Beispieldaten werden verwendet.", p6_signal_active: "Dein Signal ist aktiv", p6_built_real: "Basiert auf echten Planetendaten für deinen genauen Geburtsmoment.", p6_built_sample: "Erkunde mit Beispieldaten. Gib deine Geburtsdaten für eine persönliche Lesung ein.",
   },
+  connexions: {
+    titre: "Verbindungen",
+    compte: "{n} verbunden",
+    compris: "Verstanden",
+    code_soi: "Das ist dein eigener Code.",
+    code_deja: "Mit diesem Code bereits verbunden.",
+    code_introuvable: "Code nicht gefunden. Bitte die andere Person, Favorable einmal zu öffnen, damit ihr Code synchronisiert wird.",
+    code_erreur: "Verbindungsfehler. Versuch es gleich noch einmal.",
+    code_reseau: "Netzwerkfehler. Versuch es gleich noch einmal.",
+    code_ou_lien: "Oder frag nach dem vollständigen Einladungslink, um dich ohne Code zu verbinden.",
+    partage_sous: "Schick diesen Link, um eure Rhythmen zu vergleichen.",
+    votre_code: "Dein Code",
+    bouton_sms: "Nachricht",
+    copier: "Link kopieren",
+    copie: "Kopiert!",
+    retour_liste: "Zurück zu den Verbindungen",
+    partage_message: "Ich vergleiche unsere Rhythmen auf Favorable. Klick hier, um unsere Übereinstimmung zu sehen: {url}",
+    partage_sujet: "Vergleichen wir unsere Rhythmen auf Favorable",
+    moi: "Ich",
+    quelquun: "jemandem",
+    connexion_en_cours: "Verbindung läuft…",
+    connecte_avec: "Mit {name} verbunden",
+  },
+  boudin: {
+    titre: "Lebens-Zeitleiste",
+  },
 };
 
 const IT: Strings = {
@@ -663,6 +798,7 @@ const IT: Strings = {
     streak_day: "Giorno {n}",
   },
   auth: {
+    signing_in: "Accesso in corso…",
     title: "Accedi",
     sub: "Ricevi un link magico via email — senza password.",
     email_placeholder: "tu@email.com",
@@ -721,6 +857,32 @@ const IT: Strings = {
     p6_heure_aide: "Obbligatorio — l'ora cambia tutto il calcolo", p6_lieu: "Luogo di nascita", p6_lieu_ex: "Città, paese", p6_lieu_aide: "Obbligatorio — scrivi e scegli dalla lista",
     p6_error: "Problema di connessione. Uso dati di esempio.", p6_signal_active: "Il tuo segnale è attivo", p6_built_real: "Basato su dati planetari reali per il tuo esatto momento di nascita.", p6_built_sample: "Esplora con dati di esempio. Inserisci i tuoi dati di nascita per una lettura personale.",
   },
+  connexions: {
+    titre: "Connessioni",
+    compte: "{n} connesso/i",
+    compris: "Ho capito",
+    code_soi: "È il tuo stesso codice.",
+    code_deja: "Già connesso con questo codice.",
+    code_introuvable: "Codice non trovato. Chiedi all'altra persona di aprire Favorable una volta per sincronizzare il suo codice.",
+    code_erreur: "Errore di connessione. Riprova tra un istante.",
+    code_reseau: "Errore di rete. Riprova tra un istante.",
+    code_ou_lien: "Oppure chiedi il link d'invito completo per connetterti senza codice.",
+    partage_sous: "Invia questo link per confrontare i vostri ritmi.",
+    votre_code: "Il tuo codice",
+    bouton_sms: "Messaggio",
+    copier: "Copia il link",
+    copie: "Copiato!",
+    retour_liste: "Torna alle connessioni",
+    partage_message: "Sto confrontando i nostri ritmi su Favorable. Clicca qui per vedere la nostra compatibilità: {url}",
+    partage_sujet: "Confrontiamo i nostri ritmi su Favorable",
+    moi: "Io",
+    quelquun: "qualcuno",
+    connexion_en_cours: "Connessione in corso…",
+    connecte_avec: "Connesso con {name}",
+  },
+  boudin: {
+    titre: "Timeline di vita",
+  },
 };
 
 const PT: Strings = {
@@ -775,6 +937,7 @@ const PT: Strings = {
     streak_day: "Dia {n}",
   },
   auth: {
+    signing_in: "A iniciar sessão…",
     title: "Entrar",
     sub: "Receba um link mágico por email — sem senha.",
     email_placeholder: "voce@email.com",
@@ -833,6 +996,32 @@ const PT: Strings = {
     p6_heure_aide: "Obrigatório — a hora muda todo o cálculo", p6_lieu: "Local de nascimento", p6_lieu_ex: "Cidade, país", p6_lieu_aide: "Obrigatório — escreve e escolhe da lista",
     p6_error: "Problema de conexão. Usando dados de exemplo.", p6_signal_active: "Teu sinal está ativo", p6_built_real: "Baseado em dados planetários reais para teu exato momento de nascimento.", p6_built_sample: "Explore com dados de exemplo. Insira seu nascimento para uma leitura pessoal.",
   },
+  connexions: {
+    titre: "Ligações",
+    compte: "{n} ligado(s)",
+    compris: "Entendido",
+    code_soi: "Esse é o teu próprio código.",
+    code_deja: "Já estás ligado com este código.",
+    code_introuvable: "Código não encontrado. Pede à outra pessoa para abrir o Favorable uma vez para sincronizar o código.",
+    code_erreur: "Erro de ligação. Tenta de novo daqui a pouco.",
+    code_reseau: "Erro de rede. Tenta de novo daqui a pouco.",
+    code_ou_lien: "Ou pede o link de convite completo para ligar sem código.",
+    partage_sous: "Envia este link para comparar os vossos ritmos.",
+    votre_code: "O teu código",
+    bouton_sms: "Mensagem",
+    copier: "Copiar o link",
+    copie: "Copiado!",
+    retour_liste: "Voltar às ligações",
+    partage_message: "Estou a comparar os nossos ritmos no Favorable. Clica aqui para ver a nossa compatibilidade: {url}",
+    partage_sujet: "Vamos comparar os nossos ritmos no Favorable",
+    moi: "Eu",
+    quelquun: "alguém",
+    connexion_en_cours: "A ligar…",
+    connecte_avec: "Ligado com {name}",
+  },
+  boudin: {
+    titre: "Linha do tempo de vida",
+  },
 };
 
 const NL: Strings = {
@@ -887,6 +1076,7 @@ const NL: Strings = {
     streak_day: "Dag {n}",
   },
   auth: {
+    signing_in: "Je wordt aangemeld…",
     title: "Inloggen",
     sub: "Ontvang een magische link per e-mail — geen wachtwoord.",
     email_placeholder: "jij@email.com",
@@ -945,6 +1135,32 @@ const NL: Strings = {
     p6_heure_aide: "Vereist — de tijd verandert de hele berekening", p6_lieu: "Geboorteplaats", p6_lieu_ex: "Stad, land", p6_lieu_aide: "Vereist — typ en kies uit de lijst",
     p6_error: "Verbindingsprobleem. Voorbeeldgegevens worden gebruikt.", p6_signal_active: "Jouw signaal is actief", p6_built_real: "Gebaseerd op echte planetaire gegevens voor jouw exacte geboortemoment.", p6_built_sample: "Verken met voorbeeldgegevens. Voer je geboortegegevens in voor een persoonlijke lezing.",
   },
+  connexions: {
+    titre: "Connecties",
+    compte: "{n} verbonden",
+    compris: "Begrepen",
+    code_soi: "Dat is je eigen code.",
+    code_deja: "Al verbonden met deze code.",
+    code_introuvable: "Code niet gevonden. Vraag de ander om Favorable één keer te openen zodat de code synchroniseert.",
+    code_erreur: "Verbindingsfout. Probeer het zo opnieuw.",
+    code_reseau: "Netwerkfout. Probeer het zo opnieuw.",
+    code_ou_lien: "Of vraag om de volledige uitnodigingslink om zonder code te verbinden.",
+    partage_sous: "Stuur deze link om jullie ritmes te vergelijken.",
+    votre_code: "Jouw code",
+    bouton_sms: "Bericht",
+    copier: "Link kopiëren",
+    copie: "Gekopieerd!",
+    retour_liste: "Terug naar connecties",
+    partage_message: "Ik vergelijk onze ritmes op Favorable. Klik hier om onze match te zien: {url}",
+    partage_sujet: "Laten we onze ritmes vergelijken op Favorable",
+    moi: "Ik",
+    quelquun: "iemand",
+    connexion_en_cours: "Verbinden…",
+    connecte_avec: "Verbonden met {name}",
+  },
+  boudin: {
+    titre: "Levenstijdlijn",
+  },
 };
 
 const JA: Strings = {
@@ -999,6 +1215,7 @@ const JA: Strings = {
     streak_day: "{n}日目",
   },
   auth: {
+    signing_in: "サインインしています…",
     title: "サインイン",
     sub: "メールでマジックリンクを受け取る — パスワード不要。",
     email_placeholder: "あなた@email.com",
@@ -1057,6 +1274,32 @@ const JA: Strings = {
     p6_heure_aide: "必須 — 時刻で計算が変わります", p6_lieu: "出生地", p6_lieu_ex: "都市、国", p6_lieu_aide: "必須 — 入力して一覧から選択",
     p6_error: "接続の問題。サンプルデータを使用中。", p6_signal_active: "あなたのシグナルは活性化中", p6_built_real: "あなたの正確な誕生時の惑星データから構築。", p6_built_sample: "サンプルデータで探索。個人的なリーディングのために誕生情報を入力してください。",
   },
+  connexions: {
+    titre: "つながり",
+    compte: "{n}人とつながっています",
+    compris: "了解",
+    code_soi: "それはあなた自身のコードです。",
+    code_deja: "このコードではすでにつながっています。",
+    code_introuvable: "コードが見つかりません。相手に Favorable を一度開いてコードを同期してもらってください。",
+    code_erreur: "接続エラーです。少ししてからもう一度お試しください。",
+    code_reseau: "ネットワークエラーです。少ししてからもう一度お試しください。",
+    code_ou_lien: "または招待リンク全体をもらえば、コードなしでつながれます。",
+    partage_sous: "このリンクを送って、お互いのリズムを比べましょう。",
+    votre_code: "あなたのコード",
+    bouton_sms: "メッセージ",
+    copier: "リンクをコピー",
+    copie: "コピーしました",
+    retour_liste: "つながり一覧に戻る",
+    partage_message: "Favorable でお互いのリズムを比べています。相性はこちらから: {url}",
+    partage_sujet: "Favorable でお互いのリズムを比べよう",
+    moi: "自分",
+    quelquun: "だれか",
+    connexion_en_cours: "接続中…",
+    connecte_avec: "{name} とつながりました",
+  },
+  boudin: {
+    titre: "生涯タイムライン",
+  },
 };
 
 const ZH: Strings = {
@@ -1111,6 +1354,7 @@ const ZH: Strings = {
     streak_day: "第{n}天",
   },
   auth: {
+    signing_in: "正在登录…",
     title: "登录",
     sub: "通过电子邮件获取魔法链接 — 无需密码。",
     email_placeholder: "you@email.com",
@@ -1169,6 +1413,32 @@ const ZH: Strings = {
     p6_heure_aide: "必填 — 时间会改变整个计算", p6_lieu: "出生地", p6_lieu_ex: "城市、国家", p6_lieu_aide: "必填 — 输入并从列表中选择",
     p6_error: "连接问题。使用示例数据。", p6_signal_active: "您的信号正在激活", p6_built_real: "基于您精确出生时刻的真实行星数据构建。", p6_built_sample: "用示例数据探索。输入您的出生信息以获得个人解读。",
   },
+  connexions: {
+    titre: "连接",
+    compte: "已连接 {n} 人",
+    compris: "知道了",
+    code_soi: "这是你自己的代码。",
+    code_deja: "已通过此代码连接。",
+    code_introuvable: "找不到该代码。请对方打开一次 Favorable 以同步代码。",
+    code_erreur: "连接出错。请稍后再试。",
+    code_reseau: "网络出错。请稍后再试。",
+    code_ou_lien: "或者索取完整的邀请链接，无需代码即可连接。",
+    partage_sous: "发送此链接，比较你们的节奏。",
+    votre_code: "你的代码",
+    bouton_sms: "短信",
+    copier: "复制链接",
+    copie: "已复制",
+    retour_liste: "返回连接列表",
+    partage_message: "我在 Favorable 上比较我们的节奏。点击这里查看我们的契合度：{url}",
+    partage_sujet: "在 Favorable 上比较我们的节奏",
+    moi: "我",
+    quelquun: "某人",
+    connexion_en_cours: "正在连接…",
+    connecte_avec: "已与 {name} 连接",
+  },
+  boudin: {
+    titre: "一生时间线",
+  },
 };
 
 const AR: Strings = {
@@ -1223,6 +1493,7 @@ const AR: Strings = {
     streak_day: "اليوم {n}",
   },
   auth: {
+    signing_in: "جارٍ تسجيل الدخول…",
     title: "تسجيل الدخول",
     sub: "احصل على رابط سحري عبر البريد الإلكتروني — بدون كلمة مرور.",
     email_placeholder: "you@email.com",
@@ -1280,6 +1551,32 @@ const AR: Strings = {
     p6_nom: "الاسم", p6_nom_ex: "بماذا نناديك؟", p6_date: "تاريخ الميلاد", p6_heure: "وقت الميلاد",
     p6_heure_aide: "مطلوب — الوقت يغيّر الحساب كله", p6_lieu: "مكان الميلاد", p6_lieu_ex: "المدينة، البلد", p6_lieu_aide: "مطلوب — اكتب واختر من القائمة",
     p6_error: "مشكلة في الاتصال. استخدام بيانات نموذجية.", p6_signal_active: "إشارتك نشطة", p6_built_real: "مبني من بيانات كوكبية حقيقية للحظة ميلادك الدقيقة.", p6_built_sample: "استكشف مع بيانات نموذجية. أدخل معلومات ميلادك للحصول على قراءة شخصية.",
+  },
+  connexions: {
+    titre: "الاتصالات",
+    compte: "{n} متصل",
+    compris: "فهمت",
+    code_soi: "هذا رمزك أنت.",
+    code_deja: "أنت متصل بهذا الرمز بالفعل.",
+    code_introuvable: "لم يُعثر على الرمز. اطلب من الشخص الآخر فتح Favorable مرة واحدة لمزامنة رمزه.",
+    code_erreur: "خطأ في الاتصال. أعد المحاولة بعد قليل.",
+    code_reseau: "خطأ في الشبكة. أعد المحاولة بعد قليل.",
+    code_ou_lien: "أو اطلب رابط الدعوة الكامل للاتصال بدون رمز.",
+    partage_sous: "أرسل هذا الرابط لمقارنة إيقاعيكما.",
+    votre_code: "رمزك",
+    bouton_sms: "رسالة",
+    copier: "نسخ الرابط",
+    copie: "تم النسخ",
+    retour_liste: "العودة إلى الاتصالات",
+    partage_message: "أقارن إيقاعينا على Favorable. اضغط هنا لرؤية توافقنا: {url}",
+    partage_sujet: "لنقارن إيقاعينا على Favorable",
+    moi: "أنا",
+    quelquun: "شخص ما",
+    connexion_en_cours: "جارٍ الاتصال…",
+    connecte_avec: "متصل مع {name}",
+  },
+  boudin: {
+    titre: "الجدول الزمني للحياة",
   },
 };
 

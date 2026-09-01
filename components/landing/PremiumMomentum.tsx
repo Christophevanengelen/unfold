@@ -17,19 +17,19 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
 // Life timeline boudins — past visible, future locked then revealed
 const BOUDINS = [
   // Future (TOP, locked then revealed)
-  { y: 0,   w: 18, h: 28, color: "#6BA89A", opacity: 0.6, isFuture: true },
-  { y: 34,  w: 24, h: 40, color: "#B07CC2", opacity: 0.7, isFuture: true, isPeak: true },
-  { y: 80,  w: 16, h: 22, color: "#50C4D6", opacity: 0.6, isFuture: true },
-  { y: 108, w: 28, h: 48, color: "#9585CC", opacity: 0.7, isFuture: true, isPeak: true },
-  { y: 162, w: 22, h: 36, color: "#6BA89A", opacity: 0.7, isFuture: true },
+  { y: 0,   w: 18, h: 28, color: "var(--echantillon-sauge)", opacity: 0.6, isFuture: true },
+  { y: 34,  w: 24, h: 40, color: "var(--echantillon-violet-chaud)", opacity: 0.7, isFuture: true, isPeak: true },
+  { y: 80,  w: 16, h: 22, color: "var(--echantillon-turquoise)", opacity: 0.6, isFuture: true },
+  { y: 108, w: 28, h: 48, color: "var(--echantillon-violet)", opacity: 0.7, isFuture: true, isPeak: true },
+  { y: 162, w: 22, h: 36, color: "var(--echantillon-sauge)", opacity: 0.7, isFuture: true },
   // NOW
-  { y: 210, w: 30, h: 50, color: "#B07CC2", opacity: 1, isCurrent: true },
+  { y: 210, w: 30, h: 50, color: "var(--echantillon-violet-chaud)", opacity: 1, isCurrent: true },
   // Past (BOTTOM, visible, faded)
-  { y: 272, w: 18, h: 28, color: "#D89EA0", opacity: 0.45 },
-  { y: 306, w: 24, h: 40, color: "#9585CC", opacity: 0.5 },
-  { y: 352, w: 14, h: 18, color: "#C4A86B", opacity: 0.35 },
-  { y: 376, w: 20, h: 34, color: "#6BA89A", opacity: 0.4 },
-  { y: 416, w: 16, h: 24, color: "#8B7FC2", opacity: 0.4 },
+  { y: 272, w: 18, h: 28, color: "var(--echantillon-rose)", opacity: 0.45 },
+  { y: 306, w: 24, h: 40, color: "var(--echantillon-violet)", opacity: 0.5 },
+  { y: 352, w: 14, h: 18, color: "var(--echantillon-or)", opacity: 0.35 },
+  { y: 376, w: 20, h: 34, color: "var(--echantillon-sauge)", opacity: 0.4 },
+  { y: 416, w: 16, h: 24, color: "var(--echantillon-lavande)", opacity: 0.4 },
 ];
 
 const NOW_Y = 240;
@@ -82,10 +82,10 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
 
             {/* NOW line */}
             <div className="absolute left-0 right-0 z-10 flex items-center gap-2" style={{ top: NOW_Y }}>
-              <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.2))" }} />
+              <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, var(--site-fondu-bord))" }} />
               <span className="text-[9px] font-bold uppercase tracking-[0.2em] px-2"
-                style={{ color: "white", opacity: 0.5 }}>now</span>
-              <div className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(255,255,255,0.2))" }} />
+                style={{ color: "var(--site-marqueur)", opacity: 0.5 }}>now</span>
+              <div className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, var(--site-fondu-bord))" }} />
             </div>
 
 
@@ -131,7 +131,7 @@ export function PremiumMomentum({ translations }: PremiumMomentumProps) {
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px]">
                     {Array.from({ length: b.isCurrent ? 4 : b.isPeak ? 3 : 2 }).map((_, j) => (
                       <div key={j} className="rounded-full"
-                        style={{ width: b.isCurrent ? 4 : 3, height: b.isCurrent ? 4 : 3, backgroundColor: "white", opacity: b.isCurrent ? 0.8 : 0.5 }} />
+                        style={{ width: b.isCurrent ? 4 : 3, height: b.isCurrent ? 4 : 3, backgroundColor: "var(--site-marqueur)", opacity: b.isCurrent ? 0.8 : 0.5 }} />
                     ))}
                   </div>
                 </motion.div>

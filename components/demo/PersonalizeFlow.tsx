@@ -467,6 +467,10 @@ function ScreenStyle({
           }}
           placeholder={perso("champ.libre", l)}
           maxLength={100}
+          // EXCEPTION ASSUMEE : un champ de saisie VIDE garde son contour.
+          // C est le trait qui dit ou taper ; sans lui et sans fond distinct,
+          // le champ n existe pas pour la personne. C est l un des trois seuls
+          // cas conserves le 01/09/2026.
           className="mt-2.5 w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-colors placeholder:opacity-40"
           style={{
             background: "var(--bg-secondary)",
@@ -526,12 +530,14 @@ function Chip({
       onClick={onSelect}
       whileTap={{ scale: 0.93 }}
       transition={springs.bouncy}
-      className={`rounded-full border px-3.5 py-2 text-[13px] font-medium transition-colors${grow ? " flex-1 text-center" : ""}`}
+      // La puce se detache de la page par --bg-secondary, et son etat choisi
+      // par un fond teinte de violet plus le libelle qui change de couleur.
+      // Deux fonds differents, plus aucun trait.
+      className={`rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors${grow ? " flex-1 text-center" : ""}`}
       style={{
         background: selected
           ? "color-mix(in srgb, var(--accent-purple) 15%, transparent)"
           : "var(--bg-secondary)",
-        borderColor: selected ? "var(--accent-purple)" : "var(--border-muted)",
         color: selected ? "var(--accent-purple)" : "var(--text-body)",
       }}
     >
@@ -571,7 +577,10 @@ function ColorChip({
       disabled={disabled}
       whileTap={disabled ? undefined : { scale: 0.93 }}
       transition={springs.bouncy}
-      className="rounded-full border px-3.5 py-2 text-[13px] font-medium transition-colors disabled:opacity-35"
+      // 18 % : c est la valeur que scripts/verifier-contraste.mjs prend pour
+      // modele du fond d une puce choisie. Elle ne bouge pas — la deplacer
+      // rendrait le controle faux sans que rien ne le dise. Seul le lisere part.
+      className="rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors disabled:opacity-35"
       style={(() => {
         const base = `var(--domaine-${domaine.replace(/_/g, "-")})`;
         const texte = `var(--domaine-${domaine.replace(/_/g, "-")}-texte)`;
@@ -579,7 +588,6 @@ function ColorChip({
           background: selected
             ? `color-mix(in srgb, ${base} 18%, transparent)`
             : "var(--bg-secondary)",
-          borderColor: selected ? base : "var(--border-muted)",
           color: selected ? texte : "var(--text-body)",
         };
       })()}
@@ -609,12 +617,14 @@ function StyleCard({
       onClick={onSelect}
       whileTap={{ scale: 0.96 }}
       transition={springs.bouncy}
-      className="flex flex-col items-start gap-2 rounded-2xl border p-3.5 text-left transition-colors"
+      // Les deux etats sont deja deux SURFACES : --bg-secondary d un cote, le
+      // meme fond teinte a 12 % de violet de l autre. Le lisere ne faisait que
+      // repeter ce que les fonds disaient.
+      className="flex flex-col items-start gap-2 rounded-2xl p-3.5 text-left transition-colors"
       style={{
         background: selected
           ? "color-mix(in srgb, var(--accent-purple) 12%, var(--bg-secondary))"
           : "var(--bg-secondary)",
-        borderColor: selected ? "var(--accent-purple)" : "var(--border-muted)",
       }}
     >
       <div

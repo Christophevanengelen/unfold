@@ -15,7 +15,7 @@ interface Props {
 }
 
 
-const GOLD = "#b59a4a";
+const GOLD = "var(--site-or)";
 
 interface GeoResult {
   displayName: string;
@@ -164,9 +164,9 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
   };
 
   const inputStyle: React.CSSProperties = {
-    background: `color-mix(in srgb, ${GOLD} 8%, var(--bg-primary, #1B1535))`,
+    background: `color-mix(in srgb, ${GOLD} 8%, var(--bg-primary))`,
     border: `1px solid color-mix(in srgb, ${GOLD} 28%, transparent)`,
-    color: "var(--text-heading, #E6E2F2)",
+    color: "var(--text-heading)",
     borderRadius: 10,
     outline: "none",
     width: "100%",
@@ -196,7 +196,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
     <div
       className="relative rounded-3xl border text-left"
       style={{
-        background: `color-mix(in srgb, ${GOLD} 7%, var(--bg-primary, #1B1535))`,
+        background: `color-mix(in srgb, ${GOLD} 7%, var(--bg-primary))`,
         borderColor: `color-mix(in srgb, ${GOLD} 22%, transparent)`,
       }}
     >
@@ -204,7 +204,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
       <div className="absolute right-4 top-4 md:right-6 md:top-6">
         <span
           className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
-          style={{ background: GOLD, color: "#fff" }}
+          style={{ background: GOLD, color: "var(--site-texte-sur-aplat)" }}
         >
           Premium
         </span>
@@ -217,11 +217,11 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
         </p>
         <h2
           className="mt-3 font-display text-[24px] font-bold leading-tight md:text-[30px]"
-          style={{ color: "var(--text-heading, #E6E2F2)", letterSpacing: -0.5 }}
+          style={{ color: "var(--text-heading)", letterSpacing: -0.5 }}
         >
           {chartTitle}
         </h2>
-        <p className="mt-3 max-w-lg text-[14px] leading-relaxed" style={{ color: "var(--text-body-subtle, #BFB6D6)" }}>
+        <p className="mt-3 max-w-lg text-[14px] leading-relaxed" style={{ color: "var(--text-body-subtle)" }}>
           {chartSub}
         </p>
 
@@ -235,7 +235,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                 type="button"
                 onClick={() => setShowForm(true)}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[13px] font-semibold transition-transform hover:scale-105 md:w-auto md:justify-start md:py-3"
-                style={{ background: GOLD, color: "#fff" }}
+                style={{ background: GOLD, color: "var(--site-texte-sur-aplat)" }}
               >
                 {chartCta}
                 <span aria-hidden>→</span>
@@ -251,7 +251,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
               <Link
                 href="/app/pricing"
                 className="py-2 text-center text-[13px] font-medium transition-opacity hover:opacity-70 md:py-0"
-                style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
+                style={{ color: "var(--text-body-subtle)" }}
               >
                 Subscribe →
               </Link>
@@ -269,7 +269,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                   autoFocus
                   className="w-full rounded-full px-4 py-3 text-[16px] font-semibold uppercase tracking-widest outline-none md:w-[200px] md:py-2.5 md:text-[13px]"
                   style={{
-                    background: `color-mix(in srgb, ${GOLD} 12%, var(--bg-primary, #1B1535))`,
+                    background: `color-mix(in srgb, ${GOLD} 12%, var(--bg-primary))`,
                     border: `1px solid color-mix(in srgb, ${GOLD} 35%, transparent)`,
                     color: GOLD,
                   }}
@@ -278,7 +278,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                   type="button"
                   onClick={tryCode}
                   className="rounded-full px-5 py-3 text-[13px] font-semibold transition-opacity hover:opacity-80 md:py-2.5"
-                  style={{ background: GOLD, color: "#fff" }}
+                  style={{ background: GOLD, color: "var(--site-texte-sur-aplat)" }}
                 >
                   Unlock
                 </button>
@@ -286,13 +286,13 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                   type="button"
                   onClick={() => { setShowCoupon(false); setCouponError(""); }}
                   className="py-2 text-[12px] transition-opacity hover:opacity-60 md:py-0"
-                  style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
+                  style={{ color: "var(--text-body-subtle)" }}
                 >
                   Cancel
                 </button>
               </div>
               {couponError && (
-                <p className="text-[12px]" style={{ color: "#e57373" }}>
+                <p className="text-[12px]" style={{ color: "var(--site-texte-erreur)" }}>
                   {couponError}{" "}
                   <Link href="/app/pricing" style={{ color: GOLD }}>Get access →</Link>
                 </p>
@@ -314,7 +314,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
               <div
                 className="mt-6 rounded-2xl p-4 md:p-6"
                 style={{
-                  background: `color-mix(in srgb, ${GOLD} 5%, var(--bg-primary, #1B1535))`,
+                  background: `color-mix(in srgb, ${GOLD} 5%, var(--bg-primary))`,
                   border: `1px solid color-mix(in srgb, ${GOLD} 18%, transparent)`,
                 }}
               >
@@ -392,7 +392,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                           padding: 0,
                           border: `1px solid color-mix(in srgb, ${GOLD} 25%, transparent)`,
                           borderRadius: 10,
-                          background: `color-mix(in srgb, ${GOLD} 6%, var(--bg-primary, #1B1535))`,
+                          background: `color-mix(in srgb, ${GOLD} 6%, var(--bg-primary))`,
                         }}
                       >
                         {suggestions.map((city) => (
@@ -404,7 +404,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                               style={{
                                 width: "100%",
                                 textAlign: "left",
-                                color: "var(--text-heading, #E6E2F2)",
+                                color: "var(--text-heading)",
                                 background: "none",
                                 border: "none",
                                 cursor: "pointer",
@@ -428,7 +428,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                 </div>
 
                 {formError && (
-                  <p className="mt-3 text-[12px]" style={{ color: "#e57373" }}>{formError}</p>
+                  <p className="mt-3 text-[12px]" style={{ color: "var(--site-texte-erreur)" }}>{formError}</p>
                 )}
 
                 <div className="mt-5 flex flex-col items-stretch gap-3 md:flex-row md:items-center">
@@ -437,7 +437,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                     onClick={handleGenerate}
                     disabled={isComputing}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-center text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 md:w-auto md:justify-start md:py-3"
-                    style={{ background: GOLD, color: "#fff" }}
+                    style={{ background: GOLD, color: "var(--site-texte-sur-aplat)" }}
                   >
                     {isComputing ? (
                       <>
@@ -456,14 +456,14 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
                       type="button"
                       onClick={() => { setShowForm(false); setFormError(""); }}
                       className="py-2 text-[12px] transition-opacity hover:opacity-60 md:py-0"
-                      style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
+                      style={{ color: "var(--text-body-subtle)" }}
                     >
                       Cancel
                     </button>
                   )}
                 </div>
 
-                <p className="mt-3 text-[11px]" style={{ color: "var(--text-body-subtle, #BFB6D6)", opacity: 0.5 }}>
+                <p className="mt-3 text-[11px]" style={{ color: "var(--text-body-subtle)", opacity: 0.5 }}>
                   Opens a visual preview — real personalized data available with{" "}
                   <Link href="/app/pricing" style={{ color: GOLD }}>a subscription →</Link>
                 </p>
@@ -502,7 +502,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-20"
           style={{
-            background: `linear-gradient(to bottom, transparent, color-mix(in srgb, ${GOLD} 7%, var(--bg-primary, #1B1535)))`,
+            background: `linear-gradient(to bottom, transparent, color-mix(in srgb, ${GOLD} 7%, var(--bg-primary)))`,
           }}
         />
       </div>
@@ -514,7 +514,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
             position: "fixed",
             inset: 0,
             zIndex: 9999,
-            background: "#13102A",
+            background: "var(--site-fond-panneau)",
             display: "flex",
             flexDirection: "column",
             animation: "fadeIn .25s ease",
@@ -526,8 +526,8 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
               alignItems: "center",
               justifyContent: "space-between",
               padding: "10px 20px",
-              borderBottom: `1px solid rgba(181,154,74,0.18)`,
-              background: "rgba(19,16,42,0.97)",
+              borderBottom: `1px solid color-mix(in srgb, ${GOLD} 18%, transparent)`,
+              background: "var(--site-fond-panneau-entete)",
               backdropFilter: "blur(10px)",
               flexShrink: 0,
             }}
@@ -540,8 +540,8 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
               onClick={() => setReportHtml(null)}
               className="h-11 w-11 shrink-0 md:h-8 md:w-8"
               style={{
-                background: `rgba(181,154,74,0.12)`,
-                border: `1px solid rgba(181,154,74,0.25)`,
+                background: `color-mix(in srgb, ${GOLD} 12%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${GOLD} 25%, transparent)`,
                 borderRadius: "50%",
                 color: GOLD,
                 fontSize: 16,

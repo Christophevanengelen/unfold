@@ -358,8 +358,11 @@ export function FirstUseGuide({
           ...(courant.carte === "haut"
             ? { top: "calc(var(--safe-top, 0px) + 40px)" }
             : { bottom: "calc(var(--barre-onglets, 64px) + var(--safe-bottom, 0px) + 16px)" }),
+          // La carte FLOTTE au-dessus du voile : c est son elevation qui la
+          // decolle, plus son fond opaque contre l entourage assombri. Le
+          // lisere etait une troisieme facon de dire la meme chose. L ombre
+          // etait deja la, elle n est pas ajoutee ici.
           background: "var(--bg-primary)",
-          border: "1px solid var(--border-light)",
           boxShadow: "0 8px 32px rgb(0 0 0 / 0.18)",
         }}
       >
@@ -401,9 +404,10 @@ export function FirstUseGuide({
             className="rounded-xl px-5 text-sm font-semibold"
             style={{
               minHeight: 48,
+              // Un bouton plein n a pas besoin d etre cerne : --bg-brand-strong
+              // est un aplat franc, il se voit contre --bg-primary de la carte.
               background: "var(--bg-brand-strong)",
               color: "var(--text-on-brand)",
-              border: "1px solid var(--border-brand)",
             }}
           >
             {dernier ? t("guide.commencer", locale) : t("guide.suivant", locale)}

@@ -44,13 +44,25 @@ const OPTIONS = (locale: Locale): PriorityOption[] => [
 ];
 
 interface StepPrioritiesProps {
+  /**
+   * Compteur incremente par le parent a chaque glissement REFUSE.
+   *
+   * Le bouton affiche la consigne quand on a touche une pastille sans en garder
+   * aucune. Le glissement, lui, ne faisait rien du tout : `avancer()` sortait
+   * en silence sur `priorities.length === 0`. Deux facons d avancer, une seule
+   * qui explique — et c est celle qu on utilise le moins qui restait muette.
+   *
+   * Un compteur et non un booleen : deux glissements de suite doivent rejouer
+   * l alerte, ce qu un booleen deja vrai ne ferait pas.
+   */
+  refusCount?: number;
   selected: PriorityDomain[];
   onChange: (priorities: PriorityDomain[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrioritiesProps) {
+export function StepPriorities({ selected, onChange, onNext, onBack, refusCount = 0 }: StepPrioritiesProps) {
   const { resolvedTheme } = useTheme();
   const themeLisible: ThemeLisible = resolvedTheme === "light" ? "clair" : "sombre";
   const [touched, setTouched] = useState(false);
@@ -72,7 +84,9 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
   // c est le moment ou la consigne doit se voir. Elle etait la depuis le debut,
   // en violet a 70 % au-dessus des neuf pastilles — donc lue comme un
   // sous-titre decoratif, pas comme la regle qui bloque le bouton.
-  const bloque = touched && !canContinue;
+  // Un glissement refuse vaut un contact : la consigne doit se dire, que la
+  // personne ait touche une pastille ou non.
+  const bloque = (touched || refusCount > 0) && !canContinue;
 
   return (
     <motion.div className="flex h-full flex-col">
@@ -162,7 +176,9 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
                   // devient lisible pour les neuf domaines dans les deux themes.
                   ? `color-mix(in srgb, ${opt.color} 70%, transparent)`
                   : `color-mix(in srgb, ${opt.color} 16%, transparent)`,
-                border: `1.5px solid ${isSelected ? opt.color : `color-mix(in srgb, ${opt.color} 45%, transparent)`}`,
+                // 70 % contre 16 % : les deux etats de la puce sont deja deux
+                // fonds sans rapport l un avec l autre. Le lisere de 1,5 px
+                // n avait plus rien a distinguer.
                 boxShadow: isSelected ? `0 0 16px color-mix(in srgb, ${opt.color} 25%, transparent)` : "none",
               }}
               initial={{ opacity: 0, scale: 0.9 }}

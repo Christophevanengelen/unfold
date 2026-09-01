@@ -175,7 +175,9 @@ function ScanFeed({ isLoading, phaseCount, breakdown }: { isLoading: boolean; ph
 export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   const locale = detectLocale();
   const router = useRouter();
-  const { loadSignals, state, phases, isLive, isLoadingLifetime, timelinePhases } = useMomentum();
+  // `state` et `reessayer` etaient disponibles et jamais pris : l ecran ne
+  // savait donc pas que le moteur avait echoue, et n offrait aucune sortie.
+  const { loadSignals, state: etatMoteur, phases, isLoadingLifetime, timelinePhases, reessayer } = useMomentum();
 
   // Prefetch timeline chunk + route while user watches the reveal
   useEffect(() => {
@@ -184,16 +186,15 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   }, [router]);
   const [completed, setCompleted] = useState<number[]>([]);
   const [visible, setVisible] = useState<number[]>([0]);
-  const [error, setError] = useState<string | null>(null);
+  // Un booleen, plus un message d erreur a afficher : le message disait
+  // « donnees d exemple utilisees » alors qu on n en substitue plus aucune.
+  const [echecLocal, setEchecLocal] = useState(false);
   const [revealPhase, setRevealPhase] = useState<"loading" | "past" | "present" | "ready">("loading");
   // statusLines est une FONCTION depuis que les libelles sont traduits : sa
   // propriete `.length` vaut donc son ARITE — 1 — et non le nombre d etapes.
   //
-  // Consequences, invisibles a la lecture : l anneau « termine » s allumait au
-  // bout de 800 ms puis repassait au chargement, et surtout le bloc d erreur
-  // `{error && allDone}` ne s affichait JAMAIS, puisque le catch pose trois
-  // etapes terminees et que 3 ne vaut pas 1. Un echec du moteur restait donc
-  // muet a l ecran.
+  // Consequence, invisible a la lecture : l anneau « termine » s allumait au
+  // bout de 800 ms puis repassait au chargement.
   //
   // C est moi qui ai introduit ce defaut en traduisant l ecran ce matin.
   const allDone = completed.length === statusLines(locale).length;
@@ -249,6 +250,38 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   // Get current phase
   const currentPhase = phases.find(p => p.status === "current");
 
+  /**
+   * L echec du moteur, dans les deux formes qu il prend.
+   *
+   * 1. `etatMoteur === "error"` : la requete de l annee a echoue. C est le cas
+   *    NORMAL d echec depuis que loadSignals ne lance plus rien — il se
+   *    contente de poser les donnees de naissance et laisse SWR chercher. Le
+   *    try/catch d en dessous ne pouvait donc plus rien attraper, et l ecran
+   *    n avait aucun autre moyen de savoir.
+   * 2. `echecLocal` : loadSignals lui-meme a leve (donnees illisibles).
+   *
+   * On y ajoute le cas silencieux : arriver au bout de la revelation avec zero
+   * periode. L ecran de fin annonçait alors « Ton signal est actif » et, en
+   * sous-titre, « explore avec des donnees d exemple » — a quelqu un qui vient
+   * de saisir sa date, son heure et son lieu. Rien n avait ete calcule ; il n y
+   * a pas de signal a declarer actif.
+   *
+   * On ne teste pas `phases.length === 0` en dehors de ce moment precis : avant
+   * que loadSignals ait pose les donnees de naissance, la liste est legitimement
+   * vide et l etat vaut deja « ready ».
+   */
+  const enEchec =
+    etatMoteur === "error" || echecLocal || (revealPhase === "ready" && phases.length === 0);
+
+  // La revelation du passe n a rien a montrer quand aucune periode passee ne
+  // depasse le seuil : on ne laisse pas huit secondes d ecran vide, on passe
+  // directement au present.
+  const phaseAffichee = enEchec
+    ? "echec"
+    : revealPhase === "past" && pastHighlights.length === 0
+      ? "present"
+      : revealPhase;
+
   useEffect(() => {
     if (didStart.current) return;
     didStart.current = true;
@@ -289,7 +322,8 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
       }
 
       const birthData: BirthData = {
-        nickname: formData.nickname || "You",
+        // « You » etait servi aux dix langues quand le surnom est vide.
+        nickname: formData.nickname || perso("prep.toi", locale),
         birthDate: formData.dob,
         birthTime: formData.timeOfBirth,
         latitude: coords.lat,
@@ -319,11 +353,14 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
           setTimeout(() => setRevealPhase("present"), 8800);   // 8s to read past highlights
         }, 600);
       } catch {
-        setError(t("onboarding.p6_error", locale));
-        setCompleted([0, 1, 2]);
-        setVisible([0, 1, 2]);
-        setTimeout(() => setRevealPhase("past"), 600);
-        setTimeout(() => setRevealPhase("present"), 8600);
+        // On s ARRETE.
+        //
+        // Avant, le catch cochait les trois etapes et relançait la meme
+        // sequence de revelation : l ecran continuait son animation et
+        // finissait sur « Ton signal est actif », coche verte comprise, alors
+        // que rien n avait ete calcule. On pose l echec, et rien d autre : la
+        // suite du composant affiche l ecran d echec et sa sortie.
+        setEchecLocal(true);
       }
     }
 
@@ -363,8 +400,54 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
     // 20, et son contenu etait visiblement plus etroit que celui des autres.
     className="flex h-full flex-col items-center justify-center overflow-y-auto text-center">
       <AnimatePresence mode="wait">
+        {/* ── ECHEC — le moteur n a rien rendu ──
+
+            Meme forme que le bloc d echec de la timeline : on dit ce qui se
+            passe, on n accuse personne, et on laisse deux portes ouvertes —
+            redemander le calcul, ou revenir corriger la saisie. Sans ce bloc,
+            une panne du moteur se terminait par une coche verte. */}
+        {phaseAffichee === "echec" && (
+          <motion.div
+            key="echec"
+            className="flex flex-col items-center gap-4 px-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <p className="text-base font-semibold text-text-heading">
+              {t("common.echec_titre", locale)}
+            </p>
+            <p className="max-w-xs text-sm text-text-body-subtle">
+              {t("common.echec_corps", locale)}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setEchecLocal(false);
+                reessayer();
+              }}
+              className="rounded-full px-6 font-semibold transition-transform active:scale-95"
+              style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)", minHeight: 48 }}
+            >
+              {t("common.echec_reessayer", locale)}
+            </button>
+            <button
+              type="button"
+              // La deuxieme sortie : le calcul peut aussi echouer parce que la
+              // saisie est fausse — une ville introuvable, une heure aberrante.
+              // Sans ce retour, la seule issue etait de tuer l app.
+              onClick={() => router.replace("/app/onboarding")}
+              className="text-xs font-medium underline underline-offset-4"
+              style={{ color: "var(--accent-purple)", opacity: 0.6, minHeight: 44 }}
+            >
+              {t("common.back", locale)}
+            </button>
+          </motion.div>
+        )}
+
         {/* ── LOADING PHASE ── */}
-        {revealPhase === "loading" && (
+        {phaseAffichee === "loading" && (
           <motion.div
             key="loading"
             className="flex flex-col items-center"
@@ -451,18 +534,11 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               </AnimatePresence>
             </div>
 
-            {error && allDone && (
-              <motion.p className="mt-4 max-w-[240px] text-center text-[11px]"
-                style={{ color: "var(--accent-purple)", opacity: 0.5 }}
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {error}
-              </motion.p>
-            )}
           </motion.div>
         )}
 
         {/* ── PAST REVEAL — "Reconnais ton passé" ── */}
-        {revealPhase === "past" && pastHighlights.length > 0 && (
+        {phaseAffichee === "past" && pastHighlights.length > 0 && (
           <motion.div
             key="past"
             className="flex flex-col items-center w-full"
@@ -494,7 +570,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
         )}
 
         {/* ── PRESENT REVEAL — current signal ── */}
-        {revealPhase === "present" && (
+        {phaseAffichee === "present" && (
           <motion.div
             key="present"
             className="flex flex-col items-center"
@@ -503,22 +579,30 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
           >
-            <motion.p
-              className="text-[10px] font-semibold uppercase tracking-widest mb-3"
-              style={{ color: "var(--accent-purple)", opacity: 0.5 }}
-            >
-              {perso("timeline.maintenant", locale)}
-            </motion.p>
+            {/* Le repere « maintenant » et le titre ne s affichent que s il y a
+                une periode en cours.
 
-            <motion.h2
-              className="font-display text-xl font-bold mb-2"
-              style={{ color: "var(--accent-purple)", letterSpacing: -0.3 }}
-            >
-              {currentPhase?.title ?? t("onboarding.p6_signal_active", locale)}
-            </motion.h2>
-
+                Le titre tombait sinon sur « Ton signal est actif » : une
+                affirmation sur la personne, ecrite en dur, la ou le moteur
+                n avait justement rien renvoye pour aujourd hui. Une vie
+                comporte des moments sans periode en cours ; on n a alors rien
+                a annoncer, et on n annonce rien. */}
             {currentPhase && (
               <>
+                <motion.p
+                  className="text-[10px] font-semibold uppercase tracking-widest mb-3"
+                  style={{ color: "var(--accent-purple)", opacity: 0.5 }}
+                >
+                  {perso("timeline.maintenant", locale)}
+                </motion.p>
+
+                <motion.h2
+                  className="font-display text-xl font-bold mb-2"
+                  style={{ color: "var(--accent-purple)", letterSpacing: -0.3 }}
+                >
+                  {currentPhase.title}
+                </motion.h2>
+
                 <motion.p
                   className="mb-4 max-w-[260px] text-sm leading-relaxed"
                   style={{ color: "var(--accent-purple)", opacity: 0.7 }}
@@ -569,8 +653,11 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
           </motion.div>
         )}
 
-        {/* ── READY — CTA ── */}
-        {revealPhase === "ready" && (
+        {/* ── READY — CTA ──
+            N est atteint que si `enEchec` est faux, donc avec au moins une
+            periode calculee : la coche verte et « ton signal est actif » ne
+            peuvent plus s afficher sur du vide. */}
+        {phaseAffichee === "ready" && (
           <motion.div
             key="ready"
             className="flex flex-col items-center"
@@ -616,9 +703,13 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              {isLive
-                ? t("onboarding.p6_built_real", locale)
-                : t("onboarding.p6_built_sample", locale)}
+              {/* Plus de branche « donnees d exemple ».
+                  Elle disait « explore avec des donnees d exemple, saisis ta
+                  naissance pour une lecture personnelle » a quelqu un qui
+                  venait precisement de la saisir, et servait de decor a un
+                  echec. Cet ecran ne s affiche plus que sur des periodes
+                  reellement calculees : la phrase peut l affirmer. */}
+              {t("onboarding.p6_built_real", locale)}
             </motion.p>
 
             <motion.div

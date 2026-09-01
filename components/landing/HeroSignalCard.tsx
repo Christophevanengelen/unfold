@@ -164,7 +164,7 @@ function PastPeakRow({ peak, delay }: { peak: PastPeak; delay: number }) {
   const [open, setOpen] = useState(false);
   const planet = planetMeta(peak.planet);
   const house = houseMeta(peak.house);
-  const color = house?.color ?? planet?.color ?? "#9585CC";
+  const color = house?.color ?? planet?.color ?? "var(--site-accent-violet)";
 
   return (
     <motion.button
@@ -177,7 +177,7 @@ function PastPeakRow({ peak, delay }: { peak: PastPeak; delay: number }) {
       style={{
         background: open
           ? `color-mix(in srgb, ${color} 10%, transparent)`
-          : "var(--bg-secondary, rgba(255,255,255,0.04))",
+          : "var(--bg-secondary)",
         border: `1px solid color-mix(in srgb, ${color} ${open ? 28 : 12}%, transparent)`,
       }}
       aria-expanded={open}
@@ -276,7 +276,7 @@ export function HeroSignalCard({ signal, copy }: HeroSignalCardProps) {
         {/* ── divider ── */}
         <div
           className="my-6 mx-6 md:mx-8 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)" }}
+          style={{ background: "linear-gradient(90deg, transparent, var(--site-reflet), transparent)" }}
           aria-hidden
         />
 
@@ -421,7 +421,7 @@ export function HeroSignalCard({ signal, copy }: HeroSignalCardProps) {
 
         <div
           className="my-6 mx-6 md:mx-8 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)" }}
+          style={{ background: "linear-gradient(90deg, transparent, var(--site-reflet), transparent)" }}
           aria-hidden
         />
 

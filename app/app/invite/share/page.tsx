@@ -4,8 +4,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useMomentum } from "@/lib/momentum-store";
 import { getMyInviteCode, buildInviteUrl } from "@/lib/connections-store";
+import { t } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
+import { useLocale } from "@/lib/use-locale";
 
 export default function InviteShare() {
+  const locale = useLocale();
   const { birthData } = useMomentum();
   const [copied, setCopied] = useState(false);
   const [inviteCode, setInviteCode] = useState("...");
@@ -15,9 +19,9 @@ export default function InviteShare() {
     const code = getMyInviteCode();
     setInviteCode(code);
     if (birthData) {
-      setInviteUrl(buildInviteUrl(birthData.nickname || "Moi", birthData, code));
+      setInviteUrl(buildInviteUrl(birthData.nickname || t("connexions.moi", locale), birthData, code));
     }
-  }, [birthData]);
+  }, [birthData, locale]);
 
   const handleCopy = async () => {
     const textToCopy = inviteUrl || inviteCode;
@@ -32,7 +36,7 @@ export default function InviteShare() {
     }
   };
 
-  const shareMessage = `Je compare nos rythmes sur Favorable. Clique ici pour voir notre compatibilité : ${inviteUrl}`;
+  const shareMessage = t("connexions.partage_message", locale).replace("{url}", inviteUrl);
 
   const handleShare = async (method: string) => {
     if (method === "copy") {
@@ -48,7 +52,7 @@ export default function InviteShare() {
     } else if (method === "sms") {
       window.open(`sms:?body=${encodedMsg}`, "_blank");
     } else if (method === "email") {
-      window.open(`mailto:?subject=${encodeURIComponent("Comparons nos rythmes sur Favorable")}&body=${encodedMsg}`, "_blank");
+      window.open(`mailto:?subject=${encodeURIComponent(t("connexions.partage_sujet", locale))}&body=${encodedMsg}`, "_blank");
     } else if (navigator.share) {
       try {
         await navigator.share({ title: "Favorable", text: shareMessage, url: inviteUrl });
@@ -65,13 +69,13 @@ export default function InviteShare() {
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          Retour
+          {perso("compat.retour", locale)}
         </Link>
         <h1 className="mt-4 font-display text-2xl font-bold text-text-heading">
-          Partager votre code
+          {perso("compat.partager_code", locale)}
         </h1>
         <p className="mt-1 text-sm text-text-body-subtle">
-          Envoyez ce lien pour comparer vos rythmes.
+          {t("connexions.partage_sous", locale)}
         </p>
       </div>
 
@@ -83,7 +87,7 @@ export default function InviteShare() {
           border: "1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)",
         }}
       >
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-body-subtle">Votre code</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-body-subtle">{t("connexions.votre_code", locale)}</p>
         <p className="mt-2 font-mono text-2xl font-bold tracking-[0.15em]" style={{ color: "var(--accent-purple)" }}>
           {inviteCode}
         </p>
@@ -102,7 +106,7 @@ export default function InviteShare() {
           className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-sm active:scale-95 transition-transform"
           style={{ background: "var(--accent-green)" }}
         >
-          Message
+          {t("connexions.bouton_sms", locale)}
         </button>
         <button
           onClick={() => handleShare("email")}
@@ -116,7 +120,7 @@ export default function InviteShare() {
           className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-sm active:scale-95 transition-transform"
           style={{ background: "var(--accent-purple)" }}
         >
-          {copied ? "Copié !" : "Copier le lien"}
+          {copied ? t("connexions.copie", locale) : t("connexions.copier", locale)}
         </button>
       </div>
 
@@ -127,7 +131,7 @@ export default function InviteShare() {
           className="flex w-full items-center justify-center rounded-full py-3.5 text-sm font-semibold transition-transform active:scale-95"
           style={{ border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)", color: "var(--accent-purple)" }}
         >
-          Retour aux connexions
+          {t("connexions.retour_liste", locale)}
         </Link>
       </div>
     </div>

@@ -82,7 +82,7 @@ export function Pricing({ t }: PricingProps) {
                 <span
                   className="rounded-full px-3 py-1 text-xs font-medium text-logo-lavender"
                   style={{
-                    background: "color-mix(in srgb, #9585CC 15%, transparent)",
+                    background: "color-mix(in srgb, var(--site-accent-violet) 15%, transparent)",
                     backdropFilter: "blur(8px)",
                   }}
                 >

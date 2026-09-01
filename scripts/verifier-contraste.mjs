@@ -54,12 +54,30 @@ const JETONS = ["text-heading", "text-body", "text-body-subtle", "text-brand", "
 
 const css = readFileSync("app/globals.css", "utf8");
 
+/**
+ * Tous les jetons d un selecteur, sur TOUS ses blocs.
+ *
+ * Cette fonction prenait le PREMIER `:root {` du fichier et lisait jusqu au
+ * premier `}`. Le 01/09/2026, un bloc `:root` d une seule ligne a ete ajoute
+ * plus haut dans le fichier pour un jeton de fond. Le controle a donc lu ce
+ * bloc-la, y a trouve un seul jeton, et a annonce « jeton manquant » sur les
+ * quatre paires — sans jamais dire qu il avait cesse de lire le vrai bloc.
+ *
+ * On accumule desormais tous les blocs du selecteur, dans l ordre du fichier :
+ * c est ce que fait le navigateur, et une redefinition plus bas gagne, comme
+ * dans la cascade.
+ */
 function bloc(depart) {
-  const i = css.indexOf(depart);
-  if (i === -1) return {};
-  const j = css.indexOf("}", i);
   const out = {};
-  for (const m of css.slice(i, j).matchAll(/--([a-z-]+):\s*([^;]+);/g)) out[m[1]] = m[2].trim();
+  let i = css.indexOf(depart);
+  if (i === -1) return out;
+
+  while (i !== -1) {
+    const j = css.indexOf("}", i);
+    if (j === -1) break;
+    for (const m of css.slice(i, j).matchAll(/--([a-z-]+):\s*([^;]+);/g)) out[m[1]] = m[2].trim();
+    i = css.indexOf(depart, j);
+  }
   return out;
 }
 
@@ -128,6 +146,8 @@ for (const t of themes) {
 // Sans ce controle, retoucher une couleur de domaine casserait la lisibilite
 // sans que rien ne le dise.
 // ─────────────────────────────────────────────────────────────────────────────
+// Famille « perso » : jetons --domaine-perso-<slug>. La famille et le slug
+// sont separes depuis le 01/09/2026 — voir la grammaire en tete de globals.css.
 const DOMAINES = [
   "love", "career", "money", "family", "health-energy",
   "creativity", "home", "friends-network", "meaning-spirituality",
@@ -140,8 +160,8 @@ for (const t of themes) {
   if (!fondBase) continue;
   console.log(`\n  Domaines, theme ${t.nom} — sur leur fond teinte`);
   for (const d of DOMAINES) {
-    const base = rgb(jetons[`domaine-${d}`]);
-    const texte = rgb(jetons[`domaine-${d}-texte`]);
+    const base = rgb(jetons[`domaine-perso-${d}`]);
+    const texte = rgb(jetons[`domaine-perso-${d}-texte`]);
     if (!base || !texte) {
       console.log(`    ${d.padEnd(22)} jeton manquant`);
       echecs++;
@@ -163,6 +183,7 @@ for (const t of themes) {
 // faute aussi : les onze domaines etaient entre 2,02 et 2,78 en theme clair,
 // sur l ecran principal.
 // ─────────────────────────────────────────────────────────────────────────────
+// Famille « brief » : jetons --domaine-brief-<slug>.
 const DOMAINES_BRIEF = [
   "carriere", "amour", "sante", "argent", "famille", "creativite",
   "communication", "foyer", "spiritualite", "voyage", "transformation",
@@ -174,8 +195,8 @@ for (const t of themes) {
   if (!fondBase) continue;
   console.log(`\n  Domaines du briefing, theme ${t.nom}`);
   for (const d of DOMAINES_BRIEF) {
-    const base = rgb(jetons[`dom-${d}`]);
-    const texte = rgb(jetons[`dom-${d}-texte`]);
+    const base = rgb(jetons[`domaine-brief-${d}`]);
+    const texte = rgb(jetons[`domaine-brief-${d}-texte`]);
     if (!base || !texte) {
       console.log(`    ${d.padEnd(22)} jeton manquant`);
       echecs++;

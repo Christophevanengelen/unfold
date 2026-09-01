@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMomentum } from "@/lib/momentum-store";
 import { t, detectLocale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 const EASE = [0.4, 0, 0.2, 1] as const;
 const STORAGE_KEY = "unfold_timeline_welcomed";
@@ -100,7 +101,7 @@ export function TimelineWelcome({ onDone }: { onDone: () => void }) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 1, ease: EASE }}
                 >
-                  This is your rhythm.
+                  {perso("accueil.ton_rythme", locale)}
                 </motion.p>
                 <motion.p
                   className="mt-3 max-w-[240px] text-sm leading-relaxed"

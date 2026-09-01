@@ -14,19 +14,21 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
   return translations[key] ?? fallback ?? key;
 }
 
-// Exact same colors as Premium section boudins
+// Les memes echantillons que les boudins de la section Premium — le nom du
+// jeton le garantit desormais, la ou deux listes d hexadecimaux ne pouvaient
+// que finir par diverger.
 const STRIP_A = [
-  { w: 16, h: 24, color: "#6BA89A", dots: 2, shared: false },   // sage
-  { w: 24, h: 40, color: "#9585CC", dots: 3, shared: true },    // purple
-  { w: 28, h: 50, color: "#B07CC2", dots: 4, shared: true },    // warm purple
-  { w: 18, h: 28, color: "#C4A86B", dots: 2, shared: false },   // gold
+  { w: 16, h: 24, color: "var(--echantillon-sauge)", dots: 2, shared: false },
+  { w: 24, h: 40, color: "var(--echantillon-violet)", dots: 3, shared: true },
+  { w: 28, h: 50, color: "var(--echantillon-violet-chaud)", dots: 4, shared: true },
+  { w: 18, h: 28, color: "var(--echantillon-or)", dots: 2, shared: false },
 ];
 
 const STRIP_B = [
-  { w: 18, h: 28, color: "#50C4D6", dots: 2, shared: false },   // teal
-  { w: 24, h: 40, color: "#8B7FC2", dots: 3, shared: true },    // lavender
-  { w: 26, h: 48, color: "#D89EA0", dots: 3, shared: true },    // rose
-  { w: 16, h: 24, color: "#6BA89A", dots: 2, shared: false },   // sage
+  { w: 18, h: 28, color: "var(--echantillon-turquoise)", dots: 2, shared: false },
+  { w: 24, h: 40, color: "var(--echantillon-lavande)", dots: 3, shared: true },
+  { w: 26, h: 48, color: "var(--echantillon-rose)", dots: 3, shared: true },
+  { w: 16, h: 24, color: "var(--echantillon-sauge)", dots: 2, shared: false },
 ];
 
 // Shared peak insights — uses house domain labels, not old 3-category system
@@ -74,7 +76,7 @@ export function Compatibility({ translations }: CompatibilityProps) {
             animate={revealed ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.5 }}
           >
-            <span className="mb-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#B07CC2" }}>{t(translations, "compat.v2.you", "You")}</span>
+            <span className="mb-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--echantillon-violet-chaud)" }}>{t(translations, "compat.v2.you", "You")}</span>
             <div className="flex flex-col items-center gap-2">
               {STRIP_A.map((b, i) => (
                 <motion.div
@@ -97,7 +99,7 @@ export function Compatibility({ translations }: CompatibilityProps) {
                 >
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px]">
                     {Array.from({ length: b.dots }).map((_, j) => (
-                      <div key={j} className="rounded-full" style={{ width: 3, height: 3, backgroundColor: "white", opacity: 0.6 }} />
+                      <div key={j} className="rounded-full" style={{ width: 3, height: 3, backgroundColor: "var(--site-marqueur)", opacity: 0.6 }} />
                     ))}
                   </div>
                 </motion.div>
@@ -141,7 +143,7 @@ export function Compatibility({ translations }: CompatibilityProps) {
             animate={revealed ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.5 }}
           >
-            <span className="mb-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#D89EA0" }}>{t(translations, "compat.v2.them", "Them")}</span>
+            <span className="mb-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--echantillon-rose)" }}>{t(translations, "compat.v2.them", "Them")}</span>
             <div className="flex flex-col items-center gap-2">
               {STRIP_B.map((b, i) => (
                 <motion.div
@@ -164,7 +166,7 @@ export function Compatibility({ translations }: CompatibilityProps) {
                 >
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px]">
                     {Array.from({ length: b.dots }).map((_, j) => (
-                      <div key={j} className="rounded-full" style={{ width: 3, height: 3, backgroundColor: "white", opacity: 0.6 }} />
+                      <div key={j} className="rounded-full" style={{ width: 3, height: 3, backgroundColor: "var(--site-marqueur)", opacity: 0.6 }} />
                     ))}
                   </div>
                 </motion.div>

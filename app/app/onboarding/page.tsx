@@ -127,6 +127,9 @@ export default function OnboardingPage() {
   }, []);
 
   // Save priorities when user advances past step 3
+  // Combien de fois on a tente d avancer sans avoir choisi de priorite.
+  const [refusPriorites, setRefusPriorites] = useState(0);
+
   const handlePrioritiesNext = useCallback(() => {
     if (priorities.length > 0) {
       saveUserProfile({
@@ -149,7 +152,13 @@ export default function OnboardingPage() {
     // le glissement ne le verifiait pas, donc on pouvait atteindre la suite
     // avec zero priorite et un profil vide.
     if (step === 3) {
-      if (priorities.length === 0) return;
+      if (priorities.length === 0) {
+        // On ne sort plus en silence : le glissement dit ce qui manque, comme
+        // le bouton. Sinon le geste le plus naturel de l ecran ne produit rien
+        // et n explique rien.
+        setRefusPriorites((n) => n + 1);
+        return;
+      }
       handlePrioritiesNext();
       return;
     }
@@ -197,6 +206,7 @@ export default function OnboardingPage() {
             selected={priorities}
             onChange={setPriorities}
             onNext={handlePrioritiesNext}
+            refusCount={refusPriorites}
             onBack={back}
           />
         );

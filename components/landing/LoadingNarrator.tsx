@@ -203,7 +203,7 @@ function PlanetOrbits({ visibleCount }: { visibleCount: number }) {
               stroke="currentColor"
               strokeWidth={isReached ? 0.7 : 0.4}
               style={{
-                color: isReached ? planetConfig[p.planet]?.color : "white",
+                color: isReached ? planetConfig[p.planet]?.color : "var(--site-marqueur)",
                 opacity: isReached ? 0.4 : 0.12,
                 transition: "opacity 0.6s ease, stroke-width 0.6s ease, color 0.6s ease",
               }}

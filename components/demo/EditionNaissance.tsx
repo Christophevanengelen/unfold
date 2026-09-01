@@ -25,7 +25,7 @@
  *     ne peut plus etre resservie pendant le calcul.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BottomSheet } from "@/components/demo/primitives";
 import { StepInput } from "@/components/demo/onboarding/StepInput";
 import { getBirthDataSync, resolveCity, type BirthData } from "@/lib/birth-data";
@@ -64,8 +64,17 @@ export function EditionNaissance({
   const { loadSignals } = useMomentum();
   const [formData, setFormData] = useState<OnboardingFormData>(preremplir);
 
+  // POURQUOI un verrou : `enregistrer` ferme la feuille PUIS lance un calcul de
+  // 30 a 120 secondes. Entre le clic et la fermeture effective, le bouton reste
+  // a l ecran et repond encore — la touche Entree maintenue, un double appui,
+  // un rebond de la dalle tactile suffisent a lancer deux fois le meme calcul
+  // et deux fois la meme ecriture. Le verrou est pose a l entree et rendu dans
+  // `finally`, donc sur TOUS les chemins de sortie, y compris une erreur.
+  const enregistrementEnCours = useRef(false);
+
   async function enregistrer() {
     if (!formData) return;
+    if (enregistrementEnCours.current) return;
     // Les coordonnees viennent du geocodage si la personne a choisi une
     // suggestion, sinon de la table locale. Le formulaire garantit qu une des
     // deux existe — il ne laisse pas avancer sans lieu situe.
@@ -87,10 +96,15 @@ export function EditionNaissance({
       placeOfBirth: formData.placeOfBirth,
     };
 
+    enregistrementEnCours.current = true;
     onFermer();
-    // loadSignals enregistre et relance le calcul. La timeline se met a jour
-    // toute seule : sa clef a change.
-    await loadSignals(birthData);
+    try {
+      // loadSignals enregistre et relance le calcul. La timeline se met a jour
+      // toute seule : sa clef a change.
+      await loadSignals(birthData);
+    } finally {
+      enregistrementEnCours.current = false;
+    }
   }
 
   return (

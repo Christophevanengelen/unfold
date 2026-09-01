@@ -116,12 +116,12 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
         height: "calc(var(--barre-onglets) + var(--safe-bottom, 0px))",
         paddingBottom: "calc(6px + var(--safe-bottom, 0px))",
         paddingTop: 6,
-        background: "var(--glass-bg)",
-        border: "none",
-        // Ce lisere fait partie du design d origine. Ce qui l avait rendu
-        // voyant n est pas lui : c est --glass-border pousse de 22 % a 90 %.
-        // Le jeton est revenu a sa valeur, le trait redevient un lisere.
-        borderTop: "1px solid var(--glass-border)",
+        // 01/09/2026 : le filet du haut part avec tous les autres. La barre
+        // se separe du contenu par sa MATIERE — --glass-pill est le verre
+        // teinte d un cran plus dense que --glass-bg, et le flou derriere lui
+        // fait le reste. Un trait de 1 px en travers de l ecran etait la
+        // derniere chose qui decoupait l interface au lieu de la poser.
+        background: "var(--glass-pill)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
       }}

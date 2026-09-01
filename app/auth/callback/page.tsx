@@ -14,8 +14,11 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseAuth } from "@/lib/supabase-auth";
+import { t } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 
 export default function AuthCallbackPage() {
+  const locale = useLocale();
   const router = useRouter();
 
   useEffect(() => {
@@ -87,7 +90,7 @@ export default function AuthCallbackPage() {
           letterSpacing: "0.02em",
         }}
       >
-        Signing you in…
+        {t("auth.signing_in", locale)}
       </div>
     </div>
   );

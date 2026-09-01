@@ -117,3 +117,93 @@ panne avant deux minutes.
 **Une correction visuelle non regardee n est pas une correction.** Le
 1er septembre, une journee entiere de raisonnement sur des rapports de
 contraste a produit un downgrade que dix minutes de navigateur auraient evite.
+
+---
+
+# La passe minimaliste
+
+Une procedure, pas un principe. A rejouer telle quelle sur un ecran, un
+composant, ou le produit entier. Elle a ete etablie le 1er septembre 2026 et
+Christophe a valide le resultat : « tres propre ta passe minimaliste, t as
+reussi ».
+
+## La doctrine, en une phrase
+
+**Un contour est un aveu.** Il dit qu on n a pas su faire tenir l element par sa
+matiere. Christophe, mot pour mot :
+
+> « les strokes sont nos ennemis, un bon design minimaliste ne les utilise pas,
+>   il gere bien les couleurs des bg et des fonds de cellules »
+
+## Les quatre moyens de separer, dans cet ordre
+
+Quand deux choses doivent se distinguer, on prend le premier moyen qui suffit.
+On ne descend au suivant que si le precedent ne suffit pas, et on n en empile
+jamais deux.
+
+**1. L ESPACE.** Deux blocs separes par du vide n ont besoin de rien d autre.
+C est presque toujours la bonne reponse pour une liste. Un filet entre deux
+lignes deja separees par 32 px de vide n ajoute rien qu il faille regarder.
+
+**2. LE FOND.** Une cellule se detache de sa page par une surface d un cran
+differente : plus claire en theme sombre, plus foncee en theme clair. C est la
+reponse que Christophe decrit, et celle qui vaut pour toutes les cartes,
+feuilles, cellules et panneaux.
+
+**3. L ELEVATION.** Une ombre, et seulement pour ce qui FLOTTE reellement
+au-dessus du contenu : un bouton flottant, une feuille, un menu. Deux couches —
+une courte et dense qui pose le bord, une longue et douce qui donne la hauteur.
+Jamais d ombre sur ce qui ne flotte pas.
+
+**4. LE CONTOUR.** En dernier recours, et seulement dans trois cas :
+   - un champ de saisie VIDE — le contour dit ou taper, sans lui le champ
+     n existe pas pour la personne ;
+   - l anneau de `:focus-visible` — c est de l accessibilite, il ne s affiche
+     qu au clavier ;
+   - un lisere deja present dans le design d origine, qu on ne renforce pas.
+
+## La procedure
+
+1. **Inventorier.** `grep -rn --include='*.tsx' -E "border: ?\"?1(\.5)?px solid"`
+   sur le perimetre. Compter avant de commencer.
+
+2. **Pour chaque contour, choisir son remplacant** dans la liste ci-dessus. Un
+   contour retire doit etre REMPLACE, jamais seulement supprime. Une carte sans
+   contour et sans fond distinct disparait dans la page.
+
+3. **Ne creer un jeton de fond que s il n en existe pas deja un.** Regarder
+   `--bg-secondary`, `--bg-tertiary`, `--surface-*`, `--glass-*` AVANT d en
+   ajouter. Si un fond intermediaire manque, le deriver des jetons existants par
+   `color-mix`, jamais choisir une nouvelle couleur.
+
+4. **Regarder a l ecran, dans les deux themes.** Si un element devient
+   indistinguable de son fond, la passe a echoue sur cet element : on
+   recommence, on ne remet pas le contour.
+
+5. **Verifier** : `npx tsc --noEmit`, puis `npm run verifier`.
+
+## Les deux erreurs symetriques
+
+Elles ont ete commises toutes les deux dans la meme journee.
+
+**Ajouter pour sauver.** Un bouton flottant est devenu illisible ; au lieu de
+revenir en arriere, j ai ajoute un cerne a 90 % de violet, puis une ombre, puis
+un voile degrade de 96 px. Quatre couches pour un probleme de couleur de texte.
+Verdict : « on est passe de minimaliste a surcharge », « la honte ».
+
+**Retirer sans remplacer.** L erreur inverse : effacer tous les contours et
+rendre l interface plate, ou chaque carte se noie dans la page.
+
+Entre les deux, la question a se poser sur chaque element est toujours la meme :
+**qu est-ce qui, dans la MATIERE de cet element, le detache deja ?** Si la
+reponse est « rien », c est le fond qu il faut regler, pas un trait a ajouter
+autour.
+
+## Ce qui ne se discute pas
+
+- **Aucune valeur de couleur decidee ne change.** Nommer n est pas redecider.
+- **Aucun rayon, aucun espacement, aucune taille** ne bouge pendant une passe de
+  contours. Un chantier a la fois.
+- **Le seuil de 3:1 d un controle** se lit sur le composant ENTIER — matiere,
+  teinte, elevation comprises — jamais sur l epaisseur d un trait. Voir la
+  section sur les seuils plus haut.

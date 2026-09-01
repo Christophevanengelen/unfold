@@ -3,6 +3,9 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { parseInviteParams } from "@/lib/connections-store";
+import { t } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
+import { useLocale } from "@/lib/use-locale";
 
 /**
  * /app/invite/join?name=X&code=X&bd=X&bt=X&lat=X&lng=X&tz=X
@@ -14,6 +17,7 @@ import { parseInviteParams } from "@/lib/connections-store";
  */
 
 function JoinContent() {
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -49,15 +53,16 @@ function JoinContent() {
           className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-transparent"
           style={{ borderTopColor: "var(--accent-purple)", borderRightColor: "var(--accent-purple)" }}
         />
-        <p className="mt-3 text-sm text-text-body-subtle">Connexion en cours...</p>
+        <p className="mt-3 text-sm text-text-body-subtle">{t("connexions.connexion_en_cours", locale)}</p>
       </div>
     </div>
   );
 }
 
 export default function JoinPage() {
+  const locale = useLocale();
   return (
-    <Suspense fallback={<div className="flex h-full items-center justify-center"><p className="text-sm text-text-body-subtle">Chargement...</p></div>}>
+    <Suspense fallback={<div className="flex h-full items-center justify-center"><p className="text-sm text-text-body-subtle">{perso("compat.chargement", locale)}</p></div>}>
       <JoinContent />
     </Suspense>
   );

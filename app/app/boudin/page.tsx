@@ -14,6 +14,8 @@ import { ChevronLeft } from "flowbite-react-icons/outline";
 import { usePremiumStatus } from "@/lib/premium-gate";
 import { SAFE_TOP } from "@/lib/layout-constants";
 import { isNative } from "@/lib/platform";
+import { t } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 
 function hasCouponAccess(): boolean {
   try { return localStorage.getItem("unfold_chart_access") === "true"; } catch { return false; }
@@ -21,6 +23,7 @@ function hasCouponAccess(): boolean {
 
 export default function BoudinPage() {
   const router = useRouter();
+  const locale = useLocale();
   const isPremium = usePremiumStatus();
   const [mounted, setMounted] = useState(false);
   const native = isNative();
@@ -63,12 +66,12 @@ export default function BoudinPage() {
           onClick={() => router.back()}
           className="flex h-7 w-7 items-center justify-center rounded-full transition-opacity hover:opacity-70"
           style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}
-          aria-label="Back"
+          aria-label={t("common.back", locale)}
         >
           <ChevronLeft size={16} style={{ color: "var(--accent-purple)" }} />
         </button>
         <span className="flex-1 text-center text-[12px] font-semibold" style={{ color: "var(--text-body-subtle)" }}>
-          Lifetime timeline
+          {t("boudin.titre", locale)}
         </span>
         <div className="h-7 w-7" />
       </div>
@@ -77,7 +80,7 @@ export default function BoudinPage() {
       <iframe
         src="/boudin-sausage.html"
         className="flex-1 border-none"
-        title="Your 100-year lifetime sausage timeline"
+        title={t("boudin.titre", locale)}
         allow="same-origin"
         style={{ width: "100%", height: "100%" }}
       />

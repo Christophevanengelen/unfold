@@ -25,9 +25,9 @@ const DEMO_NOTIFICATIONS = [
     time: "8:02 AM",
     accent: "var(--accent-purple)",
     planets: [
-      { color: "#5B7FC2" },
-      { color: "#E5A940" },
-      { color: "#4BBFAF" },
+      { color: "var(--echantillon-planete-bleu)" },
+      { color: "var(--echantillon-planete-ambre)" },
+      { color: "var(--echantillon-planete-jade)" },
     ],
   },
   {
@@ -35,10 +35,10 @@ const DEMO_NOTIFICATIONS = [
     title: "Compatibility peak detected",
     body: "Your timelines overlap this week. Shared Jupiter and Venus transit. A rare alignment window.",
     time: "Yesterday",
-    accent: "#D87EA0",
+    accent: "var(--echantillon-planete-rose)",
     planets: [
-      { color: "#5B7FC2" },
-      { color: "#D87EA0" },
+      { color: "var(--echantillon-planete-bleu)" },
+      { color: "var(--echantillon-planete-rose)" },
     ],
   },
   {
@@ -46,9 +46,9 @@ const DEMO_NOTIFICATIONS = [
     title: "Momentum shift ahead",
     body: "Saturn enters your signal Thursday. Intensity drops to Subtle. Plan lighter commitments.",
     time: "2 days ago",
-    accent: "#C49B50",
+    accent: "var(--echantillon-planete-or)",
     planets: [
-      { color: "#C49B50" },
+      { color: "var(--echantillon-planete-or)" },
     ],
   },
 ];

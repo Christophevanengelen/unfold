@@ -3,49 +3,115 @@
 /* ==============================================================================
    LE CONTRAT DES JETONS
    ──────────────────────────────────────────────────────────────────────────────
-   322 jetons vivent dans ce fichier, et jusqu au 01/09/2026 rien ne disait a
-   quoi chacun servait. C est ce qui a permis de peindre les DATES d une periode
-   avec --text-disabled : le jeton existait, il avait l air discret, personne ne
-   savait qu il etait reserve aux elements inactionnables. Resultat : 1,92 de
-   contraste sur de l information, et aucun controle capable de le signaler
-   puisque la norme exempte legitimement le texte desactive.
+   Ce fichier est LA SEULE SOURCE des couleurs du produit. Site vitrine, app,
+   maquettes de demonstration : tout part d ici. Une couleur ecrite ailleurs
+   n est pas une couleur, c est une copie — et une copie prend son propre
+   chemin. Le 01/09/2026, les onze couleurs de domaine du briefing existaient
+   en TROIS exemplaires (--dom-*, --domaine-*, et un tableau d hexadecimaux
+   dans DailyBriefing.tsx) ; le site vitrine en portait quatre-vingt-cinq de
+   plus, dont trois blancs et deux rouges d erreur separes d un chiffre.
 
-   Les regles, dans l ordre ou elles se violent :
+   Pour compter ce qui existe :
+     grep -c '^\s*--[a-z0-9-]*:' app/globals.css
 
-   1. TEXTE — quatre jetons, et un seul choix a faire : quelle importance ?
-        --text-heading        un titre
-        --text-body           du texte courant
-        --text-body-subtle    une information secondaire mais VRAIE
-        --text-disabled       RESERVE aux elements qu on ne peut pas actionner.
-                              Jamais pour du contenu. Voir sa note plus bas.
+   ──────────────────────────────────────────────────────────────────────────────
+   CE QUI EXISTE — sept familles, et rien d autre
 
-   2. TEXTE SUR APLAT — toujours une PAIRE, jamais du blanc suppose.
-        --bg-brand   / --text-on-brand     le bouton principal
-        --bg-alerte  / --text-on-alerte    une action destructrice
+   1. LES ECHELLES        --brand-0..13, --violet-1..12
+      La matiere premiere. On ne les pose PAS directement sur un ecran : on
+      passe par un jeton semantique, sinon le nom ne dit plus le role.
+
+   2. LE TEXTE            --text-heading, --text-body, --text-body-subtle,
+                          --text-brand, --text-brand-strong, --text-disabled
+      Un seul choix a faire : quelle importance ?
+        --text-disabled est RESERVE aux elements qu on ne peut pas actionner.
+        Jamais pour du contenu. Voir sa note plus bas — c est ce jeton qui a
+        peint les DATES des periodes a 1,92 de contraste, sans qu aucun
+        controle puisse le dire, puisque la norme exempte le texte desactive.
+
+   3. TEXTE SUR APLAT     toujours une PAIRE, jamais du blanc suppose
+        --bg-brand    / --text-on-brand      le bouton principal
+        --bg-alerte   / --text-on-alerte     une action destructrice
+        --bg-premium  / --text-on-premium    l or du Lifetime Chart
       Poser du blanc sur une couleur de marque echoue une fois sur deux : c est
-      arrive sur le bouton principal (4,46), la bascule de vue (3,23) et le
-      bouton de suppression (3,03). scripts/verifier-contraste.mjs verifie
-      chaque paire dans les deux themes.
+      arrive sur le bouton principal (4,46), la bascule de vue (3,23), le
+      bouton de suppression (3,03) et le bouton premium (2,73).
 
-   3. COULEUR PORTANT UN SENS — jamais la meme valeur pour le texte et pour son
-      fond. Le motif `background: color-mix(couleur 15%)` + `color: couleur` les
-      fait converger PAR CONSTRUCTION : quatorze occurrences dans ce depot,
-      toutes illisibles. Deux facons de faire, selon ce qu on connait :
-        - palette fixe  -> jetons derives, ex. --dom-amour / --dom-amour-texte
-        - couleur venue de l API -> lib/contraste.ts, calcul au rendu
+   4. LES SURFACES        --bg-*, --border-*, --surface-*, --border-tint-*,
+                          --card-*, --glass-*, --voile-*
+      La matiere. Les jetons de verre sont un parti pris de design : on ne les
+      bouge pas pour satisfaire un script. Voir .claude/skills/favorable-design.
 
-   4. AUCUNE VALEUR EN DUR dans components/demo et app/app.
-      scripts/verifier-couleurs.mjs tient le compte au cliquet : il ne peut que
-      descendre. Le site vitrine est exclu — il est sombre par choix.
+   5. LES DOMAINES        --domaine-<famille>-<nom> et son -texte
+      Deux familles, « perso » et « brief ». Grammaire, valeurs et raison du
+      texte derive : voir leur bloc dans :root. Une couleur qui porte un SENS
+      ne peut pas servir a la fois de texte et de fond — le motif
+      `background: color-mix(couleur 15%)` + `color: couleur` les fait
+      converger PAR CONSTRUCTION, quatorze fois dans ce depot.
 
-   5. UN JETON NON UTILISE EST UN JETON MORT. Si plus rien ne le lit, il part.
-      Le meme raisonnement vaut pour les composants :
-      scripts/verifier-code-mort.mjs refuse qu une fonctionnalite se debranche
-      en silence, ce qui est arrive au selecteur de theme pendant des mois.
+   6. LE SITE VITRINE     --site-*
+      La palette de components/landing/**, sombre en permanence, jamais
+      redefinie dans .dark. Son bloc dans :root explique pourquoi.
 
-   Ce contrat n est pas une intention : chaque regle a un controle dans
-   `npm run verifier`, et chaque controle a ete teste en cassant volontairement
-   le code. Une regle sans controle serait oubliee avant la fin de la semaine.
+   7. LES DONNEES         --echantillon-*, --element-*
+      Des couleurs qui identifient une CHOSE et non un theme : un boudin de
+      demonstration, un element astrologique. Elles sont donc identiques en
+      clair et en sombre. Les couleurs de planete et les douze maisons vivent
+      encore en TypeScript (lib/domain-config.tsx, lib/planet-*), parce que
+      l API les remplace par celles du theme natal de la personne : elles
+      arrivent par le reseau, elles ne peuvent pas etre un jeton CSS.
+
+   ──────────────────────────────────────────────────────────────────────────────
+   COMMENT ON AJOUTE UN JETON
+
+   1. Regarder si la valeur existe deja. Si oui, citer le jeton existant.
+      Deux valeurs PROCHES mais differentes restent deux jetons : les fondre
+      est une decision de design, elle appartient a Christophe.
+   2. Le declarer dans :root, dans la famille qui correspond.
+   3. S il doit changer avec le theme, le redeclarer dans .dark. S il ne doit
+      PAS changer — une donnee, le site vitrine — ne pas le redeclarer, et
+      ecrire pourquoi.
+   4. Nommer le ROLE, pas la teinte. `--site-texte-sur-aplat`, pas `--blanc`.
+   5. Ecrire au-dessus POURQUOI il existe, en francais sans accents.
+
+   ──────────────────────────────────────────────────────────────────────────────
+   CE QUI EST INTERDIT
+
+   • Une couleur ecrite en dur dans components/** ou app/** — que ce soit
+     `color: "#fff"`, `border: "1px solid rgba(...)"` ou `const OR = "#b59a4a"`.
+   • Une valeur de repli dans un var() : `var(--text-body, #BFB6D6)`. Le repli
+     ne sert JAMAIS — le jeton est toujours declare ici — mais c est une
+     deuxieme copie de la valeur, et elle ne suit pas. Celle-la etait fausse
+     dans les deux themes.
+   • Un jeton qui n est lu par personne. Rule 5 : s il est mort, il part.
+   • Changer une valeur pour faire passer un chiffre de contraste. Quand un
+     seuil ne passe pas, on corrige LA COULEUR DU TEXTE mesuree, jamais la
+     matiere autour.
+
+   Deux dispenses, et elles sont ecrites :
+   • les attributs SVG (`fill=`, `stroke=`) d une illustration : ils ne
+     prennent pas de var(), et un trace decoratif ne s inverse pas avec le
+     theme ;
+   • les fichiers listes dans AUTORISES de scripts/verifier-couleurs.mjs,
+     chacun avec sa raison.
+
+   ──────────────────────────────────────────────────────────────────────────────
+   OU EST LE CONTROLE QUI L APPLIQUE
+
+     node scripts/verifier-couleurs.mjs     aucune couleur hors de ce fichier
+     node scripts/verifier-contraste.mjs    chaque texte et chaque paire, dans
+                                            les deux themes
+     node scripts/verifier-code-mort.mjs    aucun composant debranche en silence
+     npm run verifier                       les douze, en une commande
+
+   verifier-couleurs fonctionne au CLIQUET : son plafond ne peut que descendre.
+   Il ne dit pas « c est propre », il dit « ce n est pas pire qu hier ».
+
+   Chaque regle ci-dessus a un controle, et chaque controle a ete vu ECHOUER
+   sur du code casse volontairement avant qu on lui fasse confiance. Une regle
+   sans controle est oubliee avant la fin de la semaine ; un controle jamais vu
+   rouge ne prouve rien — c est arrive deux fois le 01/09/2026 dans ce depot,
+   dont un qui lisait ses propres commentaires comme preuve.
    ============================================================================== */
 
 /* ==============================================
@@ -211,6 +277,34 @@ button, a, [role="button"], [role="link"],
 }
 
 /* ==============================================
+   FONDS DE SEPARATION
+   ==============================================
+
+   Ces jetons remplacent les contours retires de l interface le 01/09/2026.
+   La regle de Christophe, mot pour mot : « les strokes sont nos ennemis, un
+   bon design minimaliste ne les utilise pas, il gere bien les couleurs des bg
+   et des fonds de cellules ». Une cellule ne se detache donc plus par un
+   trait mais par une SURFACE d un cran decalee de son parent.
+
+   Ils sont OPAQUES — melanges avec --bg-primary, pas avec transparent —
+   parce qu un contour retire doit etre remplace par quelque chose qui se voit
+   meme quand l element est pose sur un fond deja teinte. Les --surface-*
+   existants, eux, restent translucides et s empilent.
+
+   Une seule definition suffit pour les deux themes : --accent-purple et
+   --bg-primary basculent tous les deux, donc le melange sort plus SOMBRE que
+   la page en theme clair et plus CLAIR qu elle en theme sombre. C est
+   exactement le sens voulu dans chaque cas.
+
+   Un seul jeton pour l instant : n en ajouter un second que le jour ou un
+   ecran en a besoin. Une echelle inventee d avance se remplit de valeurs que
+   personne n a regardees a l ecran.
+   ============================================== */
+:root {
+  --fond-cellule: color-mix(in srgb, var(--accent-purple) 7%, var(--bg-primary));
+}
+
+/* ==============================================
    LIGHT MODE
    ============================================== */
 :root {
@@ -258,66 +352,285 @@ button, a, [role="button"], [role="link"],
   --bg-premium: #b59a4a;
   --text-on-premium: #1A1408;
   --text-premium: #7a6320;
-  /* Couleurs de domaine du briefing et de la timeline.
-     Deuxieme palette du produit, distincte de --domaine-* qui sert a l ecran
-     de personnalisation. Meme faute que celle-ci avant correction : le libelle
-     prenait la couleur pure sur un fond fait de la MEME couleur a 12 %, donc
-     texte et fond convergeaient. Les onze domaines etaient sous le seuil en
-     theme clair, entre 2,02 et 2,78 pour 4,5 requis, sur l ecran principal.
-     Le texte est derive ; la base reste l identite. */
-  --dom-carriere: #7B8CC4;
-  --dom-carriere-texte: #5a668f;
-  --dom-amour: #BC7A96;
-  --dom-amour-texte: #89596e;
-  --dom-sante: #7BA88A;
-  --dom-sante-texte: #516f5b;
-  --dom-argent: #B8A472;
-  --dom-argent-texte: #746748;
-  --dom-famille: #C48A6A;
-  --dom-famille-texte: #875f49;
-  --dom-creativite: #A07FBD;
-  --dom-creativite-texte: #755d8a;
-  --dom-communication: #6FA3A0;
-  --dom-communication-texte: #4b6f6d;
-  --dom-foyer: #C4727A;
-  --dom-foyer-texte: #91545a;
-  --dom-spiritualite: #9B85C4;
-  --dom-spiritualite-texte: #70608d;
-  --dom-voyage: #8B80C9;
-  --dom-voyage-texte: #686097;
-  --dom-transformation: #B07AAF;
-  --dom-transformation-texte: #825a82;
+  /* ── LES DOMAINES DE VIE — UNE SEULE NOMENCLATURE ─────────────────────────
+     Grammaire :  --domaine-<famille>-<domaine>        l identite, le fond, le trait
+                  --domaine-<famille>-<domaine>-texte  le libelle, DERIVE de la base
+
+     Deux familles, parce que le produit compte deux jeux de domaines qui ne se
+     recouvrent pas :
+       perso  — les neuf priorites de l ecran de personnalisation, fond a 18 %
+       brief  — les onze domaines du briefing et de la timeline, fond a 12 %
+
+     Elles ne fusionnent PAS. « carriere » vaut #7B8CC4 dans le briefing et
+     #7C6BBF dans la personnalisation : deux valeurs decidees separement, que
+     seul Christophe peut rapprocher. Les confondre serait une decision de
+     design ; la famille dans le nom rend la confusion impossible.
+
+     Jusqu au 01/09/2026 ces deux familles s appelaient --dom-* et --domaine-*,
+     et une TROISIEME copie des memes onze valeurs vivait en dur dans
+     components/demo/DailyBriefing.tsx. Trois noms pour une idee, c est la
+     garantie qu ils divergeront : la copie en dur avait deja pris son propre
+     chemin. Les anciens noms survivent en alias plus bas, le temps que les
+     fichiers hors perimetre les lachent.
+
+     Pourquoi le texte est derive et non la couleur pure : le motif d origine
+     peignait le libelle avec la couleur pure sur un fond fait de la MEME
+     couleur. Texte et fond convergeaient PAR CONSTRUCTION — 2,02 a 2,78 en
+     theme clair pour 4,5 requis, sur l ecran principal.
+     scripts/verifier-contraste.mjs mesure les deux familles dans les deux
+     themes ; toucher une valeur sans son texte le fait echouer.
+
+     Une troisieme palette existe, et ce n en est pas une quatrieme : les douze
+     MAISONS de lib/domain-config.tsx. Valeurs, roles et nombre differents, et
+     l API les remplace par les couleurs du theme natal de la personne. Elle
+     n a rien a faire ici tant qu elle vient du reseau. */
+
+  /* Famille « brief » — les onze domaines du briefing et de la timeline. */
+  --domaine-brief-carriere: #7B8CC4;
+  --domaine-brief-carriere-texte: #5a668f;
+  --domaine-brief-amour: #BC7A96;
+  --domaine-brief-amour-texte: #89596e;
+  --domaine-brief-sante: #7BA88A;
+  --domaine-brief-sante-texte: #516f5b;
+  --domaine-brief-argent: #B8A472;
+  --domaine-brief-argent-texte: #746748;
+  --domaine-brief-famille: #C48A6A;
+  --domaine-brief-famille-texte: #875f49;
+  --domaine-brief-creativite: #A07FBD;
+  --domaine-brief-creativite-texte: #755d8a;
+  --domaine-brief-communication: #6FA3A0;
+  --domaine-brief-communication-texte: #4b6f6d;
+  --domaine-brief-foyer: #C4727A;
+  --domaine-brief-foyer-texte: #91545a;
+  --domaine-brief-spiritualite: #9B85C4;
+  --domaine-brief-spiritualite-texte: #70608d;
+  --domaine-brief-voyage: #8B80C9;
+  --domaine-brief-voyage-texte: #686097;
+  --domaine-brief-transformation: #B07AAF;
+  --domaine-brief-transformation-texte: #825a82;
 
   /* Sans cette declaration, WKWebView rend ses PROPRES controles — selecteurs
      de date, barres de defilement, menus — selon le schema clair, quel que soit
      le theme de l app. En theme sombre, ouvrir le selecteur de date de son
      ecran de naissance faisait donc surgir un panneau blanc. */
   color-scheme: light;
-  /* Couleurs des domaines de vie.
-     La base porte l identite et sert au fond teinte et a la bordure ; le texte
-     en est DERIVE, parce que le motif d origine peignait le libelle avec la
-     couleur pure sur un fond fait de la meme couleur a 18 %. Texte et fond
-     partageant la teinte, ils convergeaient : les neuf domaines etaient sous le
-     seuil en clair (1,65 a 3,02) et sept sur neuf en sombre. Ces nuances-ci
-     sont calculees pour passer 4,5 sur leur propre fond. */
-  --domaine-love: #E87E9A;
-  --domaine-love-texte: #8b4c5c;
-  --domaine-career: #7C6BBF;
-  --domaine-career-texte: #5f5293;
-  --domaine-money: #D4A843;
-  --domaine-money-texte: #775e26;
-  --domaine-family: #6BAF92;
-  --domaine-family-texte: #406958;
-  --domaine-health-energy: #5BA3CF;
-  --domaine-health-energy-texte: #386580;
-  --domaine-creativity: #CF7E5B;
-  --domaine-creativity-texte: #84513a;
-  --domaine-home: #8B9B6B;
-  --domaine-home-texte: #596344;
-  --domaine-friends-network: #9B7ECF;
-  --domaine-friends-network-texte: #68548b;
-  --domaine-meaning-spirituality: #B08DAF;
-  --domaine-meaning-spirituality-texte: #6f596e;
+  /* Famille « perso » — les neuf priorites de l ecran de personnalisation.
+     Meme grammaire et meme raison que la famille « brief » ci-dessus : la base
+     porte l identite, le texte en est derive. Sans cette derivation les neuf
+     domaines tombaient entre 1,65 et 3,02 en theme clair, et sept sur neuf en
+     sombre. Ces nuances-ci passent 4,5 sur leur propre fond a 18 %. */
+  --domaine-perso-love: #E87E9A;
+  --domaine-perso-love-texte: #8b4c5c;
+  --domaine-perso-career: #7C6BBF;
+  --domaine-perso-career-texte: #5f5293;
+  --domaine-perso-money: #D4A843;
+  --domaine-perso-money-texte: #775e26;
+  --domaine-perso-family: #6BAF92;
+  --domaine-perso-family-texte: #406958;
+  --domaine-perso-health-energy: #5BA3CF;
+  --domaine-perso-health-energy-texte: #386580;
+  --domaine-perso-creativity: #CF7E5B;
+  --domaine-perso-creativity-texte: #84513a;
+  --domaine-perso-home: #8B9B6B;
+  --domaine-perso-home-texte: #596344;
+  --domaine-perso-friends-network: #9B7ECF;
+  --domaine-perso-friends-network-texte: #68548b;
+  --domaine-perso-meaning-spirituality: #B08DAF;
+  --domaine-perso-meaning-spirituality-texte: #6f596e;
+
+  /* ── ALIAS DES ANCIENS NOMS DE DOMAINE ────────────────────────────────────
+     Ce ne sont pas des jetons : ce sont des renvois. Ils n ont AUCUNE valeur
+     propre, donc ils ne peuvent pas diverger de la famille qu ils citent —
+     c est toute la difference avec les trois copies d avant.
+
+     Ils existent parce que deux fichiers hors du perimetre de ce chantier
+     construisent le nom du jeton a la volee et lisent encore l ancien :
+       components/demo/PersonalizeFlow.tsx  -> var(--domaine-<slug>)
+       components/demo/DailyBriefing.tsx    -> var(--dom-<slug>)   (au 01/09)
+
+     A SUPPRIMER des que ces deux fichiers citent la famille. Un alias que plus
+     personne ne lit est un jeton mort, et la regle 5 s applique aussi a lui.
+     Pour savoir s il reste un lecteur :
+       grep -rn 'var(--dom-\|var(--domaine-[a-z]' components app lib */
+  --domaine-love: var(--domaine-perso-love);
+  --domaine-love-texte: var(--domaine-perso-love-texte);
+  --domaine-career: var(--domaine-perso-career);
+  --domaine-career-texte: var(--domaine-perso-career-texte);
+  --domaine-money: var(--domaine-perso-money);
+  --domaine-money-texte: var(--domaine-perso-money-texte);
+  --domaine-family: var(--domaine-perso-family);
+  --domaine-family-texte: var(--domaine-perso-family-texte);
+  --domaine-health-energy: var(--domaine-perso-health-energy);
+  --domaine-health-energy-texte: var(--domaine-perso-health-energy-texte);
+  --domaine-creativity: var(--domaine-perso-creativity);
+  --domaine-creativity-texte: var(--domaine-perso-creativity-texte);
+  --domaine-home: var(--domaine-perso-home);
+  --domaine-home-texte: var(--domaine-perso-home-texte);
+  --domaine-friends-network: var(--domaine-perso-friends-network);
+  --domaine-friends-network-texte: var(--domaine-perso-friends-network-texte);
+  --domaine-meaning-spirituality: var(--domaine-perso-meaning-spirituality);
+  --domaine-meaning-spirituality-texte: var(--domaine-perso-meaning-spirituality-texte);
+  --dom-carriere: var(--domaine-brief-carriere);
+  --dom-carriere-texte: var(--domaine-brief-carriere-texte);
+  --dom-amour: var(--domaine-brief-amour);
+  --dom-amour-texte: var(--domaine-brief-amour-texte);
+  --dom-sante: var(--domaine-brief-sante);
+  --dom-sante-texte: var(--domaine-brief-sante-texte);
+  --dom-argent: var(--domaine-brief-argent);
+  --dom-argent-texte: var(--domaine-brief-argent-texte);
+  --dom-famille: var(--domaine-brief-famille);
+  --dom-famille-texte: var(--domaine-brief-famille-texte);
+  --dom-creativite: var(--domaine-brief-creativite);
+  --dom-creativite-texte: var(--domaine-brief-creativite-texte);
+  --dom-communication: var(--domaine-brief-communication);
+  --dom-communication-texte: var(--domaine-brief-communication-texte);
+  --dom-foyer: var(--domaine-brief-foyer);
+  --dom-foyer-texte: var(--domaine-brief-foyer-texte);
+  --dom-spiritualite: var(--domaine-brief-spiritualite);
+  --dom-spiritualite-texte: var(--domaine-brief-spiritualite-texte);
+  --dom-voyage: var(--domaine-brief-voyage);
+  --dom-voyage-texte: var(--domaine-brief-voyage-texte);
+  --dom-transformation: var(--domaine-brief-transformation);
+  --dom-transformation-texte: var(--domaine-brief-transformation-texte);
+
+  /* ── LE SITE VITRINE ──────────────────────────────────────────────────────
+     components/landing/** est sombre EN PERMANENCE : app/[locale]/page.tsx
+     enveloppe la page dans .landing-immersive, qui impose la palette sombre
+     quel que soit le theme choisi. Les couleurs du site ne suivent donc pas le
+     theme — et c est la raison pour laquelle elles etaient ecrites en dur dans
+     les composants : quatre-vingt-cinq valeurs figees au 01/09/2026, dont
+     trois blancs, deux rouges d erreur presque identiques et cinq gris de
+     graphe qu on ne pouvait pas distinguer les uns des autres.
+
+     Ces jetons sont declares dans :root et JAMAIS redefinis dans .dark. Ce
+     n est pas un oubli : les redefinir changerait le rendu du site, qui n a
+     qu une seule apparence. C est aussi ce qui rend leur usage sur la page
+     /pricing — hors .landing-immersive, elle, theme-dependante — sans surprise.
+
+     .landing-immersive et .landing-glass, plus bas, lisent ces memes jetons :
+     la palette forcee de la classe et celle des composants ne peuvent plus
+     diverger, ce qui etait le cas avant (six valeurs en double). */
+
+  /* Fonds et surfaces */
+  --site-fond:                #150F2E;
+  --site-fond-carte:          #1B1535;
+  --site-fond-graphe-haut:    #090d1e;
+  --site-fond-graphe-bas:     #070a19;
+  /* Le trait de fond d une ligne du graphe des anniversaires. */
+  --site-graphe-ligne:        rgba(255, 255, 255, 0.02);
+  /* La liste de villes qui tombe sous le champ de naissance. */
+  --site-fond-liste:          #1a1530;
+  --site-fond-panneau:        #13102A;
+  --site-fond-panneau-entete: rgba(19, 16, 42, 0.97);
+  --site-voile-modale:        rgba(0, 0, 0, 0.45);
+  --site-survol:              rgba(255, 255, 255, 0.06);
+  /* Le lisere qui separe le pied de page de la landing. Meme valeur que le
+     survol ci-dessus, role different : le jour ou l un bouge, l autre ne suit
+     pas. */
+  --site-lisere-pied:         rgba(255, 255, 255, 0.06);
+  --site-tuile-violet:        rgba(124, 107, 191, 0.06);
+  --site-tuile-violet-bord:   rgba(124, 107, 191, 0.12);
+  /* Le reflet horizontal qui traverse les cartes de signal. */
+  --site-reflet:              rgba(255, 255, 255, 0.08);
+  /* Le trait qui s eteint de part et d autre du repere « now ». */
+  --site-fondu-bord:          rgba(255, 255, 255, 0.2);
+  /* Le voile du bloc premium de la timeline du site. Il ressemble a
+     --premium-overlay de l app sans en etre la copie : 0,8 / 0,6 / 0,15 contre
+     0,78 / 0,58 / 0,14. Trois ecarts d un centieme, decides separement. On les
+     nomme separement. */
+  --site-voile-premium:       linear-gradient(160deg, rgba(27, 21, 53, 0.8) 0%, rgba(27, 21, 53, 0.6) 50%, rgba(124, 107, 191, 0.15) 100%);
+
+  /* Accents.
+     --site-accent est le violet des trois teasers (bouton, trait, repere
+     « now »). Il vaut la meme chose que --accent-purple en theme CLAIR et que
+     --border-brand ; il est fige ici parce que le site ne suit pas le theme et
+     qu aucun jeton semantique ne garde cette valeur dans les deux. */
+  --site-accent:              #7C6BBF;
+  --site-accent-violet:       #9585CC;
+  --site-accent-bleu:         #5B7FEE;
+  --site-accent-vert:         #3CB179;
+  --site-accent-rose:         #F25FA0;
+  --site-accent-orange:       #FF8B3E;
+  /* Les orbes de fond de la page ont ete dessines avec les accents du theme
+     CLAIR, pas avec les teintes sombres du site. C est un choix visible a
+     l ecran, pas une erreur de recopie : on le nomme au lieu de le corriger. */
+  --site-orbe-rose:           #E93D82;
+  --site-orbe-bleu:           #3E63DD;
+  /* L or du Lifetime Chart. Ce n est pas une sixieme couleur : c est le meme
+     aplat que dans l app, qui ne change pas d un theme a l autre. Un renvoi,
+     donc, pas une copie. */
+  --site-or:                  var(--bg-premium);
+
+  /* Encres.
+     Trois blancs pour trois roles distincts, et non un seul jeton « blanc » :
+     le jour ou l aplat des boutons de /pricing devient casse, seul celui-la
+     bouge. Nommer le role, pas la valeur.
+     ATTENTION — --site-texte-sur-aplat est pose sur --site-or dans le
+     Lifetime Chart. L app, elle, pose --text-on-premium (du NOIR) sur le meme
+     or, parce que du blanc sur cet or vaut 2,73. Les deux ne sont pas d accord
+     et c est deliberement laisse tel quel : ce chantier-ci est structurel, il
+     ne redecide aucune couleur. */
+  --site-texte-sur-aplat:     #FFFFFF;
+  --site-texte-sur-accent:    #F5F1FA;
+  --site-surface-inverse:     #FFFFFF;
+  --site-marqueur:            #FFFFFF;
+  --site-texte-erreur:        #e57373;
+  /* Deux rouges d erreur a un cheveu l un de l autre : #e57373 dans les trois
+     teasers, #f17e7a a l achat. Les fondre serait un choix de design. */
+  --site-texte-erreur-achat:  #f17e7a;
+  --site-texte-succes:        #22c55e;
+  --site-fond-succes:         #22c55e20;
+
+  /* Les gris des graphes de demonstration. Cinq valeurs distinctes, dont deux
+     qui ne different que d un chiffre — #4b5569 et #4b5563. Elles restent
+     deux jetons : les confondre serait decider a la place du designer. */
+  --site-graphe-annee:        #e2e8f0;
+  --site-graphe-theme:        #6b7280;
+  --site-graphe-echelle:      #4b5569;
+  --site-graphe-axe:          #374151;
+  --site-graphe-legende:      #4b5563;
+
+  /* Les neutres que .landing-immersive imposait en dur, et que le pied de page
+     recopiait a l identique quelques lignes plus bas. Une seule source. */
+  --site-neutre-8:            #736A9F;
+  --site-neutre-9:            #8C84B2;
+  --site-neutre-10:           #A8A1C4;
+  --site-neutre-11:           #C7C2D8;
+  --site-neutre-12:           #E6E2F2;
+  --site-neutre-13:           #FDFCFE;
+  --site-bord-discret:        #2A244B;
+  --site-bord:                #3F3766;
+
+  /* ── LES ECHANTILLONS DE DEMONSTRATION ────────────────────────────────────
+     Les « boudins » et les pastilles des maquettes — site vitrine et ecran de
+     compatibilite. Ils portent une DONNEE de demonstration, pas un theme :
+     identiques en clair et en sombre, comme les couleurs de domaine.
+     Leur nom dit la teinte parce qu ils ne designent rien d autre. Un boudin
+     sauge n est pas « la sante » : c est un exemple. */
+  --echantillon-sauge:         #6BA89A;
+  --echantillon-turquoise:     #50C4D6;
+  --echantillon-violet:        #9585CC;
+  --echantillon-violet-chaud:  #B07CC2;
+  --echantillon-lavande:       #8B7FC2;
+  --echantillon-rose:          #D89EA0;
+  --echantillon-or:            #C4A86B;
+  /* Les planetes des notifications de demonstration (SmartAlerts). Cinq
+     teintes propres a cette maquette, proches des precedentes sans etre
+     egales — donc cinq jetons de plus, pas un reemploi approximatif. */
+  --echantillon-planete-bleu:  #5B7FC2;
+  --echantillon-planete-ambre: #E5A940;
+  --echantillon-planete-jade:  #4BBFAF;
+  --echantillon-planete-rose:  #D87EA0;
+  --echantillon-planete-or:    #C49B50;
+
+  /* ── LES QUATRE ELEMENTS ──
+     Feu, terre, air, eau : une donnee astrologique au meme titre qu un domaine
+     ou qu une planete. Elle ne change pas avec le theme, sinon elle cesse
+     d identifier ce qu elle designe. */
+  --element-feu:   #F97316;
+  --element-terre: #22C55E;
+  --element-air:   #EAB308;
+  --element-eau:   #60A5FA;
 
   /* Zones de securite de l appareil : l encoche en haut, la barre d accueil en bas.
      Declarees ici une fois pour toutes, donc disponibles dans TOUT l arbre. Elles
@@ -481,29 +794,29 @@ button, a, [role="button"], [role="link"],
   --text-on-premium: #1A1408;
   --text-premium: #b59a4a;
   /* Seul le texte change : la base est identique dans les deux themes. */
-  --dom-carriere-texte: #7b8cc4;
-  --dom-amour-texte: #bc7a96;
-  --dom-sante-texte: #7ba88a;
-  --dom-argent-texte: #b8a472;
-  --dom-famille-texte: #c48a6a;
-  --dom-creativite-texte: #a282be;
-  --dom-communication-texte: #6fa3a0;
-  --dom-foyer-texte: #c6767e;
-  --dom-spiritualite-texte: #9b85c4;
-  --dom-voyage-texte: #9085cb;
-  --dom-transformation-texte: #b27db1;
+  --domaine-brief-carriere-texte: #7b8cc4;
+  --domaine-brief-amour-texte: #bc7a96;
+  --domaine-brief-sante-texte: #7ba88a;
+  --domaine-brief-argent-texte: #b8a472;
+  --domaine-brief-famille-texte: #c48a6a;
+  --domaine-brief-creativite-texte: #a282be;
+  --domaine-brief-communication-texte: #6fa3a0;
+  --domaine-brief-foyer-texte: #c6767e;
+  --domaine-brief-spiritualite-texte: #9b85c4;
+  --domaine-brief-voyage-texte: #9085cb;
+  --domaine-brief-transformation-texte: #b27db1;
 
   color-scheme: dark;
   /* Seul le texte change : la base reste identique dans les deux themes. */
-  --domaine-love-texte: #e87f9b;
-  --domaine-career-texte: #9d90cf;
-  --domaine-money-texte: #d4a843;
-  --domaine-family-texte: #6baf92;
-  --domaine-health-energy-texte: #62a7d1;
-  --domaine-creativity-texte: #d48b6b;
-  --domaine-home-texte: #94a377;
-  --domaine-friends-network-texte: #a990d6;
-  --domaine-meaning-spirituality-texte: #b594b4;
+  --domaine-perso-love-texte: #e87f9b;
+  --domaine-perso-career-texte: #9d90cf;
+  --domaine-perso-money-texte: #d4a843;
+  --domaine-perso-family-texte: #6baf92;
+  --domaine-perso-health-energy-texte: #62a7d1;
+  --domaine-perso-creativity-texte: #d48b6b;
+  --domaine-perso-home-texte: #94a377;
+  --domaine-perso-friends-network-texte: #a990d6;
+  --domaine-perso-meaning-spirituality-texte: #b594b4;
 
   /* Neutral scale — purple-tinted mauve (near-black → white) */
   --brand-0: #150F2A;
@@ -706,14 +1019,14 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Landing glass card — always dark immersive context */
 .landing-glass {
-  background: color-mix(in srgb, #1B1535 70%, transparent);
+  background: color-mix(in srgb, var(--site-fond-carte) 70%, transparent);
   border: 1px solid color-mix(in srgb, white 8%, transparent);
   backdrop-filter: blur(20px) saturate(1.6);
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   border-radius: 1.5rem;
   box-shadow:
     inset 0 1px 0 0 color-mix(in srgb, white 5%, transparent),
-    0 4px 24px color-mix(in srgb, #150F2E 30%, transparent);
+    0 4px 24px color-mix(in srgb, var(--site-fond) 30%, transparent);
 }
 
 /* Planet pill shimmer glow animation */
@@ -758,45 +1071,51 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Landing page — full dark immersive background */
 .landing-immersive {
-  background: #150F2E;
+  background: var(--site-fond);
   position: relative;
   overflow: hidden;
 
-  /* Force dark palette regardless of user's theme setting */
-  --brand-8: #736A9F;
-  --brand-9: #8C84B2;
-  --brand-10: #A8A1C4;
-  --brand-11: #C7C2D8;
-  --brand-12: #E6E2F2;
-  --brand-13: #FDFCFE;
-  --text-heading: #E6E2F2;
-  --text-body: #C7C2D8;
-  --text-body-subtle: #A8A1C4;
-  --accent-purple: #9585CC;
-  --accent-green: #3CB179;
-  --accent-blue: #5B7FEE;
-  --accent-pink: #F25FA0;
-  --accent-orange: #FF8B3E;
-  --border-muted: #2A244B;
-  --border-light: #3F3766;
-  color: #C7C2D8;
+  /* La palette du site, imposee quel que soit le theme choisi.
+     Ces dix-huit valeurs etaient ecrites en dur ici ET recopiees dans les
+     composants ET une partie dans le pied de page plus bas : trois copies qui
+     ne pouvaient que diverger. Elles citent maintenant les jetons --site-*. */
+  --brand-8: var(--site-neutre-8);
+  --brand-9: var(--site-neutre-9);
+  --brand-10: var(--site-neutre-10);
+  --brand-11: var(--site-neutre-11);
+  --brand-12: var(--site-neutre-12);
+  --brand-13: var(--site-neutre-13);
+  --text-heading: var(--site-neutre-12);
+  --text-body: var(--site-neutre-11);
+  --text-body-subtle: var(--site-neutre-10);
+  --accent-purple: var(--site-accent-violet);
+  --accent-green: var(--site-accent-vert);
+  --accent-blue: var(--site-accent-bleu);
+  --accent-pink: var(--site-accent-rose);
+  --accent-orange: var(--site-accent-orange);
+  --border-muted: var(--site-bord-discret);
+  --border-light: var(--site-bord);
+  color: var(--site-neutre-11);
 }
 /* Flowing gradient orbs — 10 orbs scattered across the page */
 .landing-immersive > .landing-gradients {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* #7C6BBF, #E93D82 et #3E63DD sont --site-accent et les valeurs CLAIRES de
+     --accent-pink / --accent-blue. Le degrade a ete dessine avec elles, pas
+     avec les teintes sombres : on les nomme telles quelles. */
   background:
-    radial-gradient(ellipse 120% 25% at 50% 0%, color-mix(in srgb, #7C6BBF 28%, transparent) 0%, transparent 55%),
-    radial-gradient(circle 500px at 5% 12%, color-mix(in srgb, #E93D82 10%, transparent) 0%, transparent 60%),
-    radial-gradient(circle 400px at 95% 18%, color-mix(in srgb, #3E63DD 10%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 15% at 50% 30%, color-mix(in srgb, #7C6BBF 6%, transparent) 0%, transparent 50%),
-    radial-gradient(circle 450px at 8% 45%, color-mix(in srgb, #3E63DD 8%, transparent) 0%, transparent 60%),
-    radial-gradient(circle 400px at 90% 50%, color-mix(in srgb, #E93D82 7%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse 90% 18% at 50% 65%, color-mix(in srgb, #7C6BBF 12%, transparent) 0%, transparent 50%),
-    radial-gradient(circle 350px at 12% 78%, color-mix(in srgb, #E93D82 8%, transparent) 0%, transparent 60%),
-    radial-gradient(circle 400px at 88% 82%, color-mix(in srgb, #3E63DD 8%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse 120% 25% at 50% 100%, color-mix(in srgb, #7C6BBF 22%, transparent) 0%, transparent 55%);
+    radial-gradient(ellipse 120% 25% at 50% 0%, color-mix(in srgb, var(--site-accent) 28%, transparent) 0%, transparent 55%),
+    radial-gradient(circle 500px at 5% 12%, color-mix(in srgb, var(--site-orbe-rose) 10%, transparent) 0%, transparent 60%),
+    radial-gradient(circle 400px at 95% 18%, color-mix(in srgb, var(--site-orbe-bleu) 10%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 15% at 50% 30%, color-mix(in srgb, var(--site-accent) 6%, transparent) 0%, transparent 50%),
+    radial-gradient(circle 450px at 8% 45%, color-mix(in srgb, var(--site-orbe-bleu) 8%, transparent) 0%, transparent 60%),
+    radial-gradient(circle 400px at 90% 50%, color-mix(in srgb, var(--site-orbe-rose) 7%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 18% at 50% 65%, color-mix(in srgb, var(--site-accent) 12%, transparent) 0%, transparent 50%),
+    radial-gradient(circle 350px at 12% 78%, color-mix(in srgb, var(--site-orbe-rose) 8%, transparent) 0%, transparent 60%),
+    radial-gradient(circle 400px at 88% 82%, color-mix(in srgb, var(--site-orbe-bleu) 8%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 120% 25% at 50% 100%, color-mix(in srgb, var(--site-accent) 22%, transparent) 0%, transparent 55%);
 }
 
 /* Glass button — frosted store badges & CTAs */
@@ -828,17 +1147,17 @@ h1, h2, h3, h4, h5, h6 {
    la même surface et la même palette forcée, uniquement quand la page rendue est
    la landing immersive. */
 main:has(> .landing-immersive) + footer {
-  --footer-bg: #150F2E;
-  --brand-8: #736A9F;
-  --brand-9: #8C84B2;
-  --brand-10: #A8A1C4;
-  --brand-11: #C7C2D8;
-  --brand-12: #E6E2F2;
-  --brand-13: #FDFCFE;
-  --text-heading: #E6E2F2;
-  --text-body: #C7C2D8;
-  --text-body-subtle: #A8A1C4;
-  border-top-color: rgba(255, 255, 255, 0.06);
+  --footer-bg: var(--site-fond);
+  --brand-8: var(--site-neutre-8);
+  --brand-9: var(--site-neutre-9);
+  --brand-10: var(--site-neutre-10);
+  --brand-11: var(--site-neutre-11);
+  --brand-12: var(--site-neutre-12);
+  --brand-13: var(--site-neutre-13);
+  --text-heading: var(--site-neutre-12);
+  --text-body: var(--site-neutre-11);
+  --text-body-subtle: var(--site-neutre-10);
+  border-top-color: var(--site-lisere-pied);
 }
 
 

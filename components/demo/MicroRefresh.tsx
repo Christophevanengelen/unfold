@@ -70,8 +70,10 @@ export function MicroRefresh({ field, onDone }: MicroRefreshProps) {
           <div
             className="rounded-xl px-4 py-3"
             style={{
+              // Ce fond est deja OPAQUE et decale de son parent — du violet a
+              // 8 % pose sur --bg-tertiary. C est exactement la separation par
+              // le fond ; le lisere par-dessus etait la couche en trop.
               background: "color-mix(in srgb, var(--accent-purple) 8%, var(--bg-tertiary))",
-              border: "1px solid color-mix(in srgb, var(--accent-purple) 15%, transparent)",
             }}
           >
             <p
@@ -89,9 +91,11 @@ export function MicroRefresh({ field, onDone }: MicroRefreshProps) {
                   onClick={() => handleSelect(opt.value)}
                   className="rounded-full px-3 py-1.5 text-[10px] font-medium transition-colors"
                   style={{
+                    // Ces boutons sont poses sur la carte teintee ci-dessus.
+                    // Leur propre fond a 10 % les en detache ; le lisere a 20 %
+                    // n ajoutait qu un troisieme niveau de violet.
                     background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)",
                     color: "var(--accent-purple)",
-                    border: "1px solid color-mix(in srgb, var(--accent-purple) 20%, transparent)",
                   }}
                 >
                   {opt.label}

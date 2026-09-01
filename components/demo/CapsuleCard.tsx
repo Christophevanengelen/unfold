@@ -4,8 +4,10 @@ import { motion } from "motion/react";
 import { planetConfig, getPlanetLabel } from "@/lib/domain-config";
 import { useLocale } from "@/lib/use-locale";
 import { getTierLabel, type CapsuleData } from "@/lib/capsules";
+import { perso } from "@/lib/perso-i18n";
+import { jourMoisAnnee } from "@/lib/dates-i18n";
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// Mois abreges : lib/dates-i18n.ts. Ceux-ci etaient en anglais.
 
 interface CapsuleCardProps {
   capsule: CapsuleData;
@@ -25,10 +27,10 @@ export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardP
   const locale = useLocale();
   const tierLabel = getTierLabel(capsule.tier);
   const phase = capsule.phases[0];
-  const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
+  const startLabel = jourMoisAnnee(capsule.startDate, locale);
   const endLabel = capsule.isCurrent
     ? "Now"
-    : `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} ${capsule.endDate.getFullYear()}`;
+    : jourMoisAnnee(capsule.endDate, locale);
   const maxIntensity = Math.max(...capsule.domains.map((d) => d.intensity));
 
   return (
@@ -60,8 +62,9 @@ export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardP
               transition={{ delay: 0.1 + i * 0.06, type: "spring", stiffness: 300 }}
               className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
               style={{
+                // La pastille de planete porte deja un fond a sa couleur.
+                // Le lisere ne faisait que redire ce decoupage en plus dur.
                 background: `color-mix(in srgb, ${pc.color} 12%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${pc.color} 25%, transparent)`,
               }}
             >
               <div
@@ -184,7 +187,7 @@ export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardP
               className="text-xs font-medium"
               style={{ color: "var(--text-body-subtle)" }}
             >
-              Your next momentum is forming
+              {perso("capsule.suivante", locale)}
             </p>
             <p
               className="mt-1 text-[10px]"

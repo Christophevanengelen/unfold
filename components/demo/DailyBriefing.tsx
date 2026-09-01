@@ -1,344 +1,169 @@
 "use client";
 
 /**
- * DailyBriefing — two AI cards at top of timeline.
+ * La collecte des briefings.
  *
- * DailyCard   — "Aujourd'hui"  — fast signals (Mars+, L4 ZR, eclipses active today)
- * PeriodCard  — "En ce moment" — slow outer planets, major transits spanning weeks/months
+ * ─── CE QUE CE FICHIER ETAIT, ET POURQUOI IL A CHANGE ──────────────────────
  *
- * Grid: 8px base. All spacing = multiples of 8.
- * Touch: minimum 44px targets (Apple HIG).
+ * Il rendait DEUX cartes — « Aujourd hui » et « En ce moment » — montees par la
+ * timeline en `absolute inset-0 z-30 flex items-center justify-center`, donc
+ * centrees par-dessus le produit entier, chacune avec sa croix, toutes deux
+ * affichees en meme temps.
+ *
+ *   « foutre 25 fenetres a cliquer pour les closer, c est pas de l UX, c est de
+ *     la punition pour user. Tu veux conserver ca, tu me crees un vrai systeme
+ *     de notification qui vient pas par dessus tout. »  — Christophe, 01/09/2026
+ *
+ * Il ne rend donc plus RIEN. Il va chercher les deux briefings et les depose
+ * dans lib/messages.ts. L affichage vit dans CentreMessages.tsx, derriere une
+ * pastille qu on ouvre.
+ *
+ * ─── LE DEFAUT QUI EXPLIQUE CE QU ON VOYAIT A L ECRAN ──────────────────────
+ *
+ * L ancienne version appelait `fetch(endpoint)` avec un chemin RELATIF. Dans
+ * l app native l origine est `capacitor://localhost` : un chemin relatif n y
+ * mene nulle part et la requete echoue en silence. Le client affichait alors le
+ * repli « Le calcul n a pas abouti » comme une carte normale. C est le motif
+ * recurrent de ce depot, documente dans CLAUDE.md : tout appel reseau passe par
+ * `apiFetch`.
+ *
+ * ─── LA REGLE QUI RESTE ────────────────────────────────────────────────────
+ *
+ * On ne depose JAMAIS un echec dans la boite. Pas de message vaut mieux qu un
+ * message qui dit que ca n a pas marche : la personne n a rien a en faire, et
+ * ca allume la pastille pour rien.
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Star, CloseCircle } from "flowbite-react-icons/solid";
+import { useEffect } from "react";
 import { useMomentum } from "@/lib/momentum-store";
 import { storage } from "@/lib/storage";
-import type { BirthData } from "@/lib/birth-data";
-import { S } from "@/lib/layout-constants";
+import { apiFetch } from "@/lib/api-client";
 import { detectLocale } from "@/lib/i18n-demo";
+import { deposer, cleDuJour, type TypeMessage } from "@/lib/messages";
+import type { BirthData } from "@/lib/birth-data";
 
-// ─── Types ───────────────────────────────────────────────
+const TTL_MS = 12 * 60 * 60 * 1000;
 
-interface BriefingData {
-  greeting: string;
-  summary: string;
-  action: string;
-  activeDomains: string[];
+interface Briefing {
+  greeting?: string;
+  summary?: string;
+  action?: string;
+  activeDomains?: string[];
+  /** Presents quand la route signale un echec. Voir app/api/openai/*. */
+  ok?: boolean;
+  echec?: boolean;
 }
 
-type LoadState = "idle" | "loading" | "ready" | "error";
-
-// ─── Animation ───────────────────────────────────────────
-
-const EASE = [0.4, 0, 0.2, 1] as const;
-
-// ─── Visual tokens ───────────────────────────────────────
-
-const CARD_BG = "var(--glass-bg)";
-const CARD_BORDER = "1px solid var(--glass-border)";
-const CARD_BLUR = "blur(24px)";
-const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-
-// ─── Domain colors ───────────────────────────────────────
-
-// Chaque clef de DOMAIN_COLORS pointe vers un jeton. Les valeurs hex restent
-// pour memoire de l identite ; ce sont les jetons qui s affichent.
-const DOMAIN_SLUGS: Record<string, string> = {
-  "carrière": "carriere", travail: "carriere", amour: "amour",
-  relations: "amour", couple: "amour", "santé": "sante",
-  finances: "argent", argent: "argent", famille: "famille",
-  "créativité": "creativite", communication: "communication", foyer: "foyer",
-  "spiritualité": "spiritualite", voyage: "voyage", transformation: "transformation",
-  "développement personnel": "spiritualite", "opportunités": "argent",
-};
-
-const DOMAIN_COLORS: Record<string, string> = {
-  carrière: "#7B8CC4", travail: "#7B8CC4", amour: "#BC7A96",
-  relations: "#BC7A96", couple: "#BC7A96", santé: "#7BA88A",
-  finances: "#B8A472", argent: "#B8A472", famille: "#C48A6A",
-  créativité: "#A07FBD", communication: "#6FA3A0", foyer: "#C4727A",
-  spiritualité: "#9B85C4", voyage: "#8B80C9", transformation: "#B07AAF",
-  "développement personnel": "#9B85C4", opportunités: "#B8A472",
-};
+const SOURCES: { endpoint: string; type: TypeMessage; cache: string }[] = [
+  { endpoint: "/api/openai/daily-brief", type: "briefing_jour", cache: "daily_brief" },
+  { endpoint: "/api/openai/daily-briefing", type: "briefing_periode", cache: "daily_briefing" },
+];
 
 /**
- * La couleur d un domaine, en deux valeurs.
- *
- * `base` porte l identite et sert au fond teinte et a la bordure ; `texte` en
- * est derive. La fonction ne renvoyait qu une seule couleur, utilisee pour les
- * TROIS a la fois — donc le libelle etait peint dans la couleur pure sur un
- * fond fait de cette meme couleur a 12 %. Texte et fond partageant la teinte,
- * ils convergeaient : les onze domaines etaient entre 2,02 et 2,78 de contraste
- * en theme clair, pour 4,5 requis. Sur l ecran principal.
- *
- * Les nuances de texte sont calculees dans app/globals.css, une par theme, et
- * verifiees par scripts/verifier-contraste.mjs.
+ * Les textes de repli que les routes ont longtemps renvoyes en 200 OK,
+ * indiscernables d une reussite. Ce filet reste tant qu une reponse de cette
+ * forme peut encore dormir dans un cache local, sur un telephone deja installe.
  */
-function getDomainColor(domain: string): { base: string; texte: string } {
-  const lower = domain.toLowerCase();
-  for (const cle of Object.keys(DOMAIN_COLORS)) {
-    if (lower.includes(cle)) {
-      const slug = DOMAIN_SLUGS[cle];
-      if (slug) return { base: `var(--dom-${slug})`, texte: `var(--dom-${slug}-texte)` };
+const REPLIS_CONNUS = [
+  "le calcul n'a pas abouti",
+  "on ne peut pas calculer",
+  "réessaie dans quelques minutes",
+];
+
+/**
+ * Est-ce une vraie lecture ? Trois refus, du moins cher au plus cher.
+ */
+function estUneLecture(b: Briefing | null): b is Briefing & { summary: string } {
+  if (!b) return false;
+  if (b.ok === false || b.echec === true) return false;
+  const corps = (b.summary ?? "").trim();
+  // On mesure des CARACTERES, pas des mots separes par des espaces.
+  //
+  // Le test comptait `corps.split(/\s+/).length < 3`. Le japonais et le chinois
+  // n ecrivent pas d espaces : un briefing entier y comptait pour UN mot, donc
+  // il etait rejete. La boite aux lettres restait vide a vie dans ces deux
+  // langues — et comme le cache n est ecrit que si ce test passe, les deux
+  // routes OpenAI PAYANTES etaient rappelees a chaque montage de la timeline.
+  //
+  // Douze caracteres : au-dessus de tout ce qui pourrait etre un artefact
+  // (« ok », « — », une clef de traduction non resolue), en dessous de la plus
+  // courte phrase reelle dans n importe laquelle des dix langues.
+  if (corps.length < 12) return false;
+  const bas = corps.toLowerCase();
+  return !REPLIS_CONNUS.some((r) => bas.includes(r));
+}
+
+async function collecter(birthData: BirthData, source: (typeof SOURCES)[number]): Promise<void> {
+  const cleCache = cleDuJour(source.type).replace(source.type, source.cache);
+
+  let briefing: Briefing | null = null;
+
+  try {
+    briefing = await storage.get<Briefing>(cleCache, TTL_MS);
+  } catch {
+    /* cache absent ou illisible : on demande au reseau */
+  }
+
+  if (!estUneLecture(briefing)) {
+    try {
+      const res = await apiFetch(source.endpoint, {
+        method: "POST",
+        // La langue part avec la requete. Sans elle, le modele repondait dans
+        // celle de son prompt systeme — le francais — a tout le monde.
+        body: JSON.stringify({ birthData, locale: detectLocale() }),
+      });
+      briefing = res.ok ? ((await res.json()) as Briefing) : null;
+    } catch {
+      // Reseau coupe. Rien a deposer, rien a dire : la boite reste en l etat et
+      // la prochaine ouverture de l ecran reessaiera.
+      return;
+    }
+    if (estUneLecture(briefing)) {
+      try {
+        await storage.set(cleCache, briefing);
+      } catch {
+        /* quota plein : on affiche quand meme */
+      }
     }
   }
-  return { base: "var(--accent-purple)", texte: "var(--text-brand-strong)" };
+
+  if (!estUneLecture(briefing)) return;
+
+  deposer({
+    type: source.type,
+    corps: briefing.summary.trim(),
+    action: briefing.action?.trim() || undefined,
+    domaines: briefing.activeDomains,
+  });
 }
 
-function dateKey(prefix: string): string {
-  const d = new Date();
-  return `${prefix}_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-// ─── Hook: data fetching ─────────────────────────────────
-
-function useBriefingData(birthData: BirthData | null, endpoint: string, cachePrefix: string) {
-  const [data, setData] = useState<BriefingData | null>(null);
-  const [state, setState] = useState<LoadState>("idle");
+/**
+ * Ne rend rien. A monter une fois, n importe ou dans l arbre de l app.
+ *
+ * Le nom du composant est conserve : il est importe ailleurs, et le renommer
+ * aurait pose un diff de deplacement par-dessus un diff de fond.
+ */
+export function DailyBriefing() {
+  const { birthData } = useMomentum();
 
   useEffect(() => {
     if (!birthData) return;
-    let cancelled = false;
-    setState("loading");
+    let annule = false;
 
-    async function load() {
-      const cacheKey = dateKey(cachePrefix);
-
-      try {
-        const cached = await storage.get<BriefingData>(cacheKey, CACHE_TTL_MS);
-        if (cached && !cancelled) { setData(cached); setState("ready"); return; }
-      } catch { /* miss */ }
-
-      try {
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // La langue part avec la requete. Sans elle, le modele repondait
-          // dans celle de son prompt systeme — le francais — a tout le monde.
-          body: JSON.stringify({ birthData, locale: detectLocale() }),
-        });
-        if (!res.ok) throw new Error(`API ${res.status}`);
-        const result: BriefingData = await res.json();
-        if (!cancelled) { setData(result); setState("ready"); await storage.set(cacheKey, result); }
-      } catch {
-        if (!cancelled) setState("error");
+    void (async () => {
+      for (const source of SOURCES) {
+        if (annule) return;
+        // En serie et non en parallele : les deux routes appellent le meme
+        // fournisseur derriere un compteur d usage partage, et deux requetes
+        // simultanees se comptent double pour un seul ecran.
+        await collecter(birthData, source);
       }
-    }
+    })();
 
-    load();
-    return () => { cancelled = true; };
-  }, [birthData, endpoint, cachePrefix]);
+    return () => {
+      annule = true;
+    };
+  }, [birthData]);
 
-  return { data, state };
-}
-
-// ─── Atom: Domain Pill ───────────────────────────────────
-
-function DomainPill({ domain }: { domain: string }) {
-  const { base, texte } = getDomainColor(domain);
-  return (
-    <span
-      className="inline-flex rounded-full font-medium"
-      style={{
-        fontSize: 10,
-        padding: `${S.xs}px ${S.sm + S.xs}px`,
-        color: texte,
-        background: `color-mix(in srgb, ${base} 12%, transparent)`,
-        border: `1px solid color-mix(in srgb, ${base} 18%, transparent)`,
-      }}
-    >
-      {domain}
-    </span>
-  );
-}
-
-// ─── Molecule: Brief Card ────────────────────────────────
-
-function BriefCard({
-  briefing,
-  eyebrow,
-  onDismiss,
-}: {
-  briefing: BriefingData;
-  eyebrow: string;
-  onDismiss: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: S.sm }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, height: 0 }}
-      // 0,25 s et non 0,6. Cette carte apparait PAR-DESSUS une timeline deja
-      // affichee et deja lisible : une entree longue s y lit comme un element
-      // qui traverse l ecran, pas comme une arrivee. Six dixiemes de seconde,
-      // c est le temps qu il faut pour que l oeil suive le mouvement au lieu de
-      // decouvrir le contenu.
-      transition={{ duration: 0.25, ease: EASE }}
-      className="relative overflow-hidden rounded-2xl"
-      style={{
-        background: CARD_BG,
-        backdropFilter: CARD_BLUR,
-        border: CARD_BORDER,
-        padding: `${S.md}px ${S.px}px ${S.px}px`,
-      }}
-    >
-      {/* ── Row 1: Eyebrow + Close ── */}
-      <div className="flex items-center" style={{ marginBottom: S.md }}>
-        <Star style={{ width: 12, height: 12, color: "var(--accent-purple)", opacity: 0.7 }} />
-        <span
-          className="font-semibold uppercase"
-          style={{
-            fontSize: 10,
-            letterSpacing: "0.12em",
-            color: "var(--accent-purple)",
-            opacity: 0.7,
-            lineHeight: 1,
-            marginLeft: S.sm,
-            flex: 1,
-          }}
-        >
-          {eyebrow}
-        </span>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="flex items-center justify-center"
-          style={{ width: 44, height: 44, marginTop: -S.sm, marginRight: -S.sm }}
-          aria-label="Fermer"
-        >
-          <CloseCircle style={{ width: 18, height: 18, color: "var(--accent-purple)", opacity: 0.35 }} />
-        </button>
-      </div>
-
-      {/* ── Row 2: Summary ── */}
-      <p
-        style={{
-          fontSize: 14,
-          lineHeight: 1.7,
-          color: "var(--text-body)",
-          marginBottom: S.md,
-          paddingRight: S.sm,
-        }}
-      >
-        {briefing.summary}
-      </p>
-
-      {/* ── Row 3: Action ── */}
-      <p
-        className="font-medium"
-        style={{ fontSize: 12, lineHeight: 1.5, color: "var(--accent-purple)", marginBottom: S.md }}
-      >
-        {briefing.action}
-      </p>
-
-      {/* ── Row 4: Domain pills ── */}
-      {briefing.activeDomains.length > 0 && (
-        <div className="flex flex-wrap items-center" style={{ gap: S.sm }}>
-          {briefing.activeDomains.slice(0, 3).map((domain) => (
-            <DomainPill key={domain} domain={domain} />
-          ))}
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// ─── Atom: Skeleton ──────────────────────────────────────
-
-/**
- * Plus de squelette. C est LUI, les « deux blocs parasites ».
- *
- * DailyBriefing rend deux cartes, chacune affichait ce rectangle gris pulse de
- * 48 px tant que ses donnees n etaient pas la — et le conteneur les centre
- * au milieu de l ecran, par-dessus la timeline. Deux rectangles flottants, le
- * temps d une lecture IndexedDB.
- *
- * Un squelette a du sens quand il occupe la place de ce qui arrive, dans un
- * flux de contenu : il evite un saut de mise en page. Ici il ne remplace rien —
- * il est superpose a une timeline deja complete et deja lisible. Il n annonce
- * donc pas un chargement, il ajoute du bruit sur un ecran qui n en avait pas
- * besoin.
- *
- * On n affiche rien, et les vraies cartes arrivent en fondu quand elles sont
- * pretes. C est ce que « fluide » veut dire ici : ne rien montrer plutot que
- * montrer un substitut.
- */
-function BriefingSkeleton() {
   return null;
-}
-
-// ─── Inner: Daily Card (fast signals) ────────────────────
-
-function DailyCard({ birthData }: { birthData: BirthData }) {
-  const { data, state } = useBriefingData(birthData, "/api/openai/daily-brief", "daily_brief");
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const stored = localStorage.getItem("unfold_daily_dismissed");
-    return stored === new Date().toISOString().slice(0, 10);
-  });
-
-  const handleDismiss = useCallback(() => {
-    setDismissed(true);
-    localStorage.setItem("unfold_daily_dismissed", new Date().toISOString().slice(0, 10));
-  }, []);
-
-  if (dismissed || state === "error") return null;
-  if (state === "loading" || state === "idle") return <BriefingSkeleton />;
-  if (!data) return null;
-
-  return (
-    <AnimatePresence>
-      {!dismissed && (
-        <BriefCard briefing={data} eyebrow="Aujourd'hui" onDismiss={handleDismiss} />
-      )}
-    </AnimatePresence>
-  );
-}
-
-// ─── Inner: Period Card (slow transits) ──────────────────
-
-function PeriodCard({ birthData }: { birthData: BirthData }) {
-  const { data, state } = useBriefingData(birthData, "/api/openai/daily-briefing", "daily_briefing");
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const stored = localStorage.getItem("unfold_briefing_dismissed");
-    return stored === new Date().toISOString().slice(0, 10);
-  });
-
-  const handleDismiss = useCallback(() => {
-    setDismissed(true);
-    localStorage.setItem("unfold_briefing_dismissed", new Date().toISOString().slice(0, 10));
-  }, []);
-
-  if (dismissed || state === "error") return null;
-  if (state === "loading" || state === "idle") return <BriefingSkeleton />;
-  if (!data) return null;
-
-  return (
-    <AnimatePresence>
-      {!dismissed && (
-        <BriefCard briefing={data} eyebrow="En ce moment" onDismiss={handleDismiss} />
-      )}
-    </AnimatePresence>
-  );
-}
-
-// ─── Organism: Container ─────────────────────────────────
-
-export function DailyBriefing({ onDismiss: onDismissParent }: { onDismiss?: () => void } = {}) {
-  const { birthData } = useMomentum();
-
-  if (!birthData) return null;
-
-  // onDismissParent kept for API compat — not used per-card since each dismisses independently
-  void onDismissParent;
-
-  return (
-    <div style={{ padding: `${S.sm}px ${S.px}px`, display: "flex", flexDirection: "column", gap: S.sm }}>
-      <DailyCard birthData={birthData} />
-      <PeriodCard birthData={birthData} />
-    </div>
-  );
 }

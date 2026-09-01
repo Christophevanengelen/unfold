@@ -16,13 +16,63 @@ const STORE_NAME = "kv";
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
+/**
+ * Au-dela, on considere que la base ne repondra pas.
+ *
+ * Trois secondes : une ouverture normale prend quelques millisecondes, meme sur
+ * un telephone lent. Ce delai n est pas la pour attendre une base lente, il est
+ * la pour sortir d une base qui ne repondra JAMAIS.
+ */
+const DELAI_OUVERTURE_MS = 3000;
+
+/**
+ * Ouvre la base, ou renonce.
+ *
+ * ─── POURQUOI CE DELAI ET CE `onblocked` ───────────────────────────────────
+ *
+ * Cette fonction n avait que `onsuccess` et `onerror`. Or `indexedDB.open` a un
+ * TROISIEME etat : `onblocked`, quand une autre connexion tient encore une
+ * version anterieure, ou quand une suppression de base est en attente. Dans ce
+ * cas aucun des deux gestionnaires ne se declenche — jamais. La promesse ne se
+ * resolvait ni ne rejetait, et tout ce qui l attendait restait suspendu.
+ *
+ * Vu a l ecran le 01/09/2026 : la timeline tournait indefiniment, sans message
+ * et sans sortie. `getBirthData()` attend `getPersistent`, qui attend cette
+ * promesse ; les donnees de naissance restaient donc nulles pour toujours, et
+ * l ecran affichait un rond qui tourne. Aucune erreur en console, aucun appel
+ * reseau : rien a quoi se raccrocher pour comprendre.
+ *
+ * Le repli existe deja partout : `getBirthData` relit localStorage quand
+ * IndexedDB ne rend rien. Il fallait seulement que l attente FINISSE.
+ *
+ * ─── POURQUOI ON EFFACE `dbPromise` EN CAS D ECHEC ─────────────────────────
+ *
+ * La promesse rejetee etait gardee en cache pour toute la vie de la page : un
+ * seul echec transitoire — un autre onglet ouvert une seconde de trop —
+ * condamnait le stockage persistant jusqu au rechargement. On la remet a null
+ * pour que la tentative suivante reessaie.
+ */
 function getDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
+
+  dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     if (typeof indexedDB === "undefined") {
-      reject(new Error("IndexedDB not available"));
+      reject(new Error("IndexedDB indisponible"));
       return;
     }
+
+    let regle = false;
+    const finir = (fn: () => void) => {
+      if (regle) return;
+      regle = true;
+      clearTimeout(minuterie);
+      fn();
+    };
+
+    const minuterie = setTimeout(() => {
+      finir(() => reject(new Error(`IndexedDB n a pas repondu en ${DELAI_OUVERTURE_MS} ms`)));
+    }, DELAI_OUVERTURE_MS);
+
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
@@ -30,9 +80,19 @@ function getDB(): Promise<IDBDatabase> {
         db.createObjectStore(STORE_NAME);
       }
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => finir(() => resolve(req.result));
+    req.onerror = () => finir(() => reject(req.error));
+    // Le troisieme etat, celui qui manquait.
+    req.onblocked = () => {
+      finir(() => reject(new Error("IndexedDB bloquee par une autre connexion")));
+    };
   });
+
+  // Un echec ne doit pas condamner le stockage pour toute la vie de la page.
+  dbPromise.catch(() => {
+    dbPromise = null;
+  });
+
   return dbPromise;
 }
 

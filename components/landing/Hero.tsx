@@ -20,14 +20,14 @@ function t(translations: TranslationMap, key: string, fallback?: string): string
 
 // Background floating boudins — purely decorative
 const BG_BOUDINS = [
-  { x: "8%",  y: "15%", w: 12, h: 20, color: "#8B7FC2", opacity: 0.08 },
-  { x: "85%", y: "10%", w: 16, h: 28, color: "#6BA89A", opacity: 0.06 },
-  { x: "15%", y: "35%", w: 10, h: 14, color: "#C4A86B", opacity: 0.07 },
-  { x: "90%", y: "40%", w: 20, h: 36, color: "#9585CC", opacity: 0.08 },
-  { x: "5%",  y: "60%", w: 14, h: 24, color: "#D89EA0", opacity: 0.06 },
-  { x: "80%", y: "65%", w: 18, h: 32, color: "#B07CC2", opacity: 0.1 },
-  { x: "20%", y: "80%", w: 12, h: 18, color: "#50C4D6", opacity: 0.06 },
-  { x: "75%", y: "85%", w: 14, h: 22, color: "#6BA89A", opacity: 0.07 },
+  { x: "8%",  y: "15%", w: 12, h: 20, color: "var(--echantillon-lavande)", opacity: 0.08 },
+  { x: "85%", y: "10%", w: 16, h: 28, color: "var(--echantillon-sauge)", opacity: 0.06 },
+  { x: "15%", y: "35%", w: 10, h: 14, color: "var(--echantillon-or)", opacity: 0.07 },
+  { x: "90%", y: "40%", w: 20, h: 36, color: "var(--echantillon-violet)", opacity: 0.08 },
+  { x: "5%",  y: "60%", w: 14, h: 24, color: "var(--echantillon-rose)", opacity: 0.06 },
+  { x: "80%", y: "65%", w: 18, h: 32, color: "var(--echantillon-violet-chaud)", opacity: 0.1 },
+  { x: "20%", y: "80%", w: 12, h: 18, color: "var(--echantillon-turquoise)", opacity: 0.06 },
+  { x: "75%", y: "85%", w: 14, h: 22, color: "var(--echantillon-sauge)", opacity: 0.07 },
 ];
 
 const REAL_SIGNAL_ENABLED = process.env.NEXT_PUBLIC_LANDING_REAL_SIGNAL !== "false";

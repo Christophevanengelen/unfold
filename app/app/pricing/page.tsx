@@ -1,331 +1,449 @@
 "use client";
 
 /**
- * /demo/pricing — In-app pricing page used by PremiumTeaser CTA.
+ * L ecran ou l on passe de gratuit a payant.
  *
- * Why a separate page from /[locale]/pricing:
- * - Lives inside the demo layout (matches app context, safe areas, theme)
- * - Uses lib/i18n-demo.ts (10 languages with auto-detect) instead of the
- *   landing site's DB-driven 3-locale i18n
- * - No dependency on the landing /[locale] route (which has its own bug)
- * - Hidden on iOS bundle per Apple anti-steering rule 3.1.1
+ * Il vit dans la mise en page de l app (zones sures, theme) et porte ses
+ * propres traductions, en dix langues, plus bas dans ce fichier. Stripe recoit
+ * la langue pour que sa page de paiement s affiche dans la bonne.
  *
- * Stripe Checkout receives the user's locale so the payment page renders
- * in the right language for all 10 supported languages.
+ * ─────────────────────────────────────────────────────────────────────────
+ * CE QU IL ETAIT, ET POURQUOI IL A ETE REFAIT LE 01/09/2026
+ *
+ * Un tableau comparatif : deux cartes cote a cote, huit cases a cocher, un
+ * bouton inerte « Ton plan actuel » a la meilleure place de l ecran. Verdict
+ * de Christophe : « ce n est pas du 10 etoiles, c est un tableau de prix SaaS
+ * generique ».
+ *
+ * Le defaut de fond n etait pas esthetique. Cet ecran ne s ouvre presque
+ * jamais tout seul : il s ouvre parce que quelqu un vient de toucher le voile
+ * pose sur UNE date de sa vie. Il ne le savait pas, et vendait donc un
+ * abonnement anonyme a quelqu un qui venait de poser une question precise.
+ *
+ * Ce qui a change :
+ *
+ *   1. La date regardee ouvre l ecran, en toutes lettres. Elle arrive par
+ *      components/demo/PremiumTeaserContext.tsx, que PremiumBlur remplit au
+ *      moment ou le mur se dresse.
+ *   2. Une seule offre visible. Comparer deux colonnes, c est deja hesiter ;
+ *      le gratuit devient une phrase, en bas, pas une carte concurrente.
+ *   3. Trois lignes de ce qu on RECOIT, a la place de huit cases a cocher.
+ *      Plus de « delineation », plus de « momentum » : personne ne sait ce
+ *      que c est, et un mot qu on ne comprend pas ne donne envie de rien.
+ *   4. Le bouton nomme le resultat — « Ouvrir le 22 Oct 2026 » — pas l acte
+ *      commercial.
+ *
+ * CE QUI N A PAS BOUGE
+ *
+ *   - Les montants viennent de lib/billing/features.ts, source unique, qui
+ *     doit correspondre a App Store Connect et au prestataire de paiement.
+ *   - Les mentions legales europeennes en pied de page, obligatoires.
+ *   - Le prix, la duree et le renouvellement restent lisibles AVANT l achat,
+ *     comme Apple l exige : c est la ligne d engagement sous le montant.
+ *   - Sur iOS on n affiche jamais nos propres constantes de prix : Apple
+ *     convertit, arrondit et applique la fiscalite locale.
+ * ─────────────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Check, ChevronLeft } from "flowbite-react-icons/outline";
+import { ChevronLeft } from "flowbite-react-icons/outline";
 import { useAuth } from "@/lib/auth-context";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { isIOSBundle } from "@/lib/platform";
-import { PLANS } from "@/lib/billing/features";
+import { PLANS, economieAnnuelle } from "@/lib/billing/features";
 import { verifierCode, CLE_ACCES } from "@/lib/coupons";
 import { perso } from "@/lib/perso-i18n";
-import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { t, type Locale } from "@/lib/i18n-demo";
 import { apiFetch } from "@/lib/api-client";
 import { disponible, preparer, offres, acheter, type OffreAchat } from "@/lib/achats";
+import { declencheurEnAttente } from "@/components/demo/PremiumTeaserContext";
 import { useLocale } from "@/lib/use-locale";
 
-// ─── Localized copy for this page ────────────────────────────────
-// Inline since these strings are page-specific. Other UI lives in i18n-demo.ts.
-const PAGE_COPY: Record<Locale, {
-  title: string;
-  sub: string;
-  free: string;
-  pro: string;
-  free_desc: string;
-  pro_desc: string;
-  monthly: string;
-  annually: string;
-  save: string;
-  savings: string;          // "{X} € per year"
-  popular: string;
-  current_plan: string;
-  start_trial: string;
-  current_billing_month: string;     // "/month"
-  billed_annually: string;            // "billed {X} per year"
-  features: { free: string[]; pro: string[] };
-  disclosure: string[];                // legal lines (web only)
-  back: string;
-  ios_blocked: string;                 // shown on iOS in place of CTA
-  lifetime_badge: string;
-  lifetime_cta: string;
-}> = {
+// ─── Textes de la page, dix langues ──────────────────────────────────────
+interface Textes {
+  reprise: string;          // sur-titre au-dessus de la date regardee
+  sous_date: string;        // la phrase qui suit la date, quand on la connait
+  titre: string;            // titre quand on ne la connait pas
+  sous: string;
+  gains: string[];          // trois, jamais plus
+  gains_sous: string[];
+  mensuel: string;
+  annuel: string;
+  economie: string;         // « {x} € de moins sur l annee »
+  par_mois: string;
+  engagement: string;       // prix + duree + renouvellement, avant l achat
+  engagement_an: string;
+  bouton_date: string;      // « Ouvrir le {d} »
+  bouton: string;
+  gratuit: string;          // ce qu on garde sans payer, une phrase
+  code_lien: string;
+  code_champ: string;
+  code_valider: string;
+  code_ouvert: string;
+  retour: string;
+  ios_bloque: string;
+  mentions: string[];       // obligatoires, web uniquement
+}
+
+const PAGE_COPY: Record<Locale, Textes> = {
   fr: {
-    title: "Gratuit maintenant.\nPro quand tu es prêt.",
-    sub: "7 jours gratuits pour explorer ton timeline complet — sans carte bancaire.",
-    free: "Gratuit", pro: "Pro",
-    free_desc: "Ton signal du moment, toujours disponible.",
-    pro_desc: "Ton momentum complet — passé, présent, futur.",
-    monthly: "Mensuel", annually: "Annuel", save: "-25%",
-    savings: "Tu économises {x} € par an",
-    popular: "Le plus populaire",
-    current_plan: "Ton plan actuel",
-    start_trial: "Démarrer 7 jours gratuits",
-    current_billing_month: "/mois",
-    billed_annually: "facturé {x} € / an",
-    features: {
-      free: ["Signal du moment", "Mots-clés planétaires", "Historique passé", "1 connexion (matching)", "1 délinéation IA / semaine"],
-      pro:  ["Tout le gratuit, sans limite", "Timeline complète 36 mois", "Fenêtres futures débloquées", "Alertes de pics en temps réel", "Délinéations IA illimitées", "Brief quotidien personnalisé", "Connexions illimitées", "Digest hebdomadaire"],
-    },
-    disclosure: [
+    reprise: "Tu regardais",
+    sous_date: "Ta timeline l'a déjà calculé. Elle ne te l'a pas encore lu.",
+    titre: "Ta timeline ne s'arrête pas à aujourd'hui.",
+    sous: "Les trois prochaines années sont déjà calculées. Elles attendent.",
+    gains: [
+      "Les trois prochaines années, période par période",
+      "Le sens de chaque période, écrit pour ta situation",
+      "Un mot le jour où une bonne fenêtre s'ouvre",
+    ],
+    gains_sous: [
+      "Quand ça pousse, quand ça freine, et jusqu'à quand.",
+      "Sur n'importe quelle date, autant de fois que tu veux.",
+      "Et chaque matin, ce que la journée porte.",
+    ],
+    mensuel: "Mensuel", annuel: "Annuel",
+    economie: "{x} € de moins sur l'année",
+    par_mois: "/mois",
+    engagement: "7 jours gratuits, puis {x} € par mois. Annulable à tout moment.",
+    engagement_an: "7 jours gratuits, puis {x} € par an. Annulable à tout moment.",
+    bouton_date: "Ouvrir le {d}",
+    bouton: "Commencer les 7 jours gratuits",
+    gratuit: "Sans rien payer, tu gardes ton signal du jour, tout ton passé et tes connexions.",
+    code_lien: "J'ai un code",
+    code_champ: "CODE",
+    code_valider: "Valider",
+    code_ouvert: "C'est ouvert. On y retourne…",
+    retour: "Retour",
+    ios_bloque: "Disponible dans la version Pro de l'app",
+    mentions: [
       "Renouvellement automatique. Annulable à tout moment depuis ton compte.",
       "Droit de rétractation 14 jours (Article 16, Directive 2011/83/UE).",
       "Prix TTC, TVA incluse selon ton pays de résidence.",
     ],
-    back: "Retour",
-    ios_blocked: "Disponible dans la version Pro de l'app",
-    lifetime_badge: "À vie · Paiement unique",
-    lifetime_cta: "Obtenir l'accès à vie",
   },
   en: {
-    title: "Free now.\nPro when you're ready.",
-    sub: "7 days free to explore your full timeline — no credit card.",
-    free: "Free", pro: "Pro",
-    free_desc: "Your current signal, always available.",
-    pro_desc: "Your full momentum — past, present, future.",
-    monthly: "Monthly", annually: "Annual", save: "-25%",
-    savings: "You save €{x} per year",
-    popular: "Most popular",
-    current_plan: "Your current plan",
-    start_trial: "Start 7-day free trial",
-    current_billing_month: "/month",
-    billed_annually: "billed €{x} per year",
-    features: {
-      free: ["Current signal", "Planet keywords", "Past history", "1 connection (matching)", "1 AI delineation / week"],
-      pro:  ["Everything free, unlimited", "Full 36-month timeline", "Future windows unlocked", "Real-time peak alerts", "Unlimited AI delineations", "Personal daily brief", "Unlimited connections", "Weekly digest"],
-    },
-    disclosure: [
+    reprise: "You were looking at",
+    sous_date: "Your timeline has already worked it out. It just hasn't read it to you.",
+    titre: "Your timeline doesn't stop at today.",
+    sous: "The next three years are already worked out. They're waiting.",
+    gains: [
+      "The next three years, period by period",
+      "What each period means, written for your situation",
+      "A word on the day a good window opens",
+    ],
+    gains_sous: [
+      "When it pushes, when it holds you back, and until when.",
+      "On any date, as many times as you want.",
+      "And every morning, what the day carries.",
+    ],
+    mensuel: "Monthly", annuel: "Annual",
+    economie: "€{x} less over the year",
+    par_mois: "/month",
+    engagement: "7 days free, then €{x} per month. Cancel anytime.",
+    engagement_an: "7 days free, then €{x} per year. Cancel anytime.",
+    bouton_date: "Open {d}",
+    bouton: "Start the 7 free days",
+    gratuit: "Paying nothing, you keep your signal of the day, all your past, and your connections.",
+    code_lien: "I have a code",
+    code_champ: "CODE",
+    code_valider: "Apply",
+    code_ouvert: "It's open. Taking you back…",
+    retour: "Back",
+    ios_bloque: "Available in the Pro version of the app",
+    mentions: [
       "Auto-renews. Cancel anytime from your account.",
       "14-day right of withdrawal (EU Directive 2011/83/EU, Art. 16).",
       "VAT included based on your country of residence.",
     ],
-    back: "Back",
-    ios_blocked: "Available in the Pro version of the app",
-    lifetime_badge: "Lifetime · One-time",
-    lifetime_cta: "Get lifetime access",
   },
   es: {
-    title: "Gratis ahora.\nPro cuando quieras.",
-    sub: "7 días gratis para explorar tu línea de tiempo completa — sin tarjeta.",
-    free: "Gratis", pro: "Pro",
-    free_desc: "Tu señal actual, siempre disponible.",
-    pro_desc: "Tu momentum completo — pasado, presente, futuro.",
-    monthly: "Mensual", annually: "Anual", save: "-25%",
-    savings: "Ahorras {x} € al año",
-    popular: "El más popular",
-    current_plan: "Tu plan actual",
-    start_trial: "Empezar 7 días gratis",
-    current_billing_month: "/mes",
-    billed_annually: "facturado {x} € / año",
-    features: {
-      free: ["Señal del momento", "Palabras planetarias", "Historial pasado", "1 conexión (matching)", "1 análisis IA / semana"],
-      pro:  ["Todo gratis, sin límite", "Línea de tiempo de 36 meses", "Ventanas futuras desbloqueadas", "Alertas de picos en tiempo real", "Análisis IA ilimitados", "Brief diario personalizado", "Conexiones ilimitadas", "Resumen semanal"],
-    },
-    disclosure: [
+    reprise: "Estabas mirando",
+    sous_date: "Tu línea de tiempo ya lo ha calculado. Solo que aún no te lo ha leído.",
+    titre: "Tu línea de tiempo no se detiene hoy.",
+    sous: "Los próximos tres años ya están calculados. Te esperan.",
+    gains: [
+      "Los próximos tres años, periodo a periodo",
+      "Qué significa cada periodo, escrito para tu situación",
+      "Un aviso el día en que se abre una buena ventana",
+    ],
+    gains_sous: [
+      "Cuándo empuja, cuándo frena y hasta cuándo.",
+      "En cualquier fecha, tantas veces como quieras.",
+      "Y cada mañana, lo que trae el día.",
+    ],
+    mensuel: "Mensual", annuel: "Anual",
+    economie: "{x} € menos al año",
+    par_mois: "/mes",
+    engagement: "7 días gratis, luego {x} € al mes. Cancela cuando quieras.",
+    engagement_an: "7 días gratis, luego {x} € al año. Cancela cuando quieras.",
+    bouton_date: "Abrir el {d}",
+    bouton: "Empezar los 7 días gratis",
+    gratuit: "Sin pagar nada, conservas tu señal del día, todo tu pasado y tus conexiones.",
+    code_lien: "Tengo un código",
+    code_champ: "CÓDIGO",
+    code_valider: "Aplicar",
+    code_ouvert: "Está abierto. Volvemos…",
+    retour: "Atrás",
+    ios_bloque: "Disponible en la versión Pro de la app",
+    mentions: [
       "Renovación automática. Cancela cuando quieras desde tu cuenta.",
       "Derecho de desistimiento de 14 días (Directiva UE 2011/83/UE, Art. 16).",
       "IVA incluido según tu país de residencia.",
     ],
-    back: "Atrás",
-    ios_blocked: "Disponible en la versión Pro de la app",
-    lifetime_badge: "De por vida · Pago único",
-    lifetime_cta: "Obtener acceso de por vida",
   },
   pt: {
-    title: "Grátis agora.\nPro quando quiser.",
-    sub: "7 dias grátis para explorar sua timeline completa — sem cartão.",
-    free: "Grátis", pro: "Pro",
-    free_desc: "Seu sinal atual, sempre disponível.",
-    pro_desc: "Seu momentum completo — passado, presente, futuro.",
-    monthly: "Mensal", annually: "Anual", save: "-25%",
-    savings: "Você economiza {x} € por ano",
-    popular: "O mais popular",
-    current_plan: "Seu plano atual",
-    start_trial: "Começar 7 dias grátis",
-    current_billing_month: "/mês",
-    billed_annually: "cobrado {x} € por ano",
-    features: {
-      free: ["Sinal do momento", "Palavras planetárias", "Histórico passado", "1 conexão (matching)", "1 análise IA / semana"],
-      pro:  ["Tudo grátis, sem limite", "Timeline completa 36 meses", "Janelas futuras desbloqueadas", "Alertas de pico em tempo real", "Análises IA ilimitadas", "Brief diário personalizado", "Conexões ilimitadas", "Resumo semanal"],
-    },
-    disclosure: [
+    reprise: "Estavas a ver",
+    sous_date: "A tua timeline já o calculou. Só ainda não to leu.",
+    titre: "A tua timeline não pára em hoje.",
+    sous: "Os próximos três anos já estão calculados. Estão à espera.",
+    gains: [
+      "Os próximos três anos, período a período",
+      "O que cada período significa, escrito para a tua situação",
+      "Um aviso no dia em que se abre uma boa janela",
+    ],
+    gains_sous: [
+      "Quando empurra, quando trava, e até quando.",
+      "Em qualquer data, tantas vezes quantas quiseres.",
+      "E todas as manhãs, o que o dia traz.",
+    ],
+    mensuel: "Mensal", annuel: "Anual",
+    economie: "menos {x} € no ano",
+    par_mois: "/mês",
+    engagement: "7 dias grátis, depois {x} € por mês. Cancela quando quiseres.",
+    engagement_an: "7 dias grátis, depois {x} € por ano. Cancela quando quiseres.",
+    bouton_date: "Abrir o {d}",
+    bouton: "Começar os 7 dias grátis",
+    gratuit: "Sem pagar nada, ficas com o teu sinal do dia, todo o teu passado e as tuas ligações.",
+    code_lien: "Tenho um código",
+    code_champ: "CÓDIGO",
+    code_valider: "Aplicar",
+    code_ouvert: "Está aberto. Voltamos…",
+    retour: "Voltar",
+    ios_bloque: "Disponível na versão Pro do app",
+    mentions: [
       "Renovação automática. Cancele quando quiser pela sua conta.",
       "Direito de retratação de 14 dias (Diretiva UE 2011/83/UE, Art. 16).",
       "Imposto incluído conforme seu país de residência.",
     ],
-    back: "Voltar",
-    ios_blocked: "Disponível na versão Pro do app",
-    lifetime_badge: "Vitalício · Pagamento único",
-    lifetime_cta: "Obter acesso vitalício",
   },
   de: {
-    title: "Jetzt kostenlos.\nPro wenn du bereit bist.",
-    sub: "7 Tage gratis für deine komplette Zeitleiste — keine Kreditkarte.",
-    free: "Kostenlos", pro: "Pro",
-    free_desc: "Dein aktuelles Signal, immer verfügbar.",
-    pro_desc: "Dein komplettes Momentum — Vergangenheit, Gegenwart, Zukunft.",
-    monthly: "Monatlich", annually: "Jährlich", save: "-25%",
-    savings: "Du sparst {x} € pro Jahr",
-    popular: "Beliebteste",
-    current_plan: "Dein aktueller Plan",
-    start_trial: "7 Tage gratis starten",
-    current_billing_month: "/Monat",
-    billed_annually: "{x} € jährlich abgerechnet",
-    features: {
-      free: ["Aktuelles Signal", "Planeten-Schlüsselwörter", "Vergangenheits-Verlauf", "1 Verbindung (Matching)", "1 KI-Analyse / Woche"],
-      pro:  ["Alles kostenlos, unbegrenzt", "Volle 36-Monats-Zeitleiste", "Zukunftsfenster freigeschaltet", "Echtzeit-Spitzenalarme", "Unbegrenzte KI-Analysen", "Persönliches Tages-Briefing", "Unbegrenzte Verbindungen", "Wöchentliche Zusammenfassung"],
-    },
-    disclosure: [
+    reprise: "Du hast dir angesehen",
+    sous_date: "Deine Zeitleiste hat ihn längst berechnet. Vorgelesen hat sie ihn dir noch nicht.",
+    titre: "Deine Zeitleiste hört nicht heute auf.",
+    sous: "Die nächsten drei Jahre sind bereits berechnet. Sie warten.",
+    gains: [
+      "Die nächsten drei Jahre, Phase für Phase",
+      "Was jede Phase bedeutet, für deine Lage geschrieben",
+      "Ein Hinweis an dem Tag, an dem sich ein gutes Fenster öffnet",
+    ],
+    gains_sous: [
+      "Wann es schiebt, wann es bremst, und bis wann.",
+      "Zu jedem Datum, so oft du willst.",
+      "Und jeden Morgen, was der Tag bringt.",
+    ],
+    mensuel: "Monatlich", annuel: "Jährlich",
+    economie: "{x} € weniger im Jahr",
+    par_mois: "/Monat",
+    engagement: "7 Tage gratis, danach {x} € pro Monat. Jederzeit kündbar.",
+    engagement_an: "7 Tage gratis, danach {x} € pro Jahr. Jederzeit kündbar.",
+    bouton_date: "Den {d} öffnen",
+    bouton: "Die 7 Gratistage starten",
+    gratuit: "Ohne zu zahlen behältst du dein Tagessignal, deine ganze Vergangenheit und deine Verbindungen.",
+    code_lien: "Ich habe einen Code",
+    code_champ: "CODE",
+    code_valider: "Einlösen",
+    code_ouvert: "Offen. Wir gehen zurück…",
+    retour: "Zurück",
+    ios_bloque: "Verfügbar in der Pro-Version der App",
+    mentions: [
       "Automatische Verlängerung. Jederzeit über dein Konto kündbar.",
       "14-tägiges Widerrufsrecht (EU-Richtlinie 2011/83/EU, Art. 16).",
       "MwSt. inklusive je nach Wohnsitzland.",
     ],
-    back: "Zurück",
-    ios_blocked: "Verfügbar in der Pro-Version der App",
-    lifetime_badge: "Lifetime · Einmalig",
-    lifetime_cta: "Lebenslangen Zugang erhalten",
   },
   it: {
-    title: "Gratis ora.\nPro quando sei pronto.",
-    sub: "7 giorni gratis per esplorare la tua timeline completa — senza carta.",
-    free: "Gratuito", pro: "Pro",
-    free_desc: "Il tuo segnale attuale, sempre disponibile.",
-    pro_desc: "Il tuo momentum completo — passato, presente, futuro.",
-    monthly: "Mensile", annually: "Annuale", save: "-25%",
-    savings: "Risparmi {x} € all'anno",
-    popular: "Il più popolare",
-    current_plan: "Il tuo piano attuale",
-    start_trial: "Inizia 7 giorni gratis",
-    current_billing_month: "/mese",
-    billed_annually: "fatturato {x} € all'anno",
-    features: {
-      free: ["Segnale del momento", "Parole planetarie", "Cronologia passata", "1 connessione (matching)", "1 analisi IA / settimana"],
-      pro:  ["Tutto gratis, senza limiti", "Timeline completa 36 mesi", "Finestre future sbloccate", "Avvisi di picco in tempo reale", "Analisi IA illimitate", "Brief quotidiano personalizzato", "Connessioni illimitate", "Riassunto settimanale"],
-    },
-    disclosure: [
+    reprise: "Stavi guardando",
+    sous_date: "La tua timeline l'ha già calcolato. Solo che non te l'ha ancora letto.",
+    titre: "La tua timeline non si ferma a oggi.",
+    sous: "I prossimi tre anni sono già calcolati. Ti aspettano.",
+    gains: [
+      "I prossimi tre anni, periodo per periodo",
+      "Cosa significa ogni periodo, scritto per la tua situazione",
+      "Un avviso il giorno in cui si apre una buona finestra",
+    ],
+    gains_sous: [
+      "Quando spinge, quando frena, e fino a quando.",
+      "Su qualsiasi data, tutte le volte che vuoi.",
+      "E ogni mattina, cosa porta la giornata.",
+    ],
+    mensuel: "Mensile", annuel: "Annuale",
+    economie: "{x} € in meno sull'anno",
+    par_mois: "/mese",
+    engagement: "7 giorni gratis, poi {x} € al mese. Annullabile in qualsiasi momento.",
+    engagement_an: "7 giorni gratis, poi {x} € all'anno. Annullabile in qualsiasi momento.",
+    bouton_date: "Aprire il {d}",
+    bouton: "Iniziare i 7 giorni gratis",
+    gratuit: "Senza pagare nulla, tieni il tuo segnale del giorno, tutto il tuo passato e le tue connessioni.",
+    code_lien: "Ho un codice",
+    code_champ: "CODICE",
+    code_valider: "Applica",
+    code_ouvert: "È aperto. Torniamo…",
+    retour: "Indietro",
+    ios_bloque: "Disponibile nella versione Pro dell'app",
+    mentions: [
       "Rinnovo automatico. Annulla quando vuoi dal tuo account.",
       "Diritto di recesso di 14 giorni (Direttiva UE 2011/83/UE, Art. 16).",
       "IVA inclusa secondo il tuo paese di residenza.",
     ],
-    back: "Indietro",
-    ios_blocked: "Disponibile nella versione Pro dell'app",
-    lifetime_badge: "A vita · Pagamento unico",
-    lifetime_cta: "Ottieni accesso a vita",
   },
   nl: {
-    title: "Gratis nu.\nPro wanneer je klaar bent.",
-    sub: "7 dagen gratis om je volledige tijdlijn te verkennen — geen creditcard.",
-    free: "Gratis", pro: "Pro",
-    free_desc: "Jouw huidige signaal, altijd beschikbaar.",
-    pro_desc: "Jouw volledige momentum — verleden, heden, toekomst.",
-    monthly: "Maandelijks", annually: "Jaarlijks", save: "-25%",
-    savings: "Je bespaart €{x} per jaar",
-    popular: "Meest populair",
-    current_plan: "Jouw huidige plan",
-    start_trial: "Start 7 dagen gratis",
-    current_billing_month: "/maand",
-    billed_annually: "€{x} per jaar gefactureerd",
-    features: {
-      free: ["Huidig signaal", "Planeet-trefwoorden", "Verleden geschiedenis", "1 verbinding (matching)", "1 AI-analyse / week"],
-      pro:  ["Alles gratis, onbeperkt", "Volledige 36-maanden tijdlijn", "Toekomstvensters ontgrendeld", "Real-time piekwaarschuwingen", "Onbeperkte AI-analyses", "Persoonlijke dagelijkse briefing", "Onbeperkte verbindingen", "Wekelijkse samenvatting"],
-    },
-    disclosure: [
+    reprise: "Je keek naar",
+    sous_date: "Je tijdlijn heeft het al berekend. Alleen nog niet aan je voorgelezen.",
+    titre: "Je tijdlijn stopt niet bij vandaag.",
+    sous: "De komende drie jaar zijn al berekend. Ze wachten.",
+    gains: [
+      "De komende drie jaar, periode voor periode",
+      "Wat elke periode betekent, geschreven voor jouw situatie",
+      "Een bericht op de dag dat een goed venster opengaat",
+    ],
+    gains_sous: [
+      "Wanneer het duwt, wanneer het remt, en tot wanneer.",
+      "Op elke datum, zo vaak je wilt.",
+      "En elke ochtend, wat de dag brengt.",
+    ],
+    mensuel: "Maandelijks", annuel: "Jaarlijks",
+    economie: "€{x} minder op jaarbasis",
+    par_mois: "/maand",
+    engagement: "7 dagen gratis, daarna €{x} per maand. Altijd opzegbaar.",
+    engagement_an: "7 dagen gratis, daarna €{x} per jaar. Altijd opzegbaar.",
+    bouton_date: "{d} openen",
+    bouton: "De 7 gratis dagen starten",
+    gratuit: "Zonder te betalen houd je je signaal van de dag, je hele verleden en je verbindingen.",
+    code_lien: "Ik heb een code",
+    code_champ: "CODE",
+    code_valider: "Toepassen",
+    code_ouvert: "Open. We gaan terug…",
+    retour: "Terug",
+    ios_bloque: "Beschikbaar in de Pro-versie van de app",
+    mentions: [
       "Automatische verlenging. Altijd opzegbaar via je account.",
       "14-daags herroepingsrecht (EU-richtlijn 2011/83/EU, art. 16).",
       "BTW inbegrepen volgens je woonland.",
     ],
-    back: "Terug",
-    ios_blocked: "Beschikbaar in de Pro-versie van de app",
-    lifetime_badge: "Levenslang · Eenmalig",
-    lifetime_cta: "Levenslang toegang",
   },
   ja: {
-    title: "今は無料。\n準備ができたらPro。",
-    sub: "完全なタイムラインを探索する7日間無料 — クレジットカード不要。",
-    free: "無料", pro: "Pro",
-    free_desc: "あなたの現在のシグナル、いつでも利用可能。",
-    pro_desc: "あなたの完全なモメンタム — 過去、現在、未来。",
-    monthly: "月額", annually: "年額", save: "-25%",
-    savings: "年間{x}€節約",
-    popular: "最も人気",
-    current_plan: "現在のプラン",
-    start_trial: "7日間無料トライアル開始",
-    current_billing_month: "/月",
-    billed_annually: "年間{x}€請求",
-    features: {
-      free: ["現在のシグナル", "惑星キーワード", "過去の履歴", "1接続(マッチング)", "週1回AI分析"],
-      pro:  ["無料分すべて、無制限", "36ヶ月完全タイムライン", "未来のウィンドウのロック解除", "リアルタイムピーク通知", "無制限AI分析", "パーソナル毎日ブリーフ", "無制限接続", "週次ダイジェスト"],
-    },
-    disclosure: [
+    reprise: "見ていたのは",
+    sous_date: "タイムラインはもう計算しています。まだあなたに読まれていないだけです。",
+    titre: "タイムラインは今日で終わりません。",
+    sous: "これからの3年間はすでに算出済み。待っているだけです。",
+    gains: [
+      "これからの3年間を、時期ごとに",
+      "それぞれの時期の意味を、あなたの状況に合わせて",
+      "良いタイミングが開く日に、ひとこと",
+    ],
+    gains_sous: [
+      "いつ進み、いつ止まり、いつまで続くか。",
+      "どの日付でも、何度でも。",
+      "そして毎朝、その日が持つもの。",
+    ],
+    mensuel: "月額", annuel: "年額",
+    economie: "年間 {x} € おトク",
+    par_mois: "/月",
+    engagement: "7日間無料、その後は月 {x} €。いつでも解約できます。",
+    engagement_an: "7日間無料、その後は年 {x} €。いつでも解約できます。",
+    bouton_date: "{d} を開く",
+    bouton: "無料の7日間を始める",
+    gratuit: "支払わなくても、その日のシグナル、過去のすべて、つながりはそのままです。",
+    code_lien: "コードを持っています",
+    code_champ: "コード",
+    code_valider: "適用",
+    code_ouvert: "開きました。戻ります…",
+    retour: "戻る",
+    ios_bloque: "アプリのProバージョンで利用可能",
+    mentions: [
       "自動更新。アカウントからいつでもキャンセル可能。",
       "14日間の撤回権 (EU指令2011/83/EU、第16条)。",
       "居住国に応じたVAT込み。",
     ],
-    back: "戻る",
-    ios_blocked: "アプリのProバージョンで利用可能",
-    lifetime_badge: "生涯 · 一回限り",
-    lifetime_cta: "生涯アクセスを取得",
   },
   zh: {
-    title: "现在免费。\n准备好了再升级Pro。",
-    sub: "7天免费探索您的完整时间线 — 无需信用卡。",
-    free: "免费", pro: "Pro",
-    free_desc: "您当前的信号,始终可用。",
-    pro_desc: "您完整的动量 — 过去、现在、未来。",
-    monthly: "月度", annually: "年度", save: "-25%",
-    savings: "每年节省 €{x}",
-    popular: "最受欢迎",
-    current_plan: "您当前的计划",
-    start_trial: "开始7天免费试用",
-    current_billing_month: "/月",
-    billed_annually: "每年收费 €{x}",
-    features: {
-      free: ["当前信号", "行星关键词", "历史记录", "1个连接(匹配)", "每周1次AI分析"],
-      pro:  ["所有免费,无限制", "完整的36个月时间线", "解锁未来窗口", "实时峰值提醒", "无限AI分析", "个性化每日简报", "无限连接", "每周摘要"],
-    },
-    disclosure: [
+    reprise: "你刚才在看",
+    sous_date: "你的时间线早就算好了，只是还没读给你听。",
+    titre: "你的时间线不止于今天。",
+    sous: "未来三年已经算好，正在等你。",
+    gains: [
+      "未来三年，逐段呈现",
+      "每段时期意味着什么，为你的处境而写",
+      "好时机开启的那天，会有一句提醒",
+    ],
+    gains_sous: [
+      "什么时候推着你走，什么时候拖住你，持续到几时。",
+      "任意日期，想看多少次都可以。",
+      "还有每天早上，这一天带来什么。",
+    ],
+    mensuel: "按月", annuel: "按年",
+    economie: "一年少付 {x} €",
+    par_mois: "/月",
+    engagement: "7 天免费，之后每月 {x} €。随时可取消。",
+    engagement_an: "7 天免费，之后每年 {x} €。随时可取消。",
+    bouton_date: "打开 {d}",
+    bouton: "开始这 7 天免费",
+    gratuit: "一分不付，你仍然保有当天的信号、全部过往和你的连接。",
+    code_lien: "我有代码",
+    code_champ: "代码",
+    code_valider: "使用",
+    code_ouvert: "已开启，正在返回…",
+    retour: "返回",
+    ios_bloque: "在应用的Pro版本中可用",
+    mentions: [
       "自动续订。可随时从您的账户取消。",
       "14天退款权 (欧盟指令2011/83/EU, 第16条)。",
       "根据您的居住国包含增值税。",
     ],
-    back: "返回",
-    ios_blocked: "在应用的Pro版本中可用",
-    lifetime_badge: "终身 · 一次性",
-    lifetime_cta: "获取终身访问权",
   },
   ar: {
-    title: "مجاني الآن.\nPro عندما تكون مستعدًا.",
-    sub: "7 أيام مجانية لاستكشاف الجدول الزمني الكامل — بدون بطاقة ائتمان.",
-    free: "مجاني", pro: "Pro",
-    free_desc: "إشارتك الحالية، متاحة دائمًا.",
-    pro_desc: "زخمك الكامل — الماضي والحاضر والمستقبل.",
-    monthly: "شهري", annually: "سنوي", save: "-25%",
-    savings: "توفر {x} € سنويًا",
-    popular: "الأكثر شعبية",
-    current_plan: "خطتك الحالية",
-    start_trial: "ابدأ تجربة 7 أيام مجانية",
-    current_billing_month: "/شهر",
-    billed_annually: "يُفوتر {x} € سنويًا",
-    features: {
-      free: ["الإشارة الحالية", "الكلمات الكوكبية", "التاريخ الماضي", "1 اتصال (مطابقة)", "1 تحليل AI / أسبوع"],
-      pro:  ["كل شيء مجاني، بلا حدود", "الجدول الزمني الكامل لـ 36 شهرًا", "فتح نوافذ المستقبل", "تنبيهات الذروة في الوقت الفعلي", "تحليلات AI غير محدودة", "ملخص يومي شخصي", "اتصالات غير محدودة", "ملخص أسبوعي"],
-    },
-    disclosure: [
+    reprise: "كنت تنظر إلى",
+    sous_date: "خطك الزمني حسبه بالفعل. لم يقرأه لك بعد فقط.",
+    titre: "خطك الزمني لا يتوقف عند اليوم.",
+    sous: "السنوات الثلاث القادمة محسوبة بالفعل. إنها بانتظارك.",
+    gains: [
+      "السنوات الثلاث القادمة، فترة بفترة",
+      "معنى كل فترة، مكتوب لوضعك أنت",
+      "كلمة في اليوم الذي تنفتح فيه نافذة جيدة",
+    ],
+    gains_sous: [
+      "متى تدفعك، ومتى تكبحك، وإلى متى.",
+      "في أي تاريخ، وبقدر ما تشاء.",
+      "وكل صباح، ما يحمله اليوم.",
+    ],
+    mensuel: "شهري", annuel: "سنوي",
+    economie: "أقل بـ {x} € في السنة",
+    par_mois: "/شهر",
+    engagement: "7 أيام مجاناً، ثم {x} € شهرياً. يمكن الإلغاء في أي وقت.",
+    engagement_an: "7 أيام مجاناً، ثم {x} € سنوياً. يمكن الإلغاء في أي وقت.",
+    bouton_date: "افتح {d}",
+    bouton: "ابدأ الأيام السبعة المجانية",
+    gratuit: "دون أن تدفع شيئاً، تحتفظ بإشارة يومك وكل ماضيك واتصالاتك.",
+    code_lien: "لديّ رمز",
+    code_champ: "الرمز",
+    code_valider: "تطبيق",
+    code_ouvert: "تم الفتح. نعود…",
+    retour: "رجوع",
+    ios_bloque: "متاح في الإصدار Pro من التطبيق",
+    mentions: [
       "تجديد تلقائي. إلغاء في أي وقت من حسابك.",
-      "حق الانسحاب لمدة 14 يومًا (التوجيه الأوروبي 2011/83/EU, المادة 16).",
+      "حق الانسحاب لمدة 14 يوماً (التوجيه الأوروبي 2011/83/EU, المادة 16).",
       "ضريبة القيمة المضافة مدرجة حسب بلد إقامتك.",
     ],
-    back: "رجوع",
-    ios_blocked: "متاح في الإصدار Pro من التطبيق",
-    lifetime_badge: "مدى الحياة · دفعة واحدة",
-    lifetime_cta: "الحصول على وصول مدى الحياة",
   },
 };
 
+/** Un montant, ecrit comme on l ecrit en Europe : 5,99 et pas 5.99. */
+function euros(n: number): string {
+  return n.toFixed(2).replace(".", ",");
+}
 
 export default function DemoPricingPage() {
   const router = useRouter();
@@ -342,6 +460,21 @@ export default function DemoPricingPage() {
   const [offresIOS, setOffresIOS] = useState<OffreAchat[]>([]);
   const [achatEnCours, setAchatEnCours] = useState(false);
   const achatPossible = disponible();
+
+  /**
+   * LA PERIODE QUI A DECLENCHE LE MUR.
+   *
+   * C est la seule chose qui separe cet ecran d un tableau de prix.
+   *
+   * Lue apres le montage et pas pendant le rendu : sessionStorage n existe pas
+   * au rendu serveur, et la lire directement donnerait un premier rendu
+   * different du second — le titre changerait sous les yeux de la personne.
+   * Lue une seule fois : la valeur ne bouge pas pendant la visite.
+   */
+  const [quand, setQuand] = useState<string | null>(null);
+  useEffect(() => {
+    setQuand(declencheurEnAttente()?.quand ?? null);
+  }, []);
 
   useEffect(() => {
     if (!achatPossible || !user?.id) return;
@@ -371,8 +504,7 @@ export default function DemoPricingPage() {
       setError(perso("achat.echec", locale));
   }
 
-
-  // Coupon state
+  // Code d acces
   const [showCoupon, setShowCoupon] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
@@ -394,14 +526,17 @@ export default function DemoPricingPage() {
 
   const c = PAGE_COPY[locale] ?? PAGE_COPY.en;
 
-  const annualMonthly = (PLANS.annual.priceEUR / 12).toFixed(2);
-  const savingsValue = (PLANS.monthly.priceEUR * 12 - PLANS.annual.priceEUR).toFixed(2);
-  const savingsLine = c.savings.replace("{x}", savingsValue);
+  // L economie se CALCULE. La page annonçait « -25% » ecrit en dur dans les dix
+  // langues alors que 39,99 contre 5,99 x 12 fait 44 % : un chiffre faux sur un
+  // ecran de prix, et faux dans le mauvais sens — on se vendait moins bien
+  // qu on ne l etait.
+  const eco = useMemo(() => economieAnnuelle(), []);
+  const parMoisEnAnnuel = PLANS.annual.priceEUR / 12;
 
-  const handleCheckout = async (plan: "monthly" | "annual" | "lifetime") => {
-    if (ios) return;                                  // no checkout on iOS
+  const handleCheckout = async (plan: "monthly" | "annual") => {
+    if (ios) return;                                  // pas de paiement web sur iOS
     if (!isAuthenticated) {
-      // Need sign-in first — open AuthSheet, then user retries
+      // Il faut un compte d abord : on ouvre la feuille, la personne reessaie.
       setAuthOpen(true);
       return;
     }
@@ -426,9 +561,14 @@ export default function DemoPricingPage() {
     }
   };
 
+  // Le bouton nomme le RESULTAT quand on le connait. « Ouvrir le 22 Oct 2026 »
+  // dit ce qui se passe apres le clic ; « Demarrer 7 jours gratuits » dit ce
+  // qu on fait, pas ce qu on obtient.
+  const libelleBouton = quand ? c.bouton_date.replace("{d}", quand) : c.bouton;
+
   return (
     <div className="min-h-full px-5 pb-12 pt-2" style={{ background: "var(--bg-primary)" }}>
-      {/* Back chip */}
+      {/* Puce de retour */}
       <button
         type="button"
         onClick={() => router.back()}
@@ -442,26 +582,100 @@ export default function DemoPricingPage() {
         }}
       >
         <ChevronLeft size={14} />
-        {c.back}
+        {c.retour}
       </button>
 
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <h1
-          className="font-display text-[26px] font-bold leading-tight"
-          style={{ color: "var(--text-heading)", letterSpacing: -0.5, whiteSpace: "pre-line" }}
+      {/* ── L en-tete ─────────────────────────────────────────────────────
+          Quand on connait la date regardee, C EST ELLE le titre. Un premier
+          jet la mettait en grand PUIS la repetait mot pour mot dans le titre
+          juste dessous — « 22 Oct 2026 » suivi de « Le 22 Oct 2026 est deja
+          dans ta timeline ». Vu a l ecran, ca fait bafouiller la page et ca
+          repousse le bouton d autant.
+
+          Le filet d un pixel est du decor : aucun seuil de contraste a
+          respecter, et il n ajoute pas une couche de matiere sur le fond.
+      */}
+      {quand ? (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="mb-6 text-center"
         >
-          {c.title}
-        </h1>
-        <p
-          className="mx-auto mt-3 max-w-md text-[13px]"
-          style={{ color: "var(--text-body-subtle)" }}
-        >
-          {c.sub}
-        </p>
+          <p
+            className="text-[10px] font-semibold uppercase"
+            style={{ color: "var(--text-body-subtle)", letterSpacing: "0.16em" }}
+          >
+            {c.reprise}
+          </p>
+          <h1
+            className="font-display mt-1.5 text-[32px] font-bold leading-none"
+            style={{ color: "var(--text-heading)", letterSpacing: -0.8 }}
+          >
+            {quand}
+          </h1>
+          <div
+            className="mx-auto mt-3.5 h-px w-10"
+            aria-hidden="true"
+            style={{ background: "color-mix(in srgb, var(--accent-purple) 32%, transparent)" }}
+          />
+          <p
+            className="mx-auto mt-3.5 max-w-[19rem] text-[13px] leading-relaxed"
+            style={{ color: "var(--text-body-subtle)" }}
+          >
+            {c.sous_date}
+          </p>
+        </motion.div>
+      ) : (
+        <div className="mb-6 text-center">
+          <h1
+            className="font-display text-[24px] font-bold leading-tight"
+            style={{ color: "var(--text-heading)", letterSpacing: -0.5 }}
+          >
+            {c.titre}
+          </h1>
+          <p
+            className="mx-auto mt-2.5 max-w-md text-[13px] leading-relaxed"
+            style={{ color: "var(--text-body-subtle)" }}
+          >
+            {c.sous}
+          </p>
+        </div>
+      )}
+
+      {/* ── Ce qu on recoit ───────────────────────────────────────────────
+          Trois lignes, sans cases a cocher et sans tuile : une case a cocher
+          appelle la comparaison, et huit cases a cocher font une grille
+          d achat B2B. Un numero, une promesse, une precision.
+      */}
+      <div className="mx-auto mb-6 max-w-md space-y-3.5">
+        {c.gains.map((g, i) => (
+          <motion.div
+            key={g}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 + i * 0.06, duration: 0.3, ease: "easeOut" }}
+            className="flex gap-3"
+          >
+            <span
+              className="font-display mt-px shrink-0 text-[11px] font-bold tabular-nums"
+              style={{ color: "var(--text-brand)" }}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <div>
+              <p className="text-[13px] font-semibold leading-snug" style={{ color: "var(--text-heading)" }}>
+                {g}
+              </p>
+              <p className="mt-0.5 text-[12px] leading-snug" style={{ color: "var(--text-body-subtle)" }}>
+                {c.gains_sous[i]}
+              </p>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Toggle — web only */}
+      {/* Mensuel / annuel — web uniquement, iOS affiche les prix du magasin */}
       {!ios && (
         <div className="mb-4 flex justify-center">
           <div
@@ -481,14 +695,14 @@ export default function DemoPricingPage() {
                   color: billing === plan ? "var(--text-on-brand)" : "var(--text-body-subtle)",
                 }}
               >
-                {plan === "monthly" ? c.monthly : (
+                {plan === "monthly" ? c.mensuel : (
                   <span className="flex items-center gap-1.5">
-                    {c.annually}
+                    {c.annuel}
                     <span
                       className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
                       style={{ background: "color-mix(in srgb, var(--text-succes) 18%, transparent)", color: "var(--text-succes)" }}
                     >
-                      {c.save}
+                      −{eco.pourcent} %
                     </span>
                   </span>
                 )}
@@ -498,221 +712,172 @@ export default function DemoPricingPage() {
         </div>
       )}
 
-      {/* Savings banner — animated entrance when toggling to Annual */}
-      <AnimatePresence mode="popLayout">
-        {billing === "annual" && !ios && (
-          <motion.p
-            key="savings-banner"
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="mb-5 text-center text-[12px] font-semibold"
-            style={{ color: "var(--success)" }}
+      {/* L economie, en euros, quand l annuel est choisi.
+
+          Pas d animation de sortie, meme raison que le prix : une ligne qui
+          sort en douceur est une ligne qui peut rester coincee. « 31,89 € de
+          moins sur l annee » suspendue au-dessus d un tarif mensuel serait une
+          affirmation fausse sur un ecran de paiement. Elle disparait net. */}
+      {billing === "annual" && !ios && (
+        <motion.p
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="mb-4 text-center text-[12px] font-semibold"
+          style={{ color: "var(--text-succes)" }}
+        >
+          {c.economie.replace("{x}", euros(eco.euros))}
+        </motion.p>
+      )}
+
+      {/* ── L offre, seule ────────────────────────────────────────────────
+          Une seule carte. La comparaison a deux colonnes transformait la
+          decision « est-ce que j ouvre ma timeline » en decision « lequel des
+          deux », et la colonne gratuite portait un bouton inerte « Ton plan
+          actuel » a la meilleure place de l ecran.
+
+          La matiere de la carte — l aplat de marque et son elevation — est
+          celle d avant, inchangee.
+
+          Les textes secondaires sont en --text-on-brand plein. La paire
+          --bg-brand / --text-on-brand ne passe qu a 4,53 en clair : elle n a
+          AUCUNE marge pour etre diluee. La hierarchie se fait par la taille et
+          la graisse, jamais par l opacite.
+      */}
+      <motion.div
+        initial={{ y: 8, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="mx-auto max-w-md rounded-2xl p-5"
+        style={{
+          background: "var(--bg-brand)",
+          boxShadow:
+            "0 0 40px color-mix(in srgb, var(--accent-purple) 30%, transparent), 0 12px 28px rgba(0,0,0,0.18)",
+        }}
+      >
+        {/* Le prix. Cache sur iOS : c est le magasin qui l annonce.
+
+            AUCUN AnimatePresence ICI, ET C EST DELIBERE.
+
+            Deux versions ont ete essayees et regardees a l ecran :
+
+              popLayout — sort du flux l element qui s en va. Les deux blocs
+                n ont pas la meme hauteur, donc le bloc sortant tombait HORS
+                de la carte, par-dessus la phrase du gratuit, le lien de code
+                et les mentions legales.
+
+              wait — attend la fin de l animation de sortie avant de monter
+                l entrant. Propre a l oeil, mais le PRIX AFFICHE se met alors
+                a dependre d une animation : onglet en arriere-plan, vue
+                native mise en veille, mouvement reduit — l animation ne
+                s acheve pas et la carte continue d annoncer l ancien tarif
+                alors que l autre est selectionne. Constate : basculer sur
+                annuel laissait « 5,99 € par mois » a l ecran.
+
+            Sur un ecran de paiement, un montant ne se negocie pas avec une
+            animation. Une cle qui change remonte le bloc, il apparait en
+            fondu, rien ne sort : le prix est juste des la premiere image,
+            meme si plus rien ne bouge. */}
+        {ios ? (
+          <p className="text-[15px] font-semibold text-[color:var(--text-on-brand)]">
+            {t("premium.trial_pitch", locale)}
+          </p>
+        ) : (
+          <motion.div
+            key={billing}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
           >
-            {savingsLine}
-          </motion.p>
+            <p className="text-[28px] font-bold leading-none text-[color:var(--text-on-brand)]">
+              {euros(billing === "monthly" ? PLANS.monthly.priceEUR : parMoisEnAnnuel)} €
+              <span className="text-[12px] font-normal text-[color:var(--text-on-brand)]">
+                {c.par_mois}
+              </span>
+            </p>
+            {/* Prix, duree et renouvellement lisibles AVANT l achat. Apple
+                l exige, le droit europeen aussi, et quelqu un qui s engage a
+                le droit de savoir a quoi. */}
+            <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--text-on-brand)]">
+              {(billing === "monthly" ? c.engagement : c.engagement_an)
+                .replace("{x}", euros(billing === "monthly" ? PLANS.monthly.priceEUR : PLANS.annual.priceEUR))}
+            </p>
+          </motion.div>
         )}
-      </AnimatePresence>
 
-      {/* Cards */}
-      <div className="space-y-3">
-        {/* Free card */}
-        <motion.div
-          initial={{ y: 8, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="rounded-2xl border p-5"
-          style={{
-            background: "color-mix(in srgb, var(--accent-purple) 6%, transparent)",
-            borderColor: "color-mix(in srgb, var(--accent-purple) 14%, transparent)",
-          }}
-        >
-          <h3 className="text-[16px] font-bold" style={{ color: "var(--text-heading)" }}>
-            {c.free}
-          </h3>
-          <p className="mt-0.5 text-[12px]" style={{ color: "var(--text-body-subtle)" }}>
-            {c.free_desc}
-          </p>
-          <p className="mt-3 text-[24px] font-bold" style={{ color: "var(--text-heading)" }}>
-            0 €
-          </p>
-          <ul className="mt-4 space-y-1.5">
-            {c.features.free.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-[12px]" style={{ color: "var(--text-body)" }}>
-                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color: "var(--accent-purple)" }} />
-                {f}
-              </li>
-            ))}
-          </ul>
-          <div
-            className="mt-4 w-full rounded-xl py-2.5 text-center text-[12px] font-semibold"
-            style={{
-              background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)",
-              // Meme convergence que la puce de retour : 3,58 en clair.
-              color: "var(--text-brand)",
-            }}
-          >
-            {c.current_plan}
-          </div>
-        </motion.div>
-
-        {/* Pro card.
-
-            Les textes secondaires de cette carte etaient en text-white/75. Sur
-            --bg-brand en theme clair, du blanc dilue a 75 % vaut 3,31 — sous le
-            seuil, sur le descriptif et la periode de facturation du seul plan
-            payant. La paire --bg-brand / --text-on-brand ne passe qu a 4,53 en
-            clair : elle n a AUCUNE marge pour etre diluee. La hierarchie se
-            fait donc ici par la taille et la graisse, pas par l opacite. */}
-        <motion.div
-          initial={{ y: 8, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.05 }}
-          className="relative rounded-2xl p-5"
-          style={{
-            background: "var(--bg-brand)",
-            boxShadow:
-              "0 0 40px color-mix(in srgb, var(--accent-purple) 30%, transparent), 0 12px 28px rgba(0,0,0,0.18)",
-          }}
-        >
-          <span
-            className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold"
-            // La paire de marque, prise a l envers : cette pastille est posee
-            // sur l aplat de la carte, pas sur le fond de page, donc ses deux
+        {/* Le bouton */}
+        {ios ? (
+          offresIOS.length > 0 ? (
+            // Un vrai bouton par offre, au prix que le MAGASIN annonce.
+            // Avant, cette place portait un texte fixe — « Disponible dans la
+            // version Pro de l app » — alors qu on est deja dans l app, sur
+            // l ecran des prix. Une impasse qui n offrait rien.
+            <div className="mt-4 space-y-2">
+              {offresIOS.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => void lancerAchat(o.id)}
+                  disabled={achatEnCours}
+                  className="w-full rounded-xl py-3 text-[13px] font-bold transition-opacity disabled:opacity-60"
+                  style={{ background: "var(--text-on-brand)", color: "var(--bg-brand)" }}
+                >
+                  {achatEnCours ? "…" : o.prix}
+                </button>
+              ))}
+            </div>
+          ) : (
+            // Tant que les produits ne sont pas crees dans App Store Connect
+            // et declares dans RevenueCat, il n y a rien a vendre. On le dit
+            // sans faire croire qu une action est possible.
+            <p
+              className="mt-4 w-full rounded-xl py-2.5 text-center text-[12px] font-semibold"
+              style={{
+                background: "color-mix(in srgb, var(--bg-brand) 18%, transparent)",
+                color: "var(--text-brand)",
+              }}
+            >
+              {c.ios_bloque}
+            </p>
+          )
+        ) : (
+          <button
+            onClick={() => handleCheckout(billing)}
+            disabled={loading}
+            className="mt-4 w-full rounded-xl px-3 py-3 text-[13px] font-bold transition-opacity disabled:opacity-60"
+            // La paire de marque prise a l envers : le bouton est pose sur
+            // l aplat de la carte, pas sur le fond de page, donc ses deux
             // couleurs sont celles de la paire, echangees. Le rapport de
-            // contraste ne depend pas du sens — verifier-contraste.mjs mesure
-            // deja cette paire dans les deux themes, donc celle-ci est couverte
-            // sans controle supplementaire.
+            // contraste ne depend pas du sens.
             style={{ background: "var(--text-on-brand)", color: "var(--bg-brand)" }}
           >
-            {c.popular}
-          </span>
+            {loading ? "..." : libelleBouton}
+          </button>
+        )}
+      </motion.div>
 
-          <h3 className="text-[16px] font-bold text-[color:var(--text-on-brand)]">
-            {c.pro}
-          </h3>
-          <p className="mt-0.5 text-[12px] text-[color:var(--text-on-brand)]">
-            {c.pro_desc}
-          </p>
+      {/* ── Le gratuit ────────────────────────────────────────────────────
+          Une phrase, sous l offre. Il etait une carte a egalite avec l offre
+          payante, coiffee d un bouton inerte « Ton plan actuel » : on occupait
+          le haut de la page pour rappeler a quelqu un ce qu il a deja.
 
-          {/* Price — hidden on iOS */}
-          <AnimatePresence mode="popLayout" initial={false}>
-          {ios ? (
-            <motion.p
-              key="ios"
-              className="mt-3 text-[15px] font-semibold text-[color:var(--text-on-brand)]"
-            >
-              {t("premium.trial_pitch", locale)}
-            </motion.p>
-          ) : billing === "monthly" ? (
-            <motion.p
-              key="monthly"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="mt-3 text-[24px] font-bold text-[color:var(--text-on-brand)]"
-            >
-              {PLANS.monthly.priceEUR.toFixed(2).replace(".", ",")} €
-              <span className="text-[12px] font-normal text-[color:var(--text-on-brand)]">{c.current_billing_month}</span>
-            </motion.p>
-          ) : (
-            <motion.div
-              key="annual"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="mt-3"
-            >
-              <p className="text-[24px] font-bold text-[color:var(--text-on-brand)]">
-                {parseFloat(annualMonthly).toFixed(2).replace(".", ",")} €
-                <span className="text-[12px] font-normal text-[color:var(--text-on-brand)]">{c.current_billing_month}</span>
-              </p>
-              <p className="text-[11px] text-[color:var(--text-on-brand)]">
-                {c.billed_annually.replace("{x}", PLANS.annual.priceEUR.toFixed(2).replace(".", ","))}
-              </p>
-            </motion.div>
-          )}
-          </AnimatePresence>
+          Il reste dit, parce que le taire ferait croire que tout se ferme.
+      */}
+      <p
+        className="mx-auto mt-4 max-w-md text-center text-[11px] leading-relaxed"
+        style={{ color: "var(--text-body-subtle)" }}
+      >
+        {c.gratuit}
+      </p>
 
-          <ul className="mt-4 space-y-1.5">
-            {c.features.pro.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-[12px] text-[color:var(--text-on-brand)]">
-                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--text-on-brand)]" />
-                {f}
-              </li>
-            ))}
-          </ul>
-
-          {/* CTA */}
-          {ios ? (
-            offresIOS.length > 0 ? (
-              // Un vrai bouton par offre, au prix que le MAGASIN annonce.
-              // Avant, cette place portait un texte fixe — « Disponible dans la
-              // version Pro de l app » — alors qu on est deja dans l app, sur
-              // l ecran des prix. Une impasse qui n offrait rien.
-              <div className="mt-4 space-y-2">
-                {offresIOS.map((o) => (
-                  <button
-                    key={o.id}
-                    type="button"
-                    onClick={() => void lancerAchat(o.id)}
-                    disabled={achatEnCours}
-                    className="w-full rounded-xl py-3 text-[13px] font-bold transition-opacity disabled:opacity-60"
-                    style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
-                  >
-                    {achatEnCours ? "…" : o.prix}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              // Tant que les produits ne sont pas crees dans App Store Connect
-              // et declares dans RevenueCat, il n y a rien a vendre. On le dit
-              // sans faire croire qu une action est possible.
-              <p
-                className="mt-4 w-full rounded-xl py-2.5 text-center text-[12px] font-semibold"
-                style={{
-                  background: "color-mix(in srgb, var(--bg-brand) 18%, transparent)",
-                  color: "var(--text-brand)",
-                }}
-              >
-                {c.ios_blocked}
-              </p>
-            )
-          ) : (
-            <button
-              onClick={() => handleCheckout(billing)}
-              disabled={loading}
-              className="mt-4 w-full rounded-xl py-3 text-[13px] font-bold transition-opacity disabled:opacity-60"
-              // Meme paire echangee que la pastille « populaire ».
-              style={{ background: "var(--text-on-brand)", color: "var(--bg-brand)" }}
-            >
-              {loading ? "..." : c.start_trial}
-            </button>
-          )}
-        </motion.div>
-
-        {/* L offre « a vie » a ete retiree le 01/09/2026.
-
-            Elle etait a 49 € contre 39,99 €/an, soit quinze mois d abonnement
-            payes une fois pour toujours. Le commentaire de lib/billing/
-            features.ts disait deja qu elle n avait jamais ete decidee.
-
-            Verifie avant de la retirer : ZERO achat a vie en base. Personne ne
-            perd d acces. Le statut « lifetime » reste reconnu par
-            lib/billing/entitlement.ts — cela ne coute rien et protege qui en
-            aurait un. C est l OFFRE qui disparait, pas la reconnaissance. */}
-      </div>
-
-      {/* Error */}
+      {/* Erreur */}
       {error && (
         <p className="mt-4 text-center text-[12px] font-medium" style={{ color: "var(--text-erreur)" }}>
           {error}
         </p>
       )}
 
-      {/* Coupon code entry */}
+      {/* Code d acces */}
       <div className="mt-6 text-center">
         {!showCoupon && !couponSuccess && (
           <button
@@ -721,7 +886,7 @@ export default function DemoPricingPage() {
             className="text-[12px] transition-opacity hover:opacity-70"
             style={{ color: "var(--text-body-subtle)", textDecoration: "underline", textUnderlineOffset: 3 }}
           >
-            I have a coupon code
+            {c.code_lien}
           </button>
         )}
 
@@ -741,7 +906,7 @@ export default function DemoPricingPage() {
                     value={couponCode}
                     onChange={(e) => { setCouponCode(e.target.value); setCouponError(""); }}
                     onKeyDown={(e) => e.key === "Enter" && tryCoupon()}
-                    placeholder="COUPON CODE"
+                    placeholder={c.code_champ}
                     autoFocus
                     className="flex-1 rounded-xl px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wider outline-none"
                     style={{
@@ -758,7 +923,7 @@ export default function DemoPricingPage() {
                     className="rounded-xl px-4 py-2.5 text-[12px] font-bold"
                     style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
                   >
-                    Apply
+                    {c.code_valider}
                   </button>
                 </div>
                 {couponError && (
@@ -775,22 +940,23 @@ export default function DemoPricingPage() {
               className="mt-3 text-[13px] font-semibold"
               style={{ color: "var(--text-brand)" }}
             >
-              ✦ Unlocked — opening your chart…
+              {c.code_ouvert}
             </motion.p>
           )}
         </AnimatePresence>
       </div>
 
-      {/* EU consumer law disclosures — web only */}
+      {/* Mentions legales europeennes — OBLIGATOIRES, web uniquement.
+          Sur iOS c est Apple qui les porte dans sa propre feuille d achat. */}
       {!ios && (
         <div className="mx-auto mt-6 max-w-md space-y-1.5 text-center text-[10px] leading-relaxed" style={{ color: "var(--text-body-subtle)", opacity: 0.8 }}>
-          {c.disclosure.map((line) => (
+          {c.mentions.map((line) => (
             <p key={line}>{line}</p>
           ))}
         </div>
       )}
 
-      {/* Auth sheet */}
+      {/* Feuille de connexion */}
       <AuthSheet open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );

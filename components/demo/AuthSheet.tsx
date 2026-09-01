@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { BottomSheet } from "./primitives/BottomSheet";
 import { signInWithMagicLink } from "@/lib/supabase-auth";
-import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { t } from "@/lib/i18n-demo";
 import { useLocale } from "@/lib/use-locale";
 
 interface AuthSheetProps {
@@ -17,16 +17,30 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
   const [error, setError] = useState<string | null>(null);
   const locale = useLocale();
 
+  // POURQUOI un compteur d envoi : `phase` est pose a « loading » a l entree du
+  // geste et n est relache que par la reponse du serveur. Si la personne ferme
+  // la feuille entre les deux — c est un aller-retour reseau, elle en a
+  // largement le temps — handleClose remet bien l etat a zero, puis la reponse
+  // arrive et repose « sent ». AuthSheet ne se demonte PAS a la fermeture (seul
+  // le contenu de la feuille se demonte), donc cet etat survit : l ouverture
+  // suivante affichait « lien envoye » avec une adresse vide, sans formulaire.
+  // Une reponse qui ne correspond plus a l envoi en cours est ignoree.
+  const envoiCourant = useRef(0);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setError(null);
     setPhase("loading");
+    envoiCourant.current += 1;
+    const monEnvoi = envoiCourant.current;
 
     try {
       await signInWithMagicLink(email.trim());
+      if (envoiCourant.current !== monEnvoi) return;
       setPhase("sent");
     } catch (err: unknown) {
+      if (envoiCourant.current !== monEnvoi) return;
       const msg = err instanceof Error ? err.message : t("auth.error_generic", locale);
       setError(msg);
       setPhase("idle");
@@ -34,6 +48,8 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
   };
 
   const handleClose = () => {
+    // Invalide l envoi en cours : sa reponse ne doit plus rien reposer.
+    envoiCourant.current += 1;
     setEmail("");
     setPhase("idle");
     setError(null);
@@ -92,7 +108,17 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
                   autoFocus
                   className="w-full rounded-lg border px-3 py-3 text-[14px] outline-none transition-colors focus:ring-2"
                   style={{
-                    background: "var(--bg-card)",
+                    // Le jeton s appelle --card-bg, pas --bg-card. La faute de
+                    // frappe ne casse rien bruyamment : un var() inconnu et sans
+                    // repli rend la propriete invalide, donc la carte n avait
+                    // AUCUN fond, dans les deux themes, en silence.
+                    // Christophe, 01/09 : « un bon design minimaliste gere bien
+                    // les couleurs des bg et des fonds de cellules ». Celle-ci
+                    // n en avait pas.
+                    // EXCEPTION ASSUMEE : champ de saisie vide, le contour
+                    // reste. Il dit ou taper — c est de la fonction, pas du
+                    // decor. Voir la regle du 01/09/2026.
+                    background: "var(--card-bg)",
                     borderColor: "color-mix(in srgb, var(--accent-purple) 20%, transparent)",
                     color: "var(--text-heading)",
                   }}

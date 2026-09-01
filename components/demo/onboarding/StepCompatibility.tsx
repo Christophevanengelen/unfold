@@ -131,8 +131,9 @@ export function StepCompatibility({
         className="mt-8 rounded-2xl px-4 py-8"
         style={{
           background:
+            // Fond OPAQUE deja decale de la page : du violet a 5 % pose sur
+            // --bg-secondary. La carte se voit par sa surface, pas par un cadre.
             "color-mix(in srgb, var(--accent-purple) 5%, var(--bg-secondary))",
-          border: "1px solid var(--border-light)",
         }}
         variants={fadeInUp}
       >

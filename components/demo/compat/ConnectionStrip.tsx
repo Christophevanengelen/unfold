@@ -74,9 +74,14 @@ export function ConnectionStrip({ connections, currentId, onSelect }: Connection
           style={{ scrollSnapAlign: "center" }}
         >
           <span
-            className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-dashed"
+            // Le cercle en pointilles devient un DISQUE. --fond-cellule est le
+            // fond de page decale d un cran : la cible se voit, elle fait
+            // 36 points, et l icone violette dessus tient les 3:1 demandes
+            // pour un controle. Un pointille etait la forme la plus bruyante
+            // possible pour dire « emplacement vide ».
+            className="flex h-9 w-9 items-center justify-center rounded-full"
             style={{
-              borderColor: "var(--border-tint-medium)",
+              background: "var(--fond-cellule)",
               color: "var(--accent-purple)",
             }}
           >

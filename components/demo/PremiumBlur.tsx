@@ -1,18 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Lock } from "flowbite-react-icons/outline";
 import { isIOSBundle } from "@/lib/platform";
 import { usePremiumStatus } from "@/lib/premium-gate";
-import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { t } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 import { memoriserIntention } from "@/lib/retour-apres-achat";
+import { memoriserDeclencheur } from "@/components/demo/PremiumTeaserContext";
 import { useLocale } from "@/lib/use-locale";
 
 interface PremiumBlurProps {
   children: React.ReactNode;
-  /** Context key: "future" | "ai" | undefined → default */
+  /**
+   * Ce qui est masque : "future" | "ai" | undefined.
+   *
+   * Le voile ne change PLUS de discours selon cette valeur : il parle de la
+   * periode que la personne regarde, ce qui est vrai dans les trois cas et
+   * bien plus fort qu un nom de fonctionnalite. La propriete reste declaree
+   * parce que les appelants la passent, et parce qu elle redeviendra utile le
+   * jour ou un mur portera un discours vraiment different.
+   */
   feature?: string;
   /** Blur amount in px (default 8) */
   blurAmount?: number;
@@ -28,11 +36,10 @@ interface PremiumBlurProps {
   capsuleId?: string;
 }
 
-export function PremiumBlur({ children, feature, blurAmount = 8, quand, capsuleId }: PremiumBlurProps) {
+export function PremiumBlur({ children, blurAmount = 8, quand, capsuleId }: PremiumBlurProps) {
   const isPrem = usePremiumStatus();
   const locale = useLocale();
 
-  const featureKey = feature === "future" ? "future" : feature === "ai" ? "ai" : "default";
   // On parle du RESULTAT, pas de la fonctionnalite ni de la technologie qui la
   // produit. Et de SA periode quand on la connait.
   const text = {
@@ -53,6 +60,12 @@ export function PremiumBlur({ children, feature, blurAmount = 8, quand, capsuleI
     // dresse. Sans cela, elle paie pour connaitre une periode precise et se
     // retrouve deposee en haut de la timeline, a devoir la retrouver.
     memoriserIntention(capsuleId);
+    // Et on retient CE QU ELLE REGARDAIT, pour que les deux ecrans suivants le
+    // sachent. memoriserIntention() ne suffit pas : elle ne garde qu un
+    // identifiant, elle se consomme a la premiere lecture, et elle sert au
+    // RETOUR apres paiement. Ici il s agit de l ALLER — l ecran de vente puis
+    // l ecran des prix doivent tous les deux pouvoir nommer la date.
+    memoriserDeclencheur({ quand, capsuleId });
     // Dispatch custom event — PremiumTeaser in demo layout listens
     window.dispatchEvent(new CustomEvent("unfold:show-premium"));
   };
@@ -105,8 +118,9 @@ export function PremiumBlur({ children, feature, blurAmount = 8, quand, capsuleI
           style={{
             width: 36,
             height: 36,
+            // Le disque du cadenas a un fond a 15 % : il se voit contre le
+            // flou qui le porte. Le lisere a 25 % ne faisait que le durcir.
             background: "color-mix(in srgb, var(--accent-purple) 15%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)",
           }}
         >
           <Lock size={16} style={{ color: "var(--accent-purple)" }} />

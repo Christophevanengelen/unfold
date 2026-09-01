@@ -13,17 +13,17 @@ interface Props {
   cta: string;
 }
 
-const ACCENT = "#7C6BBF";
+const ACCENT = "var(--site-accent)";
 
 // Static preview rows — fake Solar Return data (fire/earth/air/water)
 const PREVIEW_ROWS = [
-  { year: 2024, element: "water", color: "#60A5FA", pivotal: false, theme: "House 7 · Relationships" },
-  { year: 2025, element: "fire",  color: "#F97316", pivotal: true,  badge: "★ Top 10", theme: "House 1 · Identity" },
-  { year: 2026, element: "earth", color: "#22C55E", pivotal: false, theme: "House 10 · Career" },
-  { year: 2027, element: "air",   color: "#EAB308", pivotal: true,  badge: "Pivotal", theme: "House 5 · Creativity" },
-  { year: 2028, element: "water", color: "#60A5FA", pivotal: false, theme: "House 2 · Resources" },
-  { year: 2029, element: "fire",  color: "#F97316", pivotal: true,  badge: "★ Top 10", theme: "House 9 · Expansion" },
-  { year: 2030, element: "earth", color: "#22C55E", pivotal: false, theme: "House 4 · Home" },
+  { year: 2024, element: "water", color: "var(--element-eau)", pivotal: false, theme: "House 7 · Relationships" },
+  { year: 2025, element: "fire",  color: "var(--element-feu)", pivotal: true,  badge: "★ Top 10", theme: "House 1 · Identity" },
+  { year: 2026, element: "earth", color: "var(--element-terre)", pivotal: false, theme: "House 10 · Career" },
+  { year: 2027, element: "air",   color: "var(--element-air)", pivotal: true,  badge: "Pivotal", theme: "House 5 · Creativity" },
+  { year: 2028, element: "water", color: "var(--element-eau)", pivotal: false, theme: "House 2 · Resources" },
+  { year: 2029, element: "fire",  color: "var(--element-feu)", pivotal: true,  badge: "★ Top 10", theme: "House 9 · Expansion" },
+  { year: 2030, element: "earth", color: "var(--element-terre)", pivotal: false, theme: "House 4 · Home" },
 ];
 
 interface GeoResult {
@@ -98,6 +98,11 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
     if (!time) { setFormError("Please enter your birth time."); return; }
     if (!selectedCity) { setFormError("Please select a city from the list."); return; }
 
+    // La page d attente est ecrite dans un DOCUMENT SEPARE (window.open), qui
+    // ne charge ni app/globals.css ni le theme. Ses couleurs ne peuvent donc
+    // PAS etre des jetons : var(--x) n y resoudrait rien et tout tomberait en
+    // noir sur transparent. C est la seule dispense de ce fichier, et elle est
+    // structurelle, pas de confort.
     // Open new tab immediately (avoids popup blocker)
     const win = typeof window !== "undefined" ? window.open("", "_blank") : null;
     if (win) {
@@ -148,9 +153,9 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
   };
 
   const inputStyle: React.CSSProperties = {
-    background: `color-mix(in srgb, ${ACCENT} 7%, var(--bg-primary, #1B1535))`,
+    background: `color-mix(in srgb, ${ACCENT} 7%, var(--bg-primary))`,
     border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
-    color: "var(--text-heading, #E6E2F2)",
+    color: "var(--text-heading)",
     borderRadius: 10,
     outline: "none",
     width: "100%",
@@ -179,7 +184,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
     <div
       className="relative rounded-3xl border text-left"
       style={{
-        background: `color-mix(in srgb, ${ACCENT} 7%, var(--bg-primary, #1B1535))`,
+        background: `color-mix(in srgb, ${ACCENT} 7%, var(--bg-primary))`,
         borderColor: `color-mix(in srgb, ${ACCENT} 22%, transparent)`,
       }}
     >
@@ -187,7 +192,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
       <div className="absolute right-4 top-4 md:right-6 md:top-6">
         <span
           className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest"
-          style={{ background: ACCENT, color: "#fff" }}
+          style={{ background: ACCENT, color: "var(--site-texte-sur-aplat)" }}
         >
           Premium
         </span>
@@ -200,11 +205,11 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
         </p>
         <h2
           className="mt-3 font-display text-[24px] font-bold leading-tight md:text-[30px]"
-          style={{ color: "var(--text-heading, #E6E2F2)", letterSpacing: -0.5 }}
+          style={{ color: "var(--text-heading)", letterSpacing: -0.5 }}
         >
           {title}
         </h2>
-        <p className="mt-3 max-w-lg text-[14px] leading-relaxed" style={{ color: "var(--text-body-subtle, #BFB6D6)" }}>
+        <p className="mt-3 max-w-lg text-[14px] leading-relaxed" style={{ color: "var(--text-body-subtle)" }}>
           {sub}
         </p>
 
@@ -216,7 +221,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                 type="button"
                 onClick={() => setShowForm(true)}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[13px] font-semibold transition-transform hover:scale-105 md:w-auto md:justify-start md:py-3"
-                style={{ background: ACCENT, color: "#fff" }}
+                style={{ background: ACCENT, color: "var(--site-texte-sur-aplat)" }}
               >
                 {cta}
                 <span aria-hidden>→</span>
@@ -224,7 +229,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
               <Link
                 href="/app/pricing"
                 className="py-2 text-center text-[13px] font-medium transition-opacity hover:opacity-70 md:py-0"
-                style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
+                style={{ color: "var(--text-body-subtle)" }}
               >
                 Subscribe →
               </Link>
@@ -246,7 +251,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
               <div
                 className="mt-6 rounded-2xl p-4 md:p-6"
                 style={{
-                  background: `color-mix(in srgb, ${ACCENT} 5%, var(--bg-primary, #1B1535))`,
+                  background: `color-mix(in srgb, ${ACCENT} 5%, var(--bg-primary))`,
                   border: `1px solid color-mix(in srgb, ${ACCENT} 18%, transparent)`,
                 }}
               >
@@ -324,7 +329,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                           padding: 0,
                           border: `1px solid color-mix(in srgb, ${ACCENT} 25%, transparent)`,
                           borderRadius: 10,
-                          background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary, #1B1535))`,
+                          background: `color-mix(in srgb, ${ACCENT} 6%, var(--bg-primary))`,
                         }}
                       >
                         {suggestions.map((city) => (
@@ -336,7 +341,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                               style={{
                                 width: "100%",
                                 textAlign: "left",
-                                color: "var(--text-heading, #E6E2F2)",
+                                color: "var(--text-heading)",
                                 background: "none",
                                 border: "none",
                                 cursor: "pointer",
@@ -360,7 +365,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                 </div>
 
                 {formError && (
-                  <p className="mt-3 text-[12px]" style={{ color: "#e57373" }}>{formError}</p>
+                  <p className="mt-3 text-[12px]" style={{ color: "var(--site-texte-erreur)" }}>{formError}</p>
                 )}
 
                 <div className="mt-5 flex flex-col items-stretch gap-3 md:flex-row md:items-center">
@@ -369,7 +374,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                     onClick={handleSubmit}
                     disabled={isComputing}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-center text-[13px] font-semibold transition-transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 md:w-auto md:justify-start md:py-3"
-                    style={{ background: ACCENT, color: "#fff" }}
+                    style={{ background: ACCENT, color: "var(--site-texte-sur-aplat)" }}
                   >
                     {isComputing ? (
                       <>
@@ -388,7 +393,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                       type="button"
                       onClick={() => { setShowForm(false); setFormError(""); }}
                       className="py-2 text-[12px] transition-opacity hover:opacity-60 md:py-0"
-                      style={{ color: "var(--text-body-subtle, #BFB6D6)" }}
+                      style={{ color: "var(--text-body-subtle)" }}
                     >
                       Cancel
                     </button>
@@ -411,7 +416,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
         <div
           className="h-full px-3 pt-4 md:px-5 md:pt-[18px]"
           style={{
-            background: "linear-gradient(180deg, #090d1e, #070a19)",
+            background: "linear-gradient(180deg, var(--site-fond-graphe-haut), var(--site-fond-graphe-bas))",
             overflowY: "hidden",
           }}
         >
@@ -421,7 +426,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
               Birthday Stories · Solar Return
             </span>
             {/* Secondary label has no room next to the title on a phone */}
-            <span className="hidden md:inline" style={{ fontSize: 9, color: "#4b5569" }}>100 years</span>
+            <span className="hidden md:inline" style={{ fontSize: 9, color: "var(--site-graphe-echelle)" }}>100 years</span>
           </div>
 
           {/* Year rows */}
@@ -430,7 +435,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
               key={row.year}
               className="mb-2 flex items-center gap-2 rounded-lg px-2.5 py-2 md:gap-3 md:px-3"
               style={{
-                background: `color-mix(in srgb, ${row.color} 6%, rgba(255,255,255,0.02))`,
+                background: `color-mix(in srgb, ${row.color} 6%, var(--site-graphe-ligne))`,
                 border: `1px solid color-mix(in srgb, ${row.color} 14%, transparent)`,
               }}
             >
@@ -446,14 +451,14 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
                 }}
               />
               {/* Year */}
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0", width: 36, flexShrink: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--site-graphe-annee)", width: 36, flexShrink: 0 }}>
                 {row.year}
               </span>
               {/* Theme — truncates instead of wrapping to a second line on narrow cards */}
               <span
                 style={{
                   fontSize: 10,
-                  color: "#6b7280",
+                  color: "var(--site-graphe-theme)",
                   flex: 1,
                   minWidth: 0,
                   whiteSpace: "nowrap",
@@ -488,7 +493,7 @@ export function BirthdayGraphTeaser({ eyebrow, title, sub, cta }: Props) {
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-20"
           style={{
-            background: `linear-gradient(to bottom, transparent, color-mix(in srgb, ${ACCENT} 7%, var(--bg-primary, #1B1535)))`,
+            background: `linear-gradient(to bottom, transparent, color-mix(in srgb, ${ACCENT} 7%, var(--bg-primary)))`,
           }}
         />
       </div>
