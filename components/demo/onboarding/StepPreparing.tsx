@@ -641,7 +641,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
                 }}
                 className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
               >
-                {t("onboarding.p6_cta", locale)}
+                {perso("prep.cta", locale)}
               </button>
             </motion.div>
           </motion.div>

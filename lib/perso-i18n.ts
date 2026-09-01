@@ -223,6 +223,8 @@ const MOTS: Record<string, Traduction> = {
                        pt:"períodos de revisão", nl:"herzieningsperioden", ja:"見直しの時期", zh:"复盘时期", ar:"فترات المراجعة" },
   "scan.converge":   { fr:"Convergences de cycles", en:"Cycle convergences", es:"Convergencias de ciclos", de:"Zyklus-Konvergenzen", it:"Convergenze di cicli",
                        pt:"Convergências de ciclos", nl:"Cyclusconvergenties", ja:"周期の重なり", zh:"周期交汇", ar:"تقاطعات الدورات" },
+  "prep.cta":        { fr:"Voir mon signal", en:"See my signal", es:"Ver mi señal", de:"Mein Signal ansehen", it:"Vedi il mio segnale",
+                       pt:"Ver o meu sinal", nl:"Bekijk mijn signaal", ja:"シグナルを見る", zh:"查看我的信号", ar:"عرض إشارتي" },
   "scan.converge.d": { fr:"fenêtres d'intensité maximale", en:"peak intensity windows", es:"ventanas de máxima intensidad", de:"Fenster höchster Intensität", it:"finestre di massima intensità",
                        pt:"janelas de intensidade máxima", nl:"vensters van piekintensiteit", ja:"強度が最も高まる時", zh:"强度峰值窗口", ar:"نوافذ الذروة" },
 };

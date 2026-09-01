@@ -36,6 +36,36 @@ import { execFileSync } from "node:child_process";
 // controle vit ici plutot qu a l execution, pour que l erreur arrive pendant la
 // compilation et non sous les yeux de quelqu un.
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Les clefs passees a t() existent-elles dans lib/i18n-demo.ts ?
+ *
+ * t() renvoie la CLEF quand elle manque. Le 01/09/2026, un bouton du parcours
+ * d onboarding affichait donc « onboarding.p6_cta » en toutes lettres, dans un
+ * bouton violet, a la fin de l inscription — parce que j avais invente cette
+ * clef sans verifier qu elle existait. Christophe l a vue avant moi.
+ *
+ * Meme piege que perso(), et j avais protege perso() sans proteger t().
+ *
+ * Exception : les composants du site recoivent t en propriete avec un texte de
+ * secours en second argument — `t("cta.title", "Download")`. Ceux-la ne peuvent
+ * pas afficher une clef brute, on les laisse.
+ */
+function verifierClesT() {
+  const dico = readFileSync("lib/i18n-demo.ts", "utf8");
+  const connues = new Set(
+    [...dico.matchAll(/([a-zA-Z0-9_]+)\s*:/g)].map((m) => m[1]),
+  );
+  const fautives = [];
+  for (const fichier of fichiers) {
+    const src = readFileSync(fichier, "utf8");
+    // Un seul argument apres la clef : pas de texte de secours.
+    for (const m of src.matchAll(/\bt\(\s*"([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)"\s*,\s*[a-zA-Z]/g)) {
+      if (!connues.has(m[2])) fautives.push(`${fichier} : t("${m[1]}.${m[2]}")`);
+    }
+  }
+  return fautives;
+}
+
 function verifierClesPerso() {
   const module = readFileSync("lib/perso-i18n.ts", "utf8");
   const connues = new Set(
@@ -109,7 +139,18 @@ for (const f of fichiers) {
   });
 }
 
-// Une cle inconnue passee a perso() s afficherait telle quelle a l ecran.
+// Une cle inconnue passee a t() ou perso() s afficherait telle quelle a l ecran.
+const fautivesT = verifierClesT();
+if (fautivesT.length > 0) {
+  console.log(`\n  Cle(s) inexistante(s) dans lib/i18n-demo.ts :\n`);
+  for (const x of fautivesT) console.log(`    ${x}`);
+  console.log(`
+  t() renvoie la clef telle quelle quand elle est inconnue : ces appels
+  afficheraient un identifiant technique dans l interface.
+`);
+  process.exit(1);
+}
+
 const { connues, fautives } = verifierClesPerso();
 if (fautives.length > 0) {
   console.log(`\n  Cle(s) inexistante(s) dans lib/perso-i18n.ts (${connues} connues) :\n`);
