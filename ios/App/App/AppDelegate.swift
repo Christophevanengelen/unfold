@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import WidgetKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,6 +18,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
+        // Prevenir le widget qu il y a du neuf a lire.
+        //
+        // Le widget se rafraichit de lui-meme au prochain minuit — sa politique
+        // est correcte, puisque ce qui change d un jour a l autre n est que le
+        // nombre de jours restants. Mais elle ne dit rien de l ARRIVEE de
+        // donnees neuves : une premiere timeline, ou un changement de periode.
+        //
+        // Sans cet appel, quelqu un qui installe l app, pose le widget et ouvre
+        // l app voit « Ouvre l app une fois pour voir ta periode » pendant
+        // vingt-quatre heures. C est la premiere impression du widget, et elle
+        // etait fausse.
+        //
+        // Ici plutot qu au premier plan : la vue web a alors eu le temps
+        // d ecrire son resume dans le groupe partage (voir lib/widget.ts).
+        if #available(iOS 14.0, *) {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
     }
