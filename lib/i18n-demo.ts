@@ -145,6 +145,8 @@ type Strings = {
     p5_place_label: string; p5_place_ph: string;
     p5_privacy: string; p5_cta: string;
     p6_scanning: string; p6_status1: string; p6_status2: string; p6_status3: string;
+    p6_nom: string; p6_nom_ex: string; p6_date: string; p6_heure: string;
+    p6_heure_aide: string; p6_lieu: string; p6_lieu_ex: string; p6_lieu_aide: string;
     p6_error: string; p6_signal_active: string; p6_built_real: string; p6_built_sample: string;
   };
 };
@@ -246,6 +248,8 @@ const FR: Strings = {
     p5_place_label: "Lieu de naissance", p5_place_ph: "Ville, Pays",
     p5_privacy: "Tes données servent uniquement à préparer ton rythme.", p5_cta: "Prépare mon signal",
     p6_scanning: "Analyse de ton thème natal", p6_status1: "Lecture de tes signaux planétaires", p6_status2: "Construction de ta timeline", p6_status3: "Préparation de ta première capsule",
+    p6_nom: "Prénom", p6_nom_ex: "Comment t'appeler ?", p6_date: "Date de naissance", p6_heure: "Heure de naissance",
+    p6_heure_aide: "Requis — l'heure change tout le calcul", p6_lieu: "Lieu de naissance", p6_lieu_ex: "Ville, pays", p6_lieu_aide: "Requis — tape et choisis dans la liste",
     p6_error: "Problème de connexion. Données d'exemple utilisées.", p6_signal_active: "Ton signal est actif", p6_built_real: "Calculé depuis les données planétaires exactes de ta naissance.", p6_built_sample: "Explore avec des données d'exemple. Saisis ta naissance pour une lecture personnelle.",
   },
 };
@@ -347,6 +351,8 @@ const EN: Strings = {
     p5_place_label: "Place of birth", p5_place_ph: "City, Country",
     p5_privacy: "Your details are only used to prepare your personal rhythm.", p5_cta: "Prepare my signal",
     p6_scanning: "Scanning your birth chart", p6_status1: "Reading your planetary signals", p6_status2: "Building your momentum timeline", p6_status3: "Preparing your first capsule",
+    p6_nom: "First name", p6_nom_ex: "What should we call you?", p6_date: "Date of birth", p6_heure: "Time of birth",
+    p6_heure_aide: "Required — the time changes the whole calculation", p6_lieu: "Place of birth", p6_lieu_ex: "City, country", p6_lieu_aide: "Required — type and pick from the list",
     p6_error: "Connection issue. Using sample data instead.", p6_signal_active: "Your signal is active", p6_built_real: "Built from real planetary data for your exact birth moment.", p6_built_sample: "Explore with sample data. Enter your birth info for a personal reading.",
   },
 };
@@ -448,6 +454,8 @@ const ES: Strings = {
     p5_place_label: "Lugar de nacimiento", p5_place_ph: "Ciudad, País",
     p5_privacy: "Tus datos solo se usan para preparar tu ritmo personal.", p5_cta: "Prepara mi señal",
     p6_scanning: "Escaneando tu carta natal", p6_status1: "Leyendo tus señales planetarias", p6_status2: "Construyendo tu línea de tiempo", p6_status3: "Preparando tu primera cápsula",
+    p6_nom: "Nombre", p6_nom_ex: "¿Cómo te llamamos?", p6_date: "Fecha de nacimiento", p6_heure: "Hora de nacimiento",
+    p6_heure_aide: "Obligatorio — la hora cambia todo el cálculo", p6_lieu: "Lugar de nacimiento", p6_lieu_ex: "Ciudad, país", p6_lieu_aide: "Obligatorio — escribe y elige de la lista",
     p6_error: "Problema de conexión. Usando datos de ejemplo.", p6_signal_active: "Tu señal está activa", p6_built_real: "Basado en datos planetarios reales de tu momento de nacimiento exacto.", p6_built_sample: "Explora con datos de ejemplo. Ingresa tus datos de nacimiento para una lectura personal.",
   },
 };
@@ -549,6 +557,8 @@ const DE: Strings = {
     p5_place_label: "Geburtsort", p5_place_ph: "Stadt, Land",
     p5_privacy: "Deine Daten werden nur zur Vorbereitung deines Rhythmus verwendet.", p5_cta: "Mein Signal vorbereiten",
     p6_scanning: "Geburtshoroskop scannen", p6_status1: "Planetensignale lesen", p6_status2: "Momentum-Zeitleiste erstellen", p6_status3: "Erste Kapsel vorbereiten",
+    p6_nom: "Vorname", p6_nom_ex: "Wie sollen wir dich nennen?", p6_date: "Geburtsdatum", p6_heure: "Geburtszeit",
+    p6_heure_aide: "Erforderlich — die Zeit ändert die ganze Berechnung", p6_lieu: "Geburtsort", p6_lieu_ex: "Stadt, Land", p6_lieu_aide: "Erforderlich — tippe und wähle aus der Liste",
     p6_error: "Verbindungsproblem. Beispieldaten werden verwendet.", p6_signal_active: "Dein Signal ist aktiv", p6_built_real: "Basiert auf echten Planetendaten für deinen genauen Geburtsmoment.", p6_built_sample: "Erkunde mit Beispieldaten. Gib deine Geburtsdaten für eine persönliche Lesung ein.",
   },
 };
@@ -650,6 +660,8 @@ const IT: Strings = {
     p5_place_label: "Luogo di nascita", p5_place_ph: "Città, Paese",
     p5_privacy: "I tuoi dati vengono usati solo per preparare il tuo ritmo.", p5_cta: "Prepara il mio segnale",
     p6_scanning: "Analisi del tuo tema natale", p6_status1: "Lettura dei segnali planetari", p6_status2: "Costruzione della timeline", p6_status3: "Preparazione della prima capsula",
+    p6_nom: "Nome", p6_nom_ex: "Come ti chiamiamo?", p6_date: "Data di nascita", p6_heure: "Ora di nascita",
+    p6_heure_aide: "Obbligatorio — l'ora cambia tutto il calcolo", p6_lieu: "Luogo di nascita", p6_lieu_ex: "Città, paese", p6_lieu_aide: "Obbligatorio — scrivi e scegli dalla lista",
     p6_error: "Problema di connessione. Uso dati di esempio.", p6_signal_active: "Il tuo segnale è attivo", p6_built_real: "Basato su dati planetari reali per il tuo esatto momento di nascita.", p6_built_sample: "Esplora con dati di esempio. Inserisci i tuoi dati di nascita per una lettura personale.",
   },
 };
@@ -751,6 +763,8 @@ const PT: Strings = {
     p5_place_label: "Local de nascimento", p5_place_ph: "Cidade, País",
     p5_privacy: "Seus dados são usados apenas para preparar teu ritmo.", p5_cta: "Prepara meu sinal",
     p6_scanning: "Analisando teu mapa natal", p6_status1: "Lendo teus sinais planetários", p6_status2: "Construindo tua linha do tempo", p6_status3: "Preparando tua primeira cápsula",
+    p6_nom: "Nome", p6_nom_ex: "Como te chamamos?", p6_date: "Data de nascimento", p6_heure: "Hora de nascimento",
+    p6_heure_aide: "Obrigatório — a hora muda todo o cálculo", p6_lieu: "Local de nascimento", p6_lieu_ex: "Cidade, país", p6_lieu_aide: "Obrigatório — escreve e escolhe da lista",
     p6_error: "Problema de conexão. Usando dados de exemplo.", p6_signal_active: "Teu sinal está ativo", p6_built_real: "Baseado em dados planetários reais para teu exato momento de nascimento.", p6_built_sample: "Explore com dados de exemplo. Insira seu nascimento para uma leitura pessoal.",
   },
 };
@@ -852,6 +866,8 @@ const NL: Strings = {
     p5_place_label: "Geboorteplaats", p5_place_ph: "Stad, Land",
     p5_privacy: "Jouw gegevens worden alleen gebruikt om jouw ritme te bepalen.", p5_cta: "Bereid mijn signaal voor",
     p6_scanning: "Geboortehoroscoop scannen", p6_status1: "Planetaire signalen lezen", p6_status2: "Momentum-tijdlijn opbouwen", p6_status3: "Eerste capsule voorbereiden",
+    p6_nom: "Voornaam", p6_nom_ex: "Hoe noemen we je?", p6_date: "Geboortedatum", p6_heure: "Geboortetijd",
+    p6_heure_aide: "Vereist — de tijd verandert de hele berekening", p6_lieu: "Geboorteplaats", p6_lieu_ex: "Stad, land", p6_lieu_aide: "Vereist — typ en kies uit de lijst",
     p6_error: "Verbindingsprobleem. Voorbeeldgegevens worden gebruikt.", p6_signal_active: "Jouw signaal is actief", p6_built_real: "Gebaseerd op echte planetaire gegevens voor jouw exacte geboortemoment.", p6_built_sample: "Verken met voorbeeldgegevens. Voer je geboortegegevens in voor een persoonlijke lezing.",
   },
 };
@@ -953,6 +969,8 @@ const JA: Strings = {
     p5_place_label: "出生地", p5_place_ph: "都市、国",
     p5_privacy: "あなたの情報はリズムの準備にのみ使用されます。", p5_cta: "シグナルを準備",
     p6_scanning: "出生チャートをスキャン中", p6_status1: "惑星シグナルを読み取り中", p6_status2: "モメンタムタイムライン構築中", p6_status3: "最初のカプセルを準備中",
+    p6_nom: "名前", p6_nom_ex: "何とお呼びしますか？", p6_date: "生年月日", p6_heure: "出生時刻",
+    p6_heure_aide: "必須 — 時刻で計算が変わります", p6_lieu: "出生地", p6_lieu_ex: "都市、国", p6_lieu_aide: "必須 — 入力して一覧から選択",
     p6_error: "接続の問題。サンプルデータを使用中。", p6_signal_active: "あなたのシグナルは活性化中", p6_built_real: "あなたの正確な誕生時の惑星データから構築。", p6_built_sample: "サンプルデータで探索。個人的なリーディングのために誕生情報を入力してください。",
   },
 };
@@ -1054,6 +1072,8 @@ const ZH: Strings = {
     p5_place_label: "出生地", p5_place_ph: "城市，国家",
     p5_privacy: "您的信息仅用于准备您的个人节律。", p5_cta: "准备我的信号",
     p6_scanning: "扫描您的出生星图", p6_status1: "读取行星信号", p6_status2: "构建动量时间线", p6_status3: "准备第一个胶囊",
+    p6_nom: "名字", p6_nom_ex: "如何称呼你？", p6_date: "出生日期", p6_heure: "出生时间",
+    p6_heure_aide: "必填 — 时间会改变整个计算", p6_lieu: "出生地", p6_lieu_ex: "城市、国家", p6_lieu_aide: "必填 — 输入并从列表中选择",
     p6_error: "连接问题。使用示例数据。", p6_signal_active: "您的信号正在激活", p6_built_real: "基于您精确出生时刻的真实行星数据构建。", p6_built_sample: "用示例数据探索。输入您的出生信息以获得个人解读。",
   },
 };
@@ -1155,6 +1175,8 @@ const AR: Strings = {
     p5_place_label: "مكان الميلاد", p5_place_ph: "المدينة، الدولة",
     p5_privacy: "بياناتك تُستخدم فقط لإعداد إيقاعك الشخصي.", p5_cta: "جهز إشارتي",
     p6_scanning: "مسح خريطة ميلادك", p6_status1: "قراءة إشاراتك الكوكبية", p6_status2: "بناء خط زمن الزخم", p6_status3: "تحضير أول كبسولة",
+    p6_nom: "الاسم", p6_nom_ex: "بماذا نناديك؟", p6_date: "تاريخ الميلاد", p6_heure: "وقت الميلاد",
+    p6_heure_aide: "مطلوب — الوقت يغيّر الحساب كله", p6_lieu: "مكان الميلاد", p6_lieu_ex: "المدينة، البلد", p6_lieu_aide: "مطلوب — اكتب واختر من القائمة",
     p6_error: "مشكلة في الاتصال. استخدام بيانات نموذجية.", p6_signal_active: "إشارتك نشطة", p6_built_real: "مبني من بيانات كوكبية حقيقية للحظة ميلادك الدقيقة.", p6_built_sample: "استكشف مع بيانات نموذجية. أدخل معلومات ميلادك للحصول على قراءة شخصية.",
   },
 };

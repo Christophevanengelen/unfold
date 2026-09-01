@@ -6,6 +6,7 @@ import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { ChevronLeft } from "flowbite-react-icons/outline";
 import { DateInput } from "@/components/ui/DateInput";
 import { searchCities, type GeoResult } from "@/lib/geocode";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 export interface OnboardingFormData {
   nickname: string;
@@ -23,32 +24,43 @@ interface StepInputProps {
   onBack: () => void;
 }
 
-const fields = [
+/**
+ * Les quatre champs, traduits.
+ *
+ * Ils etaient ecrits en dur en anglais — « Time of birth », « City, Country » —
+ * pour les dix langues du produit. Et leurs aides disaient « Optional » alors
+ * que la validation exige les quatre : le bouton se bloquait sans que rien
+ * n explique pourquoi.
+ *
+ * Marie-Ange, qui a ecrit le moteur, l a dit : sans l heure et le lieu exacts,
+ * le calcul ne tourne pas correctement. L aide le dit maintenant aussi.
+ */
+const champs = (locale: Locale) => [
   {
     key: "nickname" as const,
-    label: "Nickname",
+    label: t("onboarding.p6_nom", locale),
     type: "text",
-    placeholder: "How should we call you?",
+    placeholder: t("onboarding.p6_nom_ex", locale),
   },
   {
     key: "dob" as const,
-    label: "Date of birth",
+    label: t("onboarding.p6_date", locale),
     type: "date" as const,
     placeholder: "",
   },
   {
     key: "timeOfBirth" as const,
-    label: "Time of birth",
+    label: t("onboarding.p6_heure", locale),
     type: "time",
     placeholder: "HH:MM",
-    helper: "Optional — sharpens your signal.",
+    helper: t("onboarding.p6_heure_aide", locale),
   },
   {
     key: "placeOfBirth" as const,
-    label: "Place of birth",
+    label: t("onboarding.p6_lieu", locale),
     type: "text",
-    placeholder: "City, Country",
-    helper: "Optional — for local timing.",
+    placeholder: t("onboarding.p6_lieu_ex", locale),
+    helper: t("onboarding.p6_lieu_aide", locale),
   },
 ];
 
@@ -62,6 +74,8 @@ export function StepInput({
   onNext,
   onBack,
 }: StepInputProps) {
+  const locale = detectLocale();
+  const fields = champs(locale);
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
