@@ -1,5 +1,28 @@
 "use client";
 
+/**
+ * La carte de partage.
+ *
+ * Sa palette est ecrite en dur VOLONTAIREMENT : la carte porte son propre
+ * degrade sombre (#1B1535 -> #2A1F4E) et represente le produit chez quelqu un
+ * d autre. Elle ne doit donc pas suivre le theme de qui la regarde — ce qu on
+ * partage doit etre identique pour tout le monde. C est la seule partie de
+ * l app ou une couleur figee est le bon choix.
+ *
+ * En revanche, une palette fixe ne dispense pas d etre lisible. Mesure du
+ * 01/09/2026 sur le point le plus clair du degrade, la ou un texte clair
+ * contraste le moins :
+ *
+ *     dates de la periode   0,45  ->  2,77   sous le seuil
+ *     « Quel est ton rythme ? »  0,60  ->  3,83   sous le seuil
+ *     note de pied          0,50  ->  3,09   sous le seuil
+ *
+ * Aucun des trois n etait decoratif : le premier porte les DATES de la periode.
+ * L opacite minimale qui passe 4,5 sur ce fond est 0,69, d ou le plancher a
+ * 0,70 ci-dessous. La hierarchie tient par la taille et la graisse, pas par une
+ * transparence qui efface le texte.
+ */
+
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ShareNodes, ClipboardCheck, Close, Link } from "flowbite-react-icons/outline";
@@ -261,7 +284,7 @@ export function ShareSignalCard({
               {/* Date range */}
               <span
                 className="text-[10px] tabular-nums tracking-wide"
-                style={{ color: "rgba(195, 185, 215, 0.45)" }}
+                style={{ color: "rgba(195, 185, 215, 0.7)" }}
               >
                 {startLabel} — {endLabel}
               </span>
@@ -276,7 +299,7 @@ export function ShareSignalCard({
             >
               <span
                 className="text-[11px] font-medium"
-                style={{ color: "rgba(195, 185, 215, 0.6)" }}
+                style={{ color: "rgba(195, 185, 215, 0.7)" }}
               >
                 Quel est ton rythme ?
               </span>
@@ -316,7 +339,7 @@ export function ShareSignalCard({
                   ? "rgba(124, 107, 191, 0.25)"
                   : "rgba(155, 133, 196, 0.08)",
                 border: `1px solid ${copied ? "rgba(124, 107, 191, 0.4)" : "rgba(155, 133, 196, 0.12)"}`,
-                color: copied ? "#9B85C4" : "rgba(195, 185, 215, 0.6)",
+                color: copied ? "#9B85C4" : "rgba(195, 185, 215, 0.7)",
               }}
             >
               {copied ? <ClipboardCheck size={16} /> : <Link size={16} />}
@@ -334,7 +357,7 @@ export function ShareSignalCard({
             style={{
               background: "rgba(155, 133, 196, 0.08)",
               border: "1px solid rgba(155, 133, 196, 0.1)",
-              color: "rgba(195, 185, 215, 0.5)",
+              color: "rgba(195, 185, 215, 0.7)",
             }}
           >
             <Close size={18} />
