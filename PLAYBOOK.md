@@ -72,6 +72,9 @@ installation précédente masque le comportement réel.
 
 ## Produit — en cours
 
+- [ ] **Guided tour** — « très moche et imprécis » (Christophe, 01/09). Deux pas
+      seulement, écrits en dur en anglais pour dix langues. Refonte en cours.
+
 - [ ] **Notification : durée, type, intensité.** Les douze domaines sont traduits
       (`lib/maisons-i18n.ts`). Reste à les faire porter par le texte.
 - [ ] **Charger une fois, les dates déclenchent.** `supabase/013_bascules.sql`
