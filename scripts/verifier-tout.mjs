@@ -21,6 +21,7 @@ const CONTROLES = [
   { nom: "Types", cmd: ["npx", ["tsc", "--noEmit", "-p", "tsconfig.json"]] },
   { nom: "Contraste des deux themes", cmd: ["node", ["scripts/verifier-contraste.mjs"]] },
   { nom: "Couleurs figees (cliquet)", cmd: ["node", ["scripts/verifier-couleurs.mjs"]] },
+  { nom: "Composants debranches (cliquet)", cmd: ["node", ["scripts/verifier-code-mort.mjs"]] },
   { nom: "Textes non traduits (cliquet)", cmd: ["node", ["scripts/verifier-traductions.mjs"]] },
   { nom: "Erreurs de lint (cliquet)", cmd: ["node", ["scripts/verifier-lint.mjs"]] },
   { nom: "Notifications APNs", cmd: ["node", ["scripts/verifier-apns.mjs"]] },
