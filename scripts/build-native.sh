@@ -48,6 +48,13 @@ CHEMINS=(
   # dans l app : un ecran atteignable qui invente une lecture personnelle est
   # exactement ce qu on a retire avec le boudin.
   "app/app/monthly"
+  # Rapports generes DEPUIS LE SITE. Les deux ecrans lisent une clef de
+  # stockage que seuls les teasers de la vitrine posent — et la vitrine est
+  # ecartee du build natif. Dans l app ils affichent donc toujours « aucune
+  # donnee », et aucune surface de navigation n y mene. Ils partaient dans le
+  # binaire pour rien, en offrant une impasse a qui tapait l adresse.
+  "app/app/birthday-graph"
+  "app/app/spirit-wave"
   # Page de test de developpement. Elle porte deux dates de naissance REELLES
   # ecrites en dur — 24/10/1980 Bruxelles et 02/09/1982 Anvers — et appelle le
   # modele. Elle n a aucun lien entrant, mais elle partait dans le binaire iOS

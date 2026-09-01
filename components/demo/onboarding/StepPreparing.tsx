@@ -346,7 +346,10 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   }, [revealPhase]);
 
   return (
-    <div className="flex h-full flex-col items-center justify-center text-center px-5">
+    <div // px-5 retire : app/app/onboarding/page.tsx l applique deja au conteneur
+    // d etape. Cet ecran seul avait donc 40 px de marge horizontale au lieu de
+    // 20, et son contenu etait visiblement plus etroit que celui des autres.
+    className="flex h-full flex-col items-center justify-center overflow-y-auto text-center">
       <AnimatePresence mode="wait">
         {/* ── LOADING PHASE ── */}
         {revealPhase === "loading" && (

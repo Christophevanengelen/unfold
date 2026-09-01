@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 interface FooterProps {
   locale: string;
@@ -219,8 +220,20 @@ export function Footer({ locale }: FooterProps) {
           </div>
         </div>
 
+        {/* Choix de la langue.
+
+            Le site est traduit en dix langues et personne ne pouvait en
+            changer : le selecteur vivait dans components/layout/Header.tsx, un
+            fichier qu aucune page n importe plus. On arrivait donc dans sa
+            langue par l adresse, sans aucun moyen d en sortir.
+
+            L app, elle, a son propre reglage dans le tiroir de profil. */}
+        <div className="mt-10 flex justify-center">
+          <LanguageSwitcher currentLocale={locale} />
+        </div>
+
         {/* Bottom bar */}
-        <div className="mt-10 border-t border-white/5 pt-6">
+        <div className="mt-6 border-t border-white/5 pt-6">
           <p className="text-center text-xs text-brand-10">
             &copy; {new Date().getFullYear()} Favorable. {l.rights}
           </p>

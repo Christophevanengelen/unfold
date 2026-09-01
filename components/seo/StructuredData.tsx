@@ -6,7 +6,7 @@ function SoftwareApplicationSchema() {
     "@type": "SoftwareApplication",
     name: "Favorable",
     description:
-      "Personal timing app. Free daily momentum score across Love, Health, and Work. Compare rhythms with anyone. Premium unlocks future peaks and monthly momentum maps.",
+      "Personal timing app. Free daily momentum score across Love, Health, and Work. Compare rhythms with anyone. Premium unlocks future peaks and period alerts.",
     applicationCategory: "LifestyleApplication",
     operatingSystem: "iOS, Android",
     url: BASE_URL,
@@ -25,7 +25,11 @@ function SoftwareApplicationSchema() {
         priceCurrency: "EUR",
         name: "Premium mensuel",
         description:
-          "Future momentum windows, monthly momentum map, peak alerts, advanced compatibility",
+          // « monthly momentum map » retire le 01/09/2026 : l ecran /app/monthly
+        // affichait un contenu fabrique, identique pour tout le monde, et il a
+        // ete sorti du produit. Annoncer a Google une fonctionnalite qu on
+        // vient de desactiver serait une promesse fausse, et publiee.
+        "Future momentum windows, peak alerts, advanced compatibility",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
           price: "5.99",

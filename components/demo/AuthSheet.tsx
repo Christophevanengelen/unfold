@@ -104,7 +104,7 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
               </div>
 
               {error && (
-                <p className="text-[12px] font-medium" style={{ color: "#f17e7a" }}>
+                <p className="text-[12px] font-medium" style={{ color: "var(--text-erreur)" }}>
                   {error}
                 </p>
               )}

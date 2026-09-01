@@ -453,7 +453,7 @@ export default function DemoPricingPage() {
                     {c.annually}
                     <span
                       className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
-                      style={{ background: "#22c55e30", color: "#22c55e" }}
+                      style={{ background: "color-mix(in srgb, var(--text-succes) 18%, transparent)", color: "var(--text-succes)" }}
                     >
                       {c.save}
                     </span>
@@ -662,7 +662,7 @@ export default function DemoPricingPage() {
 
       {/* Error */}
       {error && (
-        <p className="mt-4 text-center text-[12px] font-medium" style={{ color: "#f17e7a" }}>
+        <p className="mt-4 text-center text-[12px] font-medium" style={{ color: "var(--text-erreur)" }}>
           {error}
         </p>
       )}
@@ -715,7 +715,7 @@ export default function DemoPricingPage() {
                   </button>
                 </div>
                 {couponError && (
-                  <p className="mt-2 text-[11px]" style={{ color: "#f17e7a" }}>{couponError}</p>
+                  <p className="mt-2 text-[11px]" style={{ color: "var(--text-erreur)" }}>{couponError}</p>
                 )}
               </div>
             </motion.div>

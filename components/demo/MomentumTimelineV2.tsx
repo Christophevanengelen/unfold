@@ -1080,7 +1080,17 @@ function ListView({
                   <div className="flex items-center gap-2">
                     <span
                       className="text-[11px] font-semibold leading-tight truncate"
-                      style={{ color: capsule.isCurrent ? "#fff" : "var(--text-heading)" }}
+                      // Le titre de la ligne EN COURS etait en blanc, en dur.
+                      // La ligne n a pourtant aucun fond : c est donc du blanc
+                      // sur le fond de page. En theme sombre cela passait ; en
+                      // theme clair le contraste tombe a 1,1 — le titre du
+                      // signal en cours, c est-a-dire celui qui compte le plus,
+                      // etait purement invisible.
+                      //
+                      // Son statut est deja porte par le point plus gros, son
+                      // halo et le badge NOW. La couleur inversee n ajoutait
+                      // rien qu une supposition de theme sombre.
+                      style={{ color: "var(--text-heading)" }}
                     >
                       {phase.title}
                     </span>
@@ -1425,8 +1435,11 @@ export function MomentumTimelineV2() {
               onClick={() => setViewMode(mode)}
               className="relative flex items-center justify-center rounded-full transition-all duration-200"
               style={{
-                color: viewMode === mode ? "#fff" : "var(--text-disabled)",
-                background: viewMode === mode ? "var(--accent-purple)" : "transparent",
+                // La paire jeton de marque plutot que blanc sur accent-purple :
+                // celle-ci tombait a 3,23 en theme sombre. --text-on-brand et
+                // --bg-brand sont faits pour aller ensemble et sont verifies.
+                color: viewMode === mode ? "var(--text-on-brand)" : "var(--text-disabled)",
+                background: viewMode === mode ? "var(--bg-brand)" : "transparent",
                 // 44 points, le minimum qu Apple demande pour une cible tactile.
                 // On etait a 28.
                 width: 44,

@@ -219,7 +219,18 @@ export function StepInput({
   }, []);
 
   return (
-    <motion.div className="flex h-full flex-col">
+    // overflow-y-auto : sans lui, rien ne defilait.
+    //
+    // Quatre champs, un titre, un sous-titre et une ligne de reassurance : sur
+    // un iPhone SE clavier ouvert, le contenu depasse le cadre. Le parent
+    // coupant a `overflow-hidden`, le bouton devenait INATTEIGNABLE — on ne
+    // pouvait tout simplement pas terminer l inscription.
+    //
+    // On fait defiler tout le contenu plutot que d epingler le bouton en bas :
+    // la vue web ne se redimensionne pas a l ouverture du clavier, donc un
+    // bouton epingle serait cache DERRIERE lui. Defiler laisse au moins la
+    // personne l amener au-dessus.
+    <motion.div className="flex h-full flex-col overflow-y-auto">
 
       {/* Back */}
       <motion.button

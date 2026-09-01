@@ -105,3 +105,28 @@ export function texteLisible(
   memo.set(cle, resultat);
   return resultat;
 }
+
+/**
+ * La couleur de texte a poser SUR un aplat fait de `base` a `taux`.
+ *
+ * Different de texteLisible : la, on derive la teinte de base pour la garder
+ * reconnaissable sur un fond legerement teinte. Ici l aplat est dense — 80 % —
+ * et le texte doit simplement etre lisible dessus, donc on choisit entre le
+ * noir et le blanc.
+ *
+ * Ecrit apres avoir mesure les puces de priorites : elles peignaient du BLANC
+ * sur un aplat a 80 %, ce qui echouait pour les neuf domaines en theme clair
+ * (2,06 a 2,71) et pour cinq d entre eux en theme sombre. L etat selectionne —
+ * celui qu on vient de choisir — etait le moins lisible des deux.
+ */
+export function texteSurAplat(base: string, theme: ThemeLisible, taux = 0.8): string {
+  const c = versRgb(base);
+  const page = versRgb(FONDS[theme]);
+  if (!c || !page) return "#ffffff";
+  const fond = c.map((x, i) => x * taux + page[i] * (1 - taux));
+  const blanc = contraste([255, 255, 255], fond);
+  const noir = contraste([0, 0, 0], fond);
+  // On prend le meilleur des deux. Sur ces teintes moyennes, c est le noir qui
+  // l emporte largement — ce que le blanc d origine ne pouvait pas donner.
+  return blanc >= noir ? "#ffffff" : "#101010";
+}

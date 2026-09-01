@@ -153,6 +153,36 @@ for (const t of themes) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Les paires « texte sur aplat ».
+//
+// Le controle ne verifiait que des textes poses sur le FOND DE PAGE. Or le
+// libelle d un bouton principal est pose sur --bg-brand, pas sur --bg-primary,
+// et cette paire-la n etait donc verifiee par personne : elle valait 4,46 en
+// theme clair, sous le seuil, sur chaque bouton du produit.
+// ─────────────────────────────────────────────────────────────────────────────
+const PAIRES = [
+  { texte: "text-on-brand", fond: "bg-brand", nom: "bouton principal" },
+];
+
+for (const t of themes) {
+  const jetons = t.nom === "sombre" ? { ...themes[0].jetons, ...t.jetons } : t.jetons;
+  console.log(`\n  Paires, theme ${t.nom}`);
+  for (const p of PAIRES) {
+    const fg = rgb(jetons[p.texte]);
+    const bg = rgb(jetons[p.fond]);
+    if (!fg || !bg) {
+      console.log(`    ${p.nom.padEnd(22)} jeton manquant`);
+      echecs++;
+      continue;
+    }
+    const r = contraste(fg, bg);
+    const ok = r >= SEUIL;
+    if (!ok) echecs++;
+    console.log(`    ${p.nom.padEnd(22)} ${r.toFixed(2).padStart(6)}  ${ok ? "ok" : "SOUS LE SEUIL"}`);
+  }
+}
+
 if (echecs > 0) {
   console.log(`\n  ${echecs} jeton(s) sous le seuil de ${SEUIL}.`);
   console.log(`  Baisse la luminosite en gardant la teinte : la couleur reste de la

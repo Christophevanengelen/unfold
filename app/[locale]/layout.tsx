@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { isValidLocale, getDirection } from "@/i18n/config";
 import { Footer } from "@/components/layout/Footer";
+import { StructuredData } from "@/components/seo/StructuredData";
 
 /**
  * Requis par output: "export" (build natif). Declare ici une seule fois, ce
@@ -46,6 +47,12 @@ export default async function LocaleLayout({
       className="flex min-h-screen flex-col"
       style={{ backgroundColor: "var(--bg-primary, #1B1535)" }}
     >
+      {/* Donnees structurees. Ecrites il y a des mois, jamais montees : le
+          site declarait donc au moteur de recherche une application sans nom,
+          sans categorie et sans offre. Verifie avant de le brancher — les prix
+          correspondent bien a lib/billing/features.ts, et la mention de la
+          carte mensuelle a ete retiree, cet ecran ayant ete sorti du produit. */}
+      <StructuredData />
       <main id="main" className="flex-1">{children}</main>
       <Footer locale={locale} />
     </div>

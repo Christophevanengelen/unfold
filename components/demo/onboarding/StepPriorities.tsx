@@ -20,6 +20,8 @@ import { S } from "@/lib/layout-constants";
 import type { PriorityDomain } from "@/types/user-profile";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
+import { useTheme } from "next-themes";
+import { texteLisible, texteSurAplat, type ThemeLisible } from "@/lib/contraste";
 
 const EASE = [0.4, 0, 0.2, 1] as const;
 
@@ -49,6 +51,8 @@ interface StepPrioritiesProps {
 }
 
 export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrioritiesProps) {
+  const { resolvedTheme } = useTheme();
+  const themeLisible: ThemeLisible = resolvedTheme === "light" ? "clair" : "sombre";
   const [touched, setTouched] = useState(false);
   const [locale, setLocale] = useState<Locale>("en");
   useEffect(() => { setLocale(detectLocale()); }, []);
@@ -130,9 +134,20 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
                 fontSize: 13,
                 padding: `${S.sm + 2}px ${S.md}px`,
                 minHeight: S.touch,
-                color: isSelected ? "#fff" : opt.color,
+                // Les deux etats etaient illisibles, mesures. Non selectionne :
+                // le libelle prenait la couleur pure sur un fond fait d elle a
+                // 16 % — 2,19 a 2,88 en theme clair. Selectionne : du blanc sur
+                // un aplat a 80 % — 2,06 a 2,71. L etat qu on vient de choisir
+                // etait le pire des deux.
+                color: isSelected
+                  ? texteSurAplat(opt.color, themeLisible, 0.7)
+                  : texteLisible(opt.color, themeLisible, 0.16),
                 background: isSelected
-                  ? `color-mix(in srgb, ${opt.color} 80%, transparent)`
+                  // 70 % et non 80 : a 80, le meilleur des deux textes possibles
+                  // plafonnait a 4,41 pour la teinte la plus difficile. A 70 le
+                  // pire cas passe a 4,50. Quatre points d opacite, et la puce
+                  // devient lisible pour les neuf domaines dans les deux themes.
+                  ? `color-mix(in srgb, ${opt.color} 70%, transparent)`
                   : `color-mix(in srgb, ${opt.color} 16%, transparent)`,
                 border: `1.5px solid ${isSelected ? opt.color : `color-mix(in srgb, ${opt.color} 45%, transparent)`}`,
                 boxShadow: isSelected ? `0 0 16px color-mix(in srgb, ${opt.color} 25%, transparent)` : "none",
