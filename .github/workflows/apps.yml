@@ -22,6 +22,11 @@ jobs:
         # planifier() est pure : deux annees de selection sont eprouvees en une
         # seconde, sans reseau ni base.
         run: node scripts/verifier-planification.mjs
+      - name: Verifier les contrastes des deux themes
+        # L app a ete dessinee en sombre et le clair derive sans jamais etre
+        # mesure : un jeton de texte y etait a 3,27 au lieu de 4,5, et rendait
+        # illisibles toutes les etiquettes et tous les en-tetes de section.
+        run: node scripts/verifier-contraste.mjs
       - name: Verifier que le theme tient
         # Le systeme de design existe et il est bon. Ce qui lui manquait, c est
         # un garde : deux elements de l onboarding etaient invisibles en clair

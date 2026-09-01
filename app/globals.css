@@ -224,7 +224,13 @@ button, a, [role="button"], [role="link"],
   /* Semantic text */
   --text-heading: #150F2A;
   --text-body: #5C5083;
-  --text-body-subtle: #8C7FAE;
+  /* #8C7FAE donnait un contraste de 3,27 sur le fond clair — sous le seuil
+     lisible de 4,5. Ce jeton habille les dates, les etiquettes « CLEAR », les
+     en-tetes de section : tout ce qui etait illisible en theme clair venait de
+     lui. Meme famille de violet, luminosite abaissee jusqu au seuil : 4,53.
+     Le theme sombre, lui, etait a 7,10 — l app a ete dessinee en sombre et le
+     clair derive sans jamais etre mesure. */
+  --text-body-subtle: #76669E;
   --text-brand: #5C4B9B;
   --text-brand-strong: #302060;
   --text-disabled: #B7ACD0;
