@@ -1500,8 +1500,15 @@ export function MomentumTimelineV2() {
           scale: actif ? "1" : "0.98",
           pointerEvents: actif ? ("auto" as const) : ("none" as const),
           visibility: actif ? ("visible" as const) : ("hidden" as const),
+          // L entrante demarre a 0,09 s alors que la sortante finit a 0,12 s :
+          // trois centiemes de recouvrement. Sans eux, il existait une image ou
+          // les deux vues etaient a zero — un noir bref, mais visible, et
+          // c est precisement ce qui donnait l impression de saccade.
+          //
+          // Le recouvrement reste trop court pour qu on lise les deux mises en
+          // page l une sur l autre, ce qui etait le defaut d origine.
           transition: actif
-            ? "opacity 0.22s ease-out 0.12s, scale 0.22s ease-out 0.12s, visibility 0s 0.12s"
+            ? "opacity 0.22s ease-out 0.09s, scale 0.22s ease-out 0.09s, visibility 0s 0.09s"
             : "opacity 0.12s ease-in, scale 0.12s ease-in, visibility 0s 0.12s",
         });
         return (

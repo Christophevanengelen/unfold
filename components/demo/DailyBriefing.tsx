@@ -167,7 +167,12 @@ function BriefCard({
       initial={{ opacity: 0, y: S.sm }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.6, ease: EASE }}
+      // 0,25 s et non 0,6. Cette carte apparait PAR-DESSUS une timeline deja
+      // affichee et deja lisible : une entree longue s y lit comme un element
+      // qui traverse l ecran, pas comme une arrivee. Six dixiemes de seconde,
+      // c est le temps qu il faut pour que l oeil suive le mouvement au lieu de
+      // decouvrir le contenu.
+      transition={{ duration: 0.25, ease: EASE }}
       className="relative overflow-hidden rounded-2xl"
       style={{
         background: CARD_BG,
@@ -239,13 +244,26 @@ function BriefCard({
 
 // ─── Atom: Skeleton ──────────────────────────────────────
 
+/**
+ * Plus de squelette. C est LUI, les « deux blocs parasites ».
+ *
+ * DailyBriefing rend deux cartes, chacune affichait ce rectangle gris pulse de
+ * 48 px tant que ses donnees n etaient pas la — et le conteneur les centre
+ * au milieu de l ecran, par-dessus la timeline. Deux rectangles flottants, le
+ * temps d une lecture IndexedDB.
+ *
+ * Un squelette a du sens quand il occupe la place de ce qui arrive, dans un
+ * flux de contenu : il evite un saut de mise en page. Ici il ne remplace rien —
+ * il est superpose a une timeline deja complete et deja lisible. Il n annonce
+ * donc pas un chargement, il ajoute du bruit sur un ecran qui n en avait pas
+ * besoin.
+ *
+ * On n affiche rien, et les vraies cartes arrivent en fondu quand elles sont
+ * pretes. C est ce que « fluide » veut dire ici : ne rien montrer plutot que
+ * montrer un substitut.
+ */
 function BriefingSkeleton() {
-  return (
-    <div
-      className="rounded-2xl animate-pulse"
-      style={{ background: CARD_BG, border: CARD_BORDER, height: 48 }}
-    />
-  );
+  return null;
 }
 
 // ─── Inner: Daily Card (fast signals) ────────────────────
