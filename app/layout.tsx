@@ -6,7 +6,7 @@ import { MouvementProvider } from "@/components/MouvementProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Unfold — Premium Astrology Timing & Personal Momentum",
+  title: "Favorable — Premium Astrology Timing & Personal Momentum",
   description: "Pro-level astrological timing for modern life. See your peak windows, understand transits across love, work, and growth — without the horoscope cringe. 7-day free trial.",
   keywords: [
     "astrology", "horoscope", "astrology app", "transits", "natal chart",
@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     "astrologie", "astrología", "astrologia",
   ],
   openGraph: {
-    title: "Unfold — Premium Astrology Timing",
+    title: "Favorable — Premium Astrology Timing",
     description: "Pro-level astrological timing for modern life. See your peak windows before they arrive.",
     type: "website",
     images: [{ url: "/logo/icon-mark.svg" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Unfold — Premium Astrology Timing",
+    title: "Favorable — Premium Astrology Timing",
     description: "See your peak windows before they arrive. 7-day free trial.",
   },
   icons: {
