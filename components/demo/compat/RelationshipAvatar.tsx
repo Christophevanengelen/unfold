@@ -2,6 +2,8 @@
 
 import type { RelationshipType } from "@/lib/connections-store";
 import { relationshipConfig } from "./relationshipConfig";
+import { useTheme } from "next-themes";
+import { texteSurAplat } from "@/lib/contraste";
 
 interface RelationshipAvatarProps {
   initial: string;
@@ -25,6 +27,7 @@ export function RelationshipAvatar({
   size = 40,
   pulse,
 }: RelationshipAvatarProps) {
+  const { resolvedTheme } = useTheme();
   const rel = relationshipConfig[relationship];
   const hasRing = ringColor && ringColor !== "transparent";
   const ringW = 2;
@@ -57,11 +60,14 @@ export function RelationshipAvatar({
         />
       )}
       <span
-        className="inline-flex items-center justify-center rounded-full font-display font-bold text-white"
+        className="inline-flex items-center justify-center rounded-full font-display font-bold"
         style={{
           width: innerSize,
           height: innerSize,
           backgroundColor: rel.color,
+          // Les quatre couleurs de relation echouent TOUTES avec du blanc. On
+          // choisit entre noir et blanc selon celle qui contraste.
+          color: texteSurAplat(rel.color, resolvedTheme === "light" ? "clair" : "sombre", 1),
           fontSize: Math.max(10, Math.round(innerSize * 0.38)),
         }}
       >

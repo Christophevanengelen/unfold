@@ -166,6 +166,13 @@ button, a, [role="button"], [role="link"],
    LIGHT MODE
    ============================================== */
 :root {
+  /* Alerte : fond + texte, en paire.
+     --accent-pink (#E93D82) avec du blanc dessus donne 3,85 en clair et 3,03 en
+     sombre. C est ce qui portait le bouton de CONFIRMATION DE SUPPRESSION —
+     une action irreversible dont le libelle etait difficile a lire — et la
+     pastille de notification. Ce fond-ci passe 4,54. */
+  --bg-alerte: #D43876;
+  --text-on-alerte: #FFFFFF;
   /* Etat : erreur et succes.
      Les valeurs d origine — #f17e7a et #22c55e — sont concues pour un fond
      sombre et tombent a 2,35 et 2,04 sur le fond clair. C est le message

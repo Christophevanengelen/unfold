@@ -498,8 +498,11 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                     onClose();
                     router.replace("/app/onboarding");
                   }}
-                  className="flex-1 rounded-full py-2.5 text-xs font-semibold text-white transition-opacity disabled:opacity-50"
-                  style={{ background: "var(--accent-pink)", minHeight: 44 }}
+                  className="flex-1 rounded-full py-2.5 text-xs font-semibold transition-opacity disabled:opacity-50"
+                  // Paire d alerte : du blanc sur --accent-pink donnait 3,03 en
+                  // theme sombre. Sur un bouton de suppression definitive, le
+                  // libelle doit se lire sans effort.
+                  style={{ background: "var(--bg-alerte)", color: "var(--text-on-alerte)", minHeight: 44 }}
                 >
                   {t("profile.delete_confirm", locale)}
                 </button>

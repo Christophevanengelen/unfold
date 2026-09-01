@@ -191,6 +191,10 @@ const PAIRES = [
   // couleur de marque a 16 % : peindre le texte avec cette meme couleur les
   // faisait converger, 3,33 en clair et 4,02 en sombre.
   { texte: "text-brand", fond: "glass-pill", nom: "pastille Now / fleches" },
+  // Le bouton de confirmation de SUPPRESSION et la pastille de notification.
+  // Ils peignaient du blanc sur --accent-pink : 3,85 en clair, 3,03 en sombre.
+  // Sur une action irreversible, le libelle doit se lire sans effort.
+  { texte: "text-on-alerte", fond: "bg-alerte", nom: "bouton d alerte" },
 ];
 
 for (const t of themes) {

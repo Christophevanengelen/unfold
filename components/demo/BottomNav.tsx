@@ -143,8 +143,8 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
                 />
                 {(item.badge ?? 0) > 0 && (
                   <span
-                    className="absolute -right-1.5 -top-1 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[8px] font-bold text-white"
-                    style={{ backgroundColor: "var(--accent-pink)" }}
+                    className="absolute -right-1.5 -top-1 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[8px] font-bold"
+                    style={{ backgroundColor: "var(--bg-alerte)", color: "var(--text-on-alerte)" }}
                   >
                     {item.badge}
                   </span>

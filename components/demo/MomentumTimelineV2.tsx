@@ -1366,8 +1366,8 @@ export function MomentumTimelineV2() {
         <button
           type="button"
           onClick={reessayer}
-          className="rounded-xl px-5 font-medium text-white transition-opacity active:opacity-80"
-          style={{ background: "var(--accent-purple)", minHeight: 48 }}
+          className="rounded-xl px-5 font-medium transition-opacity active:opacity-80"
+          style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)", minHeight: 48 }}
         >
           {t("common.echec_reessayer", locale)}
         </button>
