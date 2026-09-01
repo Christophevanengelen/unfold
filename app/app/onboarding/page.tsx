@@ -191,7 +191,18 @@ export default function OnboardingPage() {
 
   return (
     <div
-      className="relative h-full overflow-hidden px-5"
+      // Colonne flex, et non un bloc.
+      //
+      // Le conteneur etait « h-full » et contenait d abord les pastilles de
+      // progression (22 px), puis un enfant lui aussi « h-full ». L enfant
+      // prenait donc 100 % de la boite de contenu, alors que 22 px etaient deja
+      // consommes au-dessus : le total depassait de 22 px, et ce depassement
+      // tombait DANS la gouttiere de securite basse. Sur un iPhone a barre
+      // d accueil, il restait une douzaine de pixels sous le bouton principal.
+      //
+      // En colonne flex, l enfant prend l espace restant au lieu de la hauteur
+      // totale, et le calcul retombe juste.
+      className="relative flex h-full flex-col overflow-hidden px-5"
       style={{
         // 20px comme avant quand l appareil n a ni encoche ni barre d accueil ;
         // la zone de securite prend le dessus des qu elle est plus grande.
@@ -201,14 +212,16 @@ export default function OnboardingPage() {
     >
       {/* Progress dots — hidden on preparing screen (step 5) */}
       {step < 5 && (
-        <div className="mb-4">
+        <div className="mb-4 shrink-0">
           <OnboardingProgress current={step} total={5} />
         </div>
       )}
       <AnimatePresence mode="wait" custom={dir}>
         <motion.div
           key={step}
-          className="h-full"
+          // min-h-0 : sans lui, un enfant flex refuse de se comprimer sous la
+          // taille de son contenu et le depassement revient par la fenetre.
+          className="min-h-0 flex-1"
           custom={dir}
           variants={stepVariants}
           initial={isFirstScreen ? false : "enter"}

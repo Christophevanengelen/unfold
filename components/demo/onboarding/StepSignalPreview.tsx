@@ -319,7 +319,7 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
 
       {/* CTA — always in layout, fades in smoothly */}
       <motion.div
-        className="mt-auto"
+        className="mt-auto pt-6"
         initial={CTA_DEPART}
         animate={CTA_ARRIVEE}
         transition={CTA_IMMEDIAT}

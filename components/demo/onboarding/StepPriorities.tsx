@@ -161,7 +161,7 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
 
       {/* CTA */}
       <motion.div
-        className="mt-auto"
+        className="mt-auto pt-6"
         initial={CTA_DEPART}
         animate={CTA_ARRIVEE}
         transition={CTA_IMMEDIAT}
