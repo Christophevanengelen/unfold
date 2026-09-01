@@ -1,5 +1,53 @@
 @import "tailwindcss";
 
+/* ==============================================================================
+   LE CONTRAT DES JETONS
+   ──────────────────────────────────────────────────────────────────────────────
+   322 jetons vivent dans ce fichier, et jusqu au 01/09/2026 rien ne disait a
+   quoi chacun servait. C est ce qui a permis de peindre les DATES d une periode
+   avec --text-disabled : le jeton existait, il avait l air discret, personne ne
+   savait qu il etait reserve aux elements inactionnables. Resultat : 1,92 de
+   contraste sur de l information, et aucun controle capable de le signaler
+   puisque la norme exempte legitimement le texte desactive.
+
+   Les regles, dans l ordre ou elles se violent :
+
+   1. TEXTE — quatre jetons, et un seul choix a faire : quelle importance ?
+        --text-heading        un titre
+        --text-body           du texte courant
+        --text-body-subtle    une information secondaire mais VRAIE
+        --text-disabled       RESERVE aux elements qu on ne peut pas actionner.
+                              Jamais pour du contenu. Voir sa note plus bas.
+
+   2. TEXTE SUR APLAT — toujours une PAIRE, jamais du blanc suppose.
+        --bg-brand   / --text-on-brand     le bouton principal
+        --bg-alerte  / --text-on-alerte    une action destructrice
+      Poser du blanc sur une couleur de marque echoue une fois sur deux : c est
+      arrive sur le bouton principal (4,46), la bascule de vue (3,23) et le
+      bouton de suppression (3,03). scripts/verifier-contraste.mjs verifie
+      chaque paire dans les deux themes.
+
+   3. COULEUR PORTANT UN SENS — jamais la meme valeur pour le texte et pour son
+      fond. Le motif `background: color-mix(couleur 15%)` + `color: couleur` les
+      fait converger PAR CONSTRUCTION : quatorze occurrences dans ce depot,
+      toutes illisibles. Deux facons de faire, selon ce qu on connait :
+        - palette fixe  -> jetons derives, ex. --dom-amour / --dom-amour-texte
+        - couleur venue de l API -> lib/contraste.ts, calcul au rendu
+
+   4. AUCUNE VALEUR EN DUR dans components/demo et app/app.
+      scripts/verifier-couleurs.mjs tient le compte au cliquet : il ne peut que
+      descendre. Le site vitrine est exclu — il est sombre par choix.
+
+   5. UN JETON NON UTILISE EST UN JETON MORT. Si plus rien ne le lit, il part.
+      Le meme raisonnement vaut pour les composants :
+      scripts/verifier-code-mort.mjs refuse qu une fonctionnalite se debranche
+      en silence, ce qui est arrive au selecteur de theme pendant des mois.
+
+   Ce contrat n est pas une intention : chaque regle a un controle dans
+   `npm run verifier`, et chaque controle a ete teste en cassant volontairement
+   le code. Une regle sans controle serait oubliee avant la fin de la semaine.
+   ============================================================================== */
+
 /* ==============================================
    NATIVE-FEEL BASELINE — iOS WebView polish
    ──────────────────────────────────────────────

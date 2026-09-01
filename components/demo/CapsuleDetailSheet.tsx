@@ -531,7 +531,7 @@ export function CapsuleDetailSheet({
         {/* ── Section 5: Story — title + description (LLM only) ── */}
         {phase && (shouldBlurAi ? (
           <div className="mb-5">
-            <PremiumBlur feature="ai" blurAmount={10}>
+            <PremiumBlur feature="ai" blurAmount={10} quand={startLabel}>
               <div className="px-1 py-2">
                 <span
                   className="text-[9px] font-semibold uppercase tracking-wider"
@@ -613,7 +613,7 @@ export function CapsuleDetailSheet({
         )}
         {shouldBlurAi && phase?.keyInsight && (
           <div className="mb-4">
-            <PremiumBlur feature="ai" blurAmount={10}>
+            <PremiumBlur feature="ai" blurAmount={10} quand={startLabel}>
               <div
                 className="rounded-xl px-4 py-3"
                 style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
@@ -730,7 +730,7 @@ export function CapsuleDetailSheet({
         {/* Always shown: AI text preferred, template string (guidance) as fallback */}
         {shouldBlurAi ? (
           <div className="mb-4">
-            <PremiumBlur feature="ai" blurAmount={10}>
+            <PremiumBlur feature="ai" blurAmount={10} quand={startLabel}>
               <div
                 className="rounded-xl px-4 py-3"
                 style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}

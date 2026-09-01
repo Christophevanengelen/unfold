@@ -6,6 +6,7 @@ import { Lock } from "flowbite-react-icons/outline";
 import { isIOSBundle } from "@/lib/platform";
 import { usePremiumStatus } from "@/lib/premium-gate";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface PremiumBlurProps {
   children: React.ReactNode;
@@ -13,9 +14,17 @@ interface PremiumBlurProps {
   feature?: string;
   /** Blur amount in px (default 8) */
   blurAmount?: number;
+  /**
+   * La date de la periode floutee, deja formatee.
+   *
+   * Sans elle, le voile dit la meme chose partout. Avec elle, il repond a ce
+   * que la personne VIENT DE FAIRE : elle a touche une periode precise parce
+   * qu elle voulait savoir ce qui l attend a ce moment-la.
+   */
+  quand?: string;
 }
 
-export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurProps) {
+export function PremiumBlur({ children, feature, blurAmount = 8, quand }: PremiumBlurProps) {
   const isPrem = usePremiumStatus();
   const [locale, setLocaleState] = useState<Locale>("en");
   useEffect(() => {
@@ -29,9 +38,13 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
   }, []);
 
   const featureKey = feature === "future" ? "future" : feature === "ai" ? "ai" : "default";
+  // On parle du RESULTAT, pas de la fonctionnalite ni de la technologie qui la
+  // produit. Et de SA periode quand on la connait.
   const text = {
-    headline: t(`blur.headline_${featureKey}`, locale),
-    sub: t(`blur.sub_${featureKey}`, locale),
+    headline: quand
+      ? perso("flou.titre_date", locale).replace("{d}", quand)
+      : perso("flou.titre", locale),
+    sub: perso("flou.sous", locale),
   };
 
   const handleUpgrade = () => {
