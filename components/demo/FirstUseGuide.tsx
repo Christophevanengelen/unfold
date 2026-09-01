@@ -166,7 +166,7 @@ export function FirstUseGuide({ onDone }: { onDone: () => void }) {
                   fontSize: 14,
                   padding: "14px 0",
                   background: "var(--accent-purple)",
-                  color: "#fff",
+                  color: "var(--text-on-brand)",
                 }}
                 whileTap={{ scale: 0.97 }}
               >

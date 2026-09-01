@@ -144,7 +144,7 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
           className="mb-3 w-full rounded-2xl py-3.5 text-[14px] font-semibold transition-opacity disabled:opacity-60"
           style={{
             background: "var(--accent-purple)",
-            color: "#fff",
+            color: "var(--text-on-brand)",
             boxShadow:
               "0 0 20px color-mix(in srgb, var(--accent-purple) 35%, transparent), 0 4px 12px rgba(0,0,0,0.2)",
             letterSpacing: "0.01em",

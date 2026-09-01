@@ -165,7 +165,10 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
           />
           <motion.span
             className="text-[9px] font-bold uppercase tracking-[0.2em] px-2"
-            style={{ color: "white" }}
+            // « white » etait ecrit en dur : invisible sur fond clair. Le
+            // repere NOW se pose sur le fond de la page, pas sur une surface
+            // coloree — il lui faut donc la couleur de titre du theme.
+            style={{ color: "var(--text-heading)" }}
             animate={phase >= 1 ? { opacity: 1, scale: 1.15 } : { opacity: 0.6, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
@@ -297,9 +300,12 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
             >
               <span className="text-[11px] font-semibold px-3 py-1.5 rounded-full"
                 style={{
-                  color: "#D4B8E0",
-                  background: "rgba(176, 124, 194, 0.25)",
-                  border: "1px solid rgba(176, 124, 194, 0.5)",
+                  // Trois valeurs figees, pensees pour le sombre : un lilas
+                  // pale sur un mauve pale devenait illisible en clair. Les
+                  // trois derivent maintenant du theme.
+                  color: "var(--text-heading)",
+                  background: "color-mix(in srgb, var(--accent-purple) 20%, var(--bg-primary))",
+                  border: "1px solid color-mix(in srgb, var(--accent-purple) 45%, transparent)",
                   backdropFilter: "blur(8px)",
                 }}>
                 {t("onboarding.p2_signal_active", locale)}

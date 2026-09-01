@@ -22,6 +22,11 @@ jobs:
         # planifier() est pure : deux annees de selection sont eprouvees en une
         # seconde, sans reseau ni base.
         run: node scripts/verifier-planification.mjs
+      - name: Verifier que le theme tient
+        # Le systeme de design existe et il est bon. Ce qui lui manquait, c est
+        # un garde : deux elements de l onboarding etaient invisibles en clair
+        # parce que leurs couleurs avaient ete ecrites en dur pour le sombre.
+        run: node scripts/verifier-couleurs.mjs
       - name: Verifier les liens magiques
         # La panne d origine etait muette : le jeton partait a la poubelle sans
         # qu aucune erreur ne s affiche.

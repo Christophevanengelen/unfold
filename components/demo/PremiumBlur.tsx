@@ -124,7 +124,7 @@ export function PremiumBlur({ children, feature, blurAmount = 8 }: PremiumBlurPr
           className="mt-1 rounded-full px-5 py-2 text-[11px] font-semibold transition-all duration-200"
           style={{
             background: "var(--accent-purple)",
-            color: "#fff",
+            color: "var(--text-on-brand)",
             boxShadow: "0 0 20px color-mix(in srgb, var(--accent-purple) 40%, transparent), 0 2px 8px rgba(0,0,0,0.3)",
             letterSpacing: "0.01em",
           }}

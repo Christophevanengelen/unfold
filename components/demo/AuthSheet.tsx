@@ -113,7 +113,7 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
                 type="submit"
                 disabled={phase === "loading" || !email.trim()}
                 className="w-full rounded-lg py-3 text-[14px] font-semibold transition-opacity disabled:opacity-50"
-                style={{ background: "var(--accent-purple)", color: "#fff" }}
+                style={{ background: "var(--accent-purple)", color: "var(--text-on-brand)" }}
               >
                 {phase === "loading" ? "..." : t("auth.send_link", locale)}
               </button>
