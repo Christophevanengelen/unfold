@@ -78,16 +78,23 @@ function lire(obj, chemin) {
 const CONTRATS = [
   {
     nom: "toctoc-year",
-    quoi: "les periodes de l annee, qui remplissent la timeline",
+    chemin: "toctoc-year.php",
+    quoi: "les periodes de l annee, qui remplissent la timeline au chargement rapide",
     corps: { ...THEME, year: new Date().getFullYear() },
+    // ATTENTION : ce point d entree ne rend PAS de `boudins`. La premiere
+    // version de ce controle l attendait, par analogie avec toctoc-app-short,
+    // et annoncait donc un contrat rompu sur un moteur parfaitement correct.
+    // Une fausse alerte envoyee a Marie-Ange lui aurait fait chercher un defaut
+    // inexistant, et aurait use la confiance dans ce controle des le premier
+    // usage. `lib/momentum-adapter.ts:29` lit `response.data.months`.
     attentes: [
-      { chemin: "boudins", type: "array", lu: "lib/momentum-adapter.ts:174" },
-      { chemin: "boudins.0.id", type: "string", lu: "lib/capsules.ts" },
-      { chemin: "boudins.0.startDate", type: "string", lu: "lib/momentum-adapter.ts:182" },
+      { chemin: "months", type: "array", lu: "lib/momentum-adapter.ts:29 (yearDataToPhases)" },
+      { chemin: "currentMonth", type: "object", lu: "types/api.ts (TocTocYearData)" },
     ],
   },
   {
     nom: "toctoc-app-short",
+    chemin: "toctoc-app-short.php",
     quoi: "la vie entiere, en forme allegee",
     corps: THEME,
     attentes: [
@@ -99,6 +106,11 @@ const CONTRATS = [
   },
   {
     nom: "daily-brief",
+    // Celui-ci vit sous /endpoints/, pas a la racine. Le premier essai
+    // appelait `${BASE}/daily-brief.php` et recevait un 404 — encore une
+    // fausse alerte, due au controle et non au moteur.
+    // Voir app/api/openai/daily-brief/route.ts:356.
+    chemin: "endpoints/daily-brief.php",
     quoi: "les signaux rapides du jour",
     corps: THEME,
     attentes: [
@@ -115,10 +127,11 @@ const TYPES = {
   string: (v) => typeof v === "string",
   number: (v) => typeof v === "number",
   boolean: (v) => typeof v === "boolean",
+  object: (v) => v !== null && typeof v === "object" && !Array.isArray(v),
 };
 
-async function appeler(nom, corps) {
-  const reponse = await fetch(`${BASE}/${nom}.php`, {
+async function appeler(chemin, corps) {
+  const reponse = await fetch(`${BASE}/${chemin}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(corps),
@@ -137,7 +150,7 @@ for (const contrat of CONTRATS) {
   process.stdout.write(`  ${contrat.nom.padEnd(20)}`);
   let brut;
   try {
-    brut = await appeler(contrat.nom, contrat.corps);
+    brut = await appeler(contrat.chemin, contrat.corps);
   } catch (e) {
     console.log(`INJOIGNABLE  ${e.message}`);
     console.log(`      ${contrat.quoi}\n`);

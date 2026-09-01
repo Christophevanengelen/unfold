@@ -69,7 +69,7 @@ npm run test:e2e
 
 ---
 
-## 5. Le contrat avec le moteur — le point le plus important
+## 5. Le contrat avec le moteur
 
 ```bash
 node scripts/verifier-moteur.mjs
@@ -79,20 +79,19 @@ Ce contrôle appelle le moteur d'éphémérides et vérifie, pour chaque champ q
 l'app lit réellement, qu'il est présent et du bon type. Il ne juge pas
 l'astrologie — seulement la forme de la réponse.
 
-**Au 1er septembre 2026, il échoue sur deux points :**
+**Attendu :** `Les 3 points d entree servent ce que l app attend.`
 
-| Point d'entrée | État constaté |
-|---|---|
-| `toctoc-app-short` | ok |
-| `toctoc-year` | rend `years` / `months`, l'app lit `boudins` |
-| `daily-brief` | HTTP 404 |
+Il couvre `toctoc-year`, `toctoc-app-short` et `endpoints/daily-brief.php`.
+Chaque attente porte le fichier et la ligne qui la consomme : quand ça casse,
+on sait quoi ouvrir.
 
-**À renvoyer :** la sortie complète, et la réponse à ces deux questions :
+**À lancer après chaque modification du moteur.** C'est ce qui manquait : le
+1er septembre, `daily-brief.php` a changé d'enveloppe et l'app a lu un niveau
+trop haut. Le briefing du jour n'a jamais fonctionné, et le message d'erreur —
+« aucun signal rapide exploitable » — se lisait comme une journée calme. Le
+défaut était invisible, y compris dans les journaux.
 
-1. `toctoc-year` doit-il rendre `boudins`, ou l'app doit-elle lire
-   `years`/`months` ? `lib/momentum-adapter.ts:174` lit `boudins`.
-2. `endpoints/daily-brief.php` existe-t-il encore sous ce nom, et à quelle
-   adresse de base ? Il répondait il y a peu, il renvoie 404 maintenant.
+**À renvoyer :** la sortie complète.
 
 ---
 
@@ -135,6 +134,5 @@ Une seule réponse contenant :
 
 - les sorties des points 2, 4 et 5
 - la capture du point 3
-- les réponses aux deux questions du point 5
 
 C'est ce qui clôt la mise en route.
