@@ -31,21 +31,19 @@ Il faut **22 ou plus**. Sinon : `nvm install 22 && nvm use 22`.
 
 ## Étape 2 — Les clés
 
-Elles viennent de Vercel, pas de Christophe. Aucun secret ne circule par mail
-ou par chat, et quand une clé change tu refais simplement un `pull`.
-
-Accepte d'abord l'invitation Vercel reçue à `marieangelevan@gmail.com`, puis :
-
 ```bash
-npx vercel login
-npx vercel link
-npx vercel env pull .env.local
+cp .env.example .env.local
 ```
 
-À `vercel link` : choisis l'équipe `vanengelenchristophe-6584's projects` et le
-projet `unfold`.
+`.env.example` documente les 48 variables que le code lit, groupées par usage.
+**Tu n'as besoin que de la section 1** pour lancer l'app : les trois clés
+Supabase, `SUPABASE_DB_URL` et `OPENAI_API_KEY`.
 
-**Doit s'afficher :** `Created .env.local file`
+Christophe te les envoie en main propre — 1Password Send, Bitwarden Send ou
+Signal. Pas par mail.
+
+Tout le reste (Stripe, RevenueCat, APNs, App Store) sert à la production et peut
+rester vide.
 
 Vérifie :
 
@@ -54,10 +52,6 @@ node scripts/verifier-env-exemple.mjs
 ```
 
 **Doit s'afficher :** `48 variables lues, 57 declarees, aucun secret.`
-
-Si `vercel env pull` ne rapatrie pas `OPENAI_API_KEY` — elle n'est peut-être
-définie qu'en production — demande-la à Christophe. C'est la seule qui peut
-manquer.
 
 ---
 
@@ -123,11 +117,11 @@ ni Christophe ne pouviez le voir.
 
 ## Étape 6 — Ce que Vercel te donne
 
-Ton rôle est **Developer** sur l'équipe `vanengelenchristophe-6584's projects`.
+Tu es **Viewer** sur l'équipe `vanengelenchristophe-6584's projects`.
 
-Tu y vois le projet `unfold`, ses déploiements, ses journaux d'exécution et ses
-variables d'environnement. Les préversions se construisent toutes seules à
-chaque branche que tu pousses.
+Tu y vois le projet `unfold`, ses déploiements et ses journaux d'exécution. Les
+préversions se construisent toutes seules à chaque branche que tu pousses — ton
+rôle Vercel n'y change rien, c'est GitHub qui les déclenche.
 
 ---
 
@@ -174,8 +168,8 @@ gh pr create
 
 ## Pour ton assistant de code
 
-Le bloc à coller dans ses instructions est la **section 5 de
-`BRIEFING-MARIE-ANGE.md`**, à la racine du dépôt.
+Colle-lui `PROMPT-IA-MARIE-ANGE.md`, à la racine du dépôt. Il contient tout : la
+mise en route, les règles, la méthode de travail, et le contrat avec ton moteur.
 
 ---
 
