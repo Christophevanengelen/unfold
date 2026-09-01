@@ -1,8 +1,26 @@
-// @ts-nocheck
 "use client";
 
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { DOMAINS, domainConfig, type DomainKey } from "@/lib/domain-config";
+import { Heart, ClipboardCheck, Briefcase } from "flowbite-react-icons/outline";
+
+/**
+ * Le nom d icone de la configuration, resolu en composant.
+ *
+ * Ce fichier commençait par `@ts-nocheck`, et cela cachait un vrai plantage :
+ * il appelait `config.icon({ size: 12 })` alors que domainConfig n expose
+ * qu un `iconName` — une CHAINE. « config.icon is not a function » des le
+ * premier rendu.
+ *
+ * La suppression de type ne masquait pas une gene de typage : elle masquait un
+ * composant qui ne pouvait pas fonctionner. C est pour cela qu on ne desactive
+ * pas la verification sur un fichier entier.
+ */
+const ICONES: Record<string, React.ComponentType<{ size?: number }>> = {
+  heart: Heart,
+  "clipboard-check": ClipboardCheck,
+  briefcase: Briefcase,
+};
 import { formatDelta, getDeltaColor } from "@/lib/animations";
 
 interface SatelliteScoresProps {
@@ -54,7 +72,10 @@ export function SatelliteScores({ love, health, work, deltas, isActive }: Satell
               style={{ color: config.color }}
             >
               <span className="flex shrink-0 items-center" style={{ height: 12 }}>
-                {config.icon({ size: 12 })}
+                {(() => {
+                  const Icone = ICONES[config.iconName];
+                  return Icone ? <Icone size={12} /> : null;
+                })()}
               </span>
               <span
                 className="font-medium leading-none"

@@ -27,6 +27,7 @@ import { perso } from "@/lib/perso-i18n";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 import { apiFetch } from "@/lib/api-client";
 import { disponible, preparer, offres, acheter, type OffreAchat } from "@/lib/achats";
+import { useLocale } from "@/lib/use-locale";
 
 // ─── Localized copy for this page ────────────────────────────────
 // Inline since these strings are page-specific. Other UI lives in i18n-demo.ts.
@@ -333,7 +334,7 @@ export default function DemoPricingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const locale = useLocale();
   const ios = isIOSBundle();
   // Les offres telles que le MAGASIN les annonce. On n affiche jamais nos
   // propres constantes de prix sur iOS : Apple convertit, arrondit et applique
@@ -390,16 +391,6 @@ export default function DemoPricingPage() {
       setCouponError(perso(etat === "inactif" ? "code.inactif" : "code.inconnu", locale));
     }
   };
-
-  useEffect(() => {
-    setLocaleState(detectLocale());
-    const onLocaleChange = (e: Event) => {
-      const detail = (e as CustomEvent<Locale>).detail;
-      if (detail) setLocaleState(detail);
-    };
-    window.addEventListener("unfold:locale-changed", onLocaleChange);
-    return () => window.removeEventListener("unfold:locale-changed", onLocaleChange);
-  }, []);
 
   const c = PAGE_COPY[locale] ?? PAGE_COPY.en;
 

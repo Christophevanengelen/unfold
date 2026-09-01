@@ -29,9 +29,11 @@ function TrialCountdownPill({
   trialEnd: string;
   onClick: () => void;
 }) {
-  const daysLeft = Math.ceil(
-    (new Date(trialEnd).getTime() - Date.now()) / 86_400_000
-  );
+  // Date.now() pendant le rendu rend celui-ci non deterministe : deux rendus de
+  // la meme image peuvent donner deux resultats. On fige l instant au montage —
+  // un compte a rebours en jours n a de toute facon pas besoin de plus.
+  const [maintenant] = useState(() => Date.now());
+  const daysLeft = Math.ceil((new Date(trialEnd).getTime() - maintenant) / 86_400_000);
   if (daysLeft < 0 || daysLeft > 3) return null;
   const locale = detectLocale();
   const label = t("profile.trial_ends_in", locale).replace("{n}", String(daysLeft));
@@ -212,7 +214,6 @@ export default function DemoLayout({
     };
     const current = detectLocale();
     apply(current);
-    setLocaleState(current);
     const onLocaleChange = (e: Event) => {
       const detail = (e as CustomEvent<Locale>).detail;
       if (detail) { apply(detail); setLocaleState(detail); }

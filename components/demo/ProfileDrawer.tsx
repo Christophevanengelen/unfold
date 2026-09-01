@@ -25,6 +25,7 @@ import { apiFetch } from "@/lib/api-client";
 import { mesurer } from "@/lib/mesure";
 import { EditionNaissance } from "@/components/demo/EditionNaissance";
 import { disponible, preparer, restaurer } from "@/lib/achats";
+import { useLocale } from "@/lib/use-locale";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -32,6 +33,9 @@ interface ProfileDrawerProps {
 }
 
 export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
+  // Voir app/app/layout.tsx : l instant est fige au montage plutot que lu a
+  // chaque rendu, qui doit rester deterministe.
+  const [maintenant] = useState(() => Date.now());
   const router = useRouter();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -84,7 +88,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   }, [open]);
   const [authOpen, setAuthOpen] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const locale = useLocale();
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [langPickerOpen, setLangPickerOpen] = useState(false);
   const billing = useBillingState();
@@ -96,7 +100,6 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   useEffect(() => {
     const p = getUserProfileSync();
     setHasProfile(isProfileComplete(p));
-    setLocaleState(detectLocale());
   }, [open]);
 
   const handlePersonalizeComplete = async (profile: UserProfile) => {
@@ -146,7 +149,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                             Math.max(
                               0,
                               Math.ceil(
-                                (new Date(billing.trialEnd).getTime() - Date.now()) / 86_400_000,
+                                (new Date(billing.trialEnd).getTime() - maintenant) / 86_400_000,
                               ),
                             ),
                           ),
@@ -554,7 +557,6 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                 type="button"
                 onClick={() => {
                   setLocale(loc);
-                  setLocaleState(loc);
                   setLangPickerOpen(false);
                 }}
                 className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"

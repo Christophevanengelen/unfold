@@ -30,8 +30,16 @@ export const getTranslations = cache(
       if (error || !data) return {};
 
       const map: TranslationMap = {};
-      for (const row of data as any[]) {
-        map[row.contentKey.key] = row.value;
+      // Le type dit ce que la requete rend vraiment, au lieu de renoncer avec
+      // `any`. Une colonne renommee en base devient alors une erreur de
+      // compilation plutot qu un `undefined` a l ecran.
+      // La requete rend contentKey comme un TABLEAU, pas un objet : le typage
+      // le dit maintenant, alors que `any` laissait croire au contraire. Si
+      // cette forme change en base, la compilation le signale.
+      type Ligne = { value: string; contentKey: { key: string }[] };
+      for (const row of data as unknown as Ligne[]) {
+        const cle = row.contentKey?.[0]?.key;
+        if (cle) map[cle] = row.value;
       }
       return map;
     } catch {

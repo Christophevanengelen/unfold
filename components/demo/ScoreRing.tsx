@@ -95,8 +95,12 @@ export function ScoreRing({
     [],
   );
 
-  // Keep ref in sync so we can read current visual position without triggering effects
-  progressRef.current = progress;
+  // Ecrire dans une ref PENDANT le rendu est interdit : en rendu concurrent,
+  // React peut abandonner un rendu en cours, et la ref garderait alors une
+  // valeur qui n a jamais ete affichee. On synchronise apres la peinture.
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
 
   // Animation target: for negative delta, extend past score to draw the red zone
   const target = hasDelta && delta! < 0 ? score + absDelta : score;

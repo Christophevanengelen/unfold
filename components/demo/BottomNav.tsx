@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 import { Heart, Clock, User } from "flowbite-react-icons/outline";
 import { getConnections } from "@/lib/connections-store";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 
 /**
  * Barre d onglets.
@@ -80,17 +81,11 @@ function Onglet({
 export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) {
   const pathname = usePathname();
   const [connectionCount, setConnectionCount] = useState(0);
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const locale = useLocale();
 
+  // La langue passe par useLocale : plus d ecouteur ici, plus de rendu en trop.
   useEffect(() => {
     setConnectionCount(getConnections().length);
-    setLocaleState(detectLocale());
-    const onLocaleChange = (e: Event) => {
-      const detail = (e as CustomEvent<Locale>).detail;
-      if (detail) setLocaleState(detail);
-    };
-    window.addEventListener("unfold:locale-changed", onLocaleChange);
-    return () => window.removeEventListener("unfold:locale-changed", onLocaleChange);
   }, []);
 
   const navItems = [

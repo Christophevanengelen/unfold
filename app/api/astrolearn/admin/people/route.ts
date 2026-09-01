@@ -1,4 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * Une ligne de la base AstroLearn.
+ *
+ * Ces champs viennent d une base EXTERNE, donc tout est optionnel : elle peut
+ * changer sans nous prevenir. Les decrire vaut mieux que `any`, qui faisait
+ * disparaitre toute verification — une colonne renommee la-bas devenait un
+ * « undefined » silencieux a l ecran ici.
+ */
+interface LignePersonne {
+  id_person: string | number;
+  username?: string | null;
+  login?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  name?: string | null;
+  birthdate?: string | null;
+  birthtime?: string | null;
+  city?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  timezone?: string | null;
+  country?: string | null;
+  picture?: string | null;
+  profile_picture?: string | null;
+  [k: string]: unknown;
+}
 import { getAdminClient } from "@/lib/db";
 import { requireAdminSession } from "@/lib/astrolearn-auth";
 import { getAstrolearnPool, getBubblePool } from "@/lib/astrolearn-db";
@@ -71,8 +98,8 @@ async function searchAstrolearnPeople(
     [query, pattern, birthDate, limit, createdBy ?? null]
   );
 
-  return rows.map((row: any) => {
-    const username = row.username || row.login || "";
+  return rows.map((row: LignePersonne) => {
+    const username = String(row.username ?? row.login ?? "");
     const label =
       [row.first_name, row.last_name].filter(Boolean).join(" ").trim() ||
       String(row.name ?? "").trim() ||
@@ -90,13 +117,13 @@ async function searchAstrolearnPeople(
       birthDate: birthDateValue,
       birthTime,
       city: row.city ?? "",
-      ...(row.profile_picture ? { picture: row.profile_picture } : {}),
+      ...(row.profile_picture ? { picture: String(row.profile_picture) } : {}),
       hasCompleteBirthData: summarizeBirthData({
         birthDate: birthDateValue,
         birthTime,
         latitude: Number(row.latitude),
         longitude: Number(row.longitude),
-        timezone: row.timezone ?? "",
+        timezone: String(row.timezone ?? ""),
       }),
     };
   });
@@ -138,7 +165,7 @@ async function searchBubblePeople(query: string, limit: number): Promise<PersonR
     [query, pattern, birthDate, limit]
   );
 
-  return rows.map((row: any) => {
+  return rows.map((row: LignePersonne) => {
     const login = String(row.login ?? "").trim();
     const label = String(row.name ?? "").trim() || login || String(row.id_person);
     const birthDateValue = formatDate(row.birthdate);
@@ -158,7 +185,7 @@ async function searchBubblePeople(query: string, limit: number): Promise<PersonR
         birthTime,
         latitude: Number(row.latitude),
         longitude: Number(row.longitude),
-        timezone: row.timezone ?? "",
+        timezone: String(row.timezone ?? ""),
       }),
     };
   });
@@ -223,7 +250,7 @@ async function searchUnfoldPeople(query: string, limit: number): Promise<PersonR
         birthTime,
         latitude: Number(row.latitude),
         longitude: Number(row.longitude),
-        timezone: row.timezone ?? "",
+        timezone: String(row.timezone ?? ""),
       }),
     };
   });

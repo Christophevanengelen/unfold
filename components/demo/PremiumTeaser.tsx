@@ -11,6 +11,7 @@ import { perso } from "@/lib/perso-i18n";
 import { useMemo } from "react";
 import { useMomentum } from "@/lib/momentum-store";
 import { prochainePeriodeForte } from "@/lib/prevision-semaine";
+import { useLocale } from "@/lib/use-locale";
 
 interface PremiumTeaserProps {
   open: boolean;
@@ -19,7 +20,7 @@ interface PremiumTeaserProps {
 
 export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
   const router = useRouter();
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const ios = isIOSBundle();
 
@@ -59,17 +60,6 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
   const sousTitreSpecifique = apercu
     ? perso("vente.duree", locale).replace("{n}", String(Math.max(1, Math.round(apercu.dureeJours / 7))))
     : "";
-
-
-  useEffect(() => {
-    setLocaleState(detectLocale());
-    const onLocaleChange = (e: Event) => {
-      const detail = (e as CustomEvent<Locale>).detail;
-      if (detail) setLocaleState(detail);
-    };
-    window.addEventListener("unfold:locale-changed", onLocaleChange);
-    return () => window.removeEventListener("unfold:locale-changed", onLocaleChange);
-  }, []);
 
   const features = [
     { icon: CalendarMonth, text: t("premium.feature_forecast", locale) },

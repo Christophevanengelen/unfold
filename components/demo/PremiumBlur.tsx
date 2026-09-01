@@ -8,6 +8,7 @@ import { usePremiumStatus } from "@/lib/premium-gate";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 import { memoriserIntention } from "@/lib/retour-apres-achat";
+import { useLocale } from "@/lib/use-locale";
 
 interface PremiumBlurProps {
   children: React.ReactNode;
@@ -29,16 +30,7 @@ interface PremiumBlurProps {
 
 export function PremiumBlur({ children, feature, blurAmount = 8, quand, capsuleId }: PremiumBlurProps) {
   const isPrem = usePremiumStatus();
-  const [locale, setLocaleState] = useState<Locale>("en");
-  useEffect(() => {
-    setLocaleState(detectLocale());
-    const onLocaleChange = (e: Event) => {
-      const detail = (e as CustomEvent<Locale>).detail;
-      if (detail) setLocaleState(detail);
-    };
-    window.addEventListener("unfold:locale-changed", onLocaleChange);
-    return () => window.removeEventListener("unfold:locale-changed", onLocaleChange);
-  }, []);
+  const locale = useLocale();
 
   const featureKey = feature === "future" ? "future" : feature === "ai" ? "ai" : "default";
   // On parle du RESULTAT, pas de la fonctionnalite ni de la technologie qui la

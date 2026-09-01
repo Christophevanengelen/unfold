@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BottomSheet } from "./primitives/BottomSheet";
 import { signInWithMagicLink } from "@/lib/supabase-auth";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 
 interface AuthSheetProps {
   open: boolean;
@@ -14,11 +15,7 @@ export function AuthSheet({ open, onClose }: AuthSheetProps) {
   const [email, setEmail] = useState("");
   const [phase, setPhase] = useState<"idle" | "loading" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
-  const [locale, setLocaleState] = useState<Locale>("en");
-
-  useEffect(() => {
-    setLocaleState(detectLocale());
-  }, [open]);
+  const locale = useLocale();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

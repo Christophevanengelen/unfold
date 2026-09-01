@@ -33,7 +33,7 @@ export function AnimatedNumber({
   isActive = true,
 }: AnimatedNumberProps) {
   const [display, setDisplay] = useState(0);
-  const hasAnimated = useRef(false);
+  const [aAnime, setAAnime] = useState(false);
   const prevValue = useRef(0);
   const rafRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -67,10 +67,10 @@ export function AnimatedNumber({
   useEffect(() => {
     if (!isActive) return;
 
-    if (!hasAnimated.current) {
+    if (!aAnime) {
       // First activation: animate 0 → value
       animateFromTo(0, value, delay, duration);
-      hasAnimated.current = true;
+      setAAnime(true);
       prevValue.current = value;
     } else if (prevValue.current !== value) {
       // Value changed (day switch): animate old → new, faster
@@ -88,8 +88,10 @@ export function AnimatedNumber({
     };
   }, []);
 
-  // Inactive cards that haven't animated yet: show value directly
-  const rendered = !hasAnimated.current && !isActive ? value : display;
+  // Une ref ne se lit pas pendant le rendu : sa valeur n est pas suivie, donc
+  // React peut peindre une image qui ne correspond a rien. « A-t-on deja
+  // anime ? » influence l affichage, c est donc un ETAT, pas une ref.
+  const rendered = !aAnime && !isActive ? value : display;
 
   return <span className={className}>{rendered}</span>;
 }
