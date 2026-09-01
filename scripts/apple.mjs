@@ -97,7 +97,35 @@ if (!issuer) {
 }
 
 try {
-  if (commande === "certificats") {
+  if (commande === "testeurs") {
+    // Qui recoit quoi.
+    //
+    // La distinction qui compte : un groupe INTERNE recoit chaque build des
+    // qu il est traite, sans revue. Un groupe EXTERNE ne recoit que les builds
+    // soumis ET approuves par Apple. On peut donc envoyer dix builds d affilee
+    // et laisser les testeurs externes sur un build vieux de trois semaines,
+    // sans qu aucune alerte ne le dise — l envoi a bien reussi, c est la
+    // soumission qui n a jamais eu lieu.
+    const g = await appel(issuer,
+      `/betaGroups?filter[app]=${APP}&limit=50` +
+      "&fields[betaGroups]=name,isInternalGroup,publicLinkEnabled");
+    console.log("\n  groupe                          type      testeurs");
+    for (const grp of g.data ?? []) {
+      const t = await appel(issuer,
+        `/betaGroups/${grp.id}/betaTesters?limit=200&fields[betaTesters]=email`);
+      const n = (t.data ?? []).length;
+      const type = grp.attributes.isInternalGroup ? "INTERNE" : "externe";
+      console.log(`  ${grp.attributes.name.padEnd(30)}  ${type.padEnd(8)}  ${n}`);
+      for (const p of (t.data ?? []).slice(0, 12)) {
+        console.log(`      ${p.attributes.email ?? "(sans adresse)"}`);
+      }
+    }
+    console.log(`
+  Un groupe externe ne voit que les builds APPROUVES par Apple. Croiser avec
+  \`node scripts/apple.mjs revue\` : une ligne « pas soumise » en externe veut
+  dire que ce groupe ne l a jamais recu.
+`);
+  } else if (commande === "certificats") {
     const r = await appel(issuer, "/certificates?limit=200");
     console.log(`\n${r.data.length} certificat(s) :\n`);
     for (const c of r.data) {
@@ -159,7 +187,7 @@ try {
     }
     console.log("");
   } else {
-    console.log("Commandes : revue | certificats | profils | identifiants | revoquer <id>");
+    console.log("Commandes : revue | testeurs | certificats | profils | identifiants | revoquer <id>");
   }
 } catch (e) {
   console.error(`\n${e.message}\n`);
