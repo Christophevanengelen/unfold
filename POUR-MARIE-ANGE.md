@@ -31,23 +31,21 @@ Il faut **22 ou plus**. Sinon : `nvm install 22 && nvm use 22`.
 
 ## Étape 2 — Les clés
 
+Elles viennent de Vercel, pas de Christophe. Aucun secret ne circule par mail
+ou par chat, et quand une clé change tu refais simplement un `pull`.
+
+Accepte d'abord l'invitation Vercel reçue à `marieangelevan@gmail.com`, puis :
+
 ```bash
-cp .env.example .env.local
+npx vercel login
+npx vercel link
+npx vercel env pull .env.local
 ```
 
-Ouvre `.env.local` dans ton éditeur. **Ne remplis que la section 1**, avec les
-cinq valeurs que Christophe t'envoie séparément :
+À `vercel link` : choisis l'équipe `vanengelenchristophe-6584's projects` et le
+projet `unfold`.
 
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-SUPABASE_DB_URL=
-OPENAI_API_KEY=
-```
-
-Laisse tout le reste vide — Stripe, RevenueCat, APNs, App Store servent à la
-production.
+**Doit s'afficher :** `Created .env.local file`
 
 Vérifie :
 
@@ -56,6 +54,10 @@ node scripts/verifier-env-exemple.mjs
 ```
 
 **Doit s'afficher :** `48 variables lues, 57 declarees, aucun secret.`
+
+Si `vercel env pull` ne rapatrie pas `OPENAI_API_KEY` — elle n'est peut-être
+définie qu'en production — demande-la à Christophe. C'est la seule qui peut
+manquer.
 
 ---
 
@@ -119,15 +121,13 @@ ni Christophe ne pouviez le voir.
 
 ---
 
-## Étape 6 — Vercel
+## Étape 6 — Ce que Vercel te donne
 
-Christophe t'envoie une invitation sur l'équipe
-`vanengelenchristophe-6584's projects`, à `marie@astrolearn.io`.
+Ton rôle est **Developer** sur l'équipe `vanengelenchristophe-6584's projects`.
 
-Tu la reçois par mail, tu cliques **Accept**. Tu verras alors le projet `unfold`,
-ses déploiements et ses journaux.
-
-Tu n'en as pas besoin pour développer en local.
+Tu y vois le projet `unfold`, ses déploiements, ses journaux d'exécution et ses
+variables d'environnement. Les préversions se construisent toutes seules à
+chaque branche que tu pousses.
 
 ---
 
