@@ -39,6 +39,8 @@ import {
 } from "@/lib/detail-helpers";
 import type { HouseNumber } from "@/lib/domain-config";
 import { trackDomainFeedback } from "@/lib/observed-profile";
+import { useTheme } from "next-themes";
+import { texteLisible, type ThemeLisible } from "@/lib/contraste";
 
 // ─── Types (imported from timeline) ──────────────────────
 interface CapsuleData {
@@ -118,6 +120,7 @@ export function CapsuleDetailSheet({
   onClose: () => void;
   onNavigateToCapsule?: (date: Date) => void;
 }) {
+  const { resolvedTheme } = useTheme();
   // Gate: blur AI sections for free users on future capsules.
   // usePremiumStatus() fetches /api/billing/me on mount — not spoofable via localStorage.
   const userIsPremium = usePremiumStatus();
@@ -239,6 +242,12 @@ export function CapsuleDetailSheet({
   const house = domainKeyToHouse(domain);
   const houseMeta = houseConfig[house];
   const houseColor = capsule.color ?? houseMeta?.color ?? "var(--accent-purple)";
+  // La couleur vient du moteur : elle peut valoir n importe quoi. Peinte telle
+  // quelle sur un fond fait d elle-meme a 15 %, elle donne un texte illisible —
+  // meme faute que les puces du briefing, mesuree entre 2,02 et 2,78 en theme
+  // clair. On derive la nuance de texte a l execution ; le fond garde la base.
+  const themeLisible: ThemeLisible = resolvedTheme === "light" ? "clair" : "sombre";
+  const houseTexte = texteLisible(houseColor, themeLisible);
   const progress = getProgressPercent(capsule.startDate, capsule.endDate);
   const duration = formatDuration(capsule.startDate, capsule.endDate);
   // Prefer API lifetime data (from boudin-detail via OpenAI call),
@@ -395,7 +404,7 @@ export function CapsuleDetailSheet({
                 className="rounded-full px-2 py-0.5 text-[9px] font-bold tabular-nums"
                 style={{
                   background: `color-mix(in srgb, ${houseColor} 15%, transparent)`,
-                  color: houseColor,
+                  color: houseTexte,
                 }}
               >
                 {phase.score}/4
@@ -701,7 +710,7 @@ export function CapsuleDetailSheet({
                         className="text-[9px] font-semibold rounded px-1 py-0.5"
                         style={{
                           background: `color-mix(in srgb, ${houseColor} 15%, transparent)`,
-                          color: houseColor,
+                          color: houseTexte,
                         }}
                       >
                         maintenant

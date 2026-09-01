@@ -142,3 +142,79 @@ animations, manifeste de confidentialité, CORS des profils, heure et lieu
 obligatoires, autocomplétion du lieu, écran de saisie traduit, thème clair
 mesuré, barre du haut retirée, bascule de vue sans blocs parasites, codes
 d'invitation en FAV-.
+
+---
+
+# Registre des audits du 01/09/2026
+
+Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
+**n'est pas encore corrigé**. Corrigé le jour même : voir les commits.
+
+## Perte de fonctionnalité — le plus grave
+
+- [ ] **~6 550 lignes jamais atteintes.** 23 composants qu'aucun fichier
+      n'importe. `npm run verifier` refuse maintenant que le nombre augmente,
+      mais ne supprime rien.
+- [ ] **L'écran de détail par domaine** (Amour / Santé / Travail) — 1 500
+      lignes, débranché. Racine : `components/demo/DomainPager.tsx`.
+- [ ] **Le sélecteur de LANGUE** — `components/LanguageSwitcher.tsx`, perdu avec
+      `Header.tsx` comme le sélecteur de thème.
+- [ ] **Le bandeau cookies** — `components/legal/CookieConsent.tsx`, jamais
+      monté. Enjeu de conformité, pas seulement de code mort.
+- [ ] **Les données structurées SEO** — `components/seo/StructuredData.tsx`,
+      jamais rendues. Perte de visibilité.
+- [ ] **Quatre écrans d'onboarding** hors parcours, dont `StepPremium` — le seul
+      moment de vente pendant l'inscription.
+- [ ] **`birthday-graph` et `spirit-wave`** partent dans le binaire iOS mais
+      aucune surface de l'app n'y mène. Seuls les teasers du site y renvoient.
+
+## Notifications
+
+- [ ] **Rien ne propose jamais les notifications.** `dejaPropose()` et
+      `marquerPropose()` ne sont appelés nulle part ; l'écran de pré-demande
+      annoncé en tête de `lib/push.ts` n'existe pas. Il faut aller chercher le
+      réglage dans le tiroir. C'est la raison du zéro jeton.
+- [ ] Vérifier après le prochain build que `/api/push/register` est enfin
+      appelé — il ne l'a jamais été une seule fois.
+
+## Profil
+
+- [ ] **Aucun écran d'édition des données de naissance.** « Ma naissance »
+      renvoie dans l'onboarding complet, formulaire VIDE, quatre champs à
+      ressaisir. Corriger sa date demande de traverser tout le parcours.
+
+## Thème
+
+- [ ] **Trois palettes de domaine coexistent** : `--domaine-*`
+      (personnalisation), `--dom-*` (briefing), et celle de `domain-config.tsx`.
+      Les fusionner est un choix de design.
+- [ ] **49 fichiers sur 108** contiennent au moins une couleur figée côté app.
+      763 occurrences.
+- [ ] `components/demo/SausageCard.tsx` est bâti sur `bg-white/[0.08]` —
+      **invisible en thème clair**. Actuellement dans du code mort.
+- [ ] `app/app/astro/*` — écrans entièrement sombres en dur (outil interne).
+- [ ] Le `LaunchScreen` iOS n'a qu'une seule image pour les deux thèmes :
+      séquence blanc → violet foncé → clair au démarrage à froid.
+
+## Onboarding
+
+- [ ] `StepInput` n'a pas de défilement : sur petit écran clavier ouvert, le
+      contenu peut dépasser sans qu'on puisse atteindre le bouton.
+- [ ] `StepPreparing` applique `px-5` alors que l'orchestrateur le fait déjà —
+      40 px de marge au lieu de 20 sur ce seul écran.
+
+## Dette sous cliquet
+
+- [ ] **73 erreurs ESLint.** 33 `set-state-in-effect`, 19 `refs`. Chacune
+      demande d'être jugée séparément.
+- [ ] **127 couleurs figées.**
+- [ ] **3 textes non traduits** — dans `MonthlyView`, contenu fabriqué déjà
+      sorti du build. Ils partiront avec l'écran.
+
+## Ce qui n'est pas de mon ressort
+
+- [ ] Prix « à vie » de 49 €, incohérent avec 39,99 €/an.
+- [ ] Codes d'accès : les retirer, ou vérification côté serveur.
+- [ ] Logotype `logo-dark.svg` — « unfold » vectorisé.
+- [ ] Statut DSA, questionnaire App Privacy, accord de Marie-Ange.
+- [ ] Android : aucune configuration de signature.
