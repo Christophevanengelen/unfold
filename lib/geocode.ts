@@ -40,17 +40,58 @@ function toGeoResult(r: OpenMeteoResult): GeoResult {
   };
 }
 
-/** Search for cities matching a query string. Returns up to 6 results. */
-export async function searchCities(query: string): Promise<GeoResult[]> {
-  if (!query || query.trim().length < 2) return [];
+/**
+ * Le resultat d une recherche de ville.
+ *
+ * « aucune ville » et « la recherche a echoue » sont deux choses differentes, et
+ * la fonction renvoyait la meme liste vide pour les deux. A l ecran, une panne
+ * de reseau et une ville inexistante produisaient donc rigoureusement le meme
+ * rien : la personne retapait son texte sans savoir quoi corriger.
+ */
+export type Recherche =
+  | { etat: "ok"; villes: GeoResult[] }
+  | { etat: "vide" }
+  | { etat: "echec" };
+
+/** Au-dela, on considere que la recherche ne repondra pas. */
+const DELAI_MAX = 8000;
+
+/**
+ * Cherche des villes. Jusqu a six resultats.
+ *
+ * `signal` sert a ANNULER une recherche devenue obsolete. Sans lui, deux
+ * requetes pouvaient etre en vol en meme temps et la plus lente ecrasait la
+ * plus recente : on tapait « Bruxel », pause, puis « Bruxelles », et la liste
+ * retombait sur les resultats de « Bruxel ». C est la liste instable sous le
+ * doigt.
+ */
+export async function searchCities(
+  query: string,
+  options?: { signal?: AbortSignal; langue?: string },
+): Promise<Recherche> {
+  if (!query || query.trim().length < 2) return { etat: "vide" };
   try {
-    const res = await fetch(
-      `${getApiBase()}/api/geocode?q=${encodeURIComponent(query.trim())}`,
-    );
-    if (!res.ok) return [];
+    // Un delai maximal, sinon un serveur qui ne repond pas laisse l ecran en
+    // « recherche… » indefiniment.
+    const horloge = AbortSignal.timeout(DELAI_MAX);
+    const signal = options?.signal
+      ? AbortSignal.any([options.signal, horloge])
+      : horloge;
+
+    const params = new URLSearchParams({ q: query.trim() });
+    if (options?.langue) params.set("lang", options.langue);
+
+    const res = await fetch(`${getApiBase()}/api/geocode?${params}`, { signal });
+    if (!res.ok) return { etat: "echec" };
     const data = (await res.json()) as { results?: OpenMeteoResult[] };
-    return (data.results ?? []).map(toGeoResult);
-  } catch {
-    return [];
+    const villes = (data.results ?? []).map(toGeoResult);
+    return villes.length > 0 ? { etat: "ok", villes } : { etat: "vide" };
+  } catch (e) {
+    // Une annulation volontaire n est pas un echec : la recherche suivante a
+    // deja pris le relais, et afficher une erreur ici serait un mensonge.
+    if (e instanceof DOMException && e.name === "AbortError") {
+      return { etat: "vide" };
+    }
+    return { etat: "echec" };
   }
 }

@@ -51,7 +51,7 @@ function verifierClesPerso() {
   return { connues: connues.size, fautives };
 }
 
-const PLAFOND = 12;
+const PLAFOND = 3;
 
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [

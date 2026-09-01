@@ -11,25 +11,33 @@ import { saveBirthData, resolveCity, type BirthData } from "@/lib/birth-data";
 import type { OnboardingFormData } from "./StepInput";
 import type { MomentumPhase } from "@/types/momentum";
 import { planetConfig } from "@/lib/domain-config";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
-const statusLines = [
-  "Reading your planetary signals",
-  "Building your momentum timeline",
-  "Preparing your first capsule",
+// Les clefs p6_* existent en dix langues dans lib/i18n-demo.ts depuis le
+// debut, et n etaient appelees nulle part : cet ecran servait de l anglais a
+// tout le monde.
+const statusLines = (locale: Locale) => [
+  t("onboarding.p6_status1", locale),
+  t("onboarding.p6_status2", locale),
+  t("onboarding.p6_status3", locale),
 ];
 
 // ─── Scan Feed — reveals what the engine is analyzing ────
 
-const SCAN_STEPS = [
-  { label: "Pluto deep cycles",       detail: "transformation periods",  delay: 0.5 },
-  { label: "Neptune dissolve phases",  detail: "intuition windows",      delay: 2.5 },
-  { label: "Uranus breakthrough",      detail: "liberation moments",     delay: 4.5 },
-  { label: "Saturn structure tests",   detail: "maturity checkpoints",   delay: 6.5 },
-  { label: "Jupiter expansion gates",  detail: "growth opportunities",   delay: 8.5 },
-  { label: "Eclipse axis series",      detail: "turning points",         delay: 10.5 },
-  { label: "Zodiacal releasing peaks", detail: "life chapter markers",   delay: 13.0 },
-  { label: "Station retrogrades",      detail: "revision periods",       delay: 15.5 },
-  { label: "Cycle convergences",       detail: "peak intensity windows", delay: 18.0 },
+// Dix-huit textes servis en anglais aux dix langues, pendant que la personne
+// regarde son ecran se construire. C est court, mais c est le premier contenu
+// qu elle lit du produit.
+const SCAN_STEPS = (locale: Locale) => [
+  { label: perso("scan.pluton", locale),   detail: perso("scan.pluton.d", locale),   delay: 0.5 },
+  { label: perso("scan.neptune", locale),  detail: perso("scan.neptune.d", locale),  delay: 2.5 },
+  { label: perso("scan.uranus", locale),   detail: perso("scan.uranus.d", locale),   delay: 4.5 },
+  { label: perso("scan.saturne", locale),  detail: perso("scan.saturne.d", locale),  delay: 6.5 },
+  { label: perso("scan.jupiter", locale),  detail: perso("scan.jupiter.d", locale),  delay: 8.5 },
+  { label: perso("scan.eclipse", locale),  detail: perso("scan.eclipse.d", locale),  delay: 10.5 },
+  { label: perso("scan.zr", locale),       detail: perso("scan.zr.d", locale),       delay: 13.0 },
+  { label: perso("scan.retro", locale),    detail: perso("scan.retro.d", locale),    delay: 15.5 },
+  { label: perso("scan.converge", locale), detail: perso("scan.converge.d", locale), delay: 18.0 },
 ];
 
 interface IntensityBreakdown {
@@ -38,16 +46,18 @@ interface IntensityBreakdown {
 }
 
 function ScanFeed({ isLoading, phaseCount, breakdown }: { isLoading: boolean; phaseCount: number; breakdown?: IntensityBreakdown[] }) {
+  const locale = detectLocale();
+  const etapes = SCAN_STEPS(locale);
   const [visibleCount, setVisibleCount] = useState(0);
 
   useEffect(() => {
     if (!isLoading && phaseCount > 100) {
       // Data arrived — show all remaining instantly
-      setVisibleCount(SCAN_STEPS.length);
+      setVisibleCount(etapes.length);
       return;
     }
 
-    const timers = SCAN_STEPS.map((step, i) =>
+    const timers = etapes.map((step, i) =>
       setTimeout(() => setVisibleCount(c => Math.max(c, i + 1)), step.delay * 1000)
     );
     return () => timers.forEach(clearTimeout);
@@ -70,7 +80,7 @@ function ScanFeed({ isLoading, phaseCount, breakdown }: { isLoading: boolean; ph
       </div>
 
       <div className="space-y-[6px]">
-        {SCAN_STEPS.slice(0, visibleCount).map((step, i) => {
+        {etapes.slice(0, visibleCount).map((step, i) => {
           const isLatest = i === visibleCount - 1 && !isDone;
           return (
             <motion.div
@@ -163,6 +173,7 @@ function ScanFeed({ isLoading, phaseCount, breakdown }: { isLoading: boolean; ph
  * Flow: loading → past reveal → present signal → CTA
  */
 export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
+  const locale = detectLocale();
   const router = useRouter();
   const { loadSignals, state, phases, isLive, isLoadingLifetime, timelinePhases } = useMomentum();
 
@@ -296,7 +307,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
           setTimeout(() => setRevealPhase("present"), 8800);   // 8s to read past highlights
         }, 600);
       } catch {
-        setError("Connection issue. Using sample data instead.");
+        setError(t("onboarding.p6_error", locale));
         setCompleted([0, 1, 2]);
         setVisible([0, 1, 2]);
         setTimeout(() => setRevealPhase("past"), 600);
@@ -395,7 +406,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
             {/* Status lines */}
             <div className="w-full max-w-[240px] space-y-3 text-left">
               <AnimatePresence>
-                {statusLines.map((text, i) =>
+                {statusLines(locale).map((text: string, i: number) =>
                   visible.includes(i) && (
                     <motion.div key={i} className="flex items-center gap-3"
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -488,7 +499,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               className="font-display text-xl font-bold mb-2"
               style={{ color: "var(--accent-purple)", letterSpacing: -0.3 }}
             >
-              {currentPhase?.title ?? "Your signal is active"}
+              {currentPhase?.title ?? t("onboarding.p6_signal_active", locale)}
             </motion.h2>
 
             {currentPhase && (
@@ -580,7 +591,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              Your signal is ready.
+              {t("onboarding.p6_signal_active", locale)}
             </motion.h1>
 
             <motion.p
@@ -591,8 +602,8 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               transition={{ delay: 0.4 }}
             >
               {isLive
-                ? "Built from real planetary data for your exact birth moment."
-                : "Explore with sample data. Enter your birth info for a personal reading."}
+                ? t("onboarding.p6_built_real", locale)
+                : t("onboarding.p6_built_sample", locale)}
             </motion.p>
 
             <motion.div
@@ -630,7 +641,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
                 }}
                 className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
               >
-                See my signal
+                {t("onboarding.p6_cta", locale)}
               </button>
             </motion.div>
           </motion.div>

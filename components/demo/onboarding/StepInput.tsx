@@ -8,6 +8,7 @@ import { DateInput } from "@/components/ui/DateInput";
 import { searchCities, type GeoResult } from "@/lib/geocode";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 import { villeConnue } from "@/lib/birth-data";
+import { perso } from "@/lib/perso-i18n";
 
 export interface OnboardingFormData {
   nickname: string;
@@ -79,9 +80,38 @@ export function StepInput({
   const fields = champs(locale);
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+  // « repos », « cherche », « vide » et « echec » sont quatre choses
+  // differentes. Un seul booleen les confondait, et l ecran affichait le meme
+  // rien pour une ville inexistante et pour une panne de reseau.
+  const [etatLieu, setEtatLieu] = useState<"repos" | "cherche" | "vide" | "echec">("repos");
+  const isSearching = etatLieu === "cherche";
+  // Index survole au clavier. -1 = aucun.
+  const [survol, setSurvol] = useState(-1);
+  // La liste s ouvre vers le HAUT quand le clavier ne laisse pas la place.
+  const [versLeHaut, setVersLeHaut] = useState(false);
+  const avortRef = useRef<AbortController | null>(null);
   const placeRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Y a-t-il la place d ouvrir la liste sous le champ ?
+   *
+   * Le lieu est le QUATRIEME et dernier champ, donc deja bas dans l ecran. Le
+   * clavier iOS occupe environ 290 points, et la vue web ne se redimensionne
+   * pas (capacitor.config : resize « none »), donc la liste s ouvrait
+   * integralement DERRIERE le clavier. On tapait, quelque chose se produisait
+   * hors de vue, et il fallait fermer le clavier pour le decouvrir.
+   *
+   * visualViewport donne la hauteur reellement visible, clavier deduit.
+   */
+  const choisirSens = useCallback(() => {
+    const el = placeRef.current;
+    if (!el) return;
+    const bas = el.getBoundingClientRect().bottom;
+    const visible = window.visualViewport?.height ?? window.innerHeight;
+    // 220 px : quatre lignes de 44 plus la bordure. En dessous, on ouvre haut.
+    setVersLeHaut(visible - bas < 220);
+  }, []);
 
   // Les quatre champs sont requis, et ce n est pas un exces de zele.
   //
@@ -122,18 +152,32 @@ export function StepInput({
       onChange({ ...formData, [key]: value, resolvedCoords: undefined });
       // Debounced geocode search
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      // On annule la requete precedente, pas seulement son minuteur : deux
+      // requetes en vol et la plus lente ecrasait la plus recente.
+      avortRef.current?.abort();
+      setSurvol(-1);
       if (value.trim().length >= 2) {
-        setIsSearching(true);
+        setEtatLieu("cherche");
         debounceRef.current = setTimeout(async () => {
-          const results = await searchCities(value);
-          setSuggestions(results);
-          setShowSuggestions(results.length > 0);
-          setIsSearching(false);
+          const ctrl = new AbortController();
+          avortRef.current = ctrl;
+          const r = await searchCities(value, { signal: ctrl.signal, langue: locale });
+          if (ctrl.signal.aborted) return;
+          if (r.etat === "ok") {
+            setSuggestions(r.villes);
+            setShowSuggestions(true);
+            setEtatLieu("repos");
+            choisirSens();
+          } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            setEtatLieu(r.etat);
+          }
         }, 300);
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
-        setIsSearching(false);
+        setEtatLieu("repos");
       }
     } else {
       onChange({ ...formData, [key]: value });
@@ -179,7 +223,7 @@ export function StepInput({
         transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
       >
         <ChevronLeft size={14} />
-        Back
+        {t("onboarding.back", locale)}
       </motion.button>
 
       {/* Headline */}
@@ -190,7 +234,7 @@ export function StepInput({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        Your signal starts here.
+        {t("onboarding.p5_headline", locale)}
       </motion.h1>
       <motion.p
         className="mt-1.5 text-sm"
@@ -199,7 +243,7 @@ export function StepInput({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        Tell us when and where you were born.
+        {t("onboarding.p5_sub", locale)}
       </motion.p>
 
       {/* Form fields */}
@@ -226,9 +270,18 @@ export function StepInput({
                   }}
                 >
                   {field.label}
+                  {/* Le lieu est-il SITUE ? Rien ne le disait : apres selection,
+                      le champ contenait un texte identique a ce qu on aurait pu
+                      taper a la main. Or ce qui distingue les deux, c est
+                      d avoir des coordonnees — et donc un theme juste. */}
+                  {isPlaceField && formData.resolvedCoords && (
+                    <span className="ml-2 normal-case" style={{ color: "var(--accent-green)" }}>
+                      ✓ {perso("lieu.confirme", locale)}
+                    </span>
+                  )}
                   {isPlaceField && isSearching && (
                     <span className="ml-2 normal-case" style={{ opacity: 0.4 }}>
-                      searching…
+                      {perso("lieu.recherche", locale)}
                     </span>
                   )}
                 </span>
@@ -245,10 +298,46 @@ export function StepInput({
                     value={formData[field.key] as string}
                     onChange={(e) => handleChange(field.key, e.target.value)}
                     onFocus={() => {
-                      if (isPlaceField && suggestions.length > 0) setShowSuggestions(true);
+                      if (isPlaceField) {
+                        choisirSens();
+                        if (suggestions.length > 0) setShowSuggestions(true);
+                      }
                     }}
+                    onKeyDown={
+                      isPlaceField
+                        ? (e) => {
+                            // Sans ceci, aucune suggestion n etait atteignable
+                            // au clavier — ni fleches, ni Entree, ni Echap.
+                            if (!showSuggestions || suggestions.length === 0) return;
+                            if (e.key === "ArrowDown") {
+                              e.preventDefault();
+                              setSurvol((v) => (v + 1) % suggestions.length);
+                            } else if (e.key === "ArrowUp") {
+                              e.preventDefault();
+                              setSurvol((v) => (v <= 0 ? suggestions.length - 1 : v - 1));
+                            } else if (e.key === "Enter" && survol >= 0) {
+                              e.preventDefault();
+                              selectCity(suggestions[survol]);
+                            } else if (e.key === "Escape") {
+                              setShowSuggestions(false);
+                              setSurvol(-1);
+                            }
+                          }
+                        : undefined
+                    }
                     placeholder={field.placeholder}
                     autoComplete={isPlaceField ? "off" : undefined}
+                    // La correction automatique d iOS mutile les noms de villes
+                    // etrangeres.
+                    autoCorrect={isPlaceField ? "off" : undefined}
+                    spellCheck={isPlaceField ? false : undefined}
+                    role={isPlaceField ? "combobox" : undefined}
+                    aria-expanded={isPlaceField ? showSuggestions : undefined}
+                    aria-controls={isPlaceField ? "villes-suggerees" : undefined}
+                    aria-autocomplete={isPlaceField ? "list" : undefined}
+                    aria-activedescendant={
+                      isPlaceField && survol >= 0 ? `ville-${suggestions[survol]?.id}` : undefined
+                    }
                     className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
                     style={{ color: "var(--accent-purple)" }}
                   />
@@ -263,40 +352,93 @@ export function StepInput({
                 </p>
               )}
 
-              {/* City autocomplete dropdown */}
+              {/* Suggestions de villes.
+
+                  Trois changements qui portent tout l usage au doigt :
+
+                  - Le SENS d ouverture. Le lieu est le dernier des quatre
+                    champs, donc bas dans l ecran ; la vue web ne se
+                    redimensionne pas a l ouverture du clavier iOS. La liste
+                    s ouvrait donc integralement derriere le clavier.
+                  - La HAUTEUR de chaque ligne : 44 points, le minimum
+                    d Apple. Elles faisaient 40 px, collees, sans separateur —
+                    quatre pixels d ecart et on choisissait la ville voisine.
+                  - Ce qui s affiche quand il n y a RIEN. Une ville inexistante
+                    et une panne de reseau produisaient le meme vide. */}
               {isPlaceField && (
                 <AnimatePresence>
-                  {showSuggestions && suggestions.length > 0 && (
+                  {(showSuggestions && suggestions.length > 0) ||
+                  etatLieu === "cherche" ||
+                  etatLieu === "vide" ||
+                  etatLieu === "echec" ? (
                     <motion.div
-                      className="absolute left-0 right-0 z-50 mt-1 rounded-xl border overflow-hidden"
+                      id="villes-suggerees"
+                      role="listbox"
+                      className="absolute left-0 right-0 z-50 rounded-xl border overflow-y-auto"
                       style={{
-                        top: "100%",
+                        ...(versLeHaut
+                          ? { bottom: "100%", marginBottom: 4 }
+                          : { top: "100%", marginTop: 4 }),
+                        maxHeight: 220,
                         background: "var(--bg-secondary)",
                         borderColor: "var(--border-light)",
                       }}
-                      initial={{ opacity: 0, y: -4 }}
+                      initial={{ opacity: 0, y: versLeHaut ? 4 : -4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
+                      exit={{ opacity: 0, y: versLeHaut ? 4 : -4 }}
                       transition={{ duration: 0.15 }}
                     >
-                      {suggestions.map((city) => (
-                        <button
-                          key={city.id}
-                          type="button"
-                          onClick={() => selectCity(city)}
-                          className="w-full px-4 py-2.5 text-left transition-colors hover:bg-brand-3/30"
-                          style={{ color: "var(--accent-purple)" }}
-                        >
-                          <span className="text-sm font-medium">{city.name}</span>
-                          {city.admin1 || city.country ? (
-                            <span className="ml-1.5 text-xs" style={{ opacity: 0.5 }}>
-                              {[city.admin1, city.country].filter(Boolean).join(", ")}
+                      {etatLieu === "cherche" && (
+                        <p className="px-4 py-3 text-sm" style={{ color: "var(--text-body-subtle)" }}>
+                          {perso("lieu.recherche", locale)}
+                        </p>
+                      )}
+                      {etatLieu === "vide" && (
+                        <p className="px-4 py-3 text-sm" style={{ color: "var(--text-body-subtle)" }}>
+                          {perso("lieu.aucune", locale)}
+                        </p>
+                      )}
+                      {etatLieu === "echec" && (
+                        <p className="px-4 py-3 text-sm" style={{ color: "var(--text-body-subtle)" }}>
+                          {perso("lieu.echec", locale)}
+                        </p>
+                      )}
+                      {etatLieu === "repos" &&
+                        suggestions.map((city, index) => (
+                          <button
+                            key={city.id}
+                            id={`ville-${city.id}`}
+                            role="option"
+                            aria-selected={survol === index}
+                            type="button"
+                            onMouseEnter={() => setSurvol(index)}
+                            onClick={() => selectCity(city)}
+                            className="flex min-h-11 w-full flex-col justify-center border-b px-4 py-2 text-left transition-colors last:border-b-0"
+                            style={{
+                              borderColor: "var(--border-muted)",
+                              background:
+                                survol === index ? "var(--bg-tertiary)" : "transparent",
+                            }}
+                          >
+                            <span
+                              className="text-sm font-medium"
+                              style={{ color: "var(--text-heading)" }}
+                            >
+                              {city.name}
                             </span>
-                          ) : null}
-                        </button>
-                      ))}
+                            {city.admin1 || city.country ? (
+                              // Region et pays a la meme taille que le nom :
+                              // c est l information qui distingue Paris en
+                              // France de Paris au Texas, et elle etait la
+                              // moins lisible de la ligne.
+                              <span className="text-xs" style={{ color: "var(--text-body-subtle)" }}>
+                                {[city.admin1, city.country].filter(Boolean).join(", ")}
+                              </span>
+                            ) : null}
+                          </button>
+                        ))}
                     </motion.div>
-                  )}
+                  ) : null}
                 </AnimatePresence>
               )}
             </motion.div>
@@ -317,7 +459,7 @@ export function StepInput({
 
       {/* CTA */}
       <motion.div
-        className="mt-auto"
+        className="mt-auto pt-6"
         initial={CTA_DEPART}
         animate={CTA_ARRIVEE}
         transition={CTA_IMMEDIAT}
@@ -335,7 +477,7 @@ export function StepInput({
               : "cursor-not-allowed bg-brand-4 text-text-disabled"
           }`}
         >
-          Prepare my signal
+          {t("onboarding.p5_cta", locale)}
         </button>
       </motion.div>
     </motion.div>

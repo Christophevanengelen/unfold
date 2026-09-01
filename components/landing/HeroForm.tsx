@@ -50,9 +50,14 @@ export function HeroForm({ onSubmit, ctaLabel, privacyNotice, isSubmitting }: He
     }
     setSearchingCity(true);
     debounceRef.current = setTimeout(async () => {
-      const results = await searchCities(value);
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0);
+      // searchCities distingue desormais « aucune ville » de « la recherche a
+      // echoue ». Ici, sur le site, on garde le comportement d origine : pas de
+      // liste. Le message d erreur est ajoute cote onboarding, ou le champ est
+      // obligatoire et ou l on ne peut pas avancer sans lui.
+      const r = await searchCities(value);
+      const villes = r.etat === "ok" ? r.villes : [];
+      setSuggestions(villes);
+      setShowSuggestions(villes.length > 0);
       setSearchingCity(false);
       setHighlightedIdx(-1);
     }, 300);
