@@ -13,29 +13,15 @@ jobs:
         with:
           node-version: "22"
       - run: npm ci
-      - name: Verifier l envoi de notifications
-        # Deux details d APNs se trompent en silence et ne se voient qu en
-        # production : la signature ES256 au mauvais format, et le 410 d Apple
-        # ignore. Le test fabrique sa propre clef et son propre APNs.
-        run: node scripts/verifier-apns.mjs
-      - name: Verifier le choix des notifications
-        # planifier() est pure : deux annees de selection sont eprouvees en une
-        # seconde, sans reseau ni base.
-        run: node scripts/verifier-planification.mjs
-      - name: Verifier les contrastes des deux themes
-        # L app a ete dessinee en sombre et le clair derive sans jamais etre
-        # mesure : un jeton de texte y etait a 3,27 au lieu de 4,5, et rendait
-        # illisibles toutes les etiquettes et tous les en-tetes de section.
-        run: node scripts/verifier-contraste.mjs
-      - name: Verifier que le theme tient
-        # Le systeme de design existe et il est bon. Ce qui lui manquait, c est
-        # un garde : deux elements de l onboarding etaient invisibles en clair
-        # parce que leurs couleurs avaient ete ecrites en dur pour le sombre.
-        run: node scripts/verifier-couleurs.mjs
-      - name: Verifier les liens magiques
-        # La panne d origine etait muette : le jeton partait a la poubelle sans
-        # qu aucune erreur ne s affiche.
-        run: node scripts/verifier-liens-profonds.mjs
+      - name: Verifier tout
+        # Une seule commande : types, contraste des deux themes, couleurs
+        # figees, textes non traduits, erreurs de lint, notifications, choix
+        # des notifications, liens magiques.
+        #
+        # Trois de ces controles fonctionnent au cliquet : le nombre actuel de
+        # defauts est un plafond que rien ne peut depasser, et que chaque
+        # correction abaisse.
+        run: npm run verifier
       - name: Construire le site complet (verifie aussi les types des routes API)
         run: npx next build
         env:

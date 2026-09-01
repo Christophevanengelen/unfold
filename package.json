@@ -12,7 +12,8 @@
     "build:native": "NEXT_PUBLIC_NATIVE=true next build",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "verifier": "node scripts/verifier-tout.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",

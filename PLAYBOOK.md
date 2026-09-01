@@ -27,13 +27,20 @@ faite à moitié puis recouverte par le sujet suivant.
 
 ## Les vérifications avant de livrer
 
-    npx tsc --noEmit -p tsconfig.json      # types
-    node scripts/verifier-contraste.mjs    # lisibilité des deux thèmes
-    node scripts/verifier-couleurs.mjs     # couleurs figées (cliquet 156)
-    node scripts/verifier-apns.mjs         # notifications
-    node scripts/verifier-planification.mjs
-    node scripts/verifier-liens-profonds.mjs
-    bash scripts/build-native.sh           # le bundle de l'app
+    npm run verifier          # les huit contrôles
+    bash scripts/build-native.sh
+
+`npm run verifier` enchaîne : types, contraste des deux thèmes, couleurs figées,
+textes non traduits, erreurs de lint, notifications APNs, choix des
+notifications, liens magiques.
+
+**Trois fonctionnent au cliquet** — couleurs figées (156), textes non traduits
+(29), erreurs de lint (80). Le nombre actuel est un plafond : une régression le
+dépasse et échoue, une correction l'abaisse. La dette ne peut que décroître, et
+personne n'a besoin d'y penser.
+
+Un contrôle qui échoue sur des dizaines de cas existants se fait désactiver le
+lendemain, donc ne protège de rien. Le cliquet protège dès le premier jour.
 
 Le CI les lance toutes. **L'envoi TestFlight ne part que sur `[testflight]`**
 dans le message de commit — voir le skill `favorable-livrer`, et le plafond
@@ -85,11 +92,15 @@ installation précédente masque le comportement réel.
 
 ## Dette, sous cliquet
 
-- [ ] **156 couleurs figées** dans l'app grand public. Le CI empêche d'en
-      ajouter ; chaque correction abaisse le plafond dans
-      `scripts/verifier-couleurs.mjs`.
-- [ ] **81 erreurs ESLint**, dont 35 `set-state-in-effect` et 19 `refs` — la
-      sévérité de React 19. Aucune n'est active aujourd'hui.
+- [ ] **156 couleurs figées** dans l'app grand public.
+- [ ] **29 textes visibles non traduits** — libellés anglais chez les
+      francophones, et l'inverse. `DomainDetailSheet`, `MonthlyView`,
+      `PersonalizeFlow`, et le guide de première utilisation.
+- [ ] **80 erreurs ESLint**, surtout la sévérité de React 19. Aucune n'est
+      active aujourd'hui.
+
+Les trois sont sous cliquet : elles ne peuvent qu'être payées, jamais
+augmentées.
 - [ ] **Logotype** — `public/logo/logo-dark.svg` contient « unfold » vectorisé.
       Le favicon n'y pointe plus. Livrable de design.
 
