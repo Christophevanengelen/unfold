@@ -353,7 +353,7 @@ export function ShareSignalCard({
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center justify-center h-10 w-10 rounded-full transition-colors duration-200"
+            className="flex items-center justify-center h-11 w-11 rounded-full transition-colors duration-200"
             style={{
               background: "rgba(155, 133, 196, 0.08)",
               border: "1px solid rgba(155, 133, 196, 0.1)",

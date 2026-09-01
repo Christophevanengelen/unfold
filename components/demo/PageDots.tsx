@@ -33,7 +33,10 @@ export function PageDots({ total, active, onDotTap }: PageDotsProps) {
             key={i}
             type="button"
             onClick={() => onDotTap?.(i)}
-            className="relative flex h-4 w-4 items-center justify-center"
+            // 16 points visibles, 44 tactiles. Meme technique que le bouton de
+            // profil : le pseudo-element etend la cible sans deplacer les
+            // points, qui doivent rester petits pour rester discrets.
+            className="relative flex h-4 w-4 items-center justify-center before:absolute before:-inset-3.5 before:content-['']"
             aria-label={`Page ${i + 1}`}
           >
             {/* Inactive dot */}

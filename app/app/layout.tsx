@@ -59,7 +59,11 @@ function AvatarButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="relative flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95"
+      // Le bouton mesure 24 points et ouvre le profil : un controle de
+      // navigation principal a la moitie du minimum d Apple. On ne l agrandit
+      // pas — cela deplacerait tout l en-tete — on etend la ZONE DE TOUCHE avec
+      // un pseudo-element invisible. 24 + 2x10 = 44.
+      className="relative flex h-6 w-6 items-center justify-center rounded-full bg-bg-brand-soft text-[10px] font-bold text-accent-purple transition-transform hover:scale-105 active:scale-95 before:absolute before:-inset-2.5 before:content-['']"
       aria-label="Profile"
     >
       {initial ?? (

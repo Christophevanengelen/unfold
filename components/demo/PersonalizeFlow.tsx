@@ -146,7 +146,10 @@ export function PersonalizeFlow({ open, onClose, onComplete }: PersonalizeFlowPr
       <div className="flex flex-col px-5 pb-6">
         {/* Header — progress dots + back */}
         <div className="flex items-center justify-between pb-4">
-          <div className="w-8">
+          {/* 44 points. Le bouton retour n avait AUCUNE taille declaree : une
+              icone de 18 px dans un conteneur de 32, donc une zone de touche
+              deux fois trop petite. On elargit la zone, pas l icone. */}
+          <div className="w-11">
             {screen === 2 && (
               <motion.button
                 type="button"
@@ -154,7 +157,7 @@ export function PersonalizeFlow({ open, onClose, onComplete }: PersonalizeFlowPr
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={springs.snappy}
-                className="flex items-center justify-center"
+                className="flex h-11 w-11 items-center justify-center"
                 style={{ color: "var(--accent-purple)" }}
               >
                 <ArrowLeft size={18} />

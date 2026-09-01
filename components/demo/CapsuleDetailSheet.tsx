@@ -918,7 +918,11 @@ export function CapsuleDetailSheet({
               <button
                 type="button"
                 onClick={() => setShowShare(true)}
-                className="flex items-center justify-center h-7 w-7 rounded-full transition-opacity duration-200"
+                // 44 points, le minimum d Apple. Le bouton faisait 28x28 : dans
+                // une fiche qu on ouvre a chaque signal, on visait a cote une
+                // fois sur trois. L icone reste de la meme taille — c est la
+                // ZONE DE TOUCHE qui s etend, pas le dessin.
+                className="flex items-center justify-center h-11 w-11 rounded-full transition-opacity duration-200"
                 style={{
                   color: "var(--text-body-subtle)",
                   opacity: 0.3,
