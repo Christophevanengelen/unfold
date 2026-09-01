@@ -24,26 +24,37 @@
  * NEXT_PUBLIC_ ; il faut une verification cote serveur.
  */
 
+import { apiFetch } from "@/lib/api-client";
+
 export type EtatCode = "ok" | "inconnu" | "inactif";
 
 export const CLE_ACCES = "unfold_chart_access";
 
-/** Les codes acceptes. Vide tant que la variable n est pas definie. */
-export function codesValides(): string[] {
-  const brut = process.env.NEXT_PUBLIC_CHART_COUPONS ?? "";
-  return brut
-    .split(",")
-    .map((c) => c.trim().toUpperCase())
-    .filter(Boolean);
-}
-
 /**
- * Ce que vaut un code saisi. « inactif » veut dire qu aucun code n existe dans
- * cet environnement : ce n est pas la faute de la personne, et on ne doit pas
- * lui dire de verifier son orthographe.
+ * Demande au SERVEUR ce que vaut un code.
+ *
+ * La liste vivait ici, lue depuis `NEXT_PUBLIC_CHART_COUPONS` — donc envoyee a
+ * chaque visiteur dans le paquet javascript. Le jour ou des codes y auraient
+ * ete definis, il aurait suffi d ouvrir les outils de developpement pour les
+ * lire tous. Elle est passee cote serveur : voir app/api/coupons/verifier.
+ *
+ * `apiFetch` et non `fetch` : dans l app native l origine est
+ * `capacitor://localhost`, ou un chemin relatif n aboutit nulle part et echoue
+ * en silence. C est le defaut recurrent de ce depot.
+ *
+ * Un echec reseau rend « inactif » et non « inconnu » : on ne dit pas a
+ * quelqu un que son code est faux quand on n a simplement pas pu le verifier.
  */
-export function verifierCode(saisi: string): EtatCode {
-  const valides = codesValides();
-  if (valides.length === 0) return "inactif";
-  return valides.includes(saisi.trim().toUpperCase()) ? "ok" : "inconnu";
+export async function verifierCode(saisi: string): Promise<EtatCode> {
+  try {
+    const res = await apiFetch("/api/coupons/verifier", {
+      method: "POST",
+      body: JSON.stringify({ code: saisi }),
+    });
+    if (!res.ok) return "inactif";
+    const donnees = (await res.json()) as { etat?: EtatCode };
+    return donnees.etat ?? "inactif";
+  } catch {
+    return "inactif";
+  }
 }
