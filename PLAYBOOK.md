@@ -98,20 +98,20 @@ installation précédente masque le comportement réel.
 - [ ] **Charger une fois, les dates déclenchent.** `supabase/013_bascules.sql`
       est écrit et éprouvé, **pas encore appliqué**. Le cron rappelle toujours le
       moteur une fois par personne et par jour.
-- [ ] **Prix « à vie » de 49 €** — incohérent avec 39,99 €/an, soit quinze mois
-      d'abonnement. Le relever ou retirer l'offre.
+- [x] **Prix « à vie » retiré** le 01/09. Vérifié avant : zéro achat à vie en
+      base, donc personne ne perd d'accès. Le statut `lifetime` reste reconnu
+      par `entitlement.ts` — c'est l'offre qui disparaît, pas la reconnaissance.
 
 ## Dette, sous cliquet
 
-- [ ] **136 couleurs figées** (154 le 01/09 au matin). Le gros du reste est
-      dans `components/landing/` — le site vitrine, toujours sombre par choix,
-      où une couleur figée ne casse rien. Côté app, il reste ~47.
-- [ ] **12 textes visibles non traduits** (29 le 31/08). Il en reste 9 dans
-      `StepPreparing` — étiquettes de chargement visibles 3 secondes — et 3 dans
-      `MonthlyView`, qui est du contenu fabriqué déjà sorti du build : ils
-      partiront avec l'écran, pas besoin de les traduire.
-- [ ] **80 erreurs ESLint**, surtout la sévérité de React 19. Aucune n'est
-      active aujourd'hui.
+- [ ] **121 couleurs figées** (156 le 31/08). L'essentiel du reste est sur le
+      site vitrine, sombre par choix. Les couleurs de TEXTE qui échouaient au
+      contraste sont toutes traitées, et vérifiées à chaque `npm run verifier`.
+- [ ] **3 textes non traduits** (29 le 31/08), tous dans du code déjà sorti du
+      build. Le français en dur a disparu du code vif : `perso-i18n.ts` porte
+      142 concepts et 1 420 traductions.
+- [ ] **52 erreurs ESLint** (81 le 31/08). La chute vient surtout de la
+      suppression du code mort : une bonne part de la dette vivait dedans.
 
 Les trois sont sous cliquet : elles ne peuvent qu'être payées, jamais
 augmentées.
@@ -193,23 +193,20 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
       d'une synchronisation qui n'a jamais fonctionné depuis le natif.
 - [x] Le champ de saisie du code était **blanc sur blanc** en thème clair : on
       tapait un code invisible. Le bouton « Connecter » était sous le seuil.
-- [ ] Textes en dur dans cet écran : « Connecter », « Vous & … », `rel.labelFR`.
-      Le produit a dix langues.
+- [x] Les textes de cet écran sont traduits, y compris `relationshipConfig`
+      dont le champ s'appelait littéralement `labelFR`.
 
 ## Notifications
 
-- [ ] **Rien ne propose jamais les notifications.** `dejaPropose()` et
-      `marquerPropose()` ne sont appelés nulle part ; l'écran de pré-demande
-      annoncé en tête de `lib/push.ts` n'existe pas. Il faut aller chercher le
-      réglage dans le tiroir. C'est la raison du zéro jeton.
+- [x] **La proposition de notifications existe** depuis le 01/09. Elle arrive
+      après le premier signal vu, et jamais par-dessus l'accueil ou le guide.
 - [ ] Vérifier après le prochain build que `/api/push/register` est enfin
       appelé — il ne l'a jamais été une seule fois.
 
 ## Profil
 
-- [ ] **Aucun écran d'édition des données de naissance.** « Ma naissance »
-      renvoie dans l'onboarding complet, formulaire VIDE, quatre champs à
-      ressaisir. Corriger sa date demande de traverser tout le parcours.
+- [x] **L'écran d'édition existe** depuis le 01/09 : une feuille préremplie
+      depuis le profil, qui réutilise le formulaire d'onboarding.
 
 ## Thème
 
@@ -218,8 +215,7 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
       Les fusionner est un choix de design.
 - [ ] **49 fichiers sur 108** contiennent au moins une couleur figée côté app.
       763 occurrences.
-- [ ] `components/demo/SausageCard.tsx` est bâti sur `bg-white/[0.08]` —
-      **invisible en thème clair**. Actuellement dans du code mort.
+- [x] `SausageCard` a été supprimé avec le sous-arbre de `LifeTimeline`.
 - [ ] `app/app/astro/*` — écrans entièrement sombres en dur (outil interne).
 - [ ] Le `LaunchScreen` iOS n'a qu'une seule image pour les deux thèmes :
       séquence blanc → violet foncé → clair au démarrage à froid.

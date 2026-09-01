@@ -618,46 +618,16 @@ export default function DemoPricingPage() {
           )}
         </motion.div>
 
-        {/* Lifetime card — one-time payment, web only */}
-        {!ios && (
-          <motion.div
-            initial={{ y: 8, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="relative rounded-2xl border p-5"
-            style={{
-              background: "color-mix(in srgb, #b59a4a 8%, var(--bg-primary))",
-              borderColor: "color-mix(in srgb, #b59a4a 30%, transparent)",
-            }}
-          >
-            <span
-              className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-0.5 text-[10px] font-bold"
-              style={{ background: "#b59a4a", color: "#fff" }}
-            >
-              {c.lifetime_badge}
-            </span>
+        {/* L offre « a vie » a ete retiree le 01/09/2026.
 
-            <div className="mt-1 flex items-end justify-between">
-              <div>
-                <p className="text-[24px] font-bold" style={{ color: "var(--text-heading)" }}>
-                  {PLANS.lifetime.priceEUR} €
-                </p>
-                <p className="text-[12px]" style={{ color: "var(--text-body-subtle)" }}>
-                  {c.features.pro.slice(0, 3).join(" · ")}
-                </p>
-              </div>
-            </div>
+            Elle etait a 49 € contre 39,99 €/an, soit quinze mois d abonnement
+            payes une fois pour toujours. Le commentaire de lib/billing/
+            features.ts disait deja qu elle n avait jamais ete decidee.
 
-            <button
-              onClick={() => handleCheckout("lifetime")}
-              disabled={loading}
-              className="mt-4 w-full rounded-xl py-3 text-[13px] font-bold transition-opacity disabled:opacity-60"
-              style={{ background: "#b59a4a", color: "#fff" }}
-            >
-              {loading ? "..." : c.lifetime_cta}
-            </button>
-          </motion.div>
-        )}
+            Verifie avant de la retirer : ZERO achat a vie en base. Personne ne
+            perd d acces. Le statut « lifetime » reste reconnu par
+            lib/billing/entitlement.ts — cela ne coute rien et protege qui en
+            aurait un. C est l OFFRE qui disparait, pas la reconnaissance. */}
       </div>
 
       {/* Error */}
