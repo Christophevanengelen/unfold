@@ -211,6 +211,10 @@ const PILL_STYLE: React.CSSProperties = {
   // sont. --text-brand garde la teinte de marque et passe : 5,34 et 6,44.
   color: "var(--text-brand)",
   border: "1px solid var(--glass-border)",
+  // Une ombre portee, comme les boutons flottants d iOS. Sur un fond clair,
+  // c est elle qui dit « ceci flotte au-dessus du contenu » — la teinte seule
+  // n y suffit pas, et c est ce qui rendait ces boutons invisibles.
+  boxShadow: "0 2px 10px color-mix(in srgb, var(--brand-12) 18%, transparent)",
   backdropFilter: "blur(12px)",
   WebkitBackdropFilter: "blur(12px)",
 };

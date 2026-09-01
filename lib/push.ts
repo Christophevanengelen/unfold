@@ -18,6 +18,7 @@
 import { isNative } from "@/lib/platform";
 import { getDeviceId } from "@/lib/device-id";
 import { getApiBase } from "@/lib/api-client";
+import type { Cadence } from "@/lib/push-planification";
 
 /**
  * Ce que le système répond, sans jamais rien demander.
@@ -196,17 +197,17 @@ export function marquerPropose(): void {
  */
 const CLE_CADENCE = "favorable_push_cadence";
 
-export function lireCadence(): "essentiel" | "normal" | "tout" {
+export function lireCadence(): Cadence {
   try {
     const v = localStorage.getItem(CLE_CADENCE);
-    if (v === "essentiel" || v === "tout") return v;
+    if (v === "aucune" || v === "essentiel" || v === "tout") return v;
   } catch {
     /* stockage refuse */
   }
   return "normal";
 }
 
-export async function reglerCadence(cadence: "essentiel" | "normal" | "tout"): Promise<void> {
+export async function reglerCadence(cadence: Cadence): Promise<void> {
   try {
     localStorage.setItem(CLE_CADENCE, cadence);
   } catch {

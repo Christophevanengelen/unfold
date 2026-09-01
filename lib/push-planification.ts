@@ -32,7 +32,16 @@
  *   normal    — plus les moments remarquables. Environ 25 par an. Defaut.
  *   tout      — toutes les periodes courtes. Environ 50 par an.
  */
-export type Cadence = "essentiel" | "normal" | "tout";
+/**
+ * « aucune » coupe l envoi.
+ *
+ * L app permettait d ACTIVER les notifications et jamais de les arreter : une
+ * fois la permission accordee, la ligne du reglage devenait inerte. iOS ne
+ * permet pas de revoquer une permission depuis l app, mais rien n oblige a
+ * ENVOYER. C est ce que « desactiver » veut dire pour la personne, et il fallait
+ * le lui donner.
+ */
+export type Cadence = "aucune" | "essentiel" | "normal" | "tout";
 
 export type PeriodeMoteur = {
   level: number;
@@ -97,6 +106,9 @@ export function planifier(
   const preavis = options.preavis ?? 1;
   const cadence = options.cadence ?? "normal";
   const sorties: Notification[] = [];
+
+  // Rien a envoyer : la personne a coupe.
+  if (cadence === "aucune") return sorties;
 
   const toutes = releasing?.periods?.length ? aplatir(releasing.periods) : [];
 
@@ -177,6 +189,7 @@ function rang(n: Notification): number {
  * devaluent l une l autre.
  */
 export const ESPACEMENT_MINIMUM: Record<Cadence, number> = {
+  aucune: Number.POSITIVE_INFINITY,
   essentiel: 20,
   normal: 6,
   tout: 2,

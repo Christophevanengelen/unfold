@@ -137,6 +137,25 @@ export default function OnboardingPage() {
     next();
   }, [priorities, next]);
 
+  /**
+   * Avancer d une etape, en passant TOUJOURS par ce que l etape doit faire.
+   *
+   * Le bouton et le glissement doivent emprunter le meme chemin : des qu ils
+   * divergent, l un des deux oublie quelque chose — et c est toujours celui
+   * qu on teste le moins.
+   */
+  const avancer = useCallback(() => {
+    // L etape des priorites exige au moins un choix. Le bouton le verifie ;
+    // le glissement ne le verifiait pas, donc on pouvait atteindre la suite
+    // avec zero priorite et un profil vide.
+    if (step === 3) {
+      if (priorities.length === 0) return;
+      handlePrioritiesNext();
+      return;
+    }
+    next();
+  }, [step, priorities, handlePrioritiesNext, next]);
+
   const handleDragEnd = useCallback(
     (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
       const swipe = info.offset.x;
@@ -146,12 +165,22 @@ export default function OnboardingPage() {
       if (!confident) return;
 
       if (swipe < 0 && !NO_SWIPE_FORWARD.has(step)) {
-        next();
+        // avancer() et non next().
+        //
+        // Le bouton de l ecran des priorites appelait handlePrioritiesNext, qui
+        // ENREGISTRE la selection ; le glissement appelait next() directement,
+        // qui n enregistre rien. Un doigt qui balaie au lieu de taper faisait
+        // donc perdre les priorites en silence : le moteur ne recevait rien, et
+        // la personne croyait les avoir choisies.
+        //
+        // Le meme chemin contournait la validation, donc on pouvait atteindre
+        // l ecran suivant avec zero priorite.
+        avancer();
       } else if (swipe > 0 && !NO_SWIPE_BACK.has(step)) {
         back();
       }
     },
-    [step, next, back]
+    [step, avancer, back]
   );
 
   const renderStep = () => {

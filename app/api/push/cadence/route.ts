@@ -17,7 +17,7 @@ import { withCors, corsPreflightResponse } from "@/lib/cors";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CADENCES = new Set(["essentiel", "normal", "tout"]);
+const CADENCES = new Set(["aucune", "essentiel", "normal", "tout"]);
 
 export async function OPTIONS(req: NextRequest) {
   return corsPreflightResponse(req);

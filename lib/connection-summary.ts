@@ -11,7 +11,17 @@
 import type { ConnectionBriefResult, ActivePeriod } from "@/lib/connection-brief-api";
 import type { MatchingWindow } from "@/lib/matching-narratives";
 
-export type SummaryStatus = "active" | "upcoming" | "calm";
+/**
+ * « inconnu » n est PAS « calme ».
+ *
+ * extractSummary(null) renvoyait « calme ce mois » — donc une panne reseau, un
+ * moteur qui ne repond pas ou un rejet de requete s affichaient comme une
+ * LECTURE ASTROLOGIQUE : « c est calme entre vous ce mois-ci ». La personne
+ * range l information, et elle est fausse.
+ *
+ * Un echec doit se dire comme un echec. Le quatrieme etat existe pour ça.
+ */
+export type SummaryStatus = "active" | "upcoming" | "calm" | "unknown";
 export type SummaryTier = "PEAK" | "CLEAR" | "SUBTLE";
 
 export interface ConnectionSummary {
@@ -36,7 +46,10 @@ export interface ConnectionSummary {
 }
 
 const TIER_WEIGHT: Record<SummaryTier, number> = { PEAK: 3, CLEAR: 2, SUBTLE: 1 };
-const STATUS_WEIGHT: Record<SummaryStatus, number> = { active: 300, upcoming: 150, calm: 0 };
+// « unknown » passe APRES « calm » au tri : une connexion dont on ignore l etat
+// ne doit pas remonter devant celles qu on sait calmes, mais elle ne doit pas
+// non plus disparaitre — la personne doit voir qu il manque quelque chose.
+const STATUS_WEIGHT: Record<SummaryStatus, number> = { active: 300, upcoming: 150, calm: 0, unknown: -10 };
 
 const MONTH_SHORT_FR = [
   "jan", "fév", "mar", "avr", "mai", "juin",
@@ -151,8 +164,10 @@ export function extractSummary(
       nextWindowMonthKey: null,
       nextWindowTier: null,
       daysUntilNext: null,
-      status: "calm",
-      headlineFR: "Calme ce mois",
+      // Voir SummaryStatus : sans donnees, on ne sait pas — on ne declare pas
+      // le calme.
+      status: "unknown",
+      headlineFR: "Signal indisponible",
       sortScore: 0,
     };
   }

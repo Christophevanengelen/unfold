@@ -448,8 +448,15 @@ button, a, [role="button"], [role="link"],
 
   /* Glass surfaces — light mode overrides (header, bottom nav, pills) */
   --glass-bg:           color-mix(in srgb, var(--accent-purple) 12%, rgba(245, 241, 250, 0.92));
-  --glass-border:       color-mix(in srgb, var(--accent-purple) 22%, rgba(200, 191, 220, 0.6));
-  --glass-pill:         color-mix(in srgb, var(--accent-purple) 16%, rgba(245, 241, 250, 0.88));
+  /* La bordure DETACHE le bouton de la page. A 22 % elle valait 1,2 de
+     contraste : le bouton « Maintenant » et les fleches etaient invisibles sur
+     le fond clair, on ne savait pas qu ils existaient. A 90 % elle atteint
+     3,39, le seuil des elements non textuels. */
+  --glass-border:       color-mix(in srgb, var(--accent-purple) 90%, #F5F1FA);
+  /* La surface reste claire et franche : c est la bordure et l ombre qui
+     separent, pas la teinte. Un aplat sature ferait concurrence a la bascule
+     de vue, qui est le controle principal. */
+  --glass-pill:         #FFFFFF;
   --glass-pill-strong:  color-mix(in srgb, var(--accent-purple) 24%, rgba(236, 231, 245, 0.94));
 
   /* Premium blur overlay — light mode */
@@ -593,8 +600,8 @@ button, a, [role="button"], [role="link"],
 
   /* Glass surfaces — dark mode overrides (header, bottom nav, pills) */
   --glass-bg:           color-mix(in srgb, var(--accent-purple) 6%, rgba(27, 21, 53, 0.88));
-  --glass-border:       color-mix(in srgb, var(--accent-purple) 12%, rgba(0, 0, 0, 0.25));
-  --glass-pill:         color-mix(in srgb, var(--accent-purple) 20%, rgba(27, 21, 53, 0.78));
+  --glass-border:       color-mix(in srgb, var(--accent-purple) 70%, #1B1535);
+  --glass-pill:         #241C47;
   --glass-pill-strong:  color-mix(in srgb, var(--accent-purple) 26%, rgba(27, 21, 53, 0.88));
 
   /* Premium blur overlay — dark mode */

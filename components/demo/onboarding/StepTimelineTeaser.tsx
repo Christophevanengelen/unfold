@@ -6,6 +6,7 @@ import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 
 import { planetConfig, type PlanetKey } from "@/lib/domain-config";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface StepTimelineTeaserProps {
   onNext: () => void;
@@ -310,7 +311,15 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.3 }}
             >
-              {t("onboarding.p3_planet_active", locale).replace("{planet}", planetConfig[ACTIVE_PLANETS[spotlightIndex].key].label)}
+              {/* « porte un signal », et non « est actif ».
+                  
+                  ACTIVE_PLANETS declare Soleil, Jupiter, Saturne et Neptune
+                  actifs — pour tout le monde, et avant qu on ait demande la
+                  date de naissance. Dire qu une planete PORTE un signal est
+                  vrai de toutes ; dire qu elle est ACTIVE serait une lecture,
+                  et on n a rien pour la faire. La question qui suit —
+                  « Lesquelles sont les tiennes ? » — reprend alors son sens. */}
+              {perso("demo.planete", locale).replace("{planet}", planetConfig[ACTIVE_PLANETS[spotlightIndex].key].label)}
             </motion.p>
           )}
           {spotlightIndex >= ACTIVE_PLANETS.length && (

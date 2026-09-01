@@ -322,9 +322,18 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               )}
               <div
                 className="flex gap-1.5 rounded-xl bg-bg-secondary p-1"
-                style={{ opacity: permission === "accorde" ? 1 : 0.45 }}
+                // Plus d opacite reduite : elle divisait par deux un contraste
+                // deja juste, et rendait les libelles illisibles.
               >
-                {(["essentiel", "normal", "tout"] as const).map((c) => (
+                {/* « Aucune » en premier : c est le bouton d ARRET.
+                    
+                    L app permettait d activer les notifications et jamais de
+                    les couper — une fois la permission accordee, la ligne
+                    devenait inerte. iOS n autorise pas a revoquer une permission
+                    depuis l app, mais rien n oblige a ENVOYER : ce cran coupe
+                    l envoi cote serveur, ce qui est ce que « desactiver » veut
+                    dire pour la personne. */}
+                {(["aucune", "essentiel", "normal", "tout"] as const).map((c) => (
                   <button
                     key={c}
                     type="button"
@@ -350,10 +359,19 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                     }`}
                     style={{ minHeight: 40 }}
                   >
-                    {t(`profile.notif_${c}`, locale)}
+                    {c === "aucune"
+                      ? perso("cadence.aucune_nom", locale)
+                      : t(`profile.notif_${c}`, locale)}
                   </button>
                 ))}
               </div>
+              {/* Ce que le cran choisi envoie REELLEMENT.
+                  « L essentiel », « Equilibre », « Tout » sont des etiquettes :
+                  on ne pouvait pas choisir en connaissance de cause. Ces lignes
+                  disent l espacement applique par lib/push-planification.ts. */}
+              <p className="mt-2 text-[11px]" style={{ color: "var(--text-body-subtle)" }}>
+                {perso(`cadence.${cadence}`, locale)}
+              </p>
             </div>
           )}
 

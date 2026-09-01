@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 interface StepSignalPreviewProps {
   onNext: () => void;
@@ -308,7 +309,14 @@ export function StepSignalPreview({ onNext, onBack }: StepSignalPreviewProps) {
                   border: "1px solid color-mix(in srgb, var(--accent-purple) 45%, transparent)",
                   backdropFilter: "blur(8px)",
                 }}>
-                {t("onboarding.p2_signal_active", locale)}
+                {/* « Exemple », et non « Ton signal est actif ».
+                    
+                    Cette frise est DESSINEE — treize periodes ecrites en dur,
+                    de 1985 a 2036 — et l ecran arrive AVANT qu on ait demande
+                    la date de naissance. Affirmer que c est le signal de la
+                    personne etait donc faux, au moment precis ou elle decide de
+                    nous faire confiance. */}
+                {perso("demo.exemple", locale)}
               </span>
             </motion.div>
           )}
