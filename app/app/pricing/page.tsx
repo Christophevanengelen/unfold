@@ -434,7 +434,10 @@ export default function DemoPricingPage() {
         onClick={() => router.back()}
         className="mb-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-opacity hover:opacity-70"
         style={{
-          color: "var(--accent-purple)",
+          // Regle 3 : --accent-purple pose sur une tuile faite du MEME
+          // --accent-purple converge — 3,64 en theme clair. --text-brand est
+          // la valeur derivee de la meme famille : 5,85.
+          color: "var(--text-brand)",
           background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
         }}
       >
@@ -471,8 +474,11 @@ export default function DemoPricingPage() {
                 onClick={() => setBilling(plan)}
                 className="rounded-full px-5 py-2 text-[12px] font-semibold transition-all"
                 style={{
-                  background: billing === plan ? "var(--accent-purple)" : "transparent",
-                  color: billing === plan ? "#fff" : "var(--text-body-subtle)",
+                  // Paire de la regle 2. --accent-purple n est pas un fond de
+                  // bouton : sous du blanc il vaut 4,46 en clair. --bg-brand
+                  // est la meme couleur ramenee au-dessus du seuil.
+                  background: billing === plan ? "var(--bg-brand)" : "transparent",
+                  color: billing === plan ? "var(--text-on-brand)" : "var(--text-body-subtle)",
                 }}
               >
                 {plan === "monthly" ? c.monthly : (
@@ -542,36 +548,50 @@ export default function DemoPricingPage() {
             className="mt-4 w-full rounded-xl py-2.5 text-center text-[12px] font-semibold"
             style={{
               background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)",
-              color: "var(--accent-purple)",
+              // Meme convergence que la puce de retour : 3,58 en clair.
+              color: "var(--text-brand)",
             }}
           >
             {c.current_plan}
           </div>
         </motion.div>
 
-        {/* Pro card */}
+        {/* Pro card.
+
+            Les textes secondaires de cette carte etaient en text-white/75. Sur
+            --bg-brand en theme clair, du blanc dilue a 75 % vaut 3,31 — sous le
+            seuil, sur le descriptif et la periode de facturation du seul plan
+            payant. La paire --bg-brand / --text-on-brand ne passe qu a 4,53 en
+            clair : elle n a AUCUNE marge pour etre diluee. La hierarchie se
+            fait donc ici par la taille et la graisse, pas par l opacite. */}
         <motion.div
           initial={{ y: 8, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.05 }}
           className="relative rounded-2xl p-5"
           style={{
-            background: "var(--accent-purple)",
+            background: "var(--bg-brand)",
             boxShadow:
               "0 0 40px color-mix(in srgb, var(--accent-purple) 30%, transparent), 0 12px 28px rgba(0,0,0,0.18)",
           }}
         >
           <span
             className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold"
-            style={{ background: "#fff", color: "var(--accent-purple)" }}
+            // La paire de marque, prise a l envers : cette pastille est posee
+            // sur l aplat de la carte, pas sur le fond de page, donc ses deux
+            // couleurs sont celles de la paire, echangees. Le rapport de
+            // contraste ne depend pas du sens — verifier-contraste.mjs mesure
+            // deja cette paire dans les deux themes, donc celle-ci est couverte
+            // sans controle supplementaire.
+            style={{ background: "var(--text-on-brand)", color: "var(--bg-brand)" }}
           >
             {c.popular}
           </span>
 
-          <h3 className="text-[16px] font-bold text-white">
+          <h3 className="text-[16px] font-bold text-[color:var(--text-on-brand)]">
             {c.pro}
           </h3>
-          <p className="mt-0.5 text-[12px] text-white/75">
+          <p className="mt-0.5 text-[12px] text-[color:var(--text-on-brand)]">
             {c.pro_desc}
           </p>
 
@@ -580,7 +600,7 @@ export default function DemoPricingPage() {
           {ios ? (
             <motion.p
               key="ios"
-              className="mt-3 text-[15px] font-semibold text-white"
+              className="mt-3 text-[15px] font-semibold text-[color:var(--text-on-brand)]"
             >
               {t("premium.trial_pitch", locale)}
             </motion.p>
@@ -591,10 +611,10 @@ export default function DemoPricingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
-              className="mt-3 text-[24px] font-bold text-white"
+              className="mt-3 text-[24px] font-bold text-[color:var(--text-on-brand)]"
             >
               {PLANS.monthly.priceEUR.toFixed(2).replace(".", ",")} €
-              <span className="text-[12px] font-normal text-white/75">{c.current_billing_month}</span>
+              <span className="text-[12px] font-normal text-[color:var(--text-on-brand)]">{c.current_billing_month}</span>
             </motion.p>
           ) : (
             <motion.div
@@ -605,11 +625,11 @@ export default function DemoPricingPage() {
               transition={{ duration: 0.18, ease: "easeOut" }}
               className="mt-3"
             >
-              <p className="text-[24px] font-bold text-white">
+              <p className="text-[24px] font-bold text-[color:var(--text-on-brand)]">
                 {parseFloat(annualMonthly).toFixed(2).replace(".", ",")} €
-                <span className="text-[12px] font-normal text-white/75">{c.current_billing_month}</span>
+                <span className="text-[12px] font-normal text-[color:var(--text-on-brand)]">{c.current_billing_month}</span>
               </p>
-              <p className="text-[11px] text-white/75">
+              <p className="text-[11px] text-[color:var(--text-on-brand)]">
                 {c.billed_annually.replace("{x}", PLANS.annual.priceEUR.toFixed(2).replace(".", ","))}
               </p>
             </motion.div>
@@ -618,8 +638,8 @@ export default function DemoPricingPage() {
 
           <ul className="mt-4 space-y-1.5">
             {c.features.pro.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-[12px] text-white">
-                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white" />
+              <li key={f} className="flex items-start gap-2 text-[12px] text-[color:var(--text-on-brand)]">
+                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--text-on-brand)]" />
                 {f}
               </li>
             ))}
@@ -665,7 +685,8 @@ export default function DemoPricingPage() {
               onClick={() => handleCheckout(billing)}
               disabled={loading}
               className="mt-4 w-full rounded-xl py-3 text-[13px] font-bold transition-opacity disabled:opacity-60"
-              style={{ background: "#fff", color: "var(--accent-purple)" }}
+              // Meme paire echangee que la pastille « populaire ».
+              style={{ background: "var(--text-on-brand)", color: "var(--bg-brand)" }}
             >
               {loading ? "..." : c.start_trial}
             </button>
@@ -726,14 +747,16 @@ export default function DemoPricingPage() {
                     style={{
                       background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
                       border: "1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent)",
-                      color: "var(--accent-purple)",
+                      // Le code tape par la personne, sur une tuile de la meme
+                      // couleur : c est la saisie elle-meme qui etait a 3,64.
+                      color: "var(--text-brand)",
                     }}
                   />
                   <button
                     type="button"
                     onClick={tryCoupon}
                     className="rounded-xl px-4 py-2.5 text-[12px] font-bold"
-                    style={{ background: "var(--accent-purple)", color: "#fff" }}
+                    style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
                   >
                     Apply
                   </button>
@@ -750,7 +773,7 @@ export default function DemoPricingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="mt-3 text-[13px] font-semibold"
-              style={{ color: "var(--accent-purple)" }}
+              style={{ color: "var(--text-brand)" }}
             >
               ✦ Unlocked — opening your chart…
             </motion.p>

@@ -214,6 +214,17 @@ button, a, [role="button"], [role="link"],
    LIGHT MODE
    ============================================== */
 :root {
+  /* Le voile du guide de premiere utilisation.
+     
+     Il valait « --bg-primary a 92 % » : un aplat de la couleur de fond, donc
+     quasi opaque. Tout ce qui entourait la zone eclairee disparaissait dans une
+     teinte uniforme, et l on ne savait plus OU l on se trouvait dans l ecran.
+     
+     Un projecteur assombrit l entourage en le laissant visible. Et il
+     l assombrit DANS LA GAMME DE LA MARQUE : --brand-12 est le violet le plus
+     profond de la palette claire, pas un noir neutre. Le voile appartient ainsi
+     au produit au lieu de lui etre pose dessus. */
+  --voile-guide: color-mix(in srgb, var(--brand-12) 62%, transparent);
   /* Alerte : fond + texte, en paire.
      --accent-pink (#E93D82) avec du blanc dessus donne 3,85 en clair et 3,03 en
      sombre. C est ce qui portait le bouton de CONFIRMATION DE SUPPRESSION —
@@ -228,6 +239,25 @@ button, a, [role="button"], [role="link"],
      pas, l explication disparait. */
   --text-erreur: #a65754;
   --text-succes: #167e3c;
+  /* Or « premium » — l identite du Lifetime Chart, seul produit paye a l unite.
+     La valeur d origine #b59a4a etait ecrite en dur sur la page d acces et n a
+     jamais ete mesuree : elle vaut 2,45 sur le fond clair et 2,73 sous du
+     blanc. Le libelle du bouton d activation etait donc illisible dans les
+     DEUX themes.
+
+     Trois jetons, parce que l or joue trois roles distincts :
+       --bg-premium       l aplat. C est l identite du produit, elle ne change
+                          pas d un theme a l autre : un aplat opaque ne subit
+                          pas le fond de page.
+       --text-on-premium  ce qu on pose DESSUS — du noir, pas du blanc
+                          (6,70 contre 2,73). Un or moyen appelle un texte
+                          sombre ; c est la paire de la regle 2.
+       --text-premium     l or en TEXTE, pose sur le fond de page. Lui doit
+                          suivre le theme : assombri en clair (5,19 sur
+                          --bg-primary, 4,87 sur une tuile d or a 8 %). */
+  --bg-premium: #b59a4a;
+  --text-on-premium: #1A1408;
+  --text-premium: #7a6320;
   /* Couleurs de domaine du briefing et de la timeline.
      Deuxieme palette du produit, distincte de --domaine-* qui sert a l ecran
      de personnalisation. Meme faute que celle-ci avant correction : le libelle
@@ -433,8 +463,17 @@ button, a, [role="button"], [role="link"],
    Deep purple backgrounds, lifted accents.
    ============================================== */
 .dark {
+  /* En theme sombre, --brand-1 EST le fond profond de la marque. */
+  --voile-guide: color-mix(in srgb, var(--brand-1) 72%, transparent);
   --text-erreur: #f17e7a;
   --text-succes: #22c55e;
+  /* L aplat et son texte ne bougent pas : l aplat est opaque, donc sa lisibilite
+     ne depend pas du theme, et l or doit rester le meme or dans les deux. Seul
+     --text-premium change, puisque lui se pose sur le fond de page : l or
+     d origine y donne 6,38, il n a pas besoin d etre assombri. */
+  --bg-premium: #b59a4a;
+  --text-on-premium: #1A1408;
+  --text-premium: #b59a4a;
   /* Seul le texte change : la base est identique dans les deux themes. */
   --dom-carriere-texte: #7b8cc4;
   --dom-amour-texte: #bc7a96;

@@ -49,9 +49,24 @@ export function PropositionNotifications({ pret }: { pret: boolean }) {
     if (dejaPropose()) return;
     let vivant = true;
     void etatPermission().then((etat) => {
-      // Seul « jamais_demande » nous concerne. Si le systeme a deja repondu,
-      // l occasion unique est deja depensee et cet ecran n y peut plus rien.
-      if (vivant && etat === "jamais_demande") setOuvert(true);
+      if (!vivant) return;
+      // « jamais_demande » : le cas normal, l occasion est intacte.
+      //
+      // « erreur » AUSSI, et c est le point. Cet etat veut dire « le greffon n a
+      // pas repondu, on NE SAIT PAS » — pas « la personne a refuse ». Traiter ce
+      // doute comme un non definitif etait exactement la faute qui masquait le
+      // reglage dans le tiroir de profil : un etat inconnu rendu comme une
+      // absence.
+      //
+      // Si le greffon est reellement casse, demanderPuisEnregistrer renverra
+      // « erreur » et on le MESURERA. Une panne mesuree vaut infiniment mieux
+      // qu un silence : au 01/09, zero jeton enregistre et rien pour dire si
+      // personne n avait demande ou si tout le monde echouait.
+      //
+      // Les autres etats — « accorde », « refuse » — signifient que le systeme
+      // a deja tranche : l occasion unique d iOS est depensee, cet ecran n y
+      // peut plus rien.
+      if (etat === "jamais_demande" || etat === "erreur") setOuvert(true);
     });
     return () => {
       vivant = false;

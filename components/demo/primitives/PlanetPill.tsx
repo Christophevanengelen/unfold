@@ -8,12 +8,21 @@ import { useTheme } from "next-themes";
 import { texteLisible } from "@/lib/contraste";
 
 interface PlanetPillProps {
-  planet: PlanetKey;
+  /** null quand le moteur nomme un point qu on ne sait pas representer. */
+  planet: PlanetKey | null;
   className?: string;
 }
 
 export function PlanetPill({ planet, className = "" }: PlanetPillProps) {
+  // Les hooks AVANT tout retour anticipe. J avais place ce `return` au-dessus
+  // de useTheme, ce qui est la faute meme que j ai corrigee dans
+  // lib/premium-gate.ts ce matin : un hook saute selon une condition, et React
+  // associe alors l etat d un hook a un autre.
   const { resolvedTheme } = useTheme();
+
+  // Rien plutot qu une planete inventee. Avant, un point inconnu — Chiron,
+  // l Ascendant, un lot du zodiacal releasing — devenait « Soleil ».
+  if (!planet) return null;
   const meta = planetConfig[planet];
   if (!meta) return null;
 

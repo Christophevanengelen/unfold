@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { useTheme } from "next-themes";
 import { PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitives";
 import { fetchConnectionBrief, type ActivePeriod } from "@/lib/connection-brief-api";
 import {
@@ -12,6 +13,7 @@ import type { MatchingWindow, RelationshipType } from "@/lib/matching-narratives
 import type { RealConnection } from "@/lib/connections-store";
 import type { BirthData } from "@/lib/birth-data";
 import { relationshipConfig } from "./relationshipConfig";
+import { texteLisible } from "@/lib/contraste";
 import { detectLocale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 
@@ -140,6 +142,12 @@ function WindowCard({
   theirBirthData: BirthData;
 }) {
   const locale = detectLocale();
+  const { resolvedTheme } = useTheme();
+  // w.tierColor et relColor sortent du moteur : ils ne sont pas connus a
+  // l avance, donc aucun jeton ne peut les couvrir. Les couleurs de palier
+  // valent 2,02 a 3,19 sur le fond clair — elles ont ete choisies pour le
+  // theme sombre, ou elles passent. On derive au rendu (regle 3).
+  const theme = resolvedTheme === "light" ? "clair" : "sombre";
   const [del, setDel] = useState<ConnectionDelineation | null>(null);
   const [delLoading, setDelLoading] = useState(true);
 
@@ -190,7 +198,11 @@ function WindowCard({
           />
           <span
             className="text-[10px] font-bold uppercase tracking-widest"
-            style={{ color: isActive ? w.tierColor : "var(--text-body-subtle)" }}
+            style={{
+              color: isActive
+                ? texteLisible(w.tierColor, theme, 0)
+                : "var(--text-body-subtle)",
+            }}
           >
             {isActive ? perso("compat.actif", locale) : w.status === "past" ? "Passé" : "À venir"}
           </span>
@@ -263,18 +275,23 @@ function WindowCard({
                 )}
               </>
             )}
-            <PlanetPill planet={w.you.planet} className="mt-1.5" />
+            {w.you.planet && <PlanetPill planet={w.you.planet} className="mt-1.5" />}
           </div>
 
           <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
             <div className="flex items-start justify-between gap-2">
-              <EyebrowLabel color={relColor} className="mb-1">
+              {/* Pose sur --surface-light : la couleur du type de relation y
+                  vaut 1,85 a 2,90 en clair. C est le NOM de la personne. */}
+              <EyebrowLabel color={texteLisible(relColor, theme, 0)} className="mb-1">
                 {theirName}
               </EyebrowLabel>
               {del && (
                 <span
                   className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
-                  style={{ color: relColor, opacity: 0.5 }}
+                  // L opacite 0,5 divisait par deux un contraste deja sous le
+                  // seuil. La hierarchie passe par la graisse et la taille,
+                  // qui sont deja la ; l opacite ne fait qu effacer.
+                  style={{ color: texteLisible(relColor, theme, 0) }}
                 >
                   {del.personB.titre}
                 </span>
@@ -297,7 +314,7 @@ function WindowCard({
                 )}
               </>
             )}
-            <PlanetPill planet={w.them.planet} className="mt-1.5" />
+            {w.them.planet && <PlanetPill planet={w.them.planet} className="mt-1.5" />}
           </div>
         </div>
 

@@ -43,7 +43,18 @@ export interface MatchingWindow {
 
 export interface WindowPerson {
   description: string;
-  planet: PlanetKey;
+  /**
+   * La planete du signal, ou null quand on ne la reconnait pas.
+   *
+   * Le champ etait obligatoire, et toute planete inconnue — Chiron,
+   * l Ascendant, les lots du zodiacal releasing — devenait le SOLEIL par un
+   * simple `?? "sun"`. On affichait donc une planete que le moteur n avait
+   * jamais nommee, avec sa couleur et son recit.
+   *
+   * null oblige desormais l affichage a decider quoi faire, plutot qu a
+   * recevoir une valeur inventee sans le savoir.
+   */
+  planet: PlanetKey | null;
   house?: number;
   category: string;
 }
@@ -76,20 +87,32 @@ function toPlanetKey(ev: ApiEvent): PlanetKey {
 
 // ─── House extraction from event label ──────────────────
 
-const NATAL_HOUSE_HINTS: Record<string, number> = {
-  Sun: 5, Moon: 4, Mercury: 3, Venus: 7, Mars: 1,
-  Jupiter: 9, Saturn: 10, Uranus: 11, Neptune: 12,
-  Ascendant: 1, MC: 10,
-};
+/**
+ * SUPPRIME le 01/09/2026 : c etait un theme natal fixe.
+ *
+ * La table disait « Soleil en maison 5, Lune en 4, Venus en 7 » — pour TOUT LE
+ * MONDE. Or la maison d une planete depend de l heure et du lieu de naissance :
+ * c est precisement ce que le moteur de Marie-Ange calcule, et ce pour quoi le
+ * formulaire exige l heure exacte.
+ *
+ * Cette maison devinee alimentait getSharedTheme(), affiche comme « pourquoi ce
+ * mois » dans le rapport relationnel. Deux personnes recevaient donc une
+ * explication batie sur le theme de personne.
+ *
+ * C est la quatrieme fois aujourd hui qu on trouve la meme faute : un boudin
+ * fige, un ecran mensuel invente, un theme natal en dur dans mock-data, et
+ * celui-ci. Quand on ne sait pas, on ne devine pas — guessHouse renvoie
+ * undefined, et l appelant s en accommode deja.
+ */
 
 function guessHouse(ev: ApiEvent): number | undefined {
   if (ev.category === "zr") {
     const lotHouse: Record<string, number> = { fortune: 1, spirit: 10, eros: 7 };
     return lotHouse[ev.lotType ?? "fortune"];
   }
-  // Try natal point from label: "Saturn opposition natal Sun" → Sun → H5
-  const match = ev.label?.match(/natal\s+(\w+)/);
-  if (match) return NATAL_HOUSE_HINTS[match[1]];
+  // Le libelle nomme le point natal — « Saturn opposition natal Sun » — mais
+  // pas sa MAISON, qui depend de l heure et du lieu de naissance. On ne peut
+  // donc pas la deduire ici, et on ne l invente pas.
   return undefined;
 }
 

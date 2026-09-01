@@ -155,7 +155,7 @@ function WindowCard({
                 )}
               </>
             )}
-            <PlanetPill planet={w.you.planet} className="mt-1.5" />
+            {w.you.planet && <PlanetPill planet={w.you.planet} className="mt-1.5" />}
           </div>
 
           <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
@@ -187,7 +187,7 @@ function WindowCard({
                 )}
               </>
             )}
-            <PlanetPill planet={w.them.planet} className="mt-1.5" />
+            {w.them.planet && <PlanetPill planet={w.them.planet} className="mt-1.5" />}
           </div>
         </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { useTheme } from "next-themes";
 import { UserEdit, Pen, ShareNodes, TrashBin } from "flowbite-react-icons/outline";
 import { BottomSheet } from "@/components/demo/primitives/BottomSheet";
 import {
@@ -12,6 +13,7 @@ import {
   type RealConnection,
 } from "@/lib/connections-store";
 import { relationshipConfig, relationshipOrder } from "./relationshipConfig";
+import { texteLisible } from "@/lib/contraste";
 import { detectLocale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 
@@ -39,6 +41,8 @@ export function ConnectionActionSheet({
   onDeleted,
 }: ConnectionActionSheetProps) {
   const locale = detectLocale();
+  const { resolvedTheme } = useTheme();
+  const theme = resolvedTheme === "light" ? "clair" : "sombre";
   const [view, setView] = useState<View>("menu");
   const [nameDraft, setNameDraft] = useState("");
   const [deleteHoldProgress, setDeleteHoldProgress] = useState(0);
@@ -103,9 +107,12 @@ export function ConnectionActionSheet({
         <div className="mb-4 flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+            // Regle 3 : le fond est fait de rel.color a 20 % et l initiale
+            // prenait rel.color pure — ils convergent par construction.
+            // rel.color vient de l execution, donc on derive au rendu.
             style={{
               background: `color-mix(in srgb, ${rel.color} 20%, transparent)`,
-              color: rel.color,
+              color: texteLisible(rel.color, theme, 0.2),
             }}
           >
             {connection.initial}
@@ -206,11 +213,24 @@ export function ConnectionActionSheet({
                       background: isCurrent
                         ? `color-mix(in srgb, ${r.color} 20%, transparent)`
                         : "var(--surface-light)",
+                      // La bordure garde la couleur pure : c est l identite du
+                      // type de relation, et une bordure n est pas du texte.
                       border: `1.5px solid ${isCurrent ? r.color : "transparent"}`,
-                      color: isCurrent ? r.color : "var(--text-body)",
+                      // Le libelle, lui, converge avec sa propre tuile. C etait
+                      // la puce SELECTIONNEE — celle qu on vient de choisir —
+                      // qui etait la moins lisible des quatre.
+                      color: isCurrent ? texteLisible(r.color, theme, 0.2) : "var(--text-body)",
                     }}
                   >
-                    <Icon width={14} height={14} style={{ color: r.color }} />
+                    <Icon
+                      width={14}
+                      height={14}
+                      // L icone est posee sur la tuile quand la puce est
+                      // choisie, sur --surface-light sinon : deux fonds, deux
+                      // valeurs. Sur --surface-light la couleur pure tient,
+                      // c est le fond teinte qui la fait converger.
+                      style={{ color: isCurrent ? texteLisible(r.color, theme, 0.2) : r.color }}
+                    />
                     {perso(r.cleLabel, locale)}
                   </button>
                 );
@@ -268,7 +288,11 @@ function ActionRow({
   onClick: () => void;
   destructive?: boolean;
 }) {
-  const fg = destructive ? "var(--danger, #E07A7C)" : "var(--text-heading)";
+  // --danger vaut #E5484D dans les deux themes et donne 3,51 sur le fond
+  // clair : le libelle « Supprimer » etait sous le seuil, et son repli en dur
+  // #E07A7C ne servait qu a masquer que le jeton existe. --text-erreur est le
+  // jeton derive pour ce role — 4,58 en clair, 6,64 en sombre.
+  const fg = destructive ? "var(--text-erreur)" : "var(--text-heading)";
   return (
     <button
       onClick={onClick}
@@ -277,8 +301,13 @@ function ActionRow({
       <span
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
         style={{
+          // La pastille reste teintee d alerte, mais avec --bg-alerte et non
+          // avec la couleur du texte : les deux ne doivent pas converger.
+          // L icone dessus vaut 3,74 en clair — c est un objet graphique, pour
+          // lequel le seuil est 3, et le libelle qui le nomme est a cote sur
+          // le fond de la feuille, a 4,58.
           background: destructive
-            ? "color-mix(in srgb, var(--danger, #E07A7C) 15%, transparent)"
+            ? "color-mix(in srgb, var(--bg-alerte) 15%, transparent)"
             : "var(--surface-light)",
           color: fg,
         }}
@@ -338,16 +367,22 @@ function HoldToConfirmButton({
       onTouchStart={() => setHolding(true)}
       onTouchEnd={() => setHolding(false)}
       className="relative mt-5 w-full overflow-hidden rounded-full py-3 text-sm font-semibold"
+      // C est LE bouton de confirmation de suppression. Il peignait --danger
+      // sur une tuile faite de --danger : convergence de la regle 3, sur une
+      // action irreversible. La regle 2 nomme la paire pour ce cas precis.
       style={{
-        background: "color-mix(in srgb, var(--danger, #E07A7C) 15%, transparent)",
-        color: "var(--danger, #E07A7C)",
+        background: "var(--bg-alerte)",
+        color: "var(--text-on-alerte)",
       }}
     >
       <motion.div
         className="absolute inset-y-0 left-0"
         style={{
           width: `${progress * 100}%`,
-          background: "var(--danger, #E07A7C)",
+          // La jauge se remplit maintenant PAR-DESSUS l aplat d alerte : elle
+          // reprend la couleur du texte, voilee, pour rester visible sans
+          // passer sous le libelle.
+          background: "var(--text-on-alerte)",
           opacity: 0.25,
         }}
       />

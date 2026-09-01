@@ -24,7 +24,10 @@ import { readFileSync } from "node:fs";
 const SEUIL = 4.5;
 
 /** Ce qui doit etre lisible. Le reste porte du decor ou un etat. */
-const JETONS = ["text-heading", "text-body", "text-body-subtle", "text-brand", "text-brand-strong"];
+const JETONS = ["text-heading", "text-body", "text-body-subtle", "text-brand", "text-brand-strong",
+  // L or du Lifetime Chart pose en TEXTE sur le fond de page. Sa valeur
+  // d origine y valait 2,45 en clair, sur la page d acces au produit paye.
+  "text-premium"];
 
 const css = readFileSync("app/globals.css", "utf8");
 
@@ -195,6 +198,10 @@ const PAIRES = [
   // Ils peignaient du blanc sur --accent-pink : 3,85 en clair, 3,03 en sombre.
   // Sur une action irreversible, le libelle doit se lire sans effort.
   { texte: "text-on-alerte", fond: "bg-alerte", nom: "bouton d alerte" },
+  // Le bouton d activation du Lifetime Chart. Il peignait du blanc sur l or,
+  // soit 2,73 : le seul bouton menant a un produit paye avait le libelle le
+  // moins lisible du produit. Du noir dessus donne 6,70.
+  { texte: "text-on-premium", fond: "bg-premium", nom: "bouton premium" },
 ];
 
 for (const t of themes) {

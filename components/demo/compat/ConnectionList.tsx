@@ -131,7 +131,10 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
             className="h-12 w-12 rounded-full flex items-center justify-center"
             style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}
           >
-            <ShareNodes size={20} style={{ color: "var(--accent-purple)" }} />
+            {/* L icone reprenait --accent-purple sur une tuile faite du meme
+                --accent-purple : 3,40 en clair. --text-brand est la valeur
+                derivee de la meme famille. */}
+            <ShareNodes size={20} style={{ color: "var(--text-brand)" }} />
           </div>
           <p className="text-sm text-text-body">
             Partagez votre code ou entrez celui d&apos;un proche pour comparer vos rythmes.

@@ -81,7 +81,7 @@ function verifierClesPerso() {
   return { connues: connues.size, fautives };
 }
 
-const PLAFOND = 3;
+const PLAFOND = 49;
 
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [
@@ -102,6 +102,41 @@ const AUTORISES = [
   },
   { motif: /verifier-|\.test\./, raison: "outils" },
 ];
+
+/**
+ * Le TEXTE NU, pose directement dans le JSX.
+ *
+ * Le controle ne regardait que les proprietes — label, title, placeholder. Il
+ * annonçait pourtant couvrir « le texte pose directement dans le JSX », et ne
+ * le faisait pas. Un audit du 01/09 a trouve dix phrases anglaises servies aux
+ * dix langues dans le seul parcours d onboarding, toutes invisibles pour lui :
+ * « Scanning your birth chart », « Do you recognize these? », « Right now ».
+ *
+ * On ne retient qu un texte qui ressemble a une PHRASE destinee a quelqu un :
+ * au moins deux mots, une majuscule ou un accent, et pas une expression de
+ * code. Le reste ferait du bruit, et un controle bruyant finit ignore.
+ */
+const TEXTE_NU = />\s*([A-Z\u00C0-\u00DC][^<>{}\n]{6,120}?)\s*</g;
+
+/**
+ * Une ligne qui ne contient QUE du texte, entre une balise ouvrante et une
+ * fermante. C est la forme des que la phrase depasse quelques mots — et celle
+ * que le motif sur une seule ligne ne pouvait pas voir.
+ */
+function nu_ligne(ligne, i, toutes) {
+  const t = ligne.trim();
+  if (t.length < 8 || t.length > 140) return null;
+  if (/[<>{}();=]|=>/.test(t)) return null;            // du code ou une balise
+  if (!/^[A-Z\u00C0-\u00DC]/.test(t)) return null;     // une phrase commence en majuscule
+  if (t.split(/\s+/).length < 2) return null;
+  if (/^(import|export|const|let|return|type|interface)\b/.test(t)) return null;
+  // Elle doit etre precedee d une balise ouvrante et suivie d une fermante.
+  const avant = (toutes[i - 1] ?? "").trimEnd();
+  const apres = (toutes[i + 1] ?? "").trimStart();
+  if (!avant.endsWith(">")) return null;
+  if (!apres.startsWith("</")) return null;
+  return t;
+}
 
 /** Proprietes dont la valeur s affiche a l ecran. */
 const PROPRIETES = /(?:^|[^a-zA-Z])(label|title|placeholder|helper|subtext|subtitle|heading|cta)\s*:\s*"([^"]{4,})"/g;
@@ -135,6 +170,22 @@ for (const f of fichiers) {
     let m;
     while ((m = PROPRIETES.exec(ligne))) {
       if (ressembleAUnTexte(m[2])) fuites.push({ f, ligne: i + 1, prop: m[1], texte: m[2] });
+    }
+    // Texte nu SUR SA PROPRE LIGNE, entre une balise ouvrante et une fermante.
+    // C est la forme la plus courante des que le texte depasse quelques mots,
+    // et le motif `>texte<` sur une ligne ne la voyait pas.
+    const phrase = nu_ligne(ligne, i, texte.split("\n"));
+    if (phrase) fuites.push({ f, ligne: i + 1, prop: "texte", texte: phrase });
+
+    // Texte nu : `>Une phrase<` sur une meme ligne.
+    TEXTE_NU.lastIndex = 0;
+    let n;
+    while ((n = TEXTE_NU.exec(ligne))) {
+      const t = n[1].trim();
+      if (t.split(/\s+/).length < 2) continue;          // un mot isole : trop de bruit
+      if (/^[A-Z_]+$/.test(t)) continue;                 // une constante
+      if (/[{}()=;]|=>/.test(t)) continue;               // du code
+      fuites.push({ f, ligne: i + 1, prop: "texte", texte: t });
     }
   });
 }

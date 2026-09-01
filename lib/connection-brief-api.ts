@@ -89,18 +89,27 @@ const PLANET_KEY_MAP: Record<string, PlanetKey> = {
   Mercury: "mercury",
   Uranus: "uranus",
   Neptune: "neptune",
-  Pluto: "neptune",
+  // Pluton pointait sur « neptune ». Une erreur de copie d une ligne, mais
+  // toute fenetre relationnelle portee par Pluton affichait la pastille
+  // Neptune, sa couleur et son recit — un signal attribue a la mauvaise
+  // planete, presente comme une lecture.
+  Pluto: "pluto",
   "North Node": "north-node",
   "South Node": "south-node",
 };
 
-function toPlanetKey(signal: ConnectionBriefSignal): PlanetKey {
+function toPlanetKey(signal: ConnectionBriefSignal): PlanetKey | null {
   if (signal.category === "eclipse") {
     return signal.planetOrType?.toLowerCase().includes("solar")
       ? "solar-eclipse"
       : "lunar-eclipse";
   }
-  return PLANET_KEY_MAP[signal.planetOrType] ?? "sun";
+  // Une planete inconnue devenait le SOLEIL. La table ignore Chiron,
+  // l Ascendant, le Milieu du Ciel et les lots du zodiacal releasing (Fortune,
+  // Esprit, Eros) : tous s affichaient comme « Soleil », avec sa couleur et son
+  // recit. lib/domain-config.tsx renvoie null dans ce cas, et c est la bonne
+  // reponse — mieux vaut ne rien montrer qu attribuer au hasard.
+  return PLANET_KEY_MAP[signal.planetOrType] ?? null;
 }
 
 // ─── Tier colors ─────────────────────────────────────────
@@ -136,9 +145,14 @@ function adaptPeriods(
       monthDate.getFullYear() === today.getFullYear();
     const isPast = monthDate < new Date(today.getFullYear(), today.getMonth(), 1);
     const status = isCurrentMonth ? "active" : isPast ? "past" : "upcoming";
+    // Les jours restants se comptent jusqu a la FIN du mois, pas jusqu a son
+    // debut. La formule precedente comparait a monthDate — le 1er du mois —
+    // donc a partir du 2, la fenetre en cours annonçait « 0 j restants »
+    // jusqu au 31. La moitie de chaque mois affichait une fenetre expiree.
+    const finDuMois = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
     const daysLeft = Math.max(
       0,
-      Math.round((monthDate.getTime() - today.getTime()) / 86_400_000),
+      Math.ceil((finDuMois.getTime() - today.getTime()) / 86_400_000),
     );
 
     const tierColor = TIER_COLORS[p.tier] ?? "#8B7FC2";

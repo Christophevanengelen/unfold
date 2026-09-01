@@ -186,7 +186,17 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
   const [visible, setVisible] = useState<number[]>([0]);
   const [error, setError] = useState<string | null>(null);
   const [revealPhase, setRevealPhase] = useState<"loading" | "past" | "present" | "ready">("loading");
-  const allDone = completed.length === statusLines.length;
+  // statusLines est une FONCTION depuis que les libelles sont traduits : sa
+  // propriete `.length` vaut donc son ARITE — 1 — et non le nombre d etapes.
+  //
+  // Consequences, invisibles a la lecture : l anneau « termine » s allumait au
+  // bout de 800 ms puis repassait au chargement, et surtout le bloc d erreur
+  // `{error && allDone}` ne s affichait JAMAIS, puisque le catch pose trois
+  // etapes terminees et que 3 ne vaut pas 1. Un echec du moteur restait donc
+  // muet a l ecran.
+  //
+  // C est moi qui ai introduit ce defaut en traduisant l ecran ce matin.
+  const allDone = completed.length === statusLines(locale).length;
   const didStart = useRef(false);
 
   // Get memorable past phases for the reveal — prefer lifetime data for deeper history

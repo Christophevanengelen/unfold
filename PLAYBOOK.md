@@ -196,6 +196,73 @@ Sept agents, en lecture seule. Ce qui suit est ce qu'ils ont trouvé et qui
 - [x] Les textes de cet écran sont traduits, y compris `relationshipConfig`
       dont le champ s'appelait littéralement `labelFR`.
 
+## Trouvé par les audits du 01/09 — non encore corrigé
+
+### Ce qui affiche du FAUX
+
+- [ ] **`StepSignalPreview` invente une vie entière.** Treize périodes codées en
+      dur, 1985 à 2036, un compteur qui monte de 1985 à 2026, sous la légende
+      « Ton signal est actif ». Aucune donnée de naissance n'a encore été
+      demandée à ce stade du parcours.
+- [ ] **`StepTimelineTeaser` : mêmes planètes actives pour tout le monde.**
+      `isActive: true` figé sur Soleil/Jupiter/Saturne/Neptune.
+- [ ] **`StepPreparing` affiche une réussite sur un échec moteur.** Il déstructure
+      `state` du store et ne l'utilise jamais : si le calcul échoue, l'écran
+      arrive quand même à « Ton signal est actif ».
+- [ ] **Une panne réseau s'affiche « Calme ce mois »** (`connection-summary.ts:147`).
+      Un échec devient une déclaration astrologique.
+- [ ] **Domaine inconnu = Carrière**, avec son récit complet, sans rien signaler
+      (`CapsuleDetailSheet.tsx:244`).
+- [ ] **Le premier passage est toujours marqué « maintenant »** quand la capsule
+      n'a pas d'objet `cycle`, même s'il date de plusieurs années.
+- [ ] **Une phrase de repli servie comme guidance IA** (`personalize/route.ts:762`),
+      sans marque distinctive.
+
+### Modales et feuilles
+
+- [x] **Deux feuilles empilées** — la fiche d'édition de naissance s'ouvrait
+      DANS le tiroir de profil : deux poignées, celle du dessous réduite à une
+      tranche de titre. Corrigé le 01/09 : le tiroir se ferme, une seule feuille
+      à la fois.
+- [ ] **Le reste du système de modales est à revoir** (Christophe, 01/09). Le
+      sélecteur de langue est monté dans le tiroir de la même façon et souffre
+      probablement du même défaut. À vérifier écran par écran : pas de feuille
+      sur feuille, une poignée visible, et un retour cohérent.
+
+### Ce qui bloque
+
+- [ ] **Glisser au lieu de taper saute l'enregistrement des priorités.** Le
+      bouton appelle `handlePrioritiesNext`, le glissement appelle `next()` qui
+      n'enregistre rien — et contourne aussi la validation.
+- [ ] **Le libellé du bouton désactivé est à 1,41 de contraste**, avec le jeton
+      que le contrat interdit nommément pour du contenu.
+- [ ] **Quatre boutons Retour sans aucune taille déclarée** (~16-20 pt).
+- [ ] **`onTouchCancel` manquant** sur la suppression de connexion : un appel
+      entrant pendant l'appui long supprime la connexion doigt levé.
+- [ ] **L'écran de préparation n'a aucune sortie** en cas d'échec ; `reessayer()`
+      existe et n'est appelé nulle part dans l'onboarding.
+
+### Couleurs — ce que l'agent a laissé volontairement
+
+- [x] **118 → 102 couleurs figées.** L'or « premium » valait **2,45** de
+      contraste : le libellé du seul bouton menant au payant, illisible dans les
+      deux thèmes. Trois jetons créés et enregistrés dans le vérificateur.
+- [ ] Les 4 couleurs de `relationshipConfig.ts` restent : ce sont des couleurs
+      de donnée, comme `domain-config`. Les exempter aurait baissé le compte
+      sans rien corriger.
+
+### Traductions
+
+- [ ] **49 textes visibles en dur**, contre 3 mesurés avant. Le contrôle ne
+      voyait que les propriétés, jamais le texte nu dans le JSX — il annonçait
+      pourtant le couvrir. Corrigé, d'où le saut du compteur.
+- [ ] **Les noms de planètes sont en français pour les dix langues**
+      (`domain-config.tsx:132`). Un lecteur japonais lit « Saturne est actif ».
+- [ ] **Mélange de langues dans une même phrase** : `detail-helpers.ts` compose
+      un label français avec un texte anglais — « Soleil shines a light on… ».
+- [ ] Vouvoiement et tutoiement alternent d'une ligne à l'autre sur l'écran de
+      compatibilité.
+
 ## Notifications
 
 - [x] **La proposition de notifications existe** depuis le 01/09. Elle arrive

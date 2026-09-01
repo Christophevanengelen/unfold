@@ -26,6 +26,7 @@ import { mesurer } from "@/lib/mesure";
 import { EditionNaissance } from "@/components/demo/EditionNaissance";
 import { disponible, preparer, restaurer } from "@/lib/achats";
 import { useLocale } from "@/lib/use-locale";
+import { perso } from "@/lib/perso-i18n";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -199,8 +200,19 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             // Le renvoi reste pour qui n a PAS encore de donnees : dans ce cas
             // il n y a rien a corriger, c est une premiere saisie.
             onClick={() => {
-              if (birthData?.birthDate) setEditionOuverte(true);
-              else { onClose(); router.push("/app/onboarding"); }
+              // On FERME le tiroir avant d ouvrir la fiche d edition.
+              //
+              // Les deux etaient affiches en meme temps : deux feuilles
+              // empilees, deux poignees, celle du dessous reduite a une tranche
+              // de titre. Sur iOS un sous-ecran de reglages ne s empile pas sur
+              // son parent — il le remplace. Une seule feuille a la fois.
+              if (birthData?.birthDate) {
+                onClose();
+                setEditionOuverte(true);
+              } else {
+                onClose();
+                router.push("/app/onboarding");
+              }
             }}
             className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
           >
@@ -212,11 +224,6 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               {birthData?.birthDate ? t("profile.edit", locale) : t("profile.configure", locale)}
             </span>
           </button>
-
-          {/* Edition des donnees de naissance. */}
-      {editionOuverte && (
-        <EditionNaissance ouvert onFermer={() => setEditionOuverte(false)} />
-      )}
 
       {/* Full timeline chart — premium only */}
           {billing.isPremium && (
@@ -240,7 +247,13 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           {/* Language picker */}
           <button
             type="button"
-            onClick={() => setLangPickerOpen(true)}
+            // Meme regle que la fiche d edition : une seule feuille a la fois.
+            // Le selecteur s ouvrait par-dessus le tiroir, avec la meme pile de
+            // deux poignees.
+            onClick={() => {
+              onClose();
+              setLangPickerOpen(true);
+            }}
             className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
           >
             <span className="flex items-center gap-2.5">
@@ -302,6 +315,11 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               <p className="mb-2 text-xs font-medium text-text-body-subtle">
                 {t("profile.notif_cadence", locale)}
               </p>
+              {permission !== "accorde" && (
+                <p className="mb-2 text-[11px]" style={{ color: "var(--text-body-subtle)" }}>
+                  {perso("notif.cadence_bloquee", locale)}
+                </p>
+              )}
               <div
                 className="flex gap-1.5 rounded-xl bg-bg-secondary p-1"
                 style={{ opacity: permission === "accorde" ? 1 : 0.45 }}
@@ -310,7 +328,16 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   <button
                     key={c}
                     type="button"
-                    disabled={permission !== "accorde"}
+                    // Plus de `disabled`. Ces boutons etaient desactives tant que
+                    // la permission n etait pas accordee — c est-a-dire TOUJOURS,
+                    // puisque personne ne l avait accordee. Ils s affichaient donc
+                    // en permanence sans repondre au doigt, et rien ne disait
+                    // pourquoi. Un reglage mort sans explication est pire qu un
+                    // reglage absent : on croit l app cassee.
+                    //
+                    // Le choix est desormais libre. Il est enregistre localement
+                    // et envoye au serveur ; il s applique le jour ou les
+                    // notifications sont actives, et la ligne ci-dessous le dit.
                     onClick={() => {
                       setCadence(c);
                       void reglerCadence(c);
@@ -573,6 +600,13 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           </div>
         </div>
       </BottomSheet>
+
+      {/* Edition des donnees de naissance.
+          Montee ICI, hors de la feuille du tiroir : elle doit rester a l ecran
+          une fois celui-ci ferme. */}
+      {editionOuverte && (
+        <EditionNaissance ouvert onFermer={() => setEditionOuverte(false)} />
+      )}
 
       {/* Personalize flow */}
       <PersonalizeFlow

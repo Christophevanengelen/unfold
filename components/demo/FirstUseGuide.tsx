@@ -289,14 +289,17 @@ export function FirstUseGuide({
               ...pos,
               // La couleur de fond de l app, pas un noir plaque : c est ce qui
               // rend le voile juste dans les deux themes.
-              background: "color-mix(in srgb, var(--bg-primary) 92%, transparent)",
+              // Voir --voile-guide dans globals.css : un projecteur assombrit,
+              // il n efface pas. A 92 % de la couleur de fond, l app disparaissait
+              // et l on ne savait plus ou l on etait.
+              background: "var(--voile-guide)",
             }}
           />
         ))
         : (
           <div
             className="absolute inset-0"
-            style={{ background: "color-mix(in srgb, var(--bg-primary) 92%, transparent)" }}
+            style={{ background: "var(--voile-guide)" }}
           />
         )}
 

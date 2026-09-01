@@ -45,8 +45,15 @@ export default function TimelinePage() {
             <div
               className="flex items-center gap-2 rounded-full px-4 py-2.5 text-[12px] font-semibold shadow-xl"
               style={{
-                background: "var(--accent-purple)",
-                color: "#fff",
+                // Paire de la regle 2. --accent-purple est une couleur
+                // d ACCENT, pas un fond de bouton : sous du blanc elle vaut
+                // 4,46 en theme clair. --bg-brand / --text-on-brand est la
+                // paire mesuree, et ce bandeau annonce un paiement reussi —
+                // le pire moment pour un libelle qu on ne lit pas.
+                background: "var(--bg-brand)",
+                color: "var(--text-on-brand)",
+                // L ombre reste sur l accent : elle est decorative, aucun
+                // texte ne se pose dessus.
                 boxShadow: "0 4px 24px color-mix(in srgb, var(--accent-purple) 50%, transparent)",
               }}
             >
