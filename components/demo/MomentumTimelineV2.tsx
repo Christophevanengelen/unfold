@@ -1072,7 +1072,9 @@ function ListView({
             const tierLabel = capsule.tier === "toctoctoc" ? "PEAK" : capsule.tier === "toctoc" ? "CLEAR" : "SUBTLE";
             const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} '${String(capsule.startDate.getFullYear()).slice(2)}`;
             const endLabel = capsule.isCurrent
-              ? "now"
+              // « now » etait en anglais dans une interface francaise, juste
+              // sous le titre du signal en cours. Vu a l ecran, pas dans le code.
+              ? perso("timeline.maintenant", detectLocale()).toLowerCase()
               : `${capsule.endDate.getDate()} ${MONTH_NAMES[capsule.endDate.getMonth()]} '${String(capsule.endDate.getFullYear()).slice(2)}`;
             const maxIntensity = Math.max(...capsule.phases.map(p => p.intensity));
             const dotColors = capsule.topicColors?.length ? capsule.topicColors : capsule.planets.map(p => planetConfig[p].color);
