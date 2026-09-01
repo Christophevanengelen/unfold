@@ -43,6 +43,11 @@ CHEMINS=(
   # affichait donc la vie de quelqu un d autre a la place de celle de la
   # personne. A lui seul il pesait 7,7 Mo, soit avec son voisin les deux tiers
   # du binaire. L app calcule la vraie frise dans /app/lifetime-chart.
+  # /app/monthly affiche un contenu fabrique identique pour tout le monde
+  # (MOCK_MONTHLY_INSIGHT). Rien ne le lie dans l interface, mais il partait
+  # dans l app : un ecran atteignable qui invente une lecture personnelle est
+  # exactement ce qu on a retire avec le boudin.
+  "app/app/monthly"
   "app/app/boudin"
   "public/boudin-sausage.html"
   "public/boudin-timeline.html"

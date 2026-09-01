@@ -9,6 +9,7 @@ import { InfoCircle } from "flowbite-react-icons/outline";
 import { Lightbulb } from "flowbite-react-icons/outline";
 import { ExclamationCircle } from "flowbite-react-icons/outline";
 import { ChartLineUp } from "flowbite-react-icons/outline";
+import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 
 interface DomainDetailSheetProps {
   open: boolean;
@@ -24,11 +25,13 @@ interface DomainDetailSheetProps {
   onSwipeDay?: (direction: "prev" | "next") => void;
 }
 
-const rows = [
-  { key: "whatItMeans" as const, label: "What it means", Icon: InfoCircle },
-  { key: "bestUse" as const, label: "Best use", Icon: Lightbulb },
-  { key: "watchOut" as const, label: "Watch out", Icon: ExclamationCircle },
-  { key: "whenItGetsBetter" as const, label: "When it gets better", Icon: ChartLineUp },
+/** Les quatre sections de la fiche. Anglais en dur pour dix langues jusqu au
+ *  1er septembre 2026. */
+const lignes = (locale: Locale) => [
+  { key: "whatItMeans" as const, label: t("fiche.sens", locale), Icon: InfoCircle },
+  { key: "bestUse" as const, label: t("fiche.usage", locale), Icon: Lightbulb },
+  { key: "watchOut" as const, label: t("fiche.vigilance", locale), Icon: ExclamationCircle },
+  { key: "whenItGetsBetter" as const, label: t("fiche.apres", locale), Icon: ChartLineUp },
 ];
 
 /**
@@ -100,9 +103,9 @@ export function DomainDetailSheet({
               {detail.scoreTitle}
             </p>
 
-            {/* Detail rows */}
+            {/* Detail lignes(detectLocale()) */}
             <div className="space-y-4">
-              {rows.map(({ key, label, Icon }) => (
+              {lignes(detectLocale()).map(({ key, label, Icon }) => (
                 <div key={key} className="flex gap-2.5">
                   <div
                     className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center"

@@ -122,6 +122,9 @@ type Strings = {
     profile: string;
   };
   accueil: { ligne: string };
+  fiche: {
+    sens: string; usage: string; vigilance: string; apres: string;
+  };
   guide: {
     p1_titre: string; p1_corps: string;
     p2_titre: string; p2_corps: string;
@@ -234,6 +237,7 @@ const FR: Strings = {
     profile: "Profil",
   },
   accueil: { ligne: "Chaque période, de ta naissance aux mois qui viennent." },
+  fiche: { sens: "Ce que ça veut dire", usage: "Ce qui aide", vigilance: "À surveiller", apres: "Quand ça s'allège" },
   guide: {
     p1_titre: "Tu es ici, aujourd'hui.", p1_corps: "Cette ligne et ce chiffre donnent l'âge de ce que tu regardes. Fais défiler, ils suivent.",
     p2_titre: "Ta vie, de bas en haut.", p2_corps: "En bas, ta naissance. En haut, les mois qui viennent. Chaque capsule est une période.",
@@ -345,6 +349,7 @@ const EN: Strings = {
     profile: "Profile",
   },
   accueil: { ligne: "Every period, from your birth to the coming months." },
+  fiche: { sens: "What it means", usage: "What helps", vigilance: "Watch out for", apres: "When it eases" },
   guide: {
     p1_titre: "You are here, today.", p1_corps: "This line and this number show the age of whatever you are looking at. Scroll, they follow.",
     p2_titre: "Your life, bottom to top.", p2_corps: "Birth at the bottom. The coming months at the top. Each capsule is one period.",
@@ -456,6 +461,7 @@ const ES: Strings = {
     profile: "Perfil",
   },
   accueil: { ligne: "Cada periodo, desde tu nacimiento hasta los meses que vienen." },
+  fiche: { sens: "Qué significa", usage: "Qué ayuda", vigilance: "A qué prestar atención", apres: "Cuándo se alivia" },
   guide: {
     p1_titre: "Estás aquí, hoy.", p1_corps: "Esta línea y este número dan la edad de lo que miras. Desplaza, te siguen.",
     p2_titre: "Tu vida, de abajo arriba.", p2_corps: "Abajo, tu nacimiento. Arriba, los meses que vienen. Cada cápsula es un periodo.",
@@ -567,6 +573,7 @@ const DE: Strings = {
     profile: "Profil",
   },
   accueil: { ligne: "Jede Phase, von deiner Geburt bis zu den kommenden Monaten." },
+  fiche: { sens: "Was es bedeutet", usage: "Was hilft", vigilance: "Worauf achten", apres: "Wann es leichter wird" },
   guide: {
     p1_titre: "Du bist hier, heute.", p1_corps: "Diese Linie und diese Zahl zeigen das Alter dessen, was du siehst. Scrolle, sie folgen.",
     p2_titre: "Dein Leben, von unten.", p2_corps: "Unten deine Geburt. Oben die kommenden Monate. Jede Kapsel ist eine Phase.",
@@ -678,6 +685,7 @@ const IT: Strings = {
     profile: "Profilo",
   },
   accueil: { ligne: "Ogni periodo, dalla tua nascita ai mesi che vengono." },
+  fiche: { sens: "Cosa significa", usage: "Cosa aiuta", vigilance: "A cosa fare attenzione", apres: "Quando si alleggerisce" },
   guide: {
     p1_titre: "Sei qui, oggi.", p1_corps: "Questa linea e questo numero danno l'età di ciò che guardi. Scorri, ti seguono.",
     p2_titre: "La tua vita, dal basso.", p2_corps: "In basso la nascita. In alto i mesi che vengono. Ogni capsula è un periodo.",
@@ -789,6 +797,7 @@ const PT: Strings = {
     profile: "Perfil",
   },
   accueil: { ligne: "Cada período, do teu nascimento aos meses que vêm." },
+  fiche: { sens: "O que significa", usage: "O que ajuda", vigilance: "A que prestar atenção", apres: "Quando alivia" },
   guide: {
     p1_titre: "Estás aqui, hoje.", p1_corps: "Esta linha e este número dão a idade do que estás a ver. Desliza, acompanham.",
     p2_titre: "A tua vida, de baixo.", p2_corps: "Em baixo o nascimento. Em cima os meses que vêm. Cada cápsula é um período.",
@@ -900,6 +909,7 @@ const NL: Strings = {
     profile: "Profiel",
   },
   accueil: { ligne: "Elke periode, van je geboorte tot de komende maanden." },
+  fiche: { sens: "Wat het betekent", usage: "Wat helpt", vigilance: "Waar op letten", apres: "Wanneer het lichter wordt" },
   guide: {
     p1_titre: "Je bent hier, vandaag.", p1_corps: "Deze lijn en dit getal tonen de leeftijd van wat je ziet. Scroll, ze volgen.",
     p2_titre: "Je leven, van onderaf.", p2_corps: "Onderaan je geboorte. Bovenaan de komende maanden. Elke capsule is een periode.",
@@ -1011,6 +1021,7 @@ const JA: Strings = {
     profile: "プロフィール",
   },
   accueil: { ligne: "誕生からこれからの数か月まで、すべての期間。" },
+  fiche: { sens: "意味すること", usage: "助けになること", vigilance: "気をつけること", apres: "和らぐとき" },
   guide: {
     p1_titre: "今日のあなたはここ。", p1_corps: "この線と数字は、見ている場所の年齢です。スクロールすると一緒に動きます。",
     p2_titre: "下から上へ、あなたの人生。", p2_corps: "下が誕生。上がこれからの数か月。カプセル一つが一つの期間です。",
@@ -1122,6 +1133,7 @@ const ZH: Strings = {
     profile: "个人资料",
   },
   accueil: { ligne: "从出生到接下来的月份，每一个阶段。" },
+  fiche: { sens: "这意味着什么", usage: "什么有帮助", vigilance: "需要留意", apres: "何时会缓解" },
   guide: {
     p1_titre: "你在这里，今天。", p1_corps: "这条线和这个数字显示你正在看的年龄。滚动时它们会跟随。",
     p2_titre: "你的一生，由下而上。", p2_corps: "下方是出生。上方是接下来的月份。每个胶囊是一个阶段。",
@@ -1233,6 +1245,7 @@ const AR: Strings = {
     profile: "الملف الشخصي",
   },
   accueil: { ligne: "كل فترة، من ميلادك إلى الأشهر القادمة." },
+  fiche: { sens: "ما معناه", usage: "ما الذي يساعد", vigilance: "ما ينبغي الانتباه له", apres: "متى يخفّ" },
   guide: {
     p1_titre: "أنت هنا، اليوم.", p1_corps: "هذا الخط وهذا الرقم يعطيان عمر ما تنظر إليه. مرّر، وسيتبعانك.",
     p2_titre: "حياتك، من الأسفل.", p2_corps: "في الأسفل ميلادك. في الأعلى الأشهر القادمة. كل كبسولة فترة.",

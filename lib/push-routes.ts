@@ -21,11 +21,18 @@
  */
 
 /** Les seules destinations qu'une notification peut ouvrir. */
-export type EcranNotification = "timeline" | "monthly" | "lifetime" | "compatibility";
+export type EcranNotification = "timeline" | "lifetime" | "compatibility";
 
 const ECRANS: Record<EcranNotification, (ref?: string) => string> = {
   timeline: () => "/app/timeline/",
-  monthly: () => "/app/monthly/",
+  // « monthly » a ete retire le 01/09/2026. L ecran /app/monthly affiche
+  // MOCK_MONTHLY_INSIGHT — « Career is activated », « Home is shifting » — un
+  // contenu FABRIQUE, identique pour tout le monde, presente comme une lecture
+  // personnelle. Il recoit les vraies donnees et les ignore.
+  //
+  // Une notification qui mene a du faux est pire qu une notification absente :
+  // elle depense la confiance qu on vient de gagner en demandant la permission.
+  // La destination reviendra le jour ou l ecran lira ses propres donnees.
   lifetime: () => "/app/lifetime-chart/",
   // Forme requête et non segment d'adresse : l'export statique ne produit pas
   // un fichier par identifiant de connexion. Voir le commentaire en tête de
