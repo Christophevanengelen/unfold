@@ -68,6 +68,11 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
   };
 
   const canContinue = selected.length >= 1;
+  // On a touche des pastilles, tout deselectionne, et le bouton s est eteint :
+  // c est le moment ou la consigne doit se voir. Elle etait la depuis le debut,
+  // en violet a 70 % au-dessus des neuf pastilles — donc lue comme un
+  // sous-titre decoratif, pas comme la regle qui bloque le bouton.
+  const bloque = touched && !canContinue;
 
   return (
     <motion.div className="flex h-full flex-col">
@@ -76,7 +81,10 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
       <motion.button
         type="button"
         onClick={onBack}
-        className="self-start text-xs font-medium"
+        // Zone de touche etendue plutot que bouton agrandi : le libelle fait
+        // 16 points, Apple en demande 44, et l agrandir descendrait le titre et
+        // les neuf pastilles centrees en dessous.
+        className="relative self-start text-xs font-medium before:absolute before:-inset-3.5 before:content-['']"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -101,8 +109,13 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
       </motion.h1>
 
       <motion.p
-        className="mt-1.5 text-center text-sm"
-        style={{ color: "var(--accent-purple)", opacity: 0.7 }}
+        id="priorites-consigne"
+        role={bloque ? "alert" : undefined}
+        className={`mt-1.5 text-center text-sm ${bloque ? "font-medium" : ""}`}
+        style={{
+          color: bloque ? "var(--text-heading)" : "var(--accent-purple)",
+          opacity: bloque ? 1 : 0.7,
+        }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.8, ease: EASE }}
@@ -163,7 +176,8 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
         })}
       </motion.div>
 
-      {/* Counter */}
+      {/* Counter — « 0 selectionne(s) » des qu on a touche quelque chose, pour
+          que le compte et la consigne racontent la meme chose. */}
       <motion.p
         className="mt-4 text-center text-xs"
         style={{ color: "var(--accent-purple)", opacity: touched ? 0.5 : 0 }}
@@ -183,11 +197,22 @@ export function StepPriorities({ selected, onChange, onNext, onBack }: StepPrior
       >
         <button
           type="button"
+          // Le bouton n avait AUCUN attribut disabled : seulement un style de
+          // desactive. Il restait donc tapable et focalisable, un tap ne
+          // produisait rien, et rien ne disait pourquoi. La consigne au-dessus
+          // le dit maintenant, et le bouton la designe.
+          disabled={!canContinue}
+          aria-disabled={!canContinue}
+          aria-describedby={!canContinue ? "priorites-consigne" : undefined}
           onClick={() => canContinue && onNext()}
           className={`flex w-full items-center justify-center rounded-full text-sm font-semibold transition-all ${
             canContinue
               ? "bg-bg-brand text-text-on-brand shadow-lg active:scale-95"
-              : "cursor-not-allowed bg-brand-4 text-text-disabled"
+              // --text-disabled sur --brand-4 : 1,41 de contraste en clair,
+              // 1,87 en sombre. Le contrat de globals.css reserve ce jeton aux
+              // elements inactionnables, jamais a du contenu — et ceci est le
+              // libelle du bouton principal. --text-body donne 4,72 et 7,30.
+              : "cursor-not-allowed bg-brand-4 text-text-body"
           }`}
           style={{ minHeight: S.touch, padding: `${S.sm + S.xs}px 0` }}
         >

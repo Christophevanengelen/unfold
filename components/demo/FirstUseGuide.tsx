@@ -39,7 +39,15 @@ const CLE_RELANCE = "unfold_first_use_relance";
 const ESSAIS_MAX = 3;
 
 type Pas = {
-  cible: string | null;
+  /**
+   * Selecteur CSS de ce que le pas designe, resolu dans le conteneur.
+   *
+   * C etait `string | null`, ou null voulait dire « l union de TOUS les
+   * data-guide ». Piege : le sens du pas dependait alors du nombre de reperes
+   * poses ailleurs dans l app. Il n en existait que deux, aux extremites, donc
+   * l union etait un grand rectangle vide. Un pas doit nommer sa cible.
+   */
+  selecteur: string;
   titre: string;
   corps: string;
   carte: "haut" | "bas";
@@ -155,19 +163,21 @@ export function FirstUseGuide({
 
   const TOUS: Pas[] = [
     {
-      cible: "curseur-age",
+      selecteur: '[data-guide="curseur-age"]',
       titre: t("guide.p1_titre", locale),
       corps: t("guide.p1_corps", locale),
       carte: "haut",
     },
     {
-      cible: null, // toute la colonne : mesuree comme l union des capsules
+      // « Ta vie, de bas en haut » : la colonne entiere, donc toutes les
+      // capsules visibles, pas deux reperes eloignes avec du vide entre eux.
+      selecteur: '[data-guide="capsule"]',
       titre: t("guide.p2_titre", locale),
       corps: t("guide.p2_corps", locale),
       carte: "bas",
     },
     {
-      cible: "capsule-courante",
+      selecteur: "[data-guide-courant]",
       titre: t("guide.p3_titre", locale),
       corps: t("guide.p3_corps", locale),
       carte: "bas",
@@ -176,15 +186,12 @@ export function FirstUseGuide({
 
   /** Mesure une cible dans le repere du conteneur. */
   const mesurer = useCallback(
-    (cible: string | null): Rect | null => {
+    (selecteur: string): Rect | null => {
       const hote = conteneur?.current;
       if (!hote) return null;
       const base = hote.getBoundingClientRect();
 
-      // Le pas 2 designe la colonne entiere : l union des capsules visibles.
-      const elements = cible
-        ? Array.from(hote.querySelectorAll(`[data-guide="${cible}"]`))
-        : Array.from(hote.querySelectorAll("[data-guide]"));
+      const elements = Array.from(hote.querySelectorAll(selecteur));
       if (elements.length === 0) return null;
 
       let t0 = Infinity, l0 = Infinity, b0 = -Infinity, r0 = -Infinity;
@@ -205,12 +212,31 @@ export function FirstUseGuide({
         gauche -= (44 - largeur) / 2;
         largeur = 44;
       }
-      return {
-        top: t0 - base.top - marge,
-        left: gauche,
-        width: largeur,
-        height: b0 - t0 + marge * 2,
-      };
+
+      let haut = t0 - base.top - marge;
+      let hauteur = b0 - t0 + marge * 2;
+
+      // Bornage au conteneur.
+      //
+      // La colonne defile : ses capsules debordent largement au-dessus et
+      // au-dessous du panneau visible, et getBoundingClientRect rend leurs
+      // coordonnees reelles, negatives comprises. Sans bornage, le trou
+      // deborde, les quatre bandes du voile calculent des hauteurs negatives et
+      // s effondrent — le voile disparait et l anneau sort de l ecran.
+      //
+      // On borne apres l elargissement a 44 : l ordre inverse pourrait
+      // repousser la zone hors du panneau.
+      const droite = Math.min(gauche + largeur, base.width);
+      gauche = Math.max(0, gauche);
+      largeur = Math.max(0, droite - gauche);
+
+      const bas = Math.min(haut + hauteur, base.height);
+      haut = Math.max(0, haut);
+      hauteur = Math.max(0, bas - haut);
+
+      if (largeur === 0 || hauteur === 0) return null;
+
+      return { top: haut, left: gauche, width: largeur, height: hauteur };
     },
     [conteneur],
   );
@@ -219,7 +245,7 @@ export function FirstUseGuide({
   // pire que pas de pas.
   useEffect(() => {
     const image = requestAnimationFrame(() => {
-      const utiles = TOUS.filter((p) => p.cible === null || mesurer(p.cible) !== null);
+      const utiles = TOUS.filter((p) => mesurer(p.selecteur) !== null);
       if (utiles.length === 0) {
         marquerGuideVu();
         onDone();
@@ -242,7 +268,10 @@ export function FirstUseGuide({
   // Remesurer a chaque pas, et quand la fenetre change.
   useEffect(() => {
     if (!pasUtiles) return;
-    const relever = () => setRect(mesurer(pasUtiles[pas]?.cible ?? null));
+    const relever = () => {
+      const p = pasUtiles[pas];
+      setRect(p ? mesurer(p.selecteur) : null);
+    };
     relever();
     window.addEventListener("resize", relever);
     window.addEventListener("orientationchange", relever);

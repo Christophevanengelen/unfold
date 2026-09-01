@@ -44,7 +44,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   if (state === "error") {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-sm text-text-body-subtle">Connexion perdue</p>
+        <p className="text-sm text-text-body-subtle">{perso("garde.connexion_perdue", locale)}</p>
         <button
           onClick={() => window.location.reload()}
           className="rounded-full px-4 py-2 text-xs font-medium"

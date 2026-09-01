@@ -18,7 +18,7 @@
 
 import { execFileSync } from "node:child_process";
 
-const PLAFOND = 37;
+const PLAFOND = 36;
 
 let sortie = "[]";
 try {

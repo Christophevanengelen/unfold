@@ -6,6 +6,8 @@
 import { planetConfig, type PlanetKey } from "@/lib/domain-config";
 import { useTheme } from "next-themes";
 import { texteLisible } from "@/lib/contraste";
+import { useLocale } from "@/lib/use-locale";
+import { perso } from "@/lib/perso-i18n";
 
 interface PlanetPillProps {
   /** null quand le moteur nomme un point qu on ne sait pas representer. */
@@ -19,6 +21,7 @@ export function PlanetPill({ planet, className = "" }: PlanetPillProps) {
   // lib/premium-gate.ts ce matin : un hook saute selon une condition, et React
   // associe alors l etat d un hook a un autre.
   const { resolvedTheme } = useTheme();
+  const locale = useLocale();
 
   // Rien plutot qu une planete inventee. Avant, un point inconnu — Chiron,
   // l Ascendant, un lot du zodiacal releasing — devenait « Soleil ».
@@ -40,7 +43,7 @@ export function PlanetPill({ planet, className = "" }: PlanetPillProps) {
         className="h-1.5 w-1.5 rounded-full"
         style={{ backgroundColor: meta.color }}
       />
-      {meta.label}
+      {perso(meta.cleLabel, locale)}
     </span>
   );
 }

@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
-import { ChevronLeft } from "flowbite-react-icons/outline";
 import { DateInput } from "@/components/ui/DateInput";
+import { EU_DATE_PLACEHOLDER, formatEuropeanDateInput } from "@/lib/european-date";
 import { searchCities, type GeoResult } from "@/lib/geocode";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 import { villeConnue } from "@/lib/birth-data";
@@ -67,6 +67,28 @@ const champs = (locale: Locale) => [
 ];
 
 /**
+ * Les bornes de la date de NAISSANCE.
+ *
+ * Le champ n en recevait aucune : une date situee dans le FUTUR passait la
+ * validation, partait au moteur, et produisait une timeline pour quelqu un qui
+ * n est pas encore ne. Personne ne voyait le probleme avant l ecran de calcul.
+ *
+ * La borne haute est recalculee a chaque rendu plutot que figee : une constante
+ * de module se serait arretee au jour du chargement de l onglet, et une
+ * inscription commencee avant minuit aurait refuse la journee en cours.
+ */
+const DOB_MIN = "1900-01-01";
+
+function dobMax(): string {
+  // Date LOCALE et non toISOString() : celui-ci passe en UTC et decale d un
+  // jour partout a l est de Greenwich en soiree.
+  const d = new Date();
+  const mois = String(d.getMonth() + 1).padStart(2, "0");
+  const jour = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mois}-${jour}`;
+}
+
+/**
  * Screen 6 — Configure Your Signal.
  * Place of birth uses live Nominatim geocoding via Open-Meteo.
  */
@@ -96,6 +118,10 @@ export function StepInput({
   const isSearching = etatLieu === "cherche";
   // Index survole au clavier. -1 = aucun.
   const [survol, setSurvol] = useState(-1);
+  // La date saisie est-elle refusee ? Elle l etait en SILENCE : au moment ou le
+  // champ perdait le focus, une saisie illisible ou hors bornes etait remplacee
+  // par l ancienne valeur, ou effacee. On croyait avoir tape sa date.
+  const [dateRefusee, setDateRefusee] = useState(false);
   // La liste s ouvre vers le HAUT quand le clavier ne laisse pas la place.
   const [versLeHaut, setVersLeHaut] = useState(false);
   const avortRef = useRef<AbortController | null>(null);
@@ -148,12 +174,24 @@ export function StepInput({
   const lieuSitue =
     formData.resolvedCoords !== undefined || villeConnue(formData.placeOfBirth);
 
-  const isValid =
-    formData.nickname.trim() !== "" &&
-    formData.dob !== "" &&
-    formData.timeOfBirth !== "" &&
-    formData.placeOfBirth.trim() !== "" &&
-    lieuSitue;
+  // CE QUI MANQUE, nomme.
+  //
+  // Les quatre champs etaient requis et deux seulement le disaient. Le bouton
+  // restait eteint, sans un mot : on relisait l ecran en cherchant lequel des
+  // champs n allait pas, a la fin de l inscription, avec le clavier ouvert.
+  //
+  // On liste donc les libelles des champs qui bloquent — les memes mots que
+  // ceux affiches au-dessus, deja traduits, pour que le lien soit immediat.
+  const manquants = [
+    formData.nickname.trim() === "" ? t("onboarding.p6_nom", locale) : null,
+    formData.dob === "" ? t("onboarding.p6_date", locale) : null,
+    formData.timeOfBirth === "" ? t("onboarding.p6_heure", locale) : null,
+    formData.placeOfBirth.trim() === "" || !lieuSitue
+      ? t("onboarding.p6_lieu", locale)
+      : null,
+  ].filter((x): x is string => x !== null);
+
+  const isValid = manquants.length === 0;
 
   const handleChange = (key: keyof OnboardingFormData, value: string) => {
     if (key === "placeOfBirth") {
@@ -236,13 +274,26 @@ export function StepInput({
       <motion.button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-1 self-start text-xs font-medium"
+        // La zone de touche est ETENDUE, pas le bouton.
+        //
+        // Le libelle fait 16 points de haut ; Apple en demande 44. Poser
+        // « h-11 » ici aurait descendu le titre, le sous-titre et les quatre
+        // champs de vingt-huit points sur un ecran deja trop court clavier
+        // ouvert. Le pseudo-element elargit la cible sans rien deplacer.
+        className="relative inline-flex items-center gap-1 self-start text-xs font-medium before:absolute before:-inset-3.5 before:content-['']"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
       >
-        <ChevronLeft size={14} />
+        {/* Le meme chevron que les trois autres ecrans du parcours. Celui-ci
+            venait de flowbite et mesurait 14 points la ou les autres en font
+            16 : deux fleches differentes pour le meme geste, d un ecran a
+            l autre. */}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="-mt-0.5">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
         {mode === "edition" ? perso("edit.annuler", locale) : t("onboarding.back", locale)}
       </motion.button>
 
@@ -290,6 +341,11 @@ export function StepInput({
                   }}
                 >
                   {field.label}
+                  {/* L asterisque des champs requis. Les quatre le sont, mais
+                      seuls l heure et le lieu portaient une aide qui le disait :
+                      le prenom et la date n avaient aucun marqueur, et rien ne
+                      distinguait un champ facultatif d un champ bloquant. */}
+                  <span aria-hidden="true"> *</span>
                   {/* Le lieu est-il SITUE ? Rien ne le disait : apres selection,
                       le champ contenait un texte identique a ce qu on aurait pu
                       taper a la main. Or ce qui distingue les deux, c est
@@ -309,6 +365,13 @@ export function StepInput({
                   <DateInput
                     value={formData.dob}
                     onChange={(value) => handleChange("dob", value)}
+                    // Sans bornes, une date de naissance FUTURE passait la
+                    // validation entiere et partait au calcul.
+                    min={DOB_MIN}
+                    max={dobMax()}
+                    aria-required
+                    aria-describedby={dateRefusee ? "date-refusee" : undefined}
+                    onInvalidChange={setDateRefusee}
                     className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
                     style={{ color: "var(--accent-purple)" }}
                   />
@@ -346,6 +409,7 @@ export function StepInput({
                         : undefined
                     }
                     placeholder={field.placeholder}
+                    aria-required
                     autoComplete={isPlaceField ? "off" : undefined}
                     // La correction automatique d iOS mutile les noms de villes
                     // etrangeres.
@@ -363,6 +427,21 @@ export function StepInput({
                   />
                 )}
               </label>
+              {/* La date refusee, DITE — et sous la forme attendue.
+                  Le composant effacait la saisie sans un mot ; on rend ici les
+                  deux seules choses qui manquaient pour se corriger : le format
+                  attendu et la date la plus tardive acceptee. Des chiffres,
+                  lisibles dans les dix langues du produit. */}
+              {field.key === "dob" && dateRefusee && (
+                <p
+                  id="date-refusee"
+                  role="alert"
+                  className="mt-1 font-medium"
+                  style={{ fontSize: 10, color: "var(--text-body)" }}
+                >
+                  {EU_DATE_PLACEHOLDER} · ≤ {formatEuropeanDateInput(dobMax())}
+                </p>
+              )}
               {"helper" in field && field.helper && (
                 <p
                   className="mt-1"
@@ -474,7 +553,9 @@ export function StepInput({
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        Your details are only used to prepare your personal rhythm.
+        {/* Cette phrase etait ecrite en dur, en anglais, et servie telle quelle
+            aux dix langues du produit. Sa traduction existait deja. */}
+        {t("onboarding.p5_privacy", locale)}
       </motion.p>
 
       {/* CTA */}
@@ -484,17 +565,37 @@ export function StepInput({
         animate={CTA_ARRIVEE}
         transition={CTA_IMMEDIAT}
       >
+        {/* Ce qui bloque, nomme, juste au-dessus du bouton eteint.
+            L asterisque reprend celui des etiquettes : on lit la liste, on
+            remonte au champ marque du meme signe. */}
+        {!isValid && (
+          <p
+            id="champs-manquants"
+            className="mb-2 text-center text-xs font-medium"
+            style={{ color: "var(--text-body)" }}
+          >
+            <span aria-hidden="true">* </span>
+            {manquants.join(" · ")}
+          </p>
+        )}
         <button
           type="button"
           // Le bouton etait seulement STYLE en desactive : il restait tapable
           // et focalisable, et un tap ne produisait rien ni aucune explication.
           disabled={!isValid}
           aria-disabled={!isValid}
+          aria-describedby={!isValid ? "champs-manquants" : undefined}
           onClick={() => isValid && onNext()}
           className={`flex w-full items-center justify-center rounded-full py-3.5 text-sm font-semibold transition-all ${
             isValid
               ? "bg-bg-brand text-text-on-brand shadow-lg active:scale-95"
-              : "cursor-not-allowed bg-brand-4 text-text-disabled"
+              // --text-disabled sur --brand-4, c etait 1,41 de contraste en
+              // theme clair : le libelle du bouton principal, a la fin de
+              // l inscription, etait illisible. Le contrat en tete de
+              // globals.css reserve ce jeton aux elements inactionnables et
+              // l interdit sur du contenu. --text-body donne 4,72 en clair et
+              // 7,30 en sombre sur le meme fond.
+              : "cursor-not-allowed bg-brand-4 text-text-body"
           }`}
         >
           {mode === "edition" ? perso("edit.cta", locale) : t("onboarding.p5_cta", locale)}

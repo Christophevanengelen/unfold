@@ -81,6 +81,24 @@ const DOMAIN_TO_HOUSE: Record<string, HouseNumber> = {
   inner: 12,
 };
 
+/**
+ * Un domaine absent ou inconnu ne DOIT pas devenir la maison 10.
+ * Avec `?? 10`, une capsule sans domaine affichait « Carriere » et son recit
+ * complet — « Ta carriere est sous les projecteurs… » — sans qu aucun signe ne
+ * dise que la donnee manquait. C etait une lecture inventee, indiscernable
+ * d une vraie. On renvoie null : l appelant n affiche rien.
+ */
+export function domainKeyToHouseOrNull(domain: string | undefined | null): HouseNumber | null {
+  if (!domain) return null;
+  return DOMAIN_TO_HOUSE[domain] ?? null;
+}
+
+/**
+ * Ancienne signature. Elle retombe encore sur la maison 10 et fabrique donc la
+ * meme lecture. Seul components/demo/ShareSignalCard.tsx l utilise encore, et
+ * ce fichier est hors du perimetre de ce passage — a migrer vers
+ * domainKeyToHouseOrNull.
+ */
 export function domainKeyToHouse(domain: string): HouseNumber {
   return DOMAIN_TO_HOUSE[domain] ?? 10;
 }
@@ -177,8 +195,13 @@ const DOMAIN_NARRATIVES_EN: Record<TimeContext, Record<HouseNumber, string>> = {
   },
 };
 
-export function getDomainNarrative(domain: string, context: TimeContext, locale?: ContentLocale): string {
-  const house = domainKeyToHouse(domain);
+/**
+ * Renvoie "" quand le domaine est absent ou inconnu : sans maison identifiee,
+ * il n y a aucun recit a raconter. On preferait avant celui de la maison 10.
+ */
+export function getDomainNarrative(domain: string | undefined | null, context: TimeContext, locale?: ContentLocale): string {
+  const house = domainKeyToHouseOrNull(domain);
+  if (house === null) return "";
   const dict = resolveLocale(locale) === "fr" ? DOMAIN_NARRATIVES_FR : DOMAIN_NARRATIVES_EN;
   return dict[context][house] ?? "";
 }
@@ -314,14 +337,23 @@ const HOUSE_ACTIONS_EN: Record<number, { current: string; future: string; past: 
   12: { current: "Step back. Silence carries.", future: "A time of retreat will do you good.", past: "The inner work of that period laid invisible foundations." },
 };
 
+/**
+ * Renvoie null quand rien n est ancre dans la donnee.
+ *
+ * Avant, l absence de maison activee produisait quand meme une phrase toute
+ * faite — « Ce signal est actif. Observe ce qui bouge dans ta vie. » — servie
+ * dans la carte de guidance au meme titre qu une lecture calculee. Le lecteur
+ * n avait aucun moyen de distinguer les deux. Sans maison ni guidance fournie
+ * par le moteur, on n affiche pas la carte.
+ */
 export function getContextualGuidance(
-  domain: string,
+  domain: string | undefined | null,
   context: TimeContext,
   existingGuidance?: string,
   peakMoment?: string,
   apiTopics?: { house: number }[],
   locale?: ContentLocale,
-): string {
+): string | null {
   const fr = resolveLocale(locale) === "fr";
   // Use the primary topic's house for specific guidance
   const topicHouse = apiTopics?.[0]?.house;
@@ -329,13 +361,13 @@ export function getContextualGuidance(
   const actions = topicHouse ? dict[topicHouse] : null;
 
   if (context === "current") {
-    return actions?.current ?? existingGuidance ?? (fr ? "Ce signal est actif. Observe ce qui bouge dans ta vie." : "This signal is active. Watch what's moving in your life.");
+    return actions?.current ?? existingGuidance ?? null;
   }
   if (context === "future") {
-    return actions?.future ?? (fr ? "Cette fenêtre approche. Reste attentif aux signes." : "This window is approaching. Stay alert to the signs.");
+    return actions?.future ?? null;
   }
   // Past
-  return actions?.past ?? peakMoment ?? (fr ? "Cette période a laissé une empreinte durable." : "This period left a lasting imprint.");
+  return actions?.past ?? peakMoment ?? null;
 }
 
 // ─── Transit Narrative (from real API data) ─────────────
@@ -452,10 +484,11 @@ export function getTransitNarrative(phase: any, locale?: ContentLocale): string 
       const text = planetImpact[aspect] || planetImpact.conjunction;
       if (text) return text;
     }
-    // Fallback for unknown planets
-    return isFr
-      ? `Une énergie nouvelle influence ton quotidien dans les domaines activés.`
-      : `A new energy is influencing your daily life in the activated areas.`;
+    // Planete hors table (Chiron, Ascendant, MC, lots…) : on ne connait pas son
+    // impact. La phrase de secours — « Une energie nouvelle influence ton
+    // quotidien » — s affichait exactement comme un recit calcule. Rien plutot
+    // qu un recit invente.
+    return "";
   }
 
   if (cat === "eclipse") {
@@ -492,7 +525,10 @@ export function getTransitNarrative(phase: any, locale?: ContentLocale): string 
         ? "This chapter counts for more — attachment and desire are intensifying. What plays out in your close bonds carries more weight than it seems."
         : "Attachment and desire are front and center. Your deep relationships are in motion.",
     };
-    return lotImpact[phase.lotType] || (isFr ? "Une fenêtre de timing significative est ouverte pour toi." : "A significant timing window is open for you.");
+    // Lot inconnu = on ignore de quel chapitre il s agit. « Une fenetre de
+    // timing significative est ouverte pour toi » affirmait une lecture sur
+    // une donnee absente.
+    return lotImpact[phase.lotType] ?? "";
   }
 
   if (cat === "station") {
@@ -627,8 +663,13 @@ export function getTopicsNarrative(
   const isFr = resolveLocale(locale) === "fr";
   const dict = isFr ? HOUSE_HUMAN_FR : HOUSE_HUMAN_EN;
 
-  const parts = topics.map(t => dict[t.house] || (isFr ? `ta vie` : `your life`));
+  // Une maison hors 1-12 devenait « ta vie » : on annonçait alors « Ce signal
+  // touche ta vie », phrase vraie de tout signal et donc sans contenu, mais
+  // presentee comme le resultat du calcul. On ecarte les maisons inconnues ; si
+  // aucune ne reste, on n affiche pas la phrase.
+  const parts = topics.map(t => dict[t.house]).filter((p): p is string => Boolean(p));
   const unique = [...new Set(parts)];
+  if (unique.length === 0) return "";
 
   const joined = unique.length === 1
     ? unique[0]

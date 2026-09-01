@@ -56,14 +56,22 @@ const MONTH_SHORT_FR = [
   "jul", "aoû", "sep", "oct", "nov", "déc",
 ];
 
-function capitalize(s: string): string {
-  return s.length > 0 ? s[0].toUpperCase() + s.slice(1) : s;
-}
-
 function daysBetween(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000);
 }
 
+/** "2026-03" → "en mar". null quand la cle n est pas un mois lisible. */
+function moisCourt(monthKey: string | null): string | null {
+  if (!monthKey) return null;
+  const [, m] = monthKey.split("-").map(Number);
+  if (!Number.isFinite(m) || m < 1 || m > 12) return null;
+  return `en ${MONTH_SHORT_FR[m - 1]}`;
+}
+
+// Une cle absente de la table passait par capitalize() et s affichait quand
+// meme comme un nom de planete : « Mc », « Chiron-a »… La ligne annonçait alors
+// un corps celeste que le moteur n a pas nomme. On renvoie "" — le titre se lit
+// tres bien sans le suffixe « · planete ».
 function prettyPlanet(p: string | undefined | null): string {
   if (!p) return "";
   const map: Record<string, string> = {
@@ -83,7 +91,7 @@ function prettyPlanet(p: string | undefined | null): string {
     "lunar-eclipse": "Éclipse lunaire",
     zr: "Chapitre ZR",
   };
-  return map[p] ?? capitalize(p);
+  return map[p] ?? "";
 }
 
 function headline({
@@ -112,19 +120,21 @@ function headline({
       daysUntilNext <= 0 ? "aujourd'hui"
         : daysUntilNext === 1 ? "demain"
           : daysUntilNext <= 14 ? `dans ${daysUntilNext} j`
-            : nextWindowMonthKey
-              ? (() => {
-                const [, m] = nextWindowMonthKey.split("-").map(Number);
-                return `en ${MONTH_SHORT_FR[m - 1]}`;
-              })()
-              : `dans ${daysUntilNext} j`;
+            // MONTH_SHORT_FR[m - 1] rendait « en undefined » quand le monthKey
+            // n etait pas lisible : un mois invente, affiche comme une date de
+            // fenetre. On retombe sur le compte de jours, qui lui est mesure.
+            : (moisCourt(nextWindowMonthKey) ?? `dans ${daysUntilNext} j`);
     const base =
       tier === "PEAK" ? `Fenêtre forte ${when}`
         : tier === "CLEAR" ? `Alignement clair ${when}`
           : `Alignement ${when}`;
     return p ? `${base} · ${p}` : base;
   }
-  return "Calme ce mois";
+  // Le retour par defaut disait « Calme ce mois » — y compris pour un statut
+  // « upcoming » dont on ignore l echeance. On n annonçait pas le calme, on le
+  // deduisait d une donnee manquante. Seul le vrai calme le dit.
+  if (status === "calm") return "Calme ce mois";
+  return "Signal indisponible";
 }
 
 function planetOfPeriod(period: ActivePeriod | undefined): string | undefined {
@@ -168,7 +178,10 @@ export function extractSummary(
       // le calme.
       status: "unknown",
       headlineFR: "Signal indisponible",
-      sortScore: 0,
+      // sortScore valait 0, soit exactement STATUS_WEIGHT.calm : l intention
+      // ecrite juste au-dessus — « unknown » passe APRES « calm » — n etait pas
+      // appliquee, et une connexion sans donnees se melait aux calmes.
+      sortScore: STATUS_WEIGHT.unknown,
     };
   }
 

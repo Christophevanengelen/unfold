@@ -19,13 +19,18 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
-const PLAFOND = 3;
+const PLAFOND = 2;
 
 const fichiers = execFileSync("git", ["ls-files", "components", "app"], { encoding: "utf8" })
   .split("\n")
-  .filter((f) => f.endsWith(".tsx") && !f.includes("/astro/"));
+  .filter((f) => f.endsWith(".tsx") && !f.includes("/astro/"))
+  // `git ls-files` liste ce que git CONNAIT, pas ce qui existe sur le disque :
+  // un fichier supprime mais pas encore indexe y figure encore. Sans ce filtre
+  // le controle mourait sur un ENOENT avec une trace de pile, au lieu de dire
+  // ce qu il verifiait. Un outil de verification qui plante ne verifie rien.
+  .filter((f) => existsSync(f));
 
 const petites = [];
 

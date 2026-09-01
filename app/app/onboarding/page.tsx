@@ -239,10 +239,16 @@ export default function OnboardingPage() {
         paddingBottom: "max(20px, var(--safe-bottom))",
       }}
     >
-      {/* Progress dots — hidden on preparing screen (step 5) */}
+      {/* Progress dots — hidden on preparing screen (step 5).
+
+          total = TOTAL_STEPS, et non 5. Le parcours compte SIX ecrans et la
+          jauge en annonçait cinq : sur l ecran de saisie — le quatrieme, celui
+          qui demande la date, l heure et le lieu de naissance — la derniere
+          pastille s allumait. On se croyait arrive au moment ou l effort
+          commence, et un ecran restait apres la fin annoncee. */}
       {step < 5 && (
         <div className="mb-4 shrink-0">
-          <OnboardingProgress current={step} total={5} />
+          <OnboardingProgress current={step} total={TOTAL_STEPS} />
         </div>
       )}
       <AnimatePresence mode="wait" custom={dir}>

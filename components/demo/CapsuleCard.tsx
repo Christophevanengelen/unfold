@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import { planetConfig } from "@/lib/domain-config";
+import { planetConfig, getPlanetLabel } from "@/lib/domain-config";
+import { useLocale } from "@/lib/use-locale";
 import { getTierLabel, type CapsuleData } from "@/lib/capsules";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -21,6 +22,7 @@ interface CapsuleCardProps {
  * Future: blurred planets, teaser, premium lock
  */
 export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardProps) {
+  const locale = useLocale();
   const tierLabel = getTierLabel(capsule.tier);
   const phase = capsule.phases[0];
   const startLabel = `${capsule.startDate.getDate()} ${MONTH_NAMES[capsule.startDate.getMonth()]} ${capsule.startDate.getFullYear()}`;
@@ -46,6 +48,10 @@ export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardP
       >
         {capsule.planets.map((planet, i) => {
           const pc = planetConfig[planet];
+          // Le nom dans la langue de la personne, et rien du tout pour un point
+          // que la table ne connait pas — sans ce test, pc.color plantait.
+          const nom = getPlanetLabel(planet, locale);
+          if (!pc || !nom) return null;
           return (
             <motion.div
               key={planet}
@@ -63,7 +69,7 @@ export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardP
                 style={{ background: pc.color, boxShadow: `0 0 6px ${pc.color}` }}
               />
               <span className="text-[11px] font-medium" style={{ color: pc.color }}>
-                {pc.label}
+                {nom}
               </span>
             </motion.div>
           );

@@ -30,7 +30,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 const PLAFOND = 7;
@@ -39,7 +39,12 @@ const fichiers = execFileSync("git", ["ls-files", "components", "app", "lib"], {
   encoding: "utf8",
 })
   .split("\n")
-  .filter((f) => f.endsWith(".tsx") || f.endsWith(".ts"));
+  .filter((f) => f.endsWith(".tsx") || f.endsWith(".ts"))
+  // `git ls-files` liste ce que git CONNAIT, pas ce qui existe sur le disque :
+  // un fichier supprime mais pas encore indexe y figure encore. Sans ce filtre
+  // le controle mourait sur un ENOENT avec une trace de pile, au lieu de dire
+  // ce qu il verifiait. Un outil de verification qui plante ne verifie rien.
+  .filter((f) => existsSync(f));
 
 // Ce que Next monte tout seul : ces fichiers n ont pas a etre importes.
 const ENTREES =

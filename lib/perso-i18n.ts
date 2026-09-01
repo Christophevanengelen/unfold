@@ -334,6 +334,113 @@ const MOTS: Record<string, Traduction> = {
                    pt:"Agora", nl:"Nu", ja:"現在", zh:"当前", ar:"الآن" },
   "edit.annuler":{ fr:"Annuler", en:"Cancel", es:"Cancelar", de:"Abbrechen", it:"Annulla",
                    pt:"Cancelar", nl:"Annuleren", ja:"キャンセル", zh:"取消", ar:"إلغاء" },
+
+  // ── Les quatorze corps du ciel ──────────────────────────────────────────
+  //
+  // Ces noms vivaient dans lib/domain-config.tsx, en francais, servis aux dix
+  // langues : quelqu un qui a choisi le japonais lisait « Saturne » sur ses
+  // periodes. Ce sont des noms astronomiques, pas du contenu interpretatif —
+  // chaque langue a le sien depuis des siecles, on le reprend tel quel.
+  "planete.soleil":          { fr:"Soleil", en:"Sun", es:"Sol", de:"Sonne", it:"Sole",
+                               pt:"Sol", nl:"Zon", ja:"太陽", zh:"太阳", ar:"الشمس" },
+  "planete.lune":            { fr:"Lune", en:"Moon", es:"Luna", de:"Mond", it:"Luna",
+                               pt:"Lua", nl:"Maan", ja:"月", zh:"月亮", ar:"القمر" },
+  "planete.mercure":         { fr:"Mercure", en:"Mercury", es:"Mercurio", de:"Merkur", it:"Mercurio",
+                               pt:"Mercúrio", nl:"Mercurius", ja:"水星", zh:"水星", ar:"عطارد" },
+  "planete.venus":           { fr:"Vénus", en:"Venus", es:"Venus", de:"Venus", it:"Venere",
+                               pt:"Vénus", nl:"Venus", ja:"金星", zh:"金星", ar:"الزهرة" },
+  "planete.mars":            { fr:"Mars", en:"Mars", es:"Marte", de:"Mars", it:"Marte",
+                               pt:"Marte", nl:"Mars", ja:"火星", zh:"火星", ar:"المريخ" },
+  "planete.jupiter":         { fr:"Jupiter", en:"Jupiter", es:"Júpiter", de:"Jupiter", it:"Giove",
+                               pt:"Júpiter", nl:"Jupiter", ja:"木星", zh:"木星", ar:"المشتري" },
+  "planete.saturne":         { fr:"Saturne", en:"Saturn", es:"Saturno", de:"Saturn", it:"Saturno",
+                               pt:"Saturno", nl:"Saturnus", ja:"土星", zh:"土星", ar:"زحل" },
+  "planete.uranus":          { fr:"Uranus", en:"Uranus", es:"Urano", de:"Uranus", it:"Urano",
+                               pt:"Urano", nl:"Uranus", ja:"天王星", zh:"天王星", ar:"أورانوس" },
+  "planete.neptune":         { fr:"Neptune", en:"Neptune", es:"Neptuno", de:"Neptun", it:"Nettuno",
+                               pt:"Neptuno", nl:"Neptunus", ja:"海王星", zh:"海王星", ar:"نبتون" },
+  "planete.pluton":          { fr:"Pluton", en:"Pluto", es:"Plutón", de:"Pluto", it:"Plutone",
+                               pt:"Plutão", nl:"Pluto", ja:"冥王星", zh:"冥王星", ar:"بلوتو" },
+  "planete.noeud_nord":      { fr:"Nœud Nord", en:"North Node", es:"Nodo Norte", de:"Nordknoten", it:"Nodo Nord",
+                               pt:"Nodo Norte", nl:"Noordknoop", ja:"北ノード", zh:"北交点", ar:"العقدة الشمالية" },
+  "planete.noeud_sud":       { fr:"Nœud Sud", en:"South Node", es:"Nodo Sur", de:"Südknoten", it:"Nodo Sud",
+                               pt:"Nodo Sul", nl:"Zuidknoop", ja:"南ノード", zh:"南交点", ar:"العقدة الجنوبية" },
+  "planete.eclipse_solaire": { fr:"Éclipse solaire", en:"Solar eclipse", es:"Eclipse solar", de:"Sonnenfinsternis", it:"Eclissi solare",
+                               pt:"Eclipse solar", nl:"Zonsverduistering", ja:"日食", zh:"日食", ar:"كسوف شمسي" },
+  "planete.eclipse_lunaire": { fr:"Éclipse lunaire", en:"Lunar eclipse", es:"Eclipse lunar", de:"Mondfinsternis", it:"Eclissi lunare",
+                               pt:"Eclipse lunar", nl:"Maansverduistering", ja:"月食", zh:"月食", ar:"خسوف قمري" },
+
+  // ── Les douze domaines de vie ───────────────────────────────────────────
+  //
+  // Meme faute que pour les planetes, dans le meme fichier : « Identité »,
+  // « Argent », « Couple » etaient poses en dur dans houseConfig.
+  //
+  // Les mots repris sont EXACTEMENT ceux de lib/maisons-i18n.ts, qui les
+  // traduisait deja pour les notifications. Un domaine ne peut pas s appeler
+  // autrement sur l ecran verrouille et dans l app.
+  "maison.1":  { fr:"Identité", en:"Identity", es:"Identidad", de:"Identität", it:"Identità",
+                 pt:"Identidade", nl:"Identiteit", ja:"自分", zh:"自我", ar:"الذات" },
+  "maison.2":  { fr:"Argent", en:"Money", es:"Dinero", de:"Geld", it:"Denaro",
+                 pt:"Dinheiro", nl:"Geld", ja:"お金", zh:"金钱", ar:"المال" },
+  "maison.3":  { fr:"Communication", en:"Communication", es:"Comunicación", de:"Kommunikation", it:"Comunicazione",
+                 pt:"Comunicação", nl:"Communicatie", ja:"つながり", zh:"沟通", ar:"التواصل" },
+  "maison.4":  { fr:"Foyer", en:"Home", es:"Hogar", de:"Zuhause", it:"Casa",
+                 pt:"Lar", nl:"Thuis", ja:"家庭", zh:"家庭", ar:"البيت" },
+  "maison.5":  { fr:"Créativité", en:"Creativity", es:"Creatividad", de:"Kreativität", it:"Creatività",
+                 pt:"Criatividade", nl:"Creativiteit", ja:"創造", zh:"创造", ar:"الإبداع" },
+  "maison.6":  { fr:"Quotidien", en:"Daily life", es:"Día a día", de:"Alltag", it:"Quotidiano",
+                 pt:"Quotidiano", nl:"Dagelijks leven", ja:"日常", zh:"日常", ar:"اليومي" },
+  "maison.7":  { fr:"Couple", en:"Partnership", es:"Pareja", de:"Partnerschaft", it:"Coppia",
+                 pt:"Relação", nl:"Relatie", ja:"パートナー", zh:"伴侣", ar:"الشراكة" },
+  "maison.8":  { fr:"Transformations", en:"Transformation", es:"Transformación", de:"Wandlung", it:"Trasformazione",
+                 pt:"Transformação", nl:"Transformatie", ja:"変容", zh:"转变", ar:"التحوّل" },
+  "maison.9":  { fr:"Horizon", en:"Horizon", es:"Horizonte", de:"Horizont", it:"Orizzonte",
+                 pt:"Horizonte", nl:"Horizon", ja:"視野", zh:"视野", ar:"الأفق" },
+  "maison.10": { fr:"Carrière", en:"Career", es:"Carrera", de:"Beruf", it:"Carriera",
+                 pt:"Carreira", nl:"Carrière", ja:"仕事", zh:"事业", ar:"المسار المهني" },
+  "maison.11": { fr:"Réseau", en:"Network", es:"Red", de:"Netzwerk", it:"Rete",
+                 pt:"Rede", nl:"Netwerk", ja:"仲間", zh:"人脉", ar:"الشبكة" },
+  "maison.12": { fr:"Intériorité", en:"Inner life", es:"Interioridad", de:"Innenleben", it:"Interiorità",
+                 pt:"Interioridade", nl:"Innerlijk", ja:"内面", zh:"内在", ar:"الحياة الداخلية" },
+
+  // ── Force d une fenetre (TierBadge) ─────────────────────────────────────
+  // PEAK / CLEAR / SUBTLE dans le code, « Fort / Clair / Subtil » a l ecran —
+  // en francais seul, sur la pastille qui dit a quel point une periode compte.
+  "intensite.fort":   { fr:"Fort", en:"Strong", es:"Fuerte", de:"Stark", it:"Forte",
+                        pt:"Forte", nl:"Sterk", ja:"強い", zh:"强", ar:"قوي" },
+  "intensite.clair":  { fr:"Clair", en:"Clear", es:"Claro", de:"Klar", it:"Chiaro",
+                        pt:"Claro", nl:"Helder", ja:"明確", zh:"清晰", ar:"واضح" },
+  "intensite.subtil": { fr:"Subtil", en:"Subtle", es:"Sutil", de:"Subtil", it:"Sottile",
+                        pt:"Subtil", nl:"Subtiel", ja:"かすか", zh:"微弱", ar:"خفيف" },
+
+  // ── Repartition des signaux par niveau, en fin de balayage ──────────────
+  // Se lit apres un nombre : « 142 subtils ». Minuscule voulue.
+  "niveau.subtil":  { fr:"subtils", en:"subtle", es:"sutiles", de:"subtil", it:"sottili",
+                      pt:"subtis", nl:"subtiel", ja:"かすか", zh:"微弱", ar:"خفيفة" },
+  "niveau.notable": { fr:"notables", en:"notable", es:"notables", de:"bemerkenswert", it:"notevoli",
+                      pt:"notáveis", nl:"opvallend", ja:"目立つ", zh:"明显", ar:"ملحوظة" },
+  "niveau.majeur":  { fr:"majeurs", en:"major", es:"mayores", de:"groß", it:"maggiori",
+                      pt:"maiores", nl:"groot", ja:"大きい", zh:"重大", ar:"كبيرة" },
+  "niveau.pic":     { fr:"pics", en:"peak", es:"picos", de:"Höhepunkte", it:"picchi",
+                      pt:"picos", nl:"pieken", ja:"ピーク", zh:"高峰", ar:"ذروة" },
+
+  // ── Ecran de preparation, apres la saisie de naissance ──────────────────
+  // Le premier contenu que quelqu un lit du produit une fois inscrit. Il etait
+  // en anglais pour les dix langues.
+  "prep.titre":       { fr:"Préparation de ton signal personnel", en:"Preparing your personal signal", es:"Preparando tu señal personal", de:"Dein persönliches Signal wird vorbereitet", it:"Preparazione del tuo segnale personale",
+                        pt:"A preparar o teu sinal pessoal", nl:"Je persoonlijke signaal wordt voorbereid", ja:"あなたのシグナルを準備中", zh:"正在准备你的个人信号", ar:"جارٍ تحضير إشارتك الشخصية" },
+  "prep.sous":        { fr:"On lit tes signaux planétaires et on construit ta timeline.", en:"We're reading your planetary signals and building your momentum timeline.", es:"Estamos leyendo tus señales planetarias y construyendo tu línea de tiempo.", de:"Wir lesen deine Planetensignale und bauen deine Zeitleiste.", it:"Stiamo leggendo i tuoi segnali planetari e costruendo la tua timeline.",
+                        pt:"Estamos a ler os teus sinais planetários e a construir a tua timeline.", nl:"We lezen je planetaire signalen en bouwen je tijdlijn.", ja:"あなたの惑星シグナルを読み取り、タイムラインを組み立てています。", zh:"我们正在读取你的行星信号并构建你的时间线。", ar:"نقرأ إشاراتك الكوكبية ونبني خطك الزمني." },
+  "prep.signaux":     { fr:"{n} signaux repérés sur toute ta vie", en:"{n} signals mapped across your lifetime", es:"{n} señales localizadas a lo largo de tu vida", de:"{n} Signale über dein ganzes Leben erfasst", it:"{n} segnali individuati lungo tutta la tua vita",
+                        pt:"{n} sinais mapeados ao longo da tua vida", nl:"{n} signalen in kaart gebracht over je hele leven", ja:"人生全体で{n}件のシグナルを検出", zh:"在你的一生中定位了 {n} 个信号", ar:"رُصدت {n} إشارة على امتداد حياتك" },
+  "prep.reconnais":   { fr:"Tu les reconnais ?", en:"Do you recognize these?", es:"¿Los reconoces?", de:"Erkennst du sie wieder?", it:"Li riconosci?",
+                        pt:"Reconheces estes?", nl:"Herken je deze?", ja:"心当たりはありますか？", zh:"你认得这些吗？", ar:"هل تتعرّف عليها؟" },
+  "prep.passe_forts": { fr:"Tes périodes passées les plus fortes", en:"Your strongest past periods", es:"Tus periodos pasados más fuertes", de:"Deine stärksten vergangenen Phasen", it:"I tuoi periodi passati più forti",
+                        pt:"Os teus períodos passados mais fortes", nl:"Je sterkste periodes uit het verleden", ja:"これまででいちばん強かった時期", zh:"你过去最强的时期", ar:"أقوى فتراتك الماضية" },
+
+  // ── Garde d entree de l app ─────────────────────────────────────────────
+  "garde.connexion_perdue": { fr:"Connexion perdue", en:"Connection lost", es:"Conexión perdida", de:"Verbindung verloren", it:"Connessione persa",
+                              pt:"Ligação perdida", nl:"Verbinding verbroken", ja:"接続が切れました", zh:"连接已断开", ar:"انقطع الاتصال" },
 };
 
 /**

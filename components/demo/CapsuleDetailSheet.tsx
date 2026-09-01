@@ -23,7 +23,7 @@ import {
 import {
   getTimeContext,
   getTierLabel,
-  domainKeyToHouse,
+  domainKeyToHouseOrNull,
   getDomainNarrative,
   getPlanetNarrative,
   getTransitNarrative,
@@ -241,9 +241,14 @@ export function CapsuleDetailSheet({
   const phase = capsule.phases[0];
   const tc = getTimeContext(capsule.isCurrent, capsule.isFuture);
   const tierLabel = getTierLabel(capsule.tier);
-  const domain = phase?.domain ?? "work";
-  const house = domainKeyToHouse(domain);
-  const houseMeta = houseConfig[house];
+  // `?? "work"` transformait toute capsule sans domaine en maison 10 : la fiche
+  // affichait la pastille « Carriere » et son recit — « Ta carriere est sous
+  // les projecteurs… » — pour un signal dont le domaine etait inconnu. Le
+  // domaine reste maintenant indefini, la maison vaut null, et le bloc entier
+  // n est pas rendu.
+  const domain = phase?.domain;
+  const house = domainKeyToHouseOrNull(domain);
+  const houseMeta = house !== null ? houseConfig[house] : undefined;
   const houseColor = capsule.color ?? houseMeta?.color ?? "var(--accent-purple)";
   // La couleur vient du moteur : elle peut valoir n importe quoi. Peinte telle
   // quelle sur un fond fait d elle-meme a 15 %, elle donne un texte illisible —
@@ -273,8 +278,9 @@ export function CapsuleDetailSheet({
   const lifetimeNarrative = getLifetimeNarrative(phase);
   const guidance = getContextualGuidance(domain, tc.context, phase?.guidance, phase?.peakMoment, phase?.apiTopics);
 
-  // Resolved insight/guidance: AI text first, then rich template fallbacks.
-  // This ensures Insight clé and Avec le recul are ALWAYS visible.
+  // Texte IA d abord, puis les replis calcules sur la donnee du moteur. Chacun
+  // de ces replis peut valoir null : « toujours visible » n est plus une regle,
+  // et les deux cartes disparaissent quand il n y a rien de reel a dire.
   const insightText = aiText?.insight
     || cycleNarrative
     || lifetimeNarrative
@@ -295,9 +301,15 @@ export function CapsuleDetailSheet({
   const cycleFromPhase = phase?.cycle?.allHits && phase.cycle.allHits.length > 1
     ? { hitNumber: phase.cycle.hitNumber, totalHits: phase.cycle.totalHits, pattern: phase.cycle.pattern, allHits: phase.cycle.allHits }
     : null;
+  // `hitNumber ?? 1` etait le vrai defaut : sans objet `cycle`, on ne sait pas
+  // ou en est la personne dans le cycle, mais le numero 1 combine au test
+  // `hit.hitNumber === cyclePasses.hitNumber` marquait TOUJOURS le premier
+  // passage « maintenant » — y compris quand il datait de plusieurs annees.
+  // hitNumber reste undefined quand le moteur ne l a pas donne, et le rendu ne
+  // marque alors aucun passage.
   const cycleFromExactDates = phase?.exactDates && phase.exactDates.length > 1
     ? {
-        hitNumber: phase?.cycle?.hitNumber ?? 1,
+        hitNumber: phase?.cycle?.hitNumber,
         totalHits: phase?.cycle?.totalHits ?? phase.exactDates.length,
         pattern: phase?.cycle?.pattern ?? "",
         allHits: phase.exactDates.map((date, idx) => ({
@@ -402,7 +414,10 @@ export function CapsuleDetailSheet({
             >
               {tierLabel}
             </span>
-            {phase?.score && (
+            {/* `phase?.score &&` masquait le badge quand le score valait 0 :
+                un score nul est une mesure, pas une absence de mesure. On teste
+                la presence de la valeur, pas sa verite. */}
+            {phase?.score !== undefined && (
               <span
                 className="rounded-full px-2 py-0.5 text-[9px] font-bold tabular-nums"
                 style={{
@@ -415,7 +430,9 @@ export function CapsuleDetailSheet({
             )}
           </div>
 
-          {rarityText && displayLifetimeNum && displayLifetimeTotal && (
+          {/* `nombre &&` en JSX rend le 0 lui-meme a l ecran : un « 0 » nu
+              apparaissait dans la fiche. On teste la presence de la valeur. */}
+          {rarityText && displayLifetimeNum !== undefined && displayLifetimeTotal !== undefined && (
             <div className="flex items-baseline gap-2 mt-1">
               <span
                 className="text-3xl font-bold tabular-nums font-display"
@@ -665,9 +682,11 @@ export function CapsuleDetailSheet({
               {cyclePasses.allHits.map((hit, i) => {
                 const d = new Date(hit.date);
                 const label = `${MONTH_NAMES[d.getMonth()]} ${d.getDate().toString().padStart(2, "0")} '${String(d.getFullYear()).slice(2)}`;
+                // Le passage en cours n est marque que si le moteur a donne un
+                // numero de passage. Sans lui, aucun passage n est « maintenant ».
                 const isCurrent =
-                  ("isCurrent" in hit && hit.isCurrent) ||
-                  hit.hitNumber === cyclePasses?.hitNumber;
+                  ("isCurrent" in hit && hit.isCurrent === true) ||
+                  (cyclePasses?.hitNumber !== undefined && hit.hitNumber === cyclePasses.hitNumber);
                 const today = new Date();
                 const isPast = !isCurrent && d < today;
                 const isFuture = !isCurrent && d >= today;
@@ -727,8 +746,11 @@ export function CapsuleDetailSheet({
         )}
 
         {/* ── Section 7: Guidance / Reflection Card ── */}
-        {/* Always shown: AI text preferred, template string (guidance) as fallback */}
-        {shouldBlurAi ? (
+        {/* La carte n est plus « toujours affichee ». Elle l etait au prix d une
+            phrase de secours generique servie comme conseil personnalise. Sans
+            texte ancre dans la donnee — ni IA, ni maison activee, ni guidance du
+            moteur — on n affiche pas la carte. */}
+        {(guidanceText || aiLoading) && (shouldBlurAi ? (
           <div className="mb-4">
             <PremiumBlur feature="ai" blurAmount={10} quand={startLabel} capsuleId={capsule.id}>
               <div
@@ -765,12 +787,12 @@ export function CapsuleDetailSheet({
             ) : (
               <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
                 {aiText?.guidance
-                  ? <TypewriterText text={guidanceText} speed={45} />
+                  ? <TypewriterText text={aiText.guidance} speed={45} />
                   : guidanceText}
               </p>
             )}
           </div>
-        )}
+        ))}
 
         {/* ── Section 7b: Lifetime info (LLM narrative) ── */}
         {aiText?.lifetimeInfo && (
@@ -795,8 +817,12 @@ export function CapsuleDetailSheet({
         {/* Show when total is rare (≤ 10) and we have the dates, OR when total is known but dates aren't loaded yet */}
         {displayLifetimeTotal !== undefined && displayLifetimeTotal <= 10 && !lifetimePeriods && (
           <div className="mb-4">
+            {/* Le texte disait « ouvre la fiche pour voir toutes les dates »
+                alors qu il est affiche DANS la fiche : il envoyait le lecteur
+                chercher un ecran qui n existe pas. On dit ce qu on sait — le
+                nombre — et on dit que les dates manquent. */}
             <p className="text-[11px] italic" style={{ color: "var(--text-body-subtle)" }}>
-              Ce signal se produit {displayLifetimeTotal} fois dans ta vie — ouvre la fiche pour voir toutes les dates.
+              Ce signal se produit {displayLifetimeTotal} fois dans ta vie. Les dates ne sont pas disponibles.
             </p>
           </div>
         )}
@@ -978,7 +1004,9 @@ export function CapsuleDetailSheet({
                 <DetailRow label="Score" value={`${phase?.score ?? "—"} / 4`} />
                 <DetailRow label={perso("fiche.intensite", locale)} value={`${phase?.intensity ?? "—"} / 100`} />
                 <DetailRow label={perso("fiche.duree", locale)} value={`${capsule.phases[0]?.durationWeeks ?? "—"} semaines`} />
-                {displayLifetimeNum && displayLifetimeTotal && displayLifetimeTotal > 0 && (
+                {/* Meme faute qu au-dessus : `nombre &&` laissait fuir un « 0 »
+                    dans la liste. Presence d abord, valeur ensuite. */}
+                {displayLifetimeNum !== undefined && displayLifetimeTotal !== undefined && displayLifetimeTotal > 0 && (
                   <DetailRow
                     label="Dans ta vie"
                     value={`${displayLifetimeNum}e occurrence sur ${displayLifetimeTotal}`}

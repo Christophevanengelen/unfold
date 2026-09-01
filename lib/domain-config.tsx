@@ -9,13 +9,29 @@
  */
 
 import type { EventCategory, TocScore } from "@/types/api";
+import type { Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
 
 // ─── House (Life Domain) Configuration ───────────────────
 
 export type HouseNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export interface HouseMeta {
-  /** User-facing label — NO astrology jargon */
+  /**
+   * La CLEF de traduction, pas un libelle. Meme conversion que
+   * components/demo/compat/relationshipConfig.ts, meme raison.
+   *
+   * Se lit avec perso(cleLabel, locale). Les douze mots sont ceux de
+   * lib/maisons-i18n.ts, pour qu un domaine porte le meme nom dans l app et
+   * dans une notification.
+   */
+  cleLabel: string;
+  /**
+   * Le libelle francais, uniquement pour les ecrans pas encore convertis.
+   *
+   * @deprecated Passe a cleLabel + perso(). Ce champ servait de libelle
+   * d interface a dix langues : un lecteur japonais lisait « Identité ».
+   */
   label: string;
   /** One-line description for tooltips/detail sheets */
   description: string;
@@ -29,23 +45,30 @@ export interface HouseMeta {
 // In production, the API provides natal-specific houseColors per user.
 // These defaults are fallbacks — subtle, distinguishable, never loud.
 export const houseConfig: Record<HouseNumber, HouseMeta> = {
-  1:  { label: "Identité",        description: "Corps, image, manière d'être",               color: "#C2A0D4" /* soft lilac */,     iconName: "user" },
-  2:  { label: "Argent",          description: "Revenus, biens, valeurs",                    color: "#C4A86B" /* warm gold */,      iconName: "cash" },
-  3:  { label: "Communication",   description: "Échanges, déplacements, entourage",          color: "#7BBFAF" /* sage teal */,      iconName: "chat-bubble" },
-  4:  { label: "Foyer",           description: "Logement, famille, racines",                 color: "#6BA89A" /* muted sage */,     iconName: "home" },
-  5:  { label: "Créativité",      description: "Plaisir, enfants, romance",                  color: "#D89EA0" /* dusty rose */,     iconName: "sparkles" },
-  6:  { label: "Quotidien",       description: "Travail du jour, santé, routines",           color: "#8BAFC2" /* steel blue */,     iconName: "clipboard-check" },
-  7:  { label: "Couple",          description: "Partenaires, contrats, engagement",          color: "#B07CC2" /* warm purple */,    iconName: "heart" },
-  8:  { label: "Transformations", description: "Crises, héritage, profondeur",               color: "#8B7FC2" /* muted indigo */,   iconName: "fire" },
-  9:  { label: "Horizon",         description: "Voyages, études, philosophie",               color: "#9585CC" /* accent purple */,  iconName: "globe-alt" },
-  10: { label: "Carrière",        description: "Réputation, statut, vie publique",           color: "#A88BC4" /* lavender */,       iconName: "briefcase" },
-  11: { label: "Réseau",          description: "Amis, communautés, projets",                 color: "#7BA5C2" /* soft blue */,      iconName: "user-group" },
-  12: { label: "Intériorité",     description: "Isolement, secrets, lâcher-prise",           color: "#9E7CA0" /* muted mauve */,    iconName: "eye-slash" },
+  1:  { cleLabel: "maison.1",  label: "Identité",        description: "Corps, image, manière d'être",               color: "#C2A0D4" /* soft lilac */,     iconName: "user" },
+  2:  { cleLabel: "maison.2",  label: "Argent",          description: "Revenus, biens, valeurs",                    color: "#C4A86B" /* warm gold */,      iconName: "cash" },
+  3:  { cleLabel: "maison.3",  label: "Communication",   description: "Échanges, déplacements, entourage",          color: "#7BBFAF" /* sage teal */,      iconName: "chat-bubble" },
+  4:  { cleLabel: "maison.4",  label: "Foyer",           description: "Logement, famille, racines",                 color: "#6BA89A" /* muted sage */,     iconName: "home" },
+  5:  { cleLabel: "maison.5",  label: "Créativité",      description: "Plaisir, enfants, romance",                  color: "#D89EA0" /* dusty rose */,     iconName: "sparkles" },
+  6:  { cleLabel: "maison.6",  label: "Quotidien",       description: "Travail du jour, santé, routines",           color: "#8BAFC2" /* steel blue */,     iconName: "clipboard-check" },
+  7:  { cleLabel: "maison.7",  label: "Couple",          description: "Partenaires, contrats, engagement",          color: "#B07CC2" /* warm purple */,    iconName: "heart" },
+  8:  { cleLabel: "maison.8",  label: "Transformations", description: "Crises, héritage, profondeur",               color: "#8B7FC2" /* muted indigo */,   iconName: "fire" },
+  9:  { cleLabel: "maison.9",  label: "Horizon",         description: "Voyages, études, philosophie",               color: "#9585CC" /* accent purple */,  iconName: "globe-alt" },
+  10: { cleLabel: "maison.10", label: "Carrière",        description: "Réputation, statut, vie publique",           color: "#A88BC4" /* lavender */,       iconName: "briefcase" },
+  11: { cleLabel: "maison.11", label: "Réseau",          description: "Amis, communautés, projets",                 color: "#7BA5C2" /* soft blue */,      iconName: "user-group" },
+  12: { cleLabel: "maison.12", label: "Intériorité",     description: "Isolement, secrets, lâcher-prise",           color: "#9E7CA0" /* muted mauve */,    iconName: "eye-slash" },
 };
 
-/** Get house label from number (returns "?" for invalid) */
-export function getHouseLabel(house: number): string {
-  return houseConfig[house as HouseNumber]?.label ?? "?";
+/**
+ * Le nom du domaine, dans la langue de la personne. « ? » si le numero est
+ * hors des douze.
+ *
+ * La signature prend une locale depuis que le libelle n est plus du francais
+ * fige : sans elle, cette fonction ne pouvait rendre qu une seule langue.
+ */
+export function getHouseLabel(house: number, locale: Locale): string {
+  const meta = houseConfig[house as HouseNumber];
+  return meta ? perso(meta.cleLabel, locale) : "?";
 }
 
 /** Get house meta from number */
@@ -122,6 +145,18 @@ export type PlanetKey =
   | "solar-eclipse" | "lunar-eclipse";
 
 interface PlanetMeta {
+  /**
+   * La CLEF de traduction, pas un libelle. Se lit avec perso(cleLabel, locale).
+   *
+   * Les noms de planetes sont des noms astronomiques : chaque langue a le sien.
+   */
+  cleLabel: string;
+  /**
+   * Le nom francais, uniquement pour les ecrans pas encore convertis.
+   *
+   * @deprecated Passe a cleLabel + perso(). Ce champ servait « Saturne » et
+   * « Nœud Nord » aux dix langues du produit.
+   */
   label: string;
   color: string;
   /** Unicode symbol for compact display */
@@ -129,21 +164,32 @@ interface PlanetMeta {
 }
 
 export const planetConfig: Record<PlanetKey, PlanetMeta> = {
-  sun:             { label: "Soleil",          color: "#C9A86C", symbol: "☉" },  // warm gold — muted
-  moon:            { label: "Lune",            color: "#A8B0C4", symbol: "☽" },  // silver mauve
-  mercury:         { label: "Mercure",         color: "#8AADA6", symbol: "☿" },  // sage teal
-  venus:           { label: "Vénus",           color: "#B88A9E", symbol: "♀" },  // dusty rose
-  mars:            { label: "Mars",            color: "#B87A76", symbol: "♂" },  // muted terracotta
-  jupiter:         { label: "Jupiter",         color: "#8A9ABF", symbol: "♃" },  // soft periwinkle
-  saturn:          { label: "Saturne",         color: "#A89478", symbol: "♄" },  // warm taupe
-  uranus:          { label: "Uranus",          color: "#7AAAB5", symbol: "♅" },  // dusty cyan
-  neptune:         { label: "Neptune",         color: "#9B85C4", symbol: "♆" },  // lavender — on-brand
-  pluto:           { label: "Pluton",          color: "#7A6B8A", symbol: "♇" },  // deep mauve — transformative
-  "north-node":    { label: "Noeud Nord",       color: "#B5C98A", symbol: "☊" },  // sage green — growth direction
-  "south-node":    { label: "Noeud Sud",        color: "#C4A07A", symbol: "☋" },  // warm amber — release
-  "solar-eclipse": { label: "Éclipse solaire", color: "#D4C5A0", symbol: "●" },  // warm ivory — corona glow
-  "lunar-eclipse": { label: "Éclipse lunaire", color: "#A07090", symbol: "◐" },  // mauve pink
+  sun:             { cleLabel: "planete.soleil",          label: "Soleil",          color: "#C9A86C", symbol: "☉" },  // warm gold — muted
+  moon:            { cleLabel: "planete.lune",            label: "Lune",            color: "#A8B0C4", symbol: "☽" },  // silver mauve
+  mercury:         { cleLabel: "planete.mercure",         label: "Mercure",         color: "#8AADA6", symbol: "☿" },  // sage teal
+  venus:           { cleLabel: "planete.venus",           label: "Vénus",           color: "#B88A9E", symbol: "♀" },  // dusty rose
+  mars:            { cleLabel: "planete.mars",            label: "Mars",            color: "#B87A76", symbol: "♂" },  // muted terracotta
+  jupiter:         { cleLabel: "planete.jupiter",         label: "Jupiter",         color: "#8A9ABF", symbol: "♃" },  // soft periwinkle
+  saturn:          { cleLabel: "planete.saturne",         label: "Saturne",         color: "#A89478", symbol: "♄" },  // warm taupe
+  uranus:          { cleLabel: "planete.uranus",          label: "Uranus",          color: "#7AAAB5", symbol: "♅" },  // dusty cyan
+  neptune:         { cleLabel: "planete.neptune",         label: "Neptune",         color: "#9B85C4", symbol: "♆" },  // lavender — on-brand
+  pluto:           { cleLabel: "planete.pluton",          label: "Pluton",          color: "#7A6B8A", symbol: "♇" },  // deep mauve — transformative
+  "north-node":    { cleLabel: "planete.noeud_nord",      label: "Nœud Nord",       color: "#B5C98A", symbol: "☊" },  // sage green — growth direction
+  "south-node":    { cleLabel: "planete.noeud_sud",       label: "Nœud Sud",        color: "#C4A07A", symbol: "☋" },  // warm amber — release
+  "solar-eclipse": { cleLabel: "planete.eclipse_solaire", label: "Éclipse solaire", color: "#D4C5A0", symbol: "●" },  // warm ivory — corona glow
+  "lunar-eclipse": { cleLabel: "planete.eclipse_lunaire", label: "Éclipse lunaire", color: "#A07090", symbol: "◐" },  // mauve pink
 };
+
+/**
+ * Le nom de la planete, dans la langue de la personne. null quand le moteur
+ * nomme un point qu on ne sait pas representer — on n affiche alors rien
+ * plutot qu une planete inventee.
+ */
+export function getPlanetLabel(planet: PlanetKey | null | undefined, locale: Locale): string | null {
+  if (!planet) return null;
+  const meta = planetConfig[planet];
+  return meta ? perso(meta.cleLabel, locale) : null;
+}
 
 export const PLANET_KEYS: PlanetKey[] = [
   "sun", "moon", "mercury", "venus", "mars",

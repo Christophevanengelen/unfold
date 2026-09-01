@@ -693,9 +693,23 @@ function OverviewView({
             const oCapPad = w / 2;
             return (
             <motion.button
-              // Repere pour le guide : la periode en cours est la seule cible
-              // qu il peut designer honnetement.
-              data-guide={capsule.isCurrent ? "capsule-courante" : undefined}
+              // Reperes pour le guide.
+              //
+              // TOUTES les capsules portent data-guide="capsule" : le deuxieme
+              // pas du guide dit « ta vie, de bas en haut » et doit donc
+              // encadrer la colonne entiere. Avant le 01/09/2026 ce pas n avait
+              // aucune cible propre et retombait sur « l union de tous les
+              // data-guide » — or il n en existait que deux, le curseur d age
+              // et la capsule en cours. Le guide encadrait un grand rectangle
+              // dont l interieur etait vide, entre deux petits reperes
+              // eloignes. C est le defaut signale : « dans sa zone le design,
+              // autour c est le vide ».
+              //
+              // La periode en cours porte en plus un attribut a elle, parce
+              // qu un element ne peut avoir qu un seul data-guide et que le
+              // troisieme pas la designe seule.
+              data-guide="capsule"
+              data-guide-courant={capsule.isCurrent ? "1" : undefined}
               key={capsule.id}
               type="button"
               onClick={() => onTapCapsule(capsule)}

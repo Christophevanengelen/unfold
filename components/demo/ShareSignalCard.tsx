@@ -26,8 +26,9 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ShareNodes, ClipboardCheck, Close, Link } from "flowbite-react-icons/outline";
-import { planetConfig, houseConfig, type PlanetKey, type HouseNumber } from "@/lib/domain-config";
-import { getTierLabel, domainKeyToHouse } from "@/lib/detail-helpers";
+import { planetConfig, houseConfig, getPlanetLabel, type PlanetKey, type HouseNumber } from "@/lib/domain-config";
+import { useLocale } from "@/lib/use-locale";
+import { getTierLabel, domainKeyToHouseOrNull } from "@/lib/detail-helpers";
 
 // ─── Types (mirrors CapsuleDetailSheet) ──────────────────
 interface CapsuleData {
@@ -105,9 +106,19 @@ export function ShareSignalCard({
 
   const phase = capsule.phases[0];
   const tierLabel = getTierLabel(capsule.tier);
-  const domain = phase?.domain ?? "work";
-  const house = domainKeyToHouse(domain);
-  const houseMeta = houseConfig[house];
+  const locale = useLocale();
+
+  // Une capsule sans domaine ne devient plus une capsule de CARRIERE.
+  //
+  // C etait `phase?.domain ?? "work"` puis `domainKeyToHouse(...)` : un domaine
+  // absent ou inconnu ressortait en maison 10 et la carte prenait sa couleur.
+  // Ici l enjeu est une image que la personne PUBLIE — attribuer un domaine au
+  // hasard sur quelque chose qui sort de l app est la pire version du defaut.
+  //
+  // La couleur de repli est un lavande neutre de la palette, pas celle d une
+  // maison : elle ne pretend rien.
+  const house = domainKeyToHouseOrNull(phase?.domain);
+  const houseMeta = house !== null ? houseConfig[house] : undefined;
   const houseColor = capsule.color ?? houseMeta?.color ?? "#9B85C4";
 
   // Date labels
@@ -237,6 +248,11 @@ export function ShareSignalCard({
               <div className="flex flex-wrap justify-center gap-2 mb-6">
                 {capsule.planets.slice(0, 3).map((planet) => {
                   const pc = planetConfig[planet];
+                  // Le moteur nomme des points qu on ne sait pas representer
+                  // (Chiron, l Ascendant, les lots). Sans ce test, pc.color
+                  // plantait la carte au lieu de sauter la pastille.
+                  const nom = getPlanetLabel(planet, locale);
+                  if (!pc || !nom) return null;
                   const isSolarEclipse = planet === "solar-eclipse";
                   return (
                     <div
@@ -256,8 +272,11 @@ export function ShareSignalCard({
                           boxShadow: `0 0 6px ${pc.color}`,
                         }}
                       />
+                      {/* Le nom dans la langue de la personne. C etait
+                          `pc.label`, un libelle francais servi aux dix langues
+                          — sur une image DESTINEE A ETRE PARTAGEE. */}
                       <span className="text-[10px] font-medium" style={{ color: pc.color }}>
-                        {pc.label}
+                        {nom}
                       </span>
                     </div>
                   );

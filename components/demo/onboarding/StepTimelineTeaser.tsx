@@ -89,7 +89,10 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
       <motion.button
         type="button"
         onClick={onBack}
-        className="self-start text-xs font-medium"
+        // Zone de touche etendue plutot que bouton agrandi : le libelle fait
+        // 16 points, Apple en demande 44, et l agrandir decalerait tout ce qui
+        // suit — l animation de l ecran est calee sur ces positions.
+        className="relative self-start text-xs font-medium before:absolute before:-inset-3.5 before:content-['']"
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -346,7 +349,11 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
         <button
           type="button"
           onClick={onNext}
-          className="flex w-full items-center justify-center rounded-[20px] bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
+          // rounded-full et non rounded-[20px] : le bouton principal du parcours
+          // est arrondi complet sur trois des cinq ecrans. Deux rayons differents
+          // pour le meme bouton, d un ecran au suivant, se lit comme un defaut de
+          // fabrication meme quand on ne sait pas nommer ce qu on voit.
+          className="flex w-full items-center justify-center rounded-full bg-bg-brand py-3.5 text-sm font-semibold text-text-on-brand shadow-lg transition-transform active:scale-95"
         >
           {t("onboarding.p3_cta", locale)}
         </button>

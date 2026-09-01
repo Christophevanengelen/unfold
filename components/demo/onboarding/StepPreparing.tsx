@@ -75,7 +75,7 @@ function ScanFeed({ isLoading, phaseCount, breakdown }: { isLoading: boolean; ph
       <div className="flex items-center justify-between mb-3">
         <span className="text-[9px] font-medium uppercase tracking-widest"
           style={{ color: "var(--accent-purple)", opacity: 0.4 }}>
-          Scanning your birth chart
+          {t("onboarding.p6_scanning", locale)}
         </span>
       </div>
 
@@ -144,7 +144,7 @@ function ScanFeed({ isLoading, phaseCount, breakdown }: { isLoading: boolean; ph
             <CheckCircle size={12} style={{ color: "var(--success)" }} />
             <span className="text-[10px] font-medium"
               style={{ color: "var(--success)", opacity: 0.8 }}>
-              {phaseCount} signals mapped across your lifetime
+              {perso("prep.signaux", locale).replace("{n}", String(phaseCount))}
             </span>
           </div>
           {breakdown && (
@@ -236,13 +236,15 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
       const s = p.score ?? 1;
       counts[Math.min(4, Math.max(1, s))]++;
     }
+    // Les quatre niveaux se lisent apres un nombre — « 142 subtils ». Ils
+    // etaient poses ici en anglais, donc servis tels quels aux dix langues.
     return [
-      { label: "subtle", count: counts[1] },
-      { label: "notable", count: counts[2] },
-      { label: "major", count: counts[3] },
-      { label: "peak", count: counts[4] },
+      { label: perso("niveau.subtil", locale),  count: counts[1] },
+      { label: perso("niveau.notable", locale), count: counts[2] },
+      { label: perso("niveau.majeur", locale),  count: counts[3] },
+      { label: perso("niveau.pic", locale),     count: counts[4] },
     ].filter(b => b.count > 0);
-  }, [timelinePhases]);
+  }, [timelinePhases, locale]);
 
   // Get current phase
   const currentPhase = phases.find(p => p.status === "current");
@@ -404,7 +406,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               style={{ color: "var(--accent-purple)", letterSpacing: -0.3 }}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             >
-              Preparing your personal signal
+              {perso("prep.titre", locale)}
             </motion.h1>
 
             <motion.p
@@ -413,7 +415,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              We&apos;re reading your planetary signals and building your momentum timeline.
+              {perso("prep.sous", locale)}
             </motion.p>
 
             {/* Status lines */}
@@ -473,14 +475,14 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               className="text-[10px] font-semibold uppercase tracking-widest mb-3"
               style={{ color: "var(--accent-purple)", opacity: 0.5 }}
             >
-              Do you recognize these?
+              {perso("prep.reconnais", locale)}
             </motion.p>
 
             <motion.h2
               className="font-display text-xl font-bold mb-6"
               style={{ color: "var(--accent-purple)", letterSpacing: -0.3 }}
             >
-              Your strongest past periods
+              {perso("prep.passe_forts", locale)}
             </motion.h2>
 
             <div className="w-full max-w-[280px] space-y-3">
@@ -505,7 +507,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
               className="text-[10px] font-semibold uppercase tracking-widest mb-3"
               style={{ color: "var(--accent-purple)", opacity: 0.5 }}
             >
-              Right now
+              {perso("timeline.maintenant", locale)}
             </motion.p>
 
             <motion.h2
@@ -542,7 +544,7 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
                           background: `color-mix(in srgb, ${cfg?.color ?? "#9585CC"} 15%, transparent)`,
                           color: cfg?.color ?? "#9585CC",
                         }}>
-                        {cfg?.label ?? planet}
+                        {cfg ? perso(cfg.cleLabel, locale) : planet}
                       </span>
                     );
                   })}

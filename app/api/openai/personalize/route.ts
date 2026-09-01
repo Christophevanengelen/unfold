@@ -484,10 +484,14 @@ function buildUserProfileContext(
   }
 
   if (userProfile.effectivePriorities) {
-    const source = userProfile.prioritySource ?? "declared";
+    // `?? "declared"` faisait passer pour DECLAREES des priorites dont on
+    // ignorait l origine — et sautait du meme coup l avertissement de prudence.
+    // Le modele affirmait alors « tu as dit que… » sur une deduction. Origine
+    // inconnue = meme prudence qu une observation.
+    const source = typeof userProfile.prioritySource === "string" ? userProfile.prioritySource : "inconnue";
     lines.push(`Priorités (${source}) : ${(userProfile.effectivePriorities as string[]).join(", ")}`);
-    if (source === "observed") {
-      lines.push("⚠ Priorités observées (pas déclarées) — personnaliser avec prudence, ne pas sur-affirmer.");
+    if (source !== "declared") {
+      lines.push("⚠ Priorités non déclarées par la personne — personnaliser avec prudence, ne pas sur-affirmer.");
     }
   }
 
@@ -614,12 +618,23 @@ async function handlePost(request: NextRequest) {
 
     // ── Step 1: Get category-specific prompt + payload from Marie Ange's API ──
     // Prefer boudinId (stable across calls) over boudinIndex (position-dependent)
+    // `?? "Europe/Brussels"` inventait le fuseau de naissance quand il manquait :
+    // le theme entier etait alors calcule pour Bruxelles, pour quelqu un qui n y
+    // est peut-etre jamais ne, et la lecture produite avait l air aussi vraie
+    // qu une autre. Un fuseau absent est une donnee absente : on refuse.
+    if (typeof birthData.timezone !== "string" || birthData.timezone.trim() === "") {
+      return applyGuardCookie(guard, NextResponse.json(
+        { error: "missing_timezone", message: "Fuseau horaire de naissance manquant — impossible de calculer sans lui." },
+        { status: 400 },
+      ));
+    }
+
     const detailBody: Record<string, unknown> = {
       birthDate: birthData.birthDate,
       birthTime: birthData.birthTime,
       latitude: birthData.latitude,
       longitude: birthData.longitude,
-      timezone: birthData.timezone ?? "Europe/Brussels",
+      timezone: birthData.timezone,
     };
     if (boudinId !== undefined) {
       detailBody.boudinId = boudinId;
@@ -686,10 +701,22 @@ async function handlePost(request: NextRequest) {
       ));
     }
 
+    // Le prompt de secours — « Tu es un astrologue expert… » — laissait le
+    // modele ecrire librement quand le moteur n avait pas fourni sa consigne
+    // par categorie. Le texte produit n etait plus une lecture du signal
+    // calcule mais une improvisation, et rien ne le signalait. Sans prompt du
+    // moteur, on ne genere pas : meme regle que pour llmPayload.
+    if (typeof systemPrompt !== "string" || systemPrompt.trim() === "") {
+      return applyGuardCookie(guard, NextResponse.json(
+        { error: "Missing systemPrompt from TocToc API" },
+        { status: 502 }
+      ));
+    }
+
     // ── Step 2: Build system prompt ──
     // Use Marie Ange's category-specific systemPrompt from the detail endpoint.
     // Append: our JSON output format spec + optional user profile context + locale instruction.
-    const apiSystemPrompt = systemPrompt ?? "Tu es un astrologue expert. Génère une délinéation personnalisée en français.";
+    const apiSystemPrompt = systemPrompt;
     const userContext = buildUserProfileContext(userProfile);
     const localeInstruction = buildLocaleInstruction(locale);
     const fullSystemPrompt = apiSystemPrompt + JSON_OUTPUT_FORMAT + userContext + localeInstruction;
@@ -748,18 +775,23 @@ async function handlePost(request: NextRequest) {
       const corpsRaw = String(parsed.corps ?? parsed.cor ?? "").trim();
       const avecLeReculRaw = String(parsed.avecLeRecul ?? "").trim();
 
-      // Fallbacks: derive subtitle / insight from body text if model omits them
-      const firstSentence = (() => {
-        const m = corpsRaw.match(/^[^.!?]+[.!?]/);
-        return (m?.[0] ?? "").trim();
-      })();
-      const lastSentence = (() => {
-        const parts = corpsRaw.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
-        return parts.length > 0 ? parts[parts.length - 1] : "";
-      })();
-
-      const sousTitre = sousTitreRaw || firstSentence || (titre ? `${titre}.` : "");
-      const avecLeRecul = avecLeReculRaw || lastSentence || "Avec le recul, ce chapitre t'aide à clarifier ce qui compte vraiment.";
+      // Aucun repli fabrique ici.
+      //
+      // `sousTitre` retombait sur la premiere phrase du corps : la carte
+      // « Insight cle » repetait alors mot pour mot le debut du texte deja lu,
+      // presente comme un insight distinct.
+      //
+      // `avecLeRecul` retombait sur la derniere phrase du corps puis, a defaut,
+      // sur une phrase fixe en francais — « Avec le recul, ce chapitre t aide a
+      // clarifier ce qui compte vraiment. » — servie comme guidance
+      // personnalisee, identique pour tout le monde, sans aucune marque
+      // distinctive. Elle contredisait aussi la consigne de langue : un lecteur
+      // anglophone recevait du francais.
+      //
+      // Les deux champs valent "" quand le modele ne les produit pas ; le client
+      // masque alors la carte correspondante.
+      const sousTitre = sousTitreRaw;
+      const avecLeRecul = avecLeReculRaw;
 
       return {
         titre,

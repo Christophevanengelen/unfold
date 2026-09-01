@@ -137,8 +137,16 @@ function adaptPeriods(
 ): MatchingWindow[] {
   const today = new Date();
 
-  return periods.map((p): MatchingWindow => {
+  // flatMap et non map : une periode dont le monthKey est illisible est ecartee.
+  // Avant, `new Date(NaN, NaN, 15)` produisait une date invalide qui traversait
+  // tout le calcul sans jamais lever d erreur — statut « a venir », « 0 j
+  // restants » et un titre « Alignement undefined ». Une fenetre relationnelle
+  // entierement fabriquee, affichee a cote des vraies.
+  return periods.flatMap((p): MatchingWindow[] => {
     const [year, month] = p.monthKey.split("-").map(Number);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+      return [];
+    }
     const monthDate = new Date(year, month - 1, 15);
     const isCurrentMonth =
       monthDate.getMonth() === today.getMonth() &&
@@ -155,14 +163,17 @@ function adaptPeriods(
       Math.ceil((finDuMois.getTime() - today.getTime()) / 86_400_000),
     );
 
-    const tierColor = TIER_COLORS[p.tier] ?? "#8B7FC2";
+    // Le repli valait la couleur de SUBTLE : un palier inconnu se peignait donc
+    // exactement comme un « alignement subtil » — la couleur EST le palier dans
+    // cette liste. Gris neutre : visiblement pas un palier.
+    const tierColor = TIER_COLORS[p.tier] ?? "#8A8A8A";
     const title = isCurrentMonth
       ? "Alignement actif"
       : p.tier === "PEAK"
         ? `Fenêtre forte — ${MONTH_FR[month - 1]}`
         : `Alignement ${MONTH_FR[month - 1]}`;
 
-    return {
+    return [{
       title,
       dateRange: `${MONTH_SHORT[month - 1]} ${year}`,
       monthKey: p.monthKey,
@@ -184,7 +195,7 @@ function adaptPeriods(
       sharedTheme: p.sharedTheme,
       insight: p.sharedInsight,
       action: p.actionTogether,
-    };
+    }];
   });
 }
 

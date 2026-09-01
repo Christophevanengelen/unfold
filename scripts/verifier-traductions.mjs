@@ -20,7 +20,7 @@
  *   node scripts/verifier-traductions.mjs
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 /**
@@ -81,7 +81,7 @@ function verifierClesPerso() {
   return { connues: connues.size, fautives };
 }
 
-const PLAFOND = 49;
+const PLAFOND = 37;
 
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [
@@ -156,7 +156,12 @@ function ressembleAUnTexte(v) {
 
 const fichiers = execFileSync("git", ["ls-files", "components", "app"], { encoding: "utf8" })
   .split("\n")
-  .filter((f) => f.endsWith(".tsx"));
+  .filter((f) => f.endsWith(".tsx"))
+  // `git ls-files` liste ce que git CONNAIT, pas ce qui existe sur le disque :
+  // un fichier supprime mais pas encore indexe y figure encore. Sans ce filtre
+  // le controle mourait sur un ENOENT avec une trace de pile, au lieu de dire
+  // ce qu il verifiait. Un outil de verification qui plante ne verifie rien.
+  .filter((f) => existsSync(f));
 
 const fuites = [];
 for (const f of fichiers) {
