@@ -52,16 +52,16 @@ const RELATIONSHIP_STATUSES = (l: Locale): { value: RelationshipStatus; label: s
   { value: "other", label: perso("relation.other", l) },
 ];
 
-const PRIORITIES = (l: Locale): { value: PriorityDomain; label: string; color: string }[] => [
-  { value: "love", label: perso("priorite.love", l), color: "#E87E9A" },
-  { value: "career", label: perso("priorite.career", l), color: "#7C6BBF" },
-  { value: "money", label: perso("priorite.money", l), color: "#D4A843" },
-  { value: "family", label: perso("priorite.family", l), color: "#6BAF92" },
-  { value: "health_energy", label: perso("priorite.health_energy", l), color: "#5BA3CF" },
-  { value: "creativity", label: perso("priorite.creativity", l), color: "#CF7E5B" },
-  { value: "home", label: perso("priorite.home", l), color: "#8B9B6B" },
-  { value: "friends_network", label: perso("priorite.friends_network", l), color: "#9B7ECF" },
-  { value: "meaning_spirituality", label: perso("priorite.meaning_spirituality", l), color: "#B08DAF" },
+const PRIORITIES = (l: Locale): { value: PriorityDomain; label: string }[] => [
+  { value: "love", label: perso("priorite.love", l) },
+  { value: "career", label: perso("priorite.career", l) },
+  { value: "money", label: perso("priorite.money", l) },
+  { value: "family", label: perso("priorite.family", l) },
+  { value: "health_energy", label: perso("priorite.health_energy", l) },
+  { value: "creativity", label: perso("priorite.creativity", l) },
+  { value: "home", label: perso("priorite.home", l) },
+  { value: "friends_network", label: perso("priorite.friends_network", l) },
+  { value: "meaning_spirituality", label: perso("priorite.meaning_spirituality", l) },
 ];
 
 const GUIDANCE_STYLES = (l: Locale): { value: GuidanceStyle; label: string; desc: string }[] => [
@@ -358,7 +358,7 @@ function ScreenReality({
             <ColorChip
               key={item.value}
               label={item.label}
-              color={item.color}
+              domaine={item.value}
               selected={priorities.includes(item.value)}
               disabled={!priorities.includes(item.value) && priorities.length >= MAX_PRIORITIES}
               onSelect={() => togglePriority(item.value)}
@@ -538,15 +538,25 @@ function Chip({
 }
 
 /** Priority pill with unique color tint */
+/**
+ * Puce de priorite.
+ *
+ * Le nom du jeton se DEDUIT de la valeur du domaine plutot que d etre passe a
+ * part : les deux ne peuvent donc pas se desynchroniser. Le fond teinte et la
+ * bordure prennent la couleur de base — l identite du domaine — tandis que le
+ * libelle prend la nuance derivee. Sans cette distinction, texte et fond
+ * partagent la teinte et convergent : c est ce qui rendait les neuf domaines
+ * illisibles une fois selectionnes. Voir le bloc des domaines dans globals.css.
+ */
 function ColorChip({
   label,
-  color,
+  domaine,
   selected,
   disabled,
   onSelect,
 }: {
   label: string;
-  color: string;
+  domaine: PriorityDomain;
   selected: boolean;
   disabled: boolean;
   onSelect: () => void;
@@ -559,13 +569,17 @@ function ColorChip({
       whileTap={disabled ? undefined : { scale: 0.93 }}
       transition={springs.bouncy}
       className="rounded-full border px-3.5 py-2 text-[13px] font-medium transition-colors disabled:opacity-35"
-      style={{
-        background: selected
-          ? `color-mix(in srgb, ${color} 18%, transparent)`
-          : "var(--bg-secondary)",
-        borderColor: selected ? color : "var(--border-muted)",
-        color: selected ? color : "var(--text-body)",
-      }}
+      style={(() => {
+        const base = `var(--domaine-${domaine.replace(/_/g, "-")})`;
+        const texte = `var(--domaine-${domaine.replace(/_/g, "-")}-texte)`;
+        return {
+          background: selected
+            ? `color-mix(in srgb, ${base} 18%, transparent)`
+            : "var(--bg-secondary)",
+          borderColor: selected ? base : "var(--border-muted)",
+          color: selected ? texte : "var(--text-body)",
+        };
+      })()}
     >
       {label}
     </motion.button>

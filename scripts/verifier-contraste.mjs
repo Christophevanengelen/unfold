@@ -80,6 +80,45 @@ for (const t of themes) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Les couleurs des domaines de vie.
+//
+// Elles ne se verifient pas contre le fond de la page mais contre LEUR PROPRE
+// fond teinte : la puce selectionnee peint son libelle sur un melange fait a
+// 18 % de la couleur de base. C est ce qui rendait les neuf domaines illisibles
+// avant le 01/09 — texte et fond partageaient la teinte et convergeaient, avec
+// des contrastes tombant a 1,65 en clair.
+//
+// Sans ce controle, retoucher une couleur de domaine casserait la lisibilite
+// sans que rien ne le dise.
+// ─────────────────────────────────────────────────────────────────────────────
+const DOMAINES = [
+  "love", "career", "money", "family", "health-energy",
+  "creativity", "home", "friends-network", "meaning-spirituality",
+];
+
+for (const t of themes) {
+  // Le theme sombre ne redefinit que le texte : la base vient de :root.
+  const jetons = t.nom === "sombre" ? { ...themes[0].jetons, ...t.jetons } : t.jetons;
+  const fondBase = rgb(jetons["bg-secondary"]);
+  if (!fondBase) continue;
+  console.log(`\n  Domaines, theme ${t.nom} — sur leur fond teinte`);
+  for (const d of DOMAINES) {
+    const base = rgb(jetons[`domaine-${d}`]);
+    const texte = rgb(jetons[`domaine-${d}-texte`]);
+    if (!base || !texte) {
+      console.log(`    ${d.padEnd(22)} jeton manquant`);
+      echecs++;
+      continue;
+    }
+    const fond = base.map((c, i) => c * 0.18 + fondBase[i] * 0.82);
+    const r = contraste(texte, fond);
+    const ok = r >= SEUIL;
+    if (!ok) echecs++;
+    console.log(`    ${d.padEnd(22)} ${r.toFixed(2).padStart(6)}  ${ok ? "ok" : "SOUS LE SEUIL"}`);
+  }
+}
+
 if (echecs > 0) {
   console.log(`\n  ${echecs} jeton(s) sous le seuil de ${SEUIL}.`);
   console.log(`  Baisse la luminosite en gardant la teinte : la couleur reste de la

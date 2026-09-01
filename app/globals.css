@@ -166,6 +166,32 @@ button, a, [role="button"], [role="link"],
    LIGHT MODE
    ============================================== */
 :root {
+  /* Couleurs des domaines de vie.
+     La base porte l identite et sert au fond teinte et a la bordure ; le texte
+     en est DERIVE, parce que le motif d origine peignait le libelle avec la
+     couleur pure sur un fond fait de la meme couleur a 18 %. Texte et fond
+     partageant la teinte, ils convergeaient : les neuf domaines etaient sous le
+     seuil en clair (1,65 a 3,02) et sept sur neuf en sombre. Ces nuances-ci
+     sont calculees pour passer 4,5 sur leur propre fond. */
+  --domaine-love: #E87E9A;
+  --domaine-love-texte: #8b4c5c;
+  --domaine-career: #7C6BBF;
+  --domaine-career-texte: #5f5293;
+  --domaine-money: #D4A843;
+  --domaine-money-texte: #775e26;
+  --domaine-family: #6BAF92;
+  --domaine-family-texte: #406958;
+  --domaine-health-energy: #5BA3CF;
+  --domaine-health-energy-texte: #386580;
+  --domaine-creativity: #CF7E5B;
+  --domaine-creativity-texte: #84513a;
+  --domaine-home: #8B9B6B;
+  --domaine-home-texte: #596344;
+  --domaine-friends-network: #9B7ECF;
+  --domaine-friends-network-texte: #68548b;
+  --domaine-meaning-spirituality: #B08DAF;
+  --domaine-meaning-spirituality-texte: #6f596e;
+
   /* Zones de securite de l appareil : l encoche en haut, la barre d accueil en bas.
      Declarees ici une fois pour toutes, donc disponibles dans TOUT l arbre. Elles
      existaient deja mais personne ne les lisait, et les boutons du bas tombaient
@@ -298,6 +324,17 @@ button, a, [role="button"], [role="link"],
    Deep purple backgrounds, lifted accents.
    ============================================== */
 .dark {
+  /* Seul le texte change : la base reste identique dans les deux themes. */
+  --domaine-love-texte: #e87f9b;
+  --domaine-career-texte: #9d90cf;
+  --domaine-money-texte: #d4a843;
+  --domaine-family-texte: #6baf92;
+  --domaine-health-energy-texte: #62a7d1;
+  --domaine-creativity-texte: #d48b6b;
+  --domaine-home-texte: #94a377;
+  --domaine-friends-network-texte: #a990d6;
+  --domaine-meaning-spirituality-texte: #b594b4;
+
   /* Neutral scale — purple-tinted mauve (near-black → white) */
   --brand-0: #150F2A;
   --brand-1: #1B1535;

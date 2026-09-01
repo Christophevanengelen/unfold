@@ -34,10 +34,15 @@ faite à moitié puis recouverte par le sujet suivant.
 textes non traduits, erreurs de lint, notifications APNs, choix des
 notifications, liens magiques.
 
-**Trois fonctionnent au cliquet** — couleurs figées (156), textes non traduits
-(29), erreurs de lint (80). Le nombre actuel est un plafond : une régression le
-dépasse et échoue, une correction l'abaisse. La dette ne peut que décroître, et
-personne n'a besoin d'y penser.
+**Trois fonctionnent au cliquet** — couleurs figées, textes non traduits,
+erreurs de lint. Le nombre actuel est un plafond : une régression le dépasse et
+échoue, une correction l'abaisse. La dette ne peut que décroître, et personne
+n'a besoin d'y penser.
+
+Les plafonds vivent dans les scripts, pas ici : `npm run verifier` dit toujours
+la vérité du jour. Recopier les chiffres dans ce fichier, c'est se garantir
+qu'ils seront faux dans une semaine — ce document annonçait encore 156 couleurs
+alors qu'il en restait 136.
 
 Un contrôle qui échoue sur des dizaines de cas existants se fait désactiver le
 lendemain, donc ne protège de rien. Le cliquet protège dès le premier jour.
@@ -69,6 +74,14 @@ installation précédente masque le comportement réel.
 
 ## Bloque la publication
 
+- [ ] **Codes d'accès : à trancher.** `NEXT_PUBLIC_CHART_COUPONS` n'est défini
+      nulle part, donc les trois champs de code refusent tout depuis toujours.
+      Soit on retire les champs, soit on met une vérification **côté serveur** —
+      pas une variable `NEXT_PUBLIC_`, dont le contenu est lisible par
+      n'importe quel visiteur dans son navigateur.
+- [ ] **`app/unlock` est orpheline.** Rien n'y mène, et elle renvoie vers un
+      écran absent du paquet natif. À supprimer ou à rebrancher.
+
 - [ ] **Statut de professionnel DSA** — sans lui, retrait de l'App Store dans
       l'UE. Décision préalable : ces coordonnées deviennent publiques.
 - [ ] **Questionnaire App Privacy** dans App Store Connect. Le manifeste iOS est
@@ -79,8 +92,6 @@ installation précédente masque le comportement réel.
 
 ## Produit — en cours
 
-- [ ] **Guided tour** — « très moche et imprécis » (Christophe, 01/09). Deux pas
-      seulement, écrits en dur en anglais pour dix langues. Refonte en cours.
 
 - [ ] **Notification : durée, type, intensité.** Les douze domaines sont traduits
       (`lib/maisons-i18n.ts`). Reste à les faire porter par le texte.
@@ -92,10 +103,13 @@ installation précédente masque le comportement réel.
 
 ## Dette, sous cliquet
 
-- [ ] **156 couleurs figées** dans l'app grand public.
-- [ ] **29 textes visibles non traduits** — libellés anglais chez les
-      francophones, et l'inverse. `DomainDetailSheet`, `MonthlyView`,
-      `PersonalizeFlow`, et le guide de première utilisation.
+- [ ] **136 couleurs figées** (154 le 01/09 au matin). Le gros du reste est
+      dans `components/landing/` — le site vitrine, toujours sombre par choix,
+      où une couleur figée ne casse rien. Côté app, il reste ~47.
+- [ ] **12 textes visibles non traduits** (29 le 31/08). Il en reste 9 dans
+      `StepPreparing` — étiquettes de chargement visibles 3 secondes — et 3 dans
+      `MonthlyView`, qui est du contenu fabriqué déjà sorti du build : ils
+      partiront avec l'écran, pas besoin de les traduire.
 - [ ] **80 erreurs ESLint**, surtout la sévérité de React 19. Aucune n'est
       active aujourd'hui.
 
