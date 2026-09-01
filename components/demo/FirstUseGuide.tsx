@@ -35,6 +35,7 @@ const CLE_ESSAIS = "unfold_first_use_essais";
 const CLE_ACCUEIL = "unfold_timeline_welcomed";
 
 /** Au-dela, la personne a repondu : elle ne veut pas du guide. */
+const CLE_RELANCE = "unfold_first_use_relance";
 const ESSAIS_MAX = 3;
 
 type Pas = {
@@ -88,12 +89,37 @@ export function marquerGuideVu() {
 }
 
 /** Remet le guide a zero — appele depuis l ecran profil. */
+/**
+ * Demande de rejouer le guide, depuis le tiroir de profil.
+ *
+ * Effacer « guide fait » et « refus » ne suffisait PAS, et c est ce qui rendait
+ * le bouton inerte : le guide n est monte que dans le `onDone` de l ecran
+ * d accueil, c est-a-dire au seul moment ou cet ecran se termine. Or l accueil
+ * ne se rejoue pas — `unfold_timeline_welcomed` reste pose. Le `onDone` ne
+ * partait donc jamais, et « revoir le guide » ouvrait la timeline sans rien
+ * declencher.
+ *
+ * On pose desormais une demande explicite, que la timeline lit a son montage.
+ * Le guide ne depend plus d un evenement qui ne peut plus se produire.
+ */
 export function rejouerGuide() {
   try {
     localStorage.removeItem(CLE_FAIT);
     localStorage.removeItem(CLE_ESSAIS);
+    localStorage.setItem(CLE_RELANCE, "1");
   } catch {
     /* stockage refuse */
+  }
+}
+
+/** La timeline consomme la demande : une relance, une seule fois. */
+export function relanceDemandee(): boolean {
+  try {
+    if (localStorage.getItem(CLE_RELANCE) !== "1") return false;
+    localStorage.removeItem(CLE_RELANCE);
+    return true;
+  } catch {
+    return false;
   }
 }
 

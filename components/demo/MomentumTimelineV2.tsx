@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { planetConfig, type DomainKey, type PlanetKey } from "@/lib/domain-config";
 import { TimelineWelcome, shouldShowWelcome } from "./TimelineWelcome";
-import { FirstUseGuide, shouldShowFirstUseGuide } from "./FirstUseGuide";
+import { FirstUseGuide, shouldShowFirstUseGuide, relanceDemandee } from "./FirstUseGuide";
 import {
   type MomentumPhase,
 } from "@/lib/mock-timeline";
@@ -1148,6 +1148,28 @@ export function MomentumTimelineV2() {
   const [showWelcome, setShowWelcome] = useState(() => shouldShowWelcome());
   const panneauRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);
+
+  // « Revoir le guide » depuis le profil. Le guide etait jusqu ici monte
+  // uniquement dans le onDone de l ecran d accueil — un evenement qui ne peut
+  // plus se produire une fois l accueil passe. Le bouton etait donc inerte.
+  useEffect(() => {
+    if (!relanceDemandee()) return;
+    const t = setTimeout(() => {
+      if (
+        shouldShowFirstUseGuide({
+          vue: viewMode,
+          aDesDonnees: hasAnyData,
+          chargementViager: isLoadingLifetime,
+          ficheOuverte: selectedCapsule !== null,
+        })
+      ) {
+        setShowGuide(true);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+    // Volontairement au montage seulement : la demande est consommee une fois.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [briefingDismissed, setBriefingDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
     const stored = localStorage.getItem("unfold_briefing_dismissed");
@@ -1396,21 +1418,53 @@ export function MomentumTimelineV2() {
       </div>}
 
       {/* Daily Briefing — pinned at top, only after welcome + guide are done */}
-      {viewMode === "overview" && !showWelcome && !showGuide && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center px-5 pointer-events-none">
-          <div className="pointer-events-auto w-full">
-            <DailyBriefing onDismiss={() => setBriefingDismissed(true)} />
+      {/* LES « deux blocs parasites ». Ce bloc etait monte CONDITIONNELLEMENT
+          sur viewMode, donc passer de la liste a la timeline le remontait a
+          neuf. DailyBriefing rend exactement deux cartes, chacune repartant a
+          l etat « idle », et l etat « idle » rend un BriefingSkeleton : un
+          rectangle gris pulse. Deux cartes, deux rectangles, au milieu de
+          l ecran, par-dessus la timeline.
+
+          Ils restaient visibles le temps que useBriefingData reponde — une
+          lecture IndexedDB, donc asynchrone meme quand la donnee est en cache.
+          D ou la demi-seconde decrite.
+
+          La correction du 31/08 visait les conteneurs de vue et ne pouvait pas
+          l attraper : le probleme qu elle reglait etait reel, mais ce n etait
+          pas celui-la.
+
+          On ne le demonte donc plus. Il reste monte et devient invisible, ce
+          qui preserve l etat des deux cartes : au retour, elles ont deja leurs
+          donnees et n affichent aucun squelette. Cela vaut aussi a la fermeture
+          du guide et de l accueil, qui provoquaient le meme remontage. */}
+      {(() => {
+        const visible = viewMode === "overview" && !showWelcome && !showGuide;
+        return (
+          <div
+            className="absolute inset-0 z-30 flex items-center justify-center px-5 pointer-events-none"
+            style={{ visibility: visible ? "visible" : "hidden" }}
+            aria-hidden={!visible}
+          >
+            <div className="pointer-events-auto w-full">
+              <DailyBriefing onDismiss={() => setBriefingDismissed(true)} />
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Les deux vues restent montees, mais elles ne se croisent PAS.
           
           Elles se fondaient l une dans l autre sur la meme duree et la meme
           courbe : a mi-parcours, les deux etaient a cinquante pour cent
           d opacite EN MEME TEMPS, et on voyait les boudins de la timeline
-          par-dessus les lignes de la liste. Ce sont les « blocs parasites »
-          apparaissant une demi-seconde a chaque bascule.
+          par-dessus les lignes de la liste.
+
+          RECTIFICATION du 01/09 : ce defaut-la etait reel, mais ce n etaient
+          PAS les « deux blocs parasites » signales. Ceux-ci venaient du
+          remontage de DailyBriefing, quelques lignes plus haut. Une
+          superposition de deux mises en page entieres ne produit pas « deux
+          blocs » — elle brouille tout l ecran. Corriger ceci restait juste ;
+          croire que cela reglait le symptome etait une erreur.
 
           Un fondu croise ne fonctionne qu entre deux images proches. Ces deux
           mises en page n ont rien de commun, donc on enchaine au lieu de
