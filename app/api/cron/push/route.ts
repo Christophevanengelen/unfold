@@ -28,10 +28,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/db";
 import { envoyerLot, type EnvoiAPNs } from "@/lib/apns";
-import { planifier, ESPACEMENT_MINIMUM, type Cadence } from "@/lib/push-planification";
-import { ecrire } from "@/lib/push-textes";
-import { getCalculatorRequest, chargerSujetParAppareil } from "@/lib/astrology-subject";
-import { callCalculatorEndpoint } from "@/lib/astrolearn-calculator";
+import { ESPACEMENT_MINIMUM, type Cadence } from "@/lib/push-planification";
+import { ecrireBascule } from "@/lib/push-textes";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +40,9 @@ const HEURE = 9;
 
 /** Au-dela, on s arrete et on reprendra a la prochaine heure ronde. */
 const PLAFOND = 200;
+
+/** On previent la veille : une bascule connue le matin meme se subit. */
+const PREAVIS = 1;
 
 const JOUR = 86_400_000;
 
@@ -56,8 +57,19 @@ export async function GET(req: NextRequest) {
   const supabase = getAdminClient();
   const maintenant = new Date();
 
-  const { data: candidats, error } = await supabase.rpc("push_a_prevenir", {
+  // On lit les bascules deposees par l app, plus le moteur.
+  //
+  // Ce cron rappelait le moteur d ephemerides une fois par personne et par
+  // jour, pour recalculer des dates qui ne changent jamais. Avec mille
+  // utilisateurs, mille appels quotidiens sur un serveur tiers — et mille
+  // occasions de tomber sur une panne un matin.
+  //
+  // L app charge desormais ses periodes une fois et depose ses dates d entree
+  // et de sortie (voir lib/widget.ts et /api/push/bascules). Le cron ne lit
+  // plus que sa propre base.
+  const { data: candidats, error } = await supabase.rpc("bascules_a_annoncer", {
     p_heure_locale: HEURE,
+    p_preavis: PREAVIS,
   });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -66,20 +78,32 @@ export async function GET(req: NextRequest) {
   const lignes = (candidats ?? []).slice(0, PLAFOND) as {
     device_id: string;
     jeton: string;
-    fournisseur: string;
-    plateforme: string;
     locale: string | null;
     cadence: Cadence;
     dernier_envoi: string | null;
+    cle: string;
+    jour: string;
+    sens: "entree" | "sortie";
+    duree_jours: number | null;
+    maison: number | null;
+    score: number;
   }[];
 
   const envois: EnvoiAPNs[] = [];
-  const reserves: { device_id: string; cle: string }[] = [];
   let ignores = 0;
-  let sansCalcul = 0;
+  // Une seule notification par personne, meme si plusieurs periodes basculent
+  // le meme jour : la requete les rend triees par intensite, on garde la
+  // premiere. Deux notifications le meme matin, c est une de trop.
+  const dejaVus = new Set<string>();
 
   for (const ligne of lignes) {
-    // 2. Le plancher d espacement.
+    if (dejaVus.has(ligne.device_id)) continue;
+
+    // La cadence choisie filtre ce qui merite d etre annonce.
+    const minimum = ligne.cadence === "essentiel" ? 3 : ligne.cadence === "normal" ? 2 : 1;
+    if (ligne.score < minimum) continue;
+
+    // Le plancher d espacement.
     if (ligne.dernier_envoi) {
       const jours = (maintenant.getTime() - new Date(ligne.dernier_envoi).getTime()) / JOUR;
       if (jours < ESPACEMENT_MINIMUM[ligne.cadence ?? "normal"]) {
@@ -88,55 +112,27 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Le calcul, personne par personne. Une panne du moteur ne doit pas
-    // emporter les autres.
-    let releasing: unknown = null;
-    try {
-      const sujet = await chargerSujetParAppareil(ligne.device_id);
-      const { endpoint, input } = getCalculatorRequest(sujet, "zodiacal-releasing");
-      const resultat = await callCalculatorEndpoint(endpoint, {
-        ...input,
-        lotType: "spirit",
-        maxLevels: 4,
-        targetDate: maintenant.toISOString().slice(0, 10),
-        l4Year: maintenant.getUTCFullYear(),
-      });
-      releasing = (resultat as { data?: { releasing?: unknown } })?.data?.releasing ?? null;
-    } catch {
-      // Profil incomplet, moteur indisponible : on passe.
-      sansCalcul++;
-      continue;
-    }
-
-    const choix = planifier(
-      releasing as Parameters<typeof planifier>[0],
-      maintenant,
-      { cadence: ligne.cadence ?? "normal" },
-    )[0];
-    if (!choix) continue;
-
-    // 1. Reserver AVANT d envoyer. L unicite en base fait l arbitrage, meme
-    // entre deux executions simultanees.
+    // Reserver avant d envoyer : l unicite en base arbitre, meme entre deux
+    // executions simultanees.
     const { data: reserve } = await supabase.rpc("reserver_envoi_push", {
       p_device_id: ligne.device_id,
-      p_cle: choix.cle,
-      p_nature: choix.nature,
+      p_cle: ligne.cle,
+      p_nature: ligne.sens,
     });
     if (reserve !== true) {
       ignores++;
       continue;
     }
 
-    const { titre, corps } = ecrire(choix, ligne.locale);
+    const { titre, corps } = ecrireBascule(ligne, ligne.locale);
     envois.push({
       jeton: ligne.jeton,
       titre,
       corps,
-      // Une clef, jamais un chemin : voir lib/push-routes.ts.
-      donnees: { ecran: choix.ecran },
-      regroupement: choix.regroupement,
+      donnees: { ecran: "timeline" },
+      regroupement: "periode",
     });
-    reserves.push({ device_id: ligne.device_id, cle: choix.cle });
+    dejaVus.add(ligne.device_id);
   }
 
   const resultats = envois.length > 0 ? await envoyerLot(envois) : [];
@@ -151,7 +147,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     examines: lignes.length,
     ignores,
-    sans_calcul: sansCalcul,
     envoyes: resultats.filter((r) => r.ok).length,
     echecs: resultats.filter((r) => !r.ok).length,
     jetons_enterres: morts.length,

@@ -30,7 +30,7 @@ import { yearDataToPhases, appDataToPhases } from "@/lib/momentum-adapter";
 import { syncConnections, getMyInviteCode } from "@/lib/connections-store";
 import { upsertProfile } from "@/lib/supabase-store";
 import type { MomentumPhase } from "@/types/momentum";
-import { deposerPourWidget } from "@/lib/widget";
+import { deposerPourWidget, deposerBascules } from "@/lib/widget";
 
 // ─── Cache layer — dual-write (IndexedDB + localStorage) ──────
 
@@ -63,6 +63,9 @@ async function fetchYear(bd: BirthData): Promise<MomentumPhase[]> {
   // periode en cours et la suivante, et celles-la arrivent en deux secondes au
   // lieu de deux minutes.
   void deposerPourWidget(phases);
+  // Les dates de bascule partent au meme moment : elles decoulent des memes
+  // phases, et le cron n aura plus a rappeler le moteur pour les retrouver.
+  void deposerBascules(phases);
   return phases;
 }
 

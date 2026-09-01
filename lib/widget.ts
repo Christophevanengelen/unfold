@@ -17,10 +17,54 @@
  */
 
 import { isNative } from "@/lib/platform";
+import { getApiBase } from "@/lib/api-client";
+import { getDeviceId } from "@/lib/device-id";
+import { bascules } from "@/lib/periode-courante";
 import type { MomentumPhase } from "@/types/momentum";
 import { periodeCourante, periodeSuivante } from "@/lib/periode-courante";
 
 const CLEF = "favorable_widget";
+
+/**
+ * Depose au serveur les dates d entree et de sortie a venir.
+ *
+ * Appelee au meme moment que le resume du widget, parce que les deux decoulent
+ * des memes phases — chargees une seule fois et gardees trente jours.
+ *
+ * C est ce qui permet au cron de cesser d appeler le moteur d ephemerides une
+ * fois par personne et par jour. Les dates ne changent pas ; les recalculer
+ * chaque matin etait une depense pure, et une occasion de panne.
+ *
+ * Aucune donnee de naissance ne part : une date, un sens, une duree, un
+ * domaine, une intensite.
+ */
+export async function deposerBascules(phases: MomentumPhase[]): Promise<void> {
+  if (typeof window === "undefined" || phases.length === 0) return;
+  try {
+    const aujourdHui = new Date().toISOString().slice(0, 10);
+    const liste = bascules(phases, aujourdHui).map((b) => {
+      const phase = phases.find((p) => b.cle.endsWith(p.id));
+      return {
+        cle: b.cle,
+        jour: b.jour,
+        sens: b.sens,
+        duree: phase?.durationWeeks ? Math.round(phase.durationWeeks * 7) : undefined,
+        maison: phase?.apiTopics?.[0]?.house,
+        score: b.score,
+      };
+    });
+    if (liste.length === 0) return;
+
+    await fetch(`${getApiBase()}/api/push/bascules`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({ deviceId: getDeviceId(), bascules: liste }),
+    });
+  } catch {
+    // silence volontaire : l app rappellera au prochain chargement
+  }
+}
 
 type PeriodeWidget = {
   titre: string;

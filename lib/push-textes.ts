@@ -18,6 +18,7 @@
  */
 
 import type { Notification } from "@/lib/push-planification";
+import { nomMaison } from "@/lib/maisons-i18n";
 
 type Textes = {
   /** Une periode courte s ouvre demain. */
@@ -31,11 +32,14 @@ type Textes = {
   /** `{n}` est remplace par le compte. */
   moisCorps: string;
   moisCorpsUn: string;
+  /** Une periode se termine. */
+  sortieTitre: string;
 };
 
 const T: Record<string, Textes> = {
   fr: {
     periodeTitre: "Une période s'ouvre demain",
+    sortieTitre: "Une période se termine demain",
     periodeCorps: "Elle est sur ta timeline.",
     basculeTitre: "Un basculement demain",
     basculeCorps: "Ces moments-là sont rares.",
@@ -45,6 +49,7 @@ const T: Record<string, Textes> = {
   },
   en: {
     periodeTitre: "A period opens tomorrow",
+    sortieTitre: "A period ends tomorrow",
     periodeCorps: "It's on your timeline.",
     basculeTitre: "A turning point tomorrow",
     basculeCorps: "These are rare.",
@@ -54,6 +59,7 @@ const T: Record<string, Textes> = {
   },
   es: {
     periodeTitre: "Mañana se abre un periodo",
+    sortieTitre: "Mañana termina un periodo",
     periodeCorps: "Está en tu línea de tiempo.",
     basculeTitre: "Mañana, un punto de inflexión",
     basculeCorps: "Son poco frecuentes.",
@@ -63,6 +69,7 @@ const T: Record<string, Textes> = {
   },
   de: {
     periodeTitre: "Morgen beginnt eine Phase",
+    sortieTitre: "Morgen endet eine Phase",
     periodeCorps: "Sie steht auf deiner Timeline.",
     basculeTitre: "Morgen ein Wendepunkt",
     basculeCorps: "Diese sind selten.",
@@ -72,6 +79,7 @@ const T: Record<string, Textes> = {
   },
   it: {
     periodeTitre: "Domani si apre un periodo",
+    sortieTitre: "Domani finisce un periodo",
     periodeCorps: "È sulla tua timeline.",
     basculeTitre: "Domani, una svolta",
     basculeCorps: "Sono rare.",
@@ -81,6 +89,7 @@ const T: Record<string, Textes> = {
   },
   pt: {
     periodeTitre: "Amanhã abre um período",
+    sortieTitre: "Amanhã termina um período",
     periodeCorps: "Está na tua linha do tempo.",
     basculeTitre: "Amanhã, uma viragem",
     basculeCorps: "São raras.",
@@ -90,6 +99,7 @@ const T: Record<string, Textes> = {
   },
   nl: {
     periodeTitre: "Morgen begint een periode",
+    sortieTitre: "Morgen eindigt een periode",
     periodeCorps: "Ze staat op je tijdlijn.",
     basculeTitre: "Morgen een omslagpunt",
     basculeCorps: "Die zijn zeldzaam.",
@@ -99,6 +109,7 @@ const T: Record<string, Textes> = {
   },
   ja: {
     periodeTitre: "明日、新しい期間が始まります",
+    sortieTitre: "明日、期間が終わります",
     periodeCorps: "タイムラインで確認できます。",
     basculeTitre: "明日、転換点があります",
     basculeCorps: "めったにありません。",
@@ -108,6 +119,7 @@ const T: Record<string, Textes> = {
   },
   zh: {
     periodeTitre: "明天开启一个新阶段",
+    sortieTitre: "明天一个阶段结束",
     periodeCorps: "已在你的时间线上。",
     basculeTitre: "明天是一个转折点",
     basculeCorps: "这样的时刻很少见。",
@@ -117,6 +129,7 @@ const T: Record<string, Textes> = {
   },
   ar: {
     periodeTitre: "تبدأ فترة جديدة غدًا",
+    sortieTitre: "تنتهي فترة غدًا",
     periodeCorps: "ستجدها في مخططك الزمني.",
     basculeTitre: "غدًا نقطة تحوّل",
     basculeCorps: "هذه اللحظات نادرة.",
@@ -131,6 +144,70 @@ const T: Record<string, Textes> = {
  * l app ; on retombe sur l anglais plutot que sur le francais, parce qu une
  * personne dont la langue nous manque a plus de chances de lire l anglais.
  */
+/**
+ * Ecrit le corps d une notification de bascule, avec ce qui permet de decider :
+ * le domaine touche, la duree, et l intensite.
+ *
+ * « Une periode s ouvre » ne permet rien. « Carriere · 28 jours · marque »
+ * permet de reorganiser sa semaine, ou de ne rien faire en connaissance de
+ * cause.
+ *
+ * Trois faits, separes par des points medians. Pas de phrase : sur l ecran
+ * verrouille, une enumeration se lit d un coup d oeil, une phrase se lit.
+ */
+export function ecrireBascule(
+  b: { sens: "entree" | "sortie"; duree_jours?: number | null; maison?: number | null; score: number },
+  locale: string | null | undefined,
+): { titre: string; corps: string } {
+  const t = T[(locale ?? "en").slice(0, 2).toLowerCase()] ?? T.en;
+  const lang = (locale ?? "en").slice(0, 2).toLowerCase();
+
+  const morceaux: string[] = [];
+
+  const domaine = b.maison ? nomMaison(b.maison, locale) : null;
+  if (domaine) morceaux.push(domaine);
+
+  if (b.duree_jours && b.duree_jours > 0) morceaux.push(duree(b.duree_jours, lang));
+
+  // L intensite ne se dit qu au-dela de l ordinaire : l annoncer a chaque fois
+  // la viderait de son sens.
+  if (b.score >= 3) morceaux.push(INTENSITE[lang]?.[b.score >= 4 ? 1 : 0] ?? INTENSITE.en[b.score >= 4 ? 1 : 0]);
+
+  return {
+    titre: b.sens === "entree" ? t.periodeTitre : t.sortieTitre,
+    corps: morceaux.join(" · ") || t.periodeCorps,
+  };
+}
+
+/** Une duree lisible : des jours, puis des semaines, puis des mois. */
+function duree(jours: number, lang: string): string {
+  const u = UNITES[lang] ?? UNITES.en;
+  if (jours <= 21) return u.jours.replace("{n}", String(jours));
+  if (jours <= 70) return u.semaines.replace("{n}", String(Math.round(jours / 7)));
+  return u.mois.replace("{n}", String(Math.round(jours / 30)));
+}
+
+const UNITES: Record<string, { jours: string; semaines: string; mois: string }> = {
+  fr: { jours: "{n} jours", semaines: "{n} semaines", mois: "{n} mois" },
+  en: { jours: "{n} days", semaines: "{n} weeks", mois: "{n} months" },
+  es: { jours: "{n} días", semaines: "{n} semanas", mois: "{n} meses" },
+  de: { jours: "{n} Tage", semaines: "{n} Wochen", mois: "{n} Monate" },
+  it: { jours: "{n} giorni", semaines: "{n} settimane", mois: "{n} mesi" },
+  pt: { jours: "{n} dias", semaines: "{n} semanas", mois: "{n} meses" },
+  nl: { jours: "{n} dagen", semaines: "{n} weken", mois: "{n} maanden" },
+  ja: { jours: "{n}日", semaines: "{n}週間", mois: "{n}か月" },
+  zh: { jours: "{n} 天", semaines: "{n} 周", mois: "{n} 个月" },
+  ar: { jours: "{n} يوم", semaines: "{n} أسابيع", mois: "{n} أشهر" },
+};
+
+/** Deux crans seulement : « marque » et « rare ». Trois seraient du bruit. */
+const INTENSITE: Record<string, [string, string]> = {
+  fr: ["marqué", "rare"], en: ["marked", "rare"], es: ["marcado", "raro"],
+  de: ["deutlich", "selten"], it: ["marcato", "raro"], pt: ["marcado", "raro"],
+  nl: ["uitgesproken", "zeldzaam"], ja: ["強め", "まれ"], zh: ["明显", "罕见"],
+  ar: ["واضح", "نادر"],
+};
+
 export function ecrire(
   n: Notification,
   locale: string | null | undefined,
