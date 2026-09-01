@@ -358,7 +358,13 @@ export default function DemoPricingPage() {
     setAchatEnCours(false);
     // « annule » n est pas une erreur : la personne a decide, on ne la punit
     // pas d avoir decide. Seul un vrai echec merite un message.
-    if (r === "ok") router.replace("/app/timeline");
+    if (r === "ok") {
+      // On ne depose pas la personne en haut de la timeline. Elle a paye pour
+      // voir une periode PRECISE : on l y ramene, revelee. C est le seul moment
+      // ou l argent doit se transformer en quelque chose de visible, et il ne
+      // se passait rien.
+      router.replace("/app/timeline");
+    }
     else if (r === "echec") // Le message dit ce qui compte quand un paiement rate : que rien n a
       // ete facture. C est la premiere question que se pose quelqu un.
       setError(perso("achat.echec", locale));

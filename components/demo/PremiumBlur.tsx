@@ -7,6 +7,7 @@ import { isIOSBundle } from "@/lib/platform";
 import { usePremiumStatus } from "@/lib/premium-gate";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
+import { memoriserIntention } from "@/lib/retour-apres-achat";
 
 interface PremiumBlurProps {
   children: React.ReactNode;
@@ -22,9 +23,11 @@ interface PremiumBlurProps {
    * qu elle voulait savoir ce qui l attend a ce moment-la.
    */
   quand?: string;
+  /** L identifiant de la periode, pour y revenir revelee apres l achat. */
+  capsuleId?: string;
 }
 
-export function PremiumBlur({ children, feature, blurAmount = 8, quand }: PremiumBlurProps) {
+export function PremiumBlur({ children, feature, blurAmount = 8, quand, capsuleId }: PremiumBlurProps) {
   const isPrem = usePremiumStatus();
   const [locale, setLocaleState] = useState<Locale>("en");
   useEffect(() => {
@@ -54,6 +57,10 @@ export function PremiumBlur({ children, feature, blurAmount = 8, quand }: Premiu
         Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
       });
     }
+    // On retient CE QUE LA PERSONNE VOULAIT VOIR au moment ou le mur s est
+    // dresse. Sans cela, elle paie pour connaitre une periode precise et se
+    // retrouve deposee en haut de la timeline, a devoir la retrouver.
+    memoriserIntention(capsuleId);
     // Dispatch custom event — PremiumTeaser in demo layout listens
     window.dispatchEvent(new CustomEvent("unfold:show-premium"));
   };

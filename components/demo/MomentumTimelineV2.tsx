@@ -102,6 +102,7 @@ function mapHouseColor(apiColor?: string): string | undefined {
 
 import { S, LAYOUT } from "@/lib/layout-constants";
 import { perso } from "@/lib/perso-i18n";
+import { intentionEnAttente } from "@/lib/retour-apres-achat";
 
 // ─── Constants ──────────────────────────────────────────────
 let LANE_COUNT = 7;
@@ -1349,6 +1350,26 @@ export function MomentumTimelineV2() {
   // If year data (phases) arrived, show timeline immediately — lifetime loads in background.
   const hasAnyData = phases.length > 0 || timelinePhases.length > 0;
 
+  /**
+   * Rouvrir, revelee, la periode pour laquelle on vient de payer.
+   *
+   * C est le seul instant ou l argent doit devenir visible. Sans cela on paie
+   * pour connaitre une periode precise et on est depose en haut de la timeline,
+   * a devoir la retrouver — le paiement n a aucune recompense.
+   *
+   * L intention est consommee une fois : on ne rouvre pas la meme capsule a
+   * chaque lancement suivant.
+   */
+  useEffect(() => {
+    if (!hasAnyData) return;
+    const id = intentionEnAttente();
+    if (!id) return;
+    const cible = allCapsules.find((c) => c.id === id);
+    if (!cible) return;
+    const t = setTimeout(() => setSelectedCapsule(cible), 350);
+    return () => clearTimeout(t);
+  }, [hasAnyData, allCapsules]);
+
   // « Revoir le guide » depuis le profil.
   //
   // Deux chemins, parce qu il y a deux situations reelles :
@@ -1471,6 +1492,34 @@ export function MomentumTimelineV2() {
            telephone, il fallait la deuxieme main. Elle descend juste au-dessus
            de la barre d onglets, dans la zone que le pouce atteint sans effort.
            Masquee pendant l accueil et le guide. ── */}
+      {/* Un voile degrade sous la bande de controles.
+
+          Trois boutons flottent au-dessus de la liste — « Maintenant », la
+          bascule, les fleches — et le texte leur passait derriere en s y
+          cognant : « Pause et révisi… » coupee en deux par la pastille,
+          « Tension électrique » barree par une fleche. C est le genre de detail
+          qui fait dire « pas fini » sans qu on sache le nommer.
+
+          Le rembourrage ajoute plus tot laisse le contenu se degager EN FIN de
+          liste ; il ne peut rien pour le milieu, ou les lignes continuent de
+          defiler dessous. Un voile qui va du fond transparent au fond opaque
+          resout les deux : le texte s estompe en approchant des boutons au lieu
+          de les percuter. C est ce que fait iOS partout ou une barre flotte
+          au-dessus d un contenu defilant.
+
+          Non interactif, donc il ne vole aucun geste a la liste. */}
+      {!showWelcome && !showGuide && (
+        <div
+          className="pointer-events-none absolute left-0 right-0 z-10"
+          style={{
+            bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px))",
+            height: 96,
+            background:
+              "linear-gradient(to top, var(--bg-primary) 35%, color-mix(in srgb, var(--bg-primary) 65%, transparent) 70%, transparent)",
+          }}
+        />
+      )}
+
       {!showWelcome && !showGuide && <div className="absolute left-0 right-0 z-20 flex items-center justify-center" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)", paddingInline: S.px }}>
         <div
           className="flex items-center gap-0.5 rounded-full p-0.5"
