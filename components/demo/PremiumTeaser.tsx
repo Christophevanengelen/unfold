@@ -7,6 +7,10 @@ import { CalendarMonth, Fire, Grid, WandMagicSparkles, Sun } from "flowbite-reac
 import { BottomSheet } from "@/components/demo/primitives";
 import { isIOSBundle } from "@/lib/platform";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
+import { useMemo } from "react";
+import { useMomentum } from "@/lib/momentum-store";
+import { prochainePeriodeForte } from "@/lib/prevision-semaine";
 
 interface PremiumTeaserProps {
   open: boolean;
@@ -18,6 +22,44 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
   const [locale, setLocaleState] = useState<Locale>("en");
   const [loading, setLoading] = useState(false);
   const ios = isIOSBundle();
+
+  const { phases } = useMomentum();
+
+  /**
+   * La proposition parle de la personne, pas du produit.
+   *
+   * On montre la FORME de sa prochaine periode marquante — le domaine, la
+   * distance, la duree — et jamais la lecture. L information donnee est vraie
+   * et verifiable le jour venu ; ce qu on garde est ce qu on vend vraiment.
+   *
+   * Sans periode forte a venir, on retombe sur la promesse generique. On ne
+   * fabrique pas une echeance pour creer de l urgence : quelqu un s en
+   * apercevrait, et une seule fois suffirait a perdre sa confiance.
+   */
+  const apercu = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return prochainePeriodeForte(phases ?? [], d);
+  }, [phases]);
+
+  const nomDomaine = apercu
+    ? perso(
+        apercu.domaine === "love" ? "priorite.love"
+          : apercu.domaine === "health" ? "priorite.health_energy"
+          : "priorite.career",
+        locale,
+      )
+    : "";
+  const titreSpecifique = apercu
+    ? (apercu.dansJours <= 1
+        ? perso("vente.demain", locale)
+        : perso("vente.titre", locale).replace("{n}", String(apercu.dansJours))
+      ).replace("{d}", nomDomaine)
+    : "";
+  const sousTitreSpecifique = apercu
+    ? perso("vente.duree", locale).replace("{n}", String(Math.max(1, Math.round(apercu.dureeJours / 7))))
+    : "";
+
 
   useEffect(() => {
     setLocaleState(detectLocale());
@@ -85,7 +127,7 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
             lineHeight: 1.2,
           }}
         >
-          {t("premium.headline", locale)}
+          {apercu ? titreSpecifique : t("premium.headline", locale)}
         </motion.h2>
         <motion.p
           initial={{ y: 8, opacity: 0 }}
@@ -94,7 +136,7 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
           className="mb-6 mt-1.5 text-center text-[13px]"
           style={{ color: "var(--text-body-subtle)" }}
         >
-          {t("premium.sub", locale)}
+          {apercu ? sousTitreSpecifique : t("premium.sub", locale)}
         </motion.p>
 
         {/* Feature bullets */}

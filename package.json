@@ -28,6 +28,7 @@
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
     "@next/bundle-analyzer": "^16.2.1",
+    "@revenuecat/purchases-capacitor": "^13.4.2",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.99.3",
     "@tanstack/react-virtual": "^3.13.23",

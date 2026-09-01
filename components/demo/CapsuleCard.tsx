@@ -194,7 +194,7 @@ export function CapsuleCard({ capsule, mode, isActive, onExplore }: CapsuleCardP
                 opacity: 0.6,
               }}
             >
-              Premium: see what's coming
+              Premium: see what&apos;s coming
             </div>
           </motion.div>
         )}

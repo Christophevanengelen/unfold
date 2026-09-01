@@ -21,7 +21,7 @@ const dossier = mkdtempSync(join(tmpdir(), "prev-"));
 execFileSync("npx", ["esbuild", "lib/prevision-semaine.ts", "--bundle",
   "--platform=node", "--format=esm", `--outfile=${join(dossier, "p.mjs")}`,
   "--log-level=error"], { stdio: "inherit" });
-const { previsionSemaine, scoresDuJour, phaseDominante } = await import(join(dossier, "p.mjs"));
+const { previsionSemaine, scoresDuJour, phaseDominante, prochainePeriodeForte } = await import(join(dossier, "p.mjs"));
 
 let echecs = 0;
 const verifier = (nom, condition) => {
@@ -85,6 +85,29 @@ verifier("la dominante est la phase la plus intense du jour",
 
 verifier("aucune phase active : aucune dominante, et rien d invente",
   phaseDominante([phase(0, 2, 95)], jour(9)) === null);
+
+console.log("\nL apercu de la prochaine periode");
+
+verifier("une periode ordinaire n est jamais proposee",
+  prochainePeriodeForte([phase(10, 20, 65)], jour(0)) === null);
+
+verifier("une periode PASSEE n est jamais proposee",
+  prochainePeriodeForte([phase(-30, -10, 95)], jour(0)) === null);
+
+verifier("une periode en cours n est pas « a venir »",
+  prochainePeriodeForte([phase(-5, 10, 95)], jour(0)) === null);
+
+verifier("c est la PLUS PROCHE des fortes qui est proposee",
+  prochainePeriodeForte([phase(60, 70, 95), phase(20, 30, 90)], jour(0))?.dansJours === 20);
+
+verifier("la distance et la duree sont justes",
+  (() => {
+    const a = prochainePeriodeForte([phase(14, 28, 88)], jour(0));
+    return a?.dansJours === 14 && a?.dureeJours === 14;
+  })());
+
+verifier("rien a proposer quand il n y a rien : on ne fabrique pas",
+  prochainePeriodeForte([], jour(0)) === null);
 
 rmSync(dossier, { recursive: true, force: true });
 

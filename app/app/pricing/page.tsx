@@ -26,6 +26,7 @@ import { verifierCode, CLE_ACCES } from "@/lib/coupons";
 import { perso } from "@/lib/perso-i18n";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 import { apiFetch } from "@/lib/api-client";
+import { disponible, preparer, offres, acheter, type OffreAchat } from "@/lib/achats";
 
 // ─── Localized copy for this page ────────────────────────────────
 // Inline since these strings are page-specific. Other UI lives in i18n-demo.ts.
@@ -327,13 +328,42 @@ const PAGE_COPY: Record<Locale, {
 
 export default function DemoPricingPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [locale, setLocaleState] = useState<Locale>("en");
   const ios = isIOSBundle();
+  // Les offres telles que le MAGASIN les annonce. On n affiche jamais nos
+  // propres constantes de prix sur iOS : Apple convertit, arrondit et applique
+  // la fiscalite locale, donc un prix ecrit en dur finit par mentir.
+  const [offresIOS, setOffresIOS] = useState<OffreAchat[]>([]);
+  const [achatEnCours, setAchatEnCours] = useState(false);
+  const achatPossible = disponible();
+
+  useEffect(() => {
+    if (!achatPossible || !user?.id) return;
+    let vivant = true;
+    void preparer(user.id).then((ok) => {
+      if (!ok || !vivant) return;
+      void offres().then((o) => { if (vivant) setOffresIOS(o); });
+    });
+    return () => { vivant = false; };
+  }, [achatPossible, user?.id]);
+
+  async function lancerAchat(idPaquet: string) {
+    setAchatEnCours(true);
+    const r = await acheter(idPaquet);
+    setAchatEnCours(false);
+    // « annule » n est pas une erreur : la personne a decide, on ne la punit
+    // pas d avoir decide. Seul un vrai echec merite un message.
+    if (r === "ok") router.replace("/app/timeline");
+    else if (r === "echec") // Le message dit ce qui compte quand un paiement rate : que rien n a
+      // ete facture. C est la premiere question que se pose quelqu un.
+      setError(perso("achat.echec", locale));
+  }
+
 
   // Coupon state
   const [showCoupon, setShowCoupon] = useState(false);
@@ -600,12 +630,39 @@ export default function DemoPricingPage() {
 
           {/* CTA */}
           {ios ? (
-            <p
-              className="mt-4 w-full rounded-xl py-2.5 text-center text-[12px] font-semibold"
-              style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
-            >
-              {c.ios_blocked}
-            </p>
+            offresIOS.length > 0 ? (
+              // Un vrai bouton par offre, au prix que le MAGASIN annonce.
+              // Avant, cette place portait un texte fixe — « Disponible dans la
+              // version Pro de l app » — alors qu on est deja dans l app, sur
+              // l ecran des prix. Une impasse qui n offrait rien.
+              <div className="mt-4 space-y-2">
+                {offresIOS.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => void lancerAchat(o.id)}
+                    disabled={achatEnCours}
+                    className="w-full rounded-xl py-3 text-[13px] font-bold transition-opacity disabled:opacity-60"
+                    style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
+                  >
+                    {achatEnCours ? "…" : o.prix}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              // Tant que les produits ne sont pas crees dans App Store Connect
+              // et declares dans RevenueCat, il n y a rien a vendre. On le dit
+              // sans faire croire qu une action est possible.
+              <p
+                className="mt-4 w-full rounded-xl py-2.5 text-center text-[12px] font-semibold"
+                style={{
+                  background: "color-mix(in srgb, var(--bg-brand) 18%, transparent)",
+                  color: "var(--text-brand)",
+                }}
+              >
+                {c.ios_blocked}
+              </p>
+            )
           ) : (
             <button
               onClick={() => handleCheckout(billing)}

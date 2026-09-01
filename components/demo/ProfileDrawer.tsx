@@ -24,6 +24,7 @@ import { isNative, getPlatform } from "@/lib/platform";
 import { apiFetch } from "@/lib/api-client";
 import { mesurer } from "@/lib/mesure";
 import { EditionNaissance } from "@/components/demo/EditionNaissance";
+import { disponible, preparer, restaurer } from "@/lib/achats";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -391,8 +392,18 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                 <button
                   type="button"
                   onClick={async () => {
-                    // Phase 4: will call Purchases.restorePurchases() via RC SDK
-                    // For now, just refetch /api/billing/me to sync state
+                    // Le bouton existait mais ne restaurait RIEN : il relisait
+                    // simplement /api/billing/me, c est-a-dire l etat que le
+                    // serveur avait deja. Quelqu un qui change de telephone
+                    // appuyait dessus, ne voyait rien revenir, et n avait aucun
+                    // recours. Apple exige ce bouton — a juste titre, et il doit
+                    // faire ce qu il annonce.
+                    if (disponible() && user?.id) {
+                      await preparer(user.id);
+                      await restaurer();
+                    }
+                    // Puis on relit le serveur : le webhook RevenueCat a pu
+                    // mettre l abonnement a jour entre-temps.
                     await apiFetch("/api/billing/me", { credentials: "include" });
                     window.dispatchEvent(new CustomEvent("unfold:plan-changed", { detail: billing.isPremium ? "premium" : "free" }));
                     onClose();

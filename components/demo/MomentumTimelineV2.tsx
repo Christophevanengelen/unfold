@@ -445,7 +445,7 @@ function OverviewView({
       const dotsH = dc * ds + (dc - 1) * dg;
       const oCapPad = w / 2;
       const minH = Math.max(w, dotsH + oCapPad * 2);
-      let h = Math.max(minH, bottomY - topY);
+      const h = Math.max(minH, bottomY - topY);
       // Clamp: if minH pushes capsule below birth, shift it up
       if (topY + h > birthY) topY = birthY - h;
       // Position by accumulating actual widths per lane — uniform gap between capsule edges

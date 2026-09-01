@@ -141,3 +141,57 @@ export function phaseDominante(phases: MomentumPhase[], jour: Date): MomentumPha
   const actifs = actives(phases, iso).sort((a, b) => b.intensity - a.intensity);
   return actifs[0] ?? null;
 }
+
+/** Ce qu on peut montrer d une periode sans en livrer la lecture. */
+export interface ApercuPeriode {
+  /** Dans combien de jours elle s ouvre. 0 = aujourd hui. */
+  dansJours: number;
+  /** Combien de jours elle dure. */
+  dureeJours: number;
+  /** Le domaine de vie concerne. */
+  domaine: string;
+  /** 0-100. Sert a dire « marquee » sans donner de chiffre. */
+  intensite: number;
+}
+
+/**
+ * La prochaine periode marquante a venir.
+ *
+ * Sert au moment ou l on propose le payant. La promesse actuelle — « debloque
+ * ton timing complet » — parle du PRODUIT ; celle-ci parle de la personne :
+ * « une periode Carriere de six semaines s ouvre dans 23 jours ».
+ *
+ * On montre la FORME et jamais la lecture. C est ce qui rend la proposition
+ * honnete plutot que teasante : l information donnee est vraie et verifiable,
+ * et ce qu on garde est ce qu on vend reellement — l interpretation, la
+ * preparation, le detail.
+ *
+ * `seuil` ecarte les periodes ordinaires : proposer de payer pour une semaine
+ * banale serait une promesse creuse, et la personne s en apercevrait le jour
+ * venu. Mieux vaut ne rien proposer que proposer du vide.
+ */
+export function prochainePeriodeForte(
+  phases: MomentumPhase[],
+  depuis: Date,
+  seuil = 70,
+): ApercuPeriode | null {
+  const aujourdhui = depuis.toISOString().slice(0, 10);
+  const futures = phases
+    .filter((p) => p.startDate > aujourdhui && p.intensity >= seuil)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+  const p = futures[0];
+  if (!p) return null;
+
+  const JOUR = 86_400_000;
+  const debut = new Date(p.startDate + "T00:00:00Z").getTime();
+  const base = new Date(aujourdhui + "T00:00:00Z").getTime();
+  const fin = p.endDate ? new Date(p.endDate + "T00:00:00Z").getTime() : debut;
+
+  return {
+    dansJours: Math.max(0, Math.round((debut - base) / JOUR)),
+    dureeJours: Math.max(1, Math.round((fin - debut) / JOUR)),
+    domaine: p.domain,
+    intensite: p.intensity,
+  };
+}
