@@ -223,7 +223,7 @@ export function SignalPager() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 z-40"
-              style={{ background: "rgba(0,0,0,0.4)" }}
+              style={{ background: "var(--voile-feuille)" }}
               onClick={() => setSelectedCapsule(null)}
             />
             <motion.div

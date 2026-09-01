@@ -48,22 +48,29 @@ interface IntensityBreakdown {
 function ScanFeed({ isLoading, phaseCount, breakdown }: { isLoading: boolean; phaseCount: number; breakdown?: IntensityBreakdown[] }) {
   const locale = detectLocale();
   const etapes = SCAN_STEPS(locale);
-  const [visibleCount, setVisibleCount] = useState(0);
-
-  useEffect(() => {
-    if (!isLoading && phaseCount > 100) {
-      // Data arrived — show all remaining instantly
-      setVisibleCount(etapes.length);
-      return;
-    }
-
-    const timers = etapes.map((step, i) =>
-      setTimeout(() => setVisibleCount(c => Math.max(c, i + 1)), step.delay * 1000)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [isLoading, phaseCount]);
+  // Ce que le minuteur a revele jusqu ici. Ce n est PAS ce qui s affiche :
+  // quand les donnees arrivent, tout se montre d un coup.
+  const [compteMinuteur, setCompteMinuteur] = useState(0);
 
   const isDone = !isLoading && phaseCount > 100;
+
+  // La ligne se DEDUIT, elle ne se pose pas.
+  //
+  // C etait un setVisibleCount(etapes.length) en tete d effet : la liste se
+  // completait donc APRES la premiere image, et l ecran de preparation sautait
+  // visiblement de trois lignes a neuf au moment ou le moteur repondait.
+  // Deduite ici, la liste est complete des le rendu qui apprend la nouvelle —
+  // et il n y a plus deux verites sur « combien de lignes ».
+  const visibleCount = isDone ? etapes.length : compteMinuteur;
+
+  useEffect(() => {
+    if (isDone) return;
+
+    const timers = etapes.map((step, i) =>
+      setTimeout(() => setCompteMinuteur(c => Math.max(c, i + 1)), step.delay * 1000)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [isDone]);
 
   return (
     <motion.div
@@ -625,8 +632,11 @@ export function StepPreparing({ formData }: { formData?: OnboardingFormData }) {
                     return (
                       <span key={planet} className="rounded-full px-3 py-1 text-xs font-medium"
                         style={{
-                          background: `color-mix(in srgb, ${cfg?.color ?? "#9585CC"} 15%, transparent)`,
-                          color: cfg?.color ?? "#9585CC",
+                          // Repli quand le moteur nomme un point qu on ne sait pas
+                          // representer : le violet d echantillon, meme valeur qu avant,
+                          // mais nommee une seule fois dans globals.css.
+                          background: `color-mix(in srgb, ${cfg?.color ?? "var(--echantillon-violet)"} 15%, transparent)`,
+                          color: cfg?.color ?? "var(--echantillon-violet)",
                         }}>
                         {cfg ? perso(cfg.cleLabel, locale) : planet}
                       </span>

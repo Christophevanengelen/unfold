@@ -13,19 +13,31 @@ import { t, detectLocale } from "@/lib/i18n-demo";
 export default function TimelinePage() {
   const params = useSearchParams();
   const router = useRouter();
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const locale = detectLocale();
 
+  // Le bandeau est DERIVE de l URL, il n est plus allume par un effet.
+  //
+  // Il l etait : le premier rendu ne le montrait pas, un effet appelait
+  // setShowSuccessToast(true) juste apres, et React 19 signalait la cascade.
+  // ?checkout=success est deja la au premier rendu — le layout de /app ne monte
+  // ses enfants qu apres l hydratation, donc il n y a pas d ecart possible avec
+  // le rendu serveur.
+  const retourDePaiement = params.get("checkout") === "success";
+  const [bandeauEcoule, setBandeauEcoule] = useState(false);
+  const showSuccessToast = retourDePaiement && !bandeauEcoule;
+
   useEffect(() => {
-    if (params.get("checkout") === "success") {
-      setShowSuccessToast(true);
-      // Clean URL without triggering a re-render loop
+    if (!retourDePaiement) return;
+    const minuteur = setTimeout(() => {
+      // setState depuis un minuteur, pas depuis le corps de l effet : c est la
+      // reponse a un evenement, pas une correction du premier rendu.
+      setBandeauEcoule(true);
+      // L URL se nettoie EN MEME TEMPS, pas avant. La nettoyer des le montage
+      // effacait le fait dont le bandeau depend maintenant.
       router.replace("/app/timeline", { scroll: false });
-      // Auto-hide after 4s
-      const timer = setTimeout(() => setShowSuccessToast(false), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [params, router]);
+    }, 4000);
+    return () => clearTimeout(minuteur);
+  }, [retourDePaiement, router]);
 
   return (
     <>

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { Heart, Clock, User } from "flowbite-react-icons/outline";
-import { getConnections } from "@/lib/connections-store";
-import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { t } from "@/lib/i18n-demo";
 import { useLocale } from "@/lib/use-locale";
+import { useConnexions } from "@/components/demo/use-connexions";
 
 /**
  * Barre d onglets.
@@ -80,13 +79,11 @@ function Onglet({
 
 export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) {
   const pathname = usePathname();
-  const [connectionCount, setConnectionCount] = useState(0);
   const locale = useLocale();
-
-  // La langue passe par useLocale : plus d ecouteur ici, plus de rendu en trop.
-  useEffect(() => {
-    setConnectionCount(getConnections().length);
-  }, []);
+  // La langue ET le nombre de connexions passent par un magasin externe : plus
+  // d ecouteur ici, plus de rendu en trop. La pastille affichait « 0 » le temps
+  // d une image avant de se corriger, sur la barre visible en permanence.
+  const connectionCount = useConnexions().length;
 
   const navItems = [
     {

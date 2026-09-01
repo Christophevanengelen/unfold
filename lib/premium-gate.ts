@@ -12,11 +12,12 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { apiFetch } from "@/lib/api-client";
 
 const PLAN_KEY = "unfold_plan";
 const AI_CALLS_KEY = "unfold_ai_calls";
+const PLAN_CHANGE_EVENT = "unfold:plan-changed";
 
 // In-memory cache — shared across all callsites on same page load.
 // Default: false (fail-closed). Updated by hook after /api/billing/me.
@@ -71,7 +72,35 @@ export function setPremiumStatus(plan: PlanType): void {
     // Storage full or blocked — memory cache is still updated
   }
   // Signal all mounted hooks to re-read
-  window.dispatchEvent(new CustomEvent("unfold:plan-changed", { detail: plan }));
+  window.dispatchEvent(new CustomEvent(PLAN_CHANGE_EVENT, { detail: plan }));
+}
+
+// ─── Le magasin du drapeau premium ───────────────────────
+//
+// Le plan vit HORS de React : cache memoire + localStorage, ecrits par
+// setPremiumStatus() et par la reponse de /api/billing/me. Les deux hooks le
+// lisaient par useState(false) + useEffect qui rappelait isPremium() apres le
+// montage. Resultat : un abonne voyait le PAYWALL a la premiere image, puis le
+// contenu — un clignotement sur l ecran meme qu il a paye. React 19 le signale
+// (set-state-in-effect : « cascading renders »).
+//
+// useSyncExternalStore est le motif du depot pour ce cas exact — voir
+// lib/use-locale.ts et lib/messages.ts. La vraie valeur est lue des la
+// premiere image cliente, et l abonnement remplace les ecouteurs manuels.
+function abonnerPlan(prevenir: () => void): () => void {
+  window.addEventListener(PLAN_CHANGE_EVENT, prevenir);
+  return () => window.removeEventListener(PLAN_CHANGE_EVENT, prevenir);
+}
+
+// Le serveur n a ni cache ni stockage. On rend `false` : fail-closed, on montre
+// le paywall plutot que de promettre un contenu qu on devrait retirer ensuite.
+function lirePlanServeur(): boolean {
+  return false;
+}
+
+/** Le drapeau premium tel qu il vit hors de React, sans rendu en trop. */
+function usePlanPremium(): boolean {
+  return useSyncExternalStore(abonnerPlan, isPremium, lirePlanServeur);
 }
 
 // ─── React hook — canonical way to read premium status ───
@@ -97,48 +126,34 @@ export function setPremiumStatus(plan: PlanType): void {
 //
 // Les hooks s executent donc toujours ; seule la VALEUR RENVOYEE change.
 export function usePremiumStatus(): boolean {
-  // Start false — never assume premium before verification
-  const [isPrem, setIsPrem] = useState(false);
+  // Lu du magasin, pas d un useState corrige par effet. Voir la note plus haut.
+  const isPrem = usePlanPremium();
   const fetchedRef = useRef(false);
 
   useEffect(() => {
     // Le hook tourne toujours — c est le point — mais son CORPS ne fait rien en
     // mode contournement : la promesse « no API call » est conservee.
     if (DEV_FORCE_PREMIUM) return;
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
 
-    // Step 1: Instant pre-flight from memory or localStorage
-    const cached = isPremium();
-    setIsPrem(cached);
-
-    // Step 2: Verify via server (runs once per mount)
-    if (!fetchedRef.current) {
-      fetchedRef.current = true;
-      apiFetch("/api/billing/me", {
-        headers: { "Cache-Control": "no-store" },
-        credentials: "include",
+    // Verification serveur. Le resultat n est pas pousse dans un useState : il
+    // est ecrit dans le magasin par setPremiumStatus(), qui previent TOUS les
+    // hooks montes — y compris ceux d un autre composant qui affiche le meme
+    // plan. Un seul endroit ecrit, tout le monde suit.
+    apiFetch("/api/billing/me", {
+      headers: { "Cache-Control": "no-store" },
+      credentials: "include",
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { plan?: string } | null) => {
+        if (!data) return;
+        setPremiumStatus(data.plan === "premium" ? "premium" : "free");
       })
-        .then((r) => r.ok ? r.json() : null)
-        .then((data: { plan?: string } | null) => {
-          if (!data) return;
-          const serverPremium = data.plan === "premium";
-          // Update cache + localStorage with verified value
-          _cachedPremium = serverPremium;
-          try { localStorage.setItem(PLAN_KEY, serverPremium ? "premium" : "free"); } catch {}
-          setIsPrem(serverPremium);
-        })
-        .catch(() => {
-          // Network error — keep localStorage value as fallback
-          // (fail-open for existing premium users, fail-closed for new users)
-        });
-    }
-
-    // Step 3: React to plan changes (e.g. post-checkout success redirect)
-    const handleChange = (e: Event) => {
-      const plan = (e as CustomEvent<PlanType>).detail;
-      setIsPrem(plan === "premium");
-    };
-    window.addEventListener("unfold:plan-changed", handleChange);
-    return () => window.removeEventListener("unfold:plan-changed", handleChange);
+      .catch(() => {
+        // Network error — keep localStorage value as fallback
+        // (fail-open for existing premium users, fail-closed for new users)
+      });
   }, []);
 
   // Dev bypass — instant premium, no API call. Voir la note ci-dessus.
@@ -160,8 +175,12 @@ export interface BillingState {
 }
 
 export function useBillingState(): BillingState {
-  const [state, setState] = useState<BillingState>({
-    isPremium: false,
+  // Le drapeau premium vient du magasin — meme raison que dans
+  // usePremiumStatus. Seuls les DETAILS que le serveur est seul a connaitre
+  // (statut, fin d essai, source) restent en useState : ils arrivent dans une
+  // promesse, donc apres le rendu, ce qui est le travail legitime d un effet.
+  const isPremiumStore = usePlanPremium();
+  const [details, setDetails] = useState<Omit<BillingState, "isPremium">>({
     status: "none",
     loading: true,
   });
@@ -169,48 +188,34 @@ export function useBillingState(): BillingState {
 
   useEffect(() => {
     if (DEV_FORCE_PREMIUM) return;
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
 
-    const cached = isPremium();
-    setState((s) => ({ ...s, isPremium: cached }));
-
-    if (!fetchedRef.current) {
-      fetchedRef.current = true;
-      apiFetch("/api/billing/me", {
-        headers: { "Cache-Control": "no-store" },
-        credentials: "include",
-      })
-        .then((r) => (r.ok ? r.json() : null))
-        .then(
-          (data: {
-            plan?: string;
-            status?: string;
-            trialEnd?: string;
-            currentPeriodEnd?: string;
-            source?: string;
-          } | null) => {
-            if (!data) { setState((s) => ({ ...s, loading: false })); return; }
-            const prem = data.plan === "premium";
-            _cachedPremium = prem;
-            try { localStorage.setItem(PLAN_KEY, prem ? "premium" : "free"); } catch {}
-            setState({
-              isPremium: prem,
-              status: (data.status ?? "none") as BillingState["status"],
-              trialEnd: data.trialEnd,
-              currentPeriodEnd: data.currentPeriodEnd,
-              source: data.source as BillingState["source"],
-              loading: false,
-            });
-          }
-        )
-        .catch(() => setState((s) => ({ ...s, loading: false })));
-    }
-
-    const handleChange = (e: Event) => {
-      const plan = (e as CustomEvent<PlanType>).detail;
-      setState((s) => ({ ...s, isPremium: plan === "premium" }));
-    };
-    window.addEventListener("unfold:plan-changed", handleChange);
-    return () => window.removeEventListener("unfold:plan-changed", handleChange);
+    apiFetch("/api/billing/me", {
+      headers: { "Cache-Control": "no-store" },
+      credentials: "include",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (data: {
+          plan?: string;
+          status?: string;
+          trialEnd?: string;
+          currentPeriodEnd?: string;
+          source?: string;
+        } | null) => {
+          if (!data) { setDetails((d) => ({ ...d, loading: false })); return; }
+          setPremiumStatus(data.plan === "premium" ? "premium" : "free");
+          setDetails({
+            status: (data.status ?? "none") as BillingState["status"],
+            trialEnd: data.trialEnd,
+            currentPeriodEnd: data.currentPeriodEnd,
+            source: data.source as BillingState["source"],
+            loading: false,
+          });
+        }
+      )
+      .catch(() => setDetails((d) => ({ ...d, loading: false })));
   }, []);
 
   // Dev bypass — voir la note au-dessus de usePremiumStatus : les hooks
@@ -218,7 +223,7 @@ export function useBillingState(): BillingState {
   if (DEV_FORCE_PREMIUM) {
     return { isPremium: true, status: "active", loading: false };
   }
-  return state;
+  return { ...details, isPremium: isPremiumStore };
 }
 
 // ─── Feature access ───────────────────────────────────────

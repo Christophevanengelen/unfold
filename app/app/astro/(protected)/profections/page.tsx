@@ -175,16 +175,24 @@ export default function ProfectionsPage() {
   const [liveAge, setLiveAge] = useState<number>(0);
   const [viewMonth, setViewMonth] = useState<number>(0);
   const [liveMonth, setLiveMonth] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"year" | "monthly">("year");
 
   const reloadKey = useAstrolearnSubjectReload();
   const { referenceDate } = useAstrolearnSessionTime();
 
+  // Le chargement est DERIVE de la clef demandee, il n est plus allume par un
+  // setLoading(true) en tete d effet — qui faisait rendre l ecran une fois avec
+  // les profections de l ANCIENNE date avant de le rendre en chargement.
+  //
+  // « chargement » veut dire : aucune reponse rangee pour la clef courante.
+  // C est vrai des le premier rendu, sans que personne ait a le declarer, et
+  // une reponse en retard ne peut plus ecraser la suivante.
+  const cle = `${reloadKey}|${referenceDate}`;
+  const [reponse, setReponse] = useState<{ cle: string; erreur: string } | null>(null);
+  const loading = reponse?.cle !== cle;
+  const error = loading ? "" : reponse.erreur;
+
   useEffect(() => {
-    setLoading(true);
-    setError("");
     Promise.all([
       apiFetch("/api/astrolearn/chart-data").then((r) => r.json()),
       fetch(`/api/astrolearn/profections?date=${referenceDate}`).then((r) => r.json()),
@@ -204,10 +212,10 @@ export default function ProfectionsPage() {
         setViewAge(age);
         setLiveMonth(month);
         setViewMonth(month);
+        setReponse({ cle, erreur: "" });
       })
-      .catch((e: Error) => setError(e.message ?? "Failed to load"))
-      .finally(() => setLoading(false));
-  }, [reloadKey, referenceDate]);
+      .catch((e: Error) => setReponse({ cle, erreur: e.message ?? "Failed to load" }));
+  }, [cle, referenceDate]);
 
   const navigateToAge = useCallback((age: number) => {
     const orig = originalProfDataRef.current;

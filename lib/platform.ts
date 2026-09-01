@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * Single source of truth for runtime platform detection.
@@ -48,6 +48,32 @@ export function isNative(): boolean {
 }
 
 /**
+ * La plateforme vit HORS de React : `window.Capacitor` est injecte par la
+ * coque avant que le paquet ne se charge, et NEXT_PUBLIC_NATIVE est remplacee
+ * a la compilation. C est exactement le cas que useSyncExternalStore couvre,
+ * et c est le motif du depot — voir lib/use-locale.ts.
+ *
+ * POURQUOI ON A CHANGE : le hook demarrait a `false` et un effet le corrigeait
+ * apres le montage. Le premier ecran etait donc rendu « en mode web » — cadre
+ * de telephone, fausses zones de securite — avant de basculer, a chaque
+ * demarrage de l app. React 19 le signale a juste titre.
+ *
+ * La lecture SERVEUR renvoie la constante de compilation et non `false` :
+ * elle vaut la meme chose cote serveur et cote client dans un meme paquet,
+ * donc le paquet natif rend juste des la premiere image et l hydratation reste
+ * coherente. Meme approche que le hook local de app/app/layout.tsx.
+ */
+function abonnerPlateforme(): () => void {
+  // Rien ne fait apparaitre ni disparaitre la coque en cours de session : il n y
+  // a aucun evenement a ecouter, seulement la fonction de desabonnement exigee.
+  return () => {};
+}
+
+function lirePlateformeServeur(): boolean {
+  return process.env.NEXT_PUBLIC_NATIVE === "true";
+}
+
+/**
  * React hook — observational only.
  *
  * **NEVER** branch UI styling on this. Use it for:
@@ -60,9 +86,7 @@ export function isNative(): boolean {
  *  - Conditional rendering of feature UI (use feature flags instead)
  */
 export function useIsNative(): boolean {
-  const [native, setNative] = useState(false);
-  useEffect(() => { setNative(isNative()); }, []);
-  return native;
+  return useSyncExternalStore(abonnerPlateforme, isNative, lirePlateformeServeur);
 }
 
 /**

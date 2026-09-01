@@ -233,7 +233,7 @@ export default function ConnectionsPage() {
               </button>
             </div>
             {codeError ? (
-              <p className="mt-2 text-[11px] leading-snug" style={{ color: "var(--danger, #E07A7C)" }}>
+              <p className="mt-2 text-[11px] leading-snug" style={{ color: "var(--danger)" }}>
                 {codeError}
               </p>
             ) : (

@@ -13,12 +13,13 @@
  * Stored immediately in user-profile for the AI pipeline.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 
 import { S } from "@/lib/layout-constants";
 import type { PriorityDomain } from "@/types/user-profile";
-import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { t, type Locale } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { useTheme } from "next-themes";
 import { texteLisible, texteSurAplat, type ThemeLisible } from "@/lib/contraste";
@@ -66,8 +67,11 @@ export function StepPriorities({ selected, onChange, onNext, onBack, refusCount 
   const { resolvedTheme } = useTheme();
   const themeLisible: ThemeLisible = resolvedTheme === "light" ? "clair" : "sombre";
   const [touched, setTouched] = useState(false);
-  const [locale, setLocale] = useState<Locale>("en");
-  useEffect(() => { setLocale(detectLocale()); }, []);
+  // La langue passe par useLocale : elle est lue HORS de React, donc par
+  // useSyncExternalStore. Le useState + useEffect d avant rendait cet ecran une
+  // premiere fois EN ANGLAIS puis se corrigeait — un scintillement de langue
+  // sur le premier ecran que la personne voit du produit.
+  const locale = useLocale();
   const options = OPTIONS(locale);
 
   const toggle = (key: PriorityDomain) => {

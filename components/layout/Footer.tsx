@@ -133,7 +133,13 @@ export function Footer({ locale }: FooterProps) {
   const l = footerLabels[locale] ?? footerLabels.en;
 
   return (
-    <footer className="border-t border-white/5" style={{ backgroundColor: "var(--footer-bg, var(--bg-primary, #1B1535))" }}>
+    // Le repli de --footer-bg est --bg-primary, pas une copie de sa valeur.
+    // --footer-bg n est declare que par la regle de app/globals.css qui vise le
+    // pied de page d une landing immersive ; partout ailleurs le pied de page
+    // suit le fond du produit. Le #1B1535 qui trainait ici etait une TROISIEME
+    // copie de --bg-primary sombre : elle ne suivait ni le theme clair ni un
+    // changement de jeton, et servait de fond clair a un pied de page cense etre sombre.
+    <footer className="border-t border-white/5" style={{ backgroundColor: "var(--footer-bg, var(--bg-primary))" }}>
       <div className="mx-auto max-w-7xl px-6 py-12 md:py-16">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 md:gap-16">
           {/* Brand */}

@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 
 import { planetConfig, type PlanetKey } from "@/lib/domain-config";
-import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
+import { t } from "@/lib/i18n-demo";
+import { useLocale } from "@/lib/use-locale";
 import { perso } from "@/lib/perso-i18n";
 
 interface StepTimelineTeaserProps {
@@ -66,8 +67,11 @@ const SPOTLIGHT_START = SETTLE_DELAY + 0.8;  // 4.2s — first planet spotlight
 const SPOTLIGHT_INTERVAL = 1.2;               // 1.2s between each planet
 
 export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) {
-  const [locale, setLocale] = useState<Locale>("en");
-  useEffect(() => { setLocale(detectLocale()); }, []);
+  // La langue passe par useLocale : elle est lue HORS de React, donc par
+  // useSyncExternalStore. Le useState + useEffect d avant rendait cet ecran une
+  // premiere fois EN ANGLAIS puis se corrigeait — un scintillement de langue
+  // sur le premier ecran que la personne voit du produit.
+  const locale = useLocale();
   // Which active planet is currently spotlighted (-1 = none, 0-N = index, N+1 = all done)
   const [spotlightIndex, setSpotlightIndex] = useState(-1);
 
@@ -153,7 +157,7 @@ export function StepTimelineTeaser({ onNext, onBack }: StepTimelineTeaserProps) 
               height: CENTER * 2,
               left: 0,
               top: 0,
-              background: "conic-gradient(from 260deg, transparent 0deg, rgba(124,107,191,0.06) 20deg, rgba(124,107,191,0.12) 50deg, rgba(124,107,191,0.06) 80deg, transparent 100deg)",
+              background: "var(--halo-zone-teaser)",
             }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

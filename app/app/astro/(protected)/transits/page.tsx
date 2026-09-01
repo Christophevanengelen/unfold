@@ -655,33 +655,45 @@ export default function TransitsPage() {
   const { referenceInstantMs, referenceDate } = useAstrolearnSessionTime();
   const [cycleFilter, setCycleFilter] = useState<CycleFilter>("active");
 
-  const [cycles, setCycles] = useState<TransitCycle[]>([]);
-  const [cyclesLoading, setCyclesLoading] = useState(false);
-  const [cyclesError, setCyclesError] = useState("");
-  const [cyclesFetched, setCyclesFetched] = useState(false);
-
   const now = referenceInstantMs;
+
+  // L etat du chargement est DERIVE, il n est plus pose par quatre setState en
+  // tete d effet.
+  //
+  // Ces quatre-la (chargement, erreur, liste, « deja recu ») decrivaient UN
+  // seul fait — « la reponse ne correspond plus a la date demandee » — et
+  // devaient rester d accord entre eux a la main. L effet les remettait a zero
+  // apres coup, donc React rendait d abord les anciens cycles, puis le
+  // chargement : deux images, et l avertissement de React 19.
+  //
+  // La reponse est desormais rangee AVEC la clef qui l a demandee. Une reponse
+  // arrivee en retard ne peut plus ecraser la suivante.
+  const cle = `${reloadKey}|${referenceDate}`;
+  const [reponse, setReponse] = useState<{
+    cle: string;
+    cycles: TransitCycle[];
+    erreur: string;
+  } | null>(null);
+
+  const cyclesLoading = reponse?.cle !== cle;
+  const cyclesError = cyclesLoading ? "" : reponse.erreur;
+  const cycles = cyclesLoading ? [] : reponse.cycles;
+  const cyclesFetched = !cyclesLoading && !cyclesError;
 
   // Load cycles on mount
   useEffect(() => {
-    setCyclesLoading(true);
-    setCyclesError("");
-    setCycles([]);
-    setCyclesFetched(false);
     fetch(`/api/astrolearn/transit-cycles?date=${referenceDate}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) {
-          setCyclesError(d.error);
+          setReponse({ cle, cycles: [], erreur: d.error });
         } else {
           const list: TransitCycle[] = Array.isArray(d?.data) ? d.data : Array.isArray(d) ? d : [];
-          setCycles(list);
-          setCyclesFetched(true);
+          setReponse({ cle, cycles: list, erreur: "" });
         }
       })
-      .catch(() => setCyclesError("Failed to load transit cycles"))
-      .finally(() => setCyclesLoading(false));
-  }, [reloadKey, referenceDate]);
+      .catch(() => setReponse({ cle, cycles: [], erreur: "Failed to load transit cycles" }));
+  }, [cle, referenceDate]);
 
   const activeCycles = cycles.filter((c) => c.isInMiddleOfCycle);
   const upcomingCycles = cycles.filter((c) => !c.isInMiddleOfCycle && c.daysToFirstHit > 0);

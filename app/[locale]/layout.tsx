@@ -45,7 +45,7 @@ export default async function LocaleLayout({
       lang={locale}
       dir={getDirection(locale)}
       className="flex min-h-screen flex-col"
-      style={{ backgroundColor: "var(--bg-primary, #1B1535)" }}
+      style={{ backgroundColor: "var(--bg-primary)" }}
     >
       {/* Lien d evitement.
           

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 
 const COOKIE_CONSENT_KEY = "unfold-cookie-consent";
 
@@ -27,24 +27,72 @@ const labels: Record<string, { message: string; accept: string; decline: string;
   },
 };
 
-export function CookieConsent({ locale = "en" }: { locale?: string }) {
-  const [consent, setConsent] = useState<ConsentState>("accepted"); // default to hidden
+/**
+ * Le consentement vit dans localStorage, donc HORS de React.
+ *
+ * Il etait lu par useState("accepted") + useEffect : le bandeau etait donc
+ * ABSENT a la premiere image et apparaissait a la suivante, en poussant le bas
+ * de la page. Un saut de mise en page sur chaque premiere visite, et React 19
+ * le signale (« cascading renders »).
+ *
+ * useSyncExternalStore est le motif du depot pour ce cas — voir
+ * lib/use-locale.ts. Le magasin sert aussi a ce que deux bandeaux montes en
+ * meme temps, ou un second onglet, ne se contredisent pas.
+ */
+const EVENEMENT = "unfold:cookie-consent-changed";
 
-  useEffect(() => {
-    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
-    if (!stored) {
-      setConsent("pending");
-    }
-  }, []);
+/** Memoise : useSyncExternalStore compare le resultat par identite. */
+let cache: ConsentState | null = null;
+
+function lire(): ConsentState {
+  if (cache !== null) return cache;
+  try {
+    const stocke = localStorage.getItem(COOKIE_CONSENT_KEY);
+    cache = stocke === "declined" ? "declined" : stocke ? "accepted" : "pending";
+  } catch {
+    // Stockage refuse : on ne montre RIEN. Montrer un bandeau dont la reponse
+    // ne pourra pas etre retenue, c est le reposer a chaque chargement.
+    cache = "accepted";
+  }
+  return cache;
+}
+
+function lireServeur(): ConsentState {
+  // Le serveur ne sait pas ce que la personne a repondu. On rend l etat cache,
+  // et le client montre le bandeau des la premiere image s il le faut.
+  return "accepted";
+}
+
+function abonner(prevenir: () => void): () => void {
+  window.addEventListener(EVENEMENT, prevenir);
+  // Un autre onglet a pu repondre.
+  const surStockage = () => { cache = null; prevenir(); };
+  window.addEventListener("storage", surStockage);
+  return () => {
+    window.removeEventListener(EVENEMENT, prevenir);
+    window.removeEventListener("storage", surStockage);
+  };
+}
+
+function repondre(reponse: Exclude<ConsentState, "pending">): void {
+  try {
+    localStorage.setItem(COOKIE_CONSENT_KEY, reponse);
+  } catch {
+    // Voir lire() : sans stockage la question reviendra, on ne peut pas mieux.
+  }
+  cache = reponse;
+  window.dispatchEvent(new CustomEvent(EVENEMENT));
+}
+
+export function CookieConsent({ locale = "en" }: { locale?: string }) {
+  const consent = useSyncExternalStore(abonner, lire, lireServeur);
 
   function handleAccept() {
-    localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
-    setConsent("accepted");
+    repondre("accepted");
   }
 
   function handleDecline() {
-    localStorage.setItem(COOKIE_CONSENT_KEY, "declined");
-    setConsent("declined");
+    repondre("declined");
   }
 
   if (consent !== "pending") return null;
@@ -57,7 +105,7 @@ export function CookieConsent({ locale = "en" }: { locale?: string }) {
       role="dialog"
       aria-label="Cookie consent"
     >
-      <div className="mx-auto flex max-w-4xl flex-col gap-4 rounded-2xl border border-white/10 bg-[var(--bg-primary,#1B1535)] p-5 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center sm:gap-6">
+      <div className="mx-auto flex max-w-4xl flex-col gap-4 rounded-2xl border border-white/10 bg-[var(--bg-primary)] p-5 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center sm:gap-6">
         <p className="flex-1 text-sm leading-relaxed text-brand-11">
           {l.message}
         </p>
@@ -71,7 +119,7 @@ export function CookieConsent({ locale = "en" }: { locale?: string }) {
           <button
             onClick={handleAccept}
             className="rounded-lg bg-accent-purple px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
-            style={{ backgroundColor: "var(--accent-purple, #7C6BBF)" }}
+            style={{ backgroundColor: "var(--accent-purple)" }}
           >
             {l.accept}
           </button>

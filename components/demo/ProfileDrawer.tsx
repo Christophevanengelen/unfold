@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye, TrashBin, Bell } from "flowbite-react-icons/outline";
@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth-context";
 import { signOut } from "@/lib/supabase-auth";
 import { clearBirthData, getBirthDataSync, birthHash } from "@/lib/birth-data";
 import { AuthSheet } from "@/components/demo/AuthSheet";
-import { t, detectLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from "@/lib/i18n-demo";
+import { t, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES } from "@/lib/i18n-demo";
 import { getStreak } from "@/lib/streak";
 import { etatPermission, demanderPuisEnregistrer, lireCadence, reglerCadence, detailEchec, type EtatPermission } from "@/lib/push";
 import type { Cadence } from "@/lib/push-planification";
@@ -32,6 +32,52 @@ interface ProfileDrawerProps {
   open: boolean;
   onClose: () => void;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Le profil et la serie, lus HORS de React
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Les deux vivaient dans un useState charge par un useEffect declenche sur
+// `open`. Le tiroir s ouvrait donc TOUJOURS sur « pas de profil » et « serie a
+// zero », puis se corrigeait : la ligne de serie apparaissait apres coup et
+// poussait le reste vers le bas, et le bouton de personnalisation affichait
+// « Configurer » avant de devenir « Modifier ». A chaque ouverture.
+//
+// Les deux valeurs vivent dans localStorage. C est le motif de
+// lib/use-locale.ts et lib/messages.ts : useSyncExternalStore rend la bonne
+// valeur des la PREMIERE image. Pas de memoisation ici, les deux instantanes
+// sont des primitives comparees par valeur — c est le tableau frais a chaque
+// lecture qui fait boucler ce hook, pas une relecture.
+const abonnesProfil = new Set<() => void>();
+
+function abonnerProfil(prevenir: () => void): () => void {
+  abonnesProfil.add(prevenir);
+  // Un autre onglet peut avoir enregistre un profil ou avance la serie.
+  window.addEventListener("storage", prevenir);
+  return () => {
+    abonnesProfil.delete(prevenir);
+    window.removeEventListener("storage", prevenir);
+  };
+}
+
+/** A appeler apres avoir ecrit le profil : l evenement `storage` ne se
+    declenche PAS dans l onglet qui ecrit. */
+function prevenirProfil(): void {
+  for (const prevenir of abonnesProfil) prevenir();
+}
+
+function lireProfilComplet(): boolean {
+  return isProfileComplete(getUserProfileSync());
+}
+
+function lireSerie(): number {
+  return getStreak().count;
+}
+
+// Le serveur n a pas de stockage. Deux fonctions constantes plutot que des
+// lambdas : useSyncExternalStore compare les instantanes par identite.
+const PAS_DE_PROFIL = () => false;
+const AUCUNE_SERIE = () => 0;
 
 export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   // Voir app/app/layout.tsx : l instant est fige au montage plutot que lu a
@@ -88,7 +134,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
     if (open) void etatPermission().then(setPermission);
   }, [open]);
   const [authOpen, setAuthOpen] = useState(false);
-  const [hasProfile, setHasProfile] = useState(false);
+  const hasProfile = useSyncExternalStore(abonnerProfil, lireProfilComplet, PAS_DE_PROFIL);
   const locale = useLocale();
   const [editionOuverte, setEditionOuverte] = useState(false);
   const [langPickerOpen, setLangPickerOpen] = useState(false);
@@ -98,23 +144,15 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
 
   const userName = birthData?.nickname || (locale === "fr" ? "Toi" : locale === "es" ? "Tú" : locale === "pt" ? "Você" : "You");
 
-  useEffect(() => {
-    const p = getUserProfileSync();
-    setHasProfile(isProfileComplete(p));
-  }, [open]);
-
   const handlePersonalizeComplete = async (profile: UserProfile) => {
     await saveUserProfile(profile);
-    setHasProfile(true);
+    prevenirProfil();
     setPersonalizeOpen(false);
   };
 
   // La serie vivait dans la barre du haut, supprimee le 31/08/2026. Sa place
   // est ici : c est l ecran ou l on regarde son propre etat.
-  const [streak, setStreak] = useState(0);
-  useEffect(() => {
-    if (open) setStreak(getStreak().count);
-  }, [open]);
+  const streak = useSyncExternalStore(abonnerProfil, lireSerie, AUCUNE_SERIE);
 
   return (
     <>

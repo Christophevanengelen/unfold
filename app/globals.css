@@ -1183,3 +1183,68 @@ main:has(> .landing-immersive) + footer {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ==============================================================================
+   JETONS AJOUTES LE 02/09/2026 POUR components/demo/**
+   ──────────────────────────────────────────────────────────────────────────────
+   Un bloc :root de plus, pose en fin de fichier plutot qu insere dans les
+   familles du haut : trois passes tournaient en meme temps sur ce fichier, et
+   une insertion au milieu les aurait fait se marcher dessus. Les valeurs sont
+   celles qui etaient deja ecrites dans les composants, au chiffre pres —
+   nommer n est pas redecider.
+   ============================================================================== */
+
+:root {
+  /* ── LA CARTE DE PARTAGE ──────────────────────────────────────────────────
+     components/demo/ShareSignalCard.tsx fabrique une image que la personne
+     PUBLIE. Elle part chez quelqu un d autre : elle ne peut donc pas suivre le
+     theme de qui la regarde, sinon deux personnes ne voient pas la meme carte.
+     Ces jetons ne sont PAS redeclares dans .dark, et c est voulu — meme raison
+     que --echantillon-* et --element- : ils portent une CHOSE, pas un theme.
+
+     Les opacites de texte ont ete mesurees le 01/09/2026 contre le point le
+     plus clair du degrade de la carte. 0,70 est le plancher qui passe 4,5 :
+     il ne se baisse pas. */
+  --partage-voile:            rgba(10, 6, 20, 0.75);
+  --partage-carte:            linear-gradient(165deg, #1B1535 0%, #2A1F4E 55%, #1B1535 100%);
+  --partage-pastille-marque:  linear-gradient(135deg, #9B85C4 0%, #7C6BBF 100%);
+  --partage-texte:            rgba(225, 218, 240, 0.9);
+  --partage-texte-doux:       rgba(195, 185, 215, 0.7);
+  --partage-texte-bouton:     #C3B9D7;
+  --partage-accent:           #9B85C4;
+  /* Les deux fonds opaques sur lesquels on melange la couleur de maison ou de
+     planete. Deux valeurs proches, 0,8 et 0,6, donc deux jetons : les fondre
+     serait une decision de design. */
+  --partage-fond-badge:       rgba(27, 21, 53, 0.8);
+  --partage-fond-pastille:    rgba(27, 21, 53, 0.6);
+  --partage-voile-bas:        linear-gradient(to top, rgba(27, 21, 53, 0.95) 40%, transparent 100%);
+  /* Les trois densites des boutons sous la carte. La hierarchie entre eux est
+     portee par la densite du fond seule — aucun contour, voir la skill
+     favorable-design. */
+  --partage-bouton:           rgba(155, 133, 196, 0.20);
+  --partage-bouton-doux:      rgba(155, 133, 196, 0.14);
+  --partage-bouton-copie:     rgba(124, 107, 191, 0.25);
+  /* Le halo derriere la carte et derriere le badge, une densite par palier de
+     signal. Il sert a la fois de fond (radial-gradient) et d ombre : trois
+     valeurs, trois jetons. */
+  --partage-halo-fort:        rgba(155, 133, 196, 0.5);
+  --partage-halo-moyen:       rgba(155, 133, 196, 0.3);
+  --partage-halo-doux:        rgba(155, 133, 196, 0.15);
+
+  /* ── LE VOILE SOUS UNE FEUILLE ────────────────────────────────────────────
+     Le fond assombri pose derriere une feuille de detail. Noir dans les deux
+     themes, donc declare une seule fois : un voile ne teinte pas, il eteint ce
+     qu il y a dessous. Meme valeur que le `bg-black/40` de
+     components/demo/primitives/BottomSheet.tsx, qui joue le meme role. */
+  --voile-feuille: rgba(0, 0, 0, 0.4);
+
+  /* ── LE HALO DE ZONE DE L ONBOARDING ──────────────────────────────────────
+     Le secteur eclaire derriere le systeme de planetes, ecran
+     onboarding/StepTimelineTeaser. Decor pur, sans seuil de contraste. La
+     teinte est le violet de marque en clair (#7C6BBF), servi tel quel dans les
+     deux themes depuis l origine : on l ecrit en litteral plutot qu en
+     color-mix de --accent-purple, qui change de valeur en sombre et ferait
+     donc bouger le dessin. */
+  --halo-zone-teaser: conic-gradient(from 260deg, transparent 0deg, rgba(124,107,191,0.06) 20deg, rgba(124,107,191,0.12) 50deg, rgba(124,107,191,0.06) 80deg, transparent 100deg);
+}

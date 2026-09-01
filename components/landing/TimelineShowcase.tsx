@@ -541,17 +541,51 @@ function PreviewPremiumOverlay() {
 }
 
 // ─── Main Component ────────────────────────────────────────
+
+/** Une phase et sa sous-etape. Voir la note dans le composant. */
+interface EtapeTour {
+  phase: TourPhase;
+  /** 0 au debut de la phase ; une minuterie la fait passer a 1. */
+  sous: number;
+}
+
+/** Ce que la personne a ouvert a la main pendant que la visite est en pause. */
+interface EtatManuel {
+  capsule: PreviewCapsule | null;
+  premium: boolean;
+}
+
 interface TimelineShowcaseProps {
   translations: TranslationMap;
 }
 
 export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
-  const [phase, setPhase] = useState<TourPhase>("idle");
-  const [openCapsule, setOpenCapsule] = useState<PreviewCapsule | null>(null);
-  const [showBriefing, setShowBriefing] = useState(false);
-  const [highlightId, setHighlightId] = useState<string | null>(null);
-  const [showPremium, setShowPremium] = useState(false);
+  // ─── L etat de la visite guidee ───────────────────────────
+  //
+  // Il y avait six etats et l effet en reecrivait quatre a chaque changement de
+  // phase — `setShowBriefing(true)`, `setOpenCapsule(...)`, etc. dans le corps
+  // meme de l effet. Chaque etape de la visite coutait donc DEUX rendus : un
+  // premier qui montrait encore l etape precedente, un second qui la corrigeait.
+  // Sur une visite de neuf etapes qui tourne en boucle, cela fait neuf
+  // saccades par tour. React 19 le signale (set-state-in-effect).
+  //
+  // Ces quatre etats etaient en realite une FONCTION de la phase : ils se
+  // derivent donc pendant le rendu, plus bas. Ne reste comme etat que ce qui
+  // n est pas derivable :
+  //
+  //   `etape`   la phase ET sa sous-etape. La sous-etape existe parce que deux
+  //             phases changent d apparence EN COURS de route sans changer de
+  //             phase : le briefing se retire avant la fin de la sienne, le
+  //             voile premium apparait 600 ms apres le debut de la sienne.
+  //             Les deux dans un seul etat : une phase qui avance remet
+  //             toujours sa sous-etape a zero, sans effet de synchronisation.
+  //
+  //   `manuel`  ce que la personne a ouvert a la main. `null` tant que c est la
+  //             visite qui commande.
+  const [etape, setEtape] = useState<EtapeTour>({ phase: "idle", sous: 0 });
+  const [manuel, setManuel] = useState<EtatManuel | null>(null);
   const [tourPaused, setTourPaused] = useState(false);
+  const { phase } = etape;
   const scrollRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef(false);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -565,7 +599,7 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
       ([entry]) => {
         if (entry.isIntersecting && !startedRef.current) {
           startedRef.current = true;
-          setPhase("briefing");
+          setEtape({ phase: "briefing", sous: 0 });
         }
       },
       { threshold: 0.35 }
@@ -577,8 +611,33 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
   // Tour state machine
   const advance = useCallback((next: TourPhase) => {
     if (cancelRef.current || tourPaused) return;
-    setPhase(next);
+    setEtape({ phase: next, sous: 0 });
   }, [tourPaused]);
+
+  /**
+   * Fait avancer la sous-etape, mais SEULEMENT si la phase attendue est encore
+   * celle en cours. Une minuterie qui se declenche apres un changement de phase
+   * ne doit pas retirer le briefing de la phase suivante.
+   */
+  const avancerSousEtape = useCallback((attendue: TourPhase) => {
+    setEtape((e) => (e.phase === attendue ? { ...e, sous: 1 } : e));
+  }, []);
+
+  // ─── Ce qui s affiche, derive de la phase ─────────────────
+  // Aucun de ces quatre n est un etat : chacun est une lecture de `etape`, ou
+  // de `manuel` quand la personne a pris la main.
+  const enDetail = phase === "detail-opening" || phase === "detail-reading";
+  const showBriefing = manuel ? false : phase === "briefing" && etape.sous === 0;
+  const openCapsule = manuel
+    ? manuel.capsule
+    : enDetail
+      ? CAPSULES[CURRENT_INDEX]
+      : null;
+  const highlightId =
+    !manuel && (phase === "highlight" || enDetail) ? CAPSULES[CURRENT_INDEX].id : null;
+  const showPremium = manuel
+    ? manuel.premium
+    : phase === "premium-tease" && etape.sous >= 1;
 
   useEffect(() => {
     if (tourPaused || phase === "idle") return;
@@ -590,12 +649,10 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
 
     switch (phase) {
       case "briefing":
-        setShowBriefing(true);
-        setOpenCapsule(null);
-        setShowPremium(false);
-        setHighlightId(null);
+        // Le briefing se retire AVANT la fin de sa phase, puis on laisse 400 ms
+        // de vide avant de defiler. C est la sous-etape 1.
         delay(TOUR_TIMINGS.briefing, () => {
-          setShowBriefing(false);
+          avancerSousEtape("briefing");
           delay(400, () => advance("scrolling"));
         });
         break;
@@ -611,12 +668,10 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
         break;
 
       case "highlight":
-        setHighlightId(CAPSULES[CURRENT_INDEX].id);
         delay(TOUR_TIMINGS.highlight, () => advance("detail-opening"));
         break;
 
       case "detail-opening":
-        setOpenCapsule(CAPSULES[CURRENT_INDEX]);
         delay(TOUR_TIMINGS["detail-opening"], () => advance("detail-reading"));
         break;
 
@@ -625,8 +680,6 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
         break;
 
       case "detail-closing":
-        setOpenCapsule(null);
-        setHighlightId(null);
         delay(TOUR_TIMINGS["detail-closing"], () => advance("premium-tease"));
         break;
 
@@ -637,40 +690,40 @@ export function TimelineShowcase({ translations }: TimelineShowcaseProps) {
           const target = FUTURE_INDEX * rowH;
           scrollRef.current.scrollTo({ top: target, behavior: "smooth" });
         }
-        delay(600, () => setShowPremium(true));
+        // Le voile arrive 600 ms apres le debut de la phase : sous-etape 1.
+        delay(600, () => avancerSousEtape("premium-tease"));
         delay(TOUR_TIMINGS["premium-tease"], () => advance("reset"));
         break;
 
       case "reset":
-        setShowPremium(false);
         if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
         delay(TOUR_TIMINGS.reset, () => advance("briefing"));
         break;
     }
 
     return () => timers.forEach(clearTimeout);
-  }, [phase, tourPaused, advance]);
+  }, [phase, tourPaused, advance, avancerSousEtape]);
 
   // Manual interaction — pause tour
   const handleCapsuleClick = useCallback((capsule: PreviewCapsule) => {
     setTourPaused(true);
-    setShowBriefing(false);
-    setShowPremium(false);
-    if (capsule.status === "future") {
-      setOpenCapsule(null);
-      setShowPremium(true);
-    } else {
-      setOpenCapsule(capsule);
-    }
+    // Une capsule future n a rien a montrer : elle appelle le voile premium.
+    setManuel(
+      capsule.status === "future"
+        ? { capsule: null, premium: true }
+        : { capsule, premium: false },
+    );
   }, []);
 
   const handleCloseDetail = useCallback(() => {
-    setOpenCapsule(null);
-    setShowPremium(false);
-    // Resume tour after delay
+    // On referme tout de suite, mais on garde la main a la personne : la visite
+    // ne reprend qu au bout d une seconde et demie, sinon elle repart dans la
+    // figure de qui vient juste de fermer.
+    setManuel({ capsule: null, premium: false });
     setTimeout(() => {
       setTourPaused(false);
-      setPhase("reset");
+      setManuel(null);
+      setEtape({ phase: "reset", sous: 0 });
     }, 1500);
   }, []);
 

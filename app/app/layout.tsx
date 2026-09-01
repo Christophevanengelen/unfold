@@ -20,6 +20,8 @@ import { checkAndUpdateStreak } from "@/lib/streak";
 import { detectLocale, isRTL, t, type Locale } from "@/lib/i18n-demo";
 import { useBillingState } from "@/lib/premium-gate";
 import { isIOSBundle } from "@/lib/platform";
+import Link from "next/link";
+import { useHydrate } from "./_hydrate";
 
 /** Shows "J-2" or "2d left" pill when trial ends within 3 days. Web + Android only. */
 function TrialCountdownPill({
@@ -97,16 +99,18 @@ function useIsNative() {
   // cote serveur et cote client dans un meme paquet, donc l hydratation reste
   // coherente et le paquet natif n a plus de premiere image fausse.
   //
-  // L effet ne sert plus qu au cas restant : une page web ouverte a l interieur
-  // d une coque Capacitor, ou seul `window.Capacitor` le dit.
-  const [isNative, setIsNative] = useState(
-    process.env.NEXT_PUBLIC_NATIVE === "true",
-  );
-  useEffect(() => {
-    if (isNative) return;
-    if (typeof window !== "undefined" && "Capacitor" in window) setIsNative(true);
-  }, [isNative]);
-  return isNative;
+  // Reste le cas d une page web ouverte a l interieur d une coque Capacitor, ou
+  // seul `window.Capacitor` le dit. Il se LIT pendant le rendu, apres
+  // l hydratation : un effet qui appelait setIsNative(true) faisait rendre une
+  // deuxieme fois tout l arbre de /app, ce que React 19 signale.
+  //
+  // useHydrate() garde la premiere image du client identique a celle du
+  // serveur — sans quoi lire window.Capacitor des le premier rendu creerait un
+  // ecart d hydratation sur le layout racine.
+  const compileEnNatif = process.env.NEXT_PUBLIC_NATIVE === "true";
+  const hydrate = useHydrate();
+  if (compileEnNatif) return true;
+  return hydrate && typeof window !== "undefined" && "Capacitor" in window;
 }
 
 export default function DemoLayout({
@@ -463,12 +467,14 @@ export default function DemoLayout({
 
       {/* Exit link — only in web frame mode */}
       {!isNative && (
-        <a
+        // next/link et non <a> : /en est une page de ce meme site, et une
+        // ancre brute la recharge entierement au lieu de naviguer.
+        <Link
           href="/en#pricing"
           className="absolute bottom-2 right-4 text-[10px] text-white/20 hover:text-white/40 transition-colors"
         >
           unfold.app
-        </a>
+        </Link>
       )}
     </div>
     </MomentumProvider>

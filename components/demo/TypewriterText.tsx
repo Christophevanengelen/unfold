@@ -25,11 +25,22 @@ export function TypewriterText({
   const startRef = useRef<number>(0);
   const textRef = useRef(text);
 
-  useEffect(() => {
-    // Reset on new text
-    textRef.current = text;
+  // Remise a zero PENDANT le rendu, pas dans l effet.
+  //
+  // L effet remettait `displayed` a vide apres le montage, donc le nouveau
+  // texte s affichait d abord EN ENTIER — la valeur de l ancien rendu — avant
+  // d etre efface et retape. C est le scintillement que React 19 signale par
+  // react-hooks/set-state-in-effect. Ecrit ici, React rejoue le composant avant
+  // de peindre : personne ne voit l etat intermediaire.
+  const [texteEnCours, setTexteEnCours] = useState(text);
+  if (texteEnCours !== text) {
+    setTexteEnCours(text);
     setDisplayed("");
     setDone(false);
+  }
+
+  useEffect(() => {
+    textRef.current = text;
     startRef.current = performance.now();
 
     const interval = 1000 / speed;

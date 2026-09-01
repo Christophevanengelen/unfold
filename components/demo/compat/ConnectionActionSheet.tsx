@@ -51,24 +51,30 @@ export function ConnectionActionSheet({
   //
   // POURQUOI on suit l IDENTIFIANT et pas l objet : `connection` vient d une
   // liste qui se recalcule (SWR rafraichit les resumes en continu). Avec
-  // l objet en dependance, la moindre remise a jour de la liste rejouait cet
-  // effet et ramenait la vue a « menu » en effacant le nom en cours de saisie —
-  // un etat pose a l entree du geste, ecrase par un evenement etranger au
-  // geste. On ne reinitialise donc que pour une vraie ouverture, ou pour une
-  // autre connexion.
-  const connexionInitialisee = useRef<string | null>(null);
-  useEffect(() => {
-    if (!open) {
-      connexionInitialisee.current = null;
-      return;
-    }
-    if (!connection) return;
-    if (connexionInitialisee.current === connection.id) return;
-    connexionInitialisee.current = connection.id;
+  // l objet en dependance, la moindre remise a jour de la liste ramenait la vue
+  // a « menu » en effacant le nom en cours de saisie — un etat pose a l entree
+  // du geste, ecrase par un evenement etranger au geste. On ne reinitialise
+  // donc que pour une vraie ouverture, ou pour une autre connexion.
+  //
+  // POURQUOI PENDANT LE RENDU et non dans un effet : l effet remettait la vue a
+  // « menu » APRES la premiere image. La feuille s ouvrait donc l espace d une
+  // image sur la vue laissee par la connexion PRECEDENTE — le renommage a
+  // moitie tape de quelqu un d autre, ou l ecran de confirmation de
+  // suppression. React rejoue le composant avant de peindre : ecrit ici,
+  // personne ne voit cet etat. C est aussi ce que demande React 19
+  // (react-hooks/set-state-in-effect).
+  //
+  // L etat remplace le useRef : un ref modifie pendant le rendu ne survit pas
+  // au rejeu que React fait justement dans ce cas.
+  const [connexionInitialisee, setConnexionInitialisee] = useState<string | null>(null);
+  if (!open) {
+    if (connexionInitialisee !== null) setConnexionInitialisee(null);
+  } else if (connection && connexionInitialisee !== connection.id) {
+    setConnexionInitialisee(connection.id);
     setView("menu");
     setNameDraft(connection.name);
     setDeleteHoldProgress(0);
-  }, [open, connection]);
+  }
 
   if (!connection) {
     return <BottomSheet open={open} onClose={onClose}>{null}</BottomSheet>;

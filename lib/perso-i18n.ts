@@ -495,6 +495,18 @@ const MOTS: Record<string, Traduction> = {
                          pt:"Na tua vida", nl:"In jouw leven", ja:"あなたの人生で", zh:"在你的人生中", ar:"في حياتك" },
   "prep.toi":              { fr:"Toi", en:"You", es:"Tú", de:"Du", it:"Tu",
                              pt:"Tu", nl:"Jij", ja:"あなた", zh:"你", ar:"أنت" },
+  // La carte de partage. Ces quatre libelles etaient en francais pour les dix
+  // langues, sur une image DESTINEE A ETRE PUBLIEE. Le controle des traductions
+  // ne les voyait pas : ils vivent dans une expression ternaire, pas dans du
+  // JSX nu.
+  "partage.partager":  { fr:"Partager", en:"Share", es:"Compartir", de:"Teilen", it:"Condividi",
+                         pt:"Partilhar", nl:"Delen", ja:"シェア", zh:"分享", ar:"مشاركة" },
+  "partage.en_cours":  { fr:"Partage en cours…", en:"Sharing…", es:"Compartiendo…", de:"Wird geteilt…", it:"Condivisione…",
+                         pt:"A partilhar…", nl:"Delen…", ja:"シェア中…", zh:"正在分享…", ar:"جارٍ المشاركة…" },
+  "partage.copier":    { fr:"Copier le lien", en:"Copy link", es:"Copiar enlace", de:"Link kopieren", it:"Copia link",
+                         pt:"Copiar ligação", nl:"Link kopiëren", ja:"リンクをコピー", zh:"复制链接", ar:"نسخ الرابط" },
+  "partage.copie":     { fr:"Copié !", en:"Copied!", es:"¡Copiado!", de:"Kopiert!", it:"Copiato!",
+                         pt:"Copiado!", nl:"Gekopieerd!", ja:"コピーしました！", zh:"已复制！", ar:"تم النسخ!" },
   "fiche.prevu":           { fr:"Prévu", en:"Planned", es:"Previsto", de:"Geplant", it:"Previsto",
                              pt:"Previsto", nl:"Gepland", ja:"予定", zh:"预计", ar:"مقرر" },
   "fiche.ce_signal":       { fr:"Ce signal", en:"This signal", es:"Esta señal", de:"Dieses Signal", it:"Questo segnale",
