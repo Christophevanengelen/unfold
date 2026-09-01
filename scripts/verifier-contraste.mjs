@@ -21,6 +21,29 @@
 
 import { readFileSync } from "node:fs";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CE CONTROLE NE MESURE QUE DU TEXTE. Il n a rien a dire sur un contour, une
+// icone, une bordure ou une surface.
+//
+// Le 01/09/2026 il appliquait ce seuil de 4,5 a la pastille flottante de la
+// timeline. Pour l atteindre j ai blanchi la pastille, pousse son lisere a
+// 90 % de violet, ajoute une ombre puis un voile de 96 px. Le produit est passe
+// de minimaliste a surcharge, et la cause etait ce chiffre applique la ou il
+// n avait pas cours.
+//
+// La regle, une fois pour toutes :
+//
+//   TEXTE ................. 4,5   (ce fichier, et rien d autre)
+//   GROS TEXTE ............ 3,0   (>= 24 px, ou >= 19 px en gras)
+//   CONTROLE / ICONE ...... 3,0   contre son fond, composant ENTIER —
+//                                 matiere, teinte et elevation comprises,
+//                                 jamais l epaisseur d un trait
+//   DECOR, ETAT INACTIF ... aucun seuil
+//
+// Si un libelle ne passe pas : on assombrit LE LIBELLE. On ne touche ni a la
+// matiere, ni au lisere, ni a l elevation. Ajouter une couche pour sauver un
+// chiffre est toujours la mauvaise reponse — voir la skill favorable-design.
+// ─────────────────────────────────────────────────────────────────────────────
 const SEUIL = 4.5;
 
 /** Ce qui doit etre lisible. Le reste porte du decor ou un etat. */
@@ -227,8 +250,12 @@ for (const t of themes) {
 
 if (echecs > 0) {
   console.log(`\n  ${echecs} jeton(s) sous le seuil de ${SEUIL}.`);
-  console.log(`  Baisse la luminosite en gardant la teinte : la couleur reste de la
-  meme famille, elle devient seulement lisible.\n`);
+  console.log(`  Assombris LE TEXTE en gardant sa teinte : la couleur reste de la
+  meme famille, elle devient seulement lisible.
+
+  Ne touche pas a la matiere, au lisere ni a l elevation du composant. Ce
+  controle mesure du texte ; il n a pas d avis sur le design, et un chiffre
+  d ici ne justifie jamais d ajouter une couche.\n`);
   process.exit(1);
 }
 console.log(`\n  Tous les jetons de texte passent ${SEUIL} dans les deux themes.\n`);

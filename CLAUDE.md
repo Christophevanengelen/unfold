@@ -252,7 +252,7 @@ fois le 31 aout 2026, ne pas y repasser du temps.
 
 ## Les skills de ce depot
 
-Quatre skills vivent dans `.claude/skills/`. Ils ne repetent pas ce que le code
+Cinq skills vivent dans `.claude/skills/`. Ils ne repetent pas ce que le code
 dit deja : ils gardent ce qui a coute des heures a decouvrir, et qu on ne peut
 pas deviner en lisant les fichiers.
 
@@ -264,6 +264,11 @@ pas deviner en lisant les fichiers.
 - **favorable-site** — le site favorable.day : `force-dynamic` obligatoire sur
   toute page localisee, adresse de base, prix a source unique, vocabulaire qui
   tient a distance de l article 4.3(b). Contacts centralises sur hi-def.be.
+- **favorable-design** — le langage visuel et les regles qui le tiennent : la
+  matiere plutot que le cerne, les seuils de contraste et leur perimetre, les
+  contextes d empilement. A lire AVANT de toucher a une couleur, un contour, une
+  ombre, un voile ou un z-index. Le 1er septembre 2026, un seuil de texte
+  applique a un controle a produit un downgrade visuel sur quatre commits.
 - **favorable-natif** — les pieges de l app Capacitor : routes a barre finale,
   navigation par le routeur, greffons a synchroniser, et la panne muette qui est
   le defaut recurrent de ce depot.
