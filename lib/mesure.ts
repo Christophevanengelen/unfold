@@ -36,7 +36,16 @@ export type Evenement =
   | "onboarding_demarre"
   | "onboarding_termine"
   | "premier_signal_vu"
-  | "signal_ouvert";
+  | "signal_ouvert"
+  // Les notifications. Au 01/09/2026 la base compte ZERO jeton enregistre,
+  // et rien ne permet de dire pourquoi : personne n a vu la proposition, ou
+  // tout le monde echoue a l enregistrement ? Sans ces quatre evenements la
+  // question reste sans reponse, et une panne se confond avec une absence
+  // d usage.
+  | "notif_demandee"
+  | "notif_accordee"
+  | "notif_refusee"
+  | "notif_echec";
 
 function identifiantInstallation(): string | null {
   try {

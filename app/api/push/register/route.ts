@@ -100,8 +100,30 @@ export async function POST(req: NextRequest) {
       p_fuseau: fuseau,
       p_locale: typeof locale === "string" ? locale : null,
     });
-  } catch {
-    // silence volontaire : voir l en-tete
+  } catch (e) {
+    // On ne casse toujours pas l app — voir l en-tete, l enregistrement se
+    // rejoue au prochain demarrage. Mais on ne perd plus l information que
+    // quelqu un a ESSAYE.
+    //
+    // Au 01/09/2026 la table push_jetons etait vide, et ce catch muet rendait
+    // la cause indecidable : personne n avait accorde la permission, ou tout
+    // le monde echouait ici ? Les deux produisaient exactement le meme silence.
+    // Une trace ne repare rien, mais elle tranche la question.
+    const detail = e instanceof Error ? e.message : String(e);
+    console.error("enregistrement du jeton refuse :", detail);
+    try {
+      await getAdminClient()
+        .from("app_events")
+        .insert({
+          event: "notif_echec",
+          install_id: deviceId,
+          surface: "serveur",
+          props: { plateforme, detail: detail.slice(0, 300) },
+        });
+    } catch {
+      // Si meme la trace echoue, la base est injoignable : le journal Vercel
+      // ci-dessus reste, et c est tout ce qu on peut faire.
+    }
   }
 
   return withCors(

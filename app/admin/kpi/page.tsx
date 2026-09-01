@@ -25,6 +25,14 @@ const EVENEMENTS: { cle: string; titre: string; aide: string }[] = [
   { cle: "onboarding_termine", titre: "Onboarding terminé", aide: "Une fois par installation." },
   { cle: "premier_signal_vu", titre: "Premier signal vu", aide: "Le moment où la promesse est tenue." },
   { cle: "signal_ouvert", titre: "Signaux ouverts", aide: "Chaque période consultée." },
+  // Les quatre issues de la demande de notification. Elles existent parce que
+  // la table des jetons était vide le 01/09 sans qu'on puisse dire pourquoi :
+  // « personne n'a demandé » et « tout le monde échoue » produisaient le même
+  // silence. Lire « demandée » contre les trois autres tranche la question.
+  { cle: "notif_demandee", titre: "Notifs demandées", aide: "Quelqu'un a touché le réglage." },
+  { cle: "notif_accordee", titre: "Notifs accordées", aide: "Le système a dit oui. C'est ce chiffre qui devrait égaler le nombre de jetons." },
+  { cle: "notif_refusee", titre: "Notifs refusées", aide: "La personne a dit non. iOS ne repose jamais la question." },
+  { cle: "notif_echec", titre: "Notifs en échec", aide: "Une panne technique, pas un refus. Devrait rester à zéro." },
 ];
 
 type Comptes = Record<string, { j7: number; j30: number }>;

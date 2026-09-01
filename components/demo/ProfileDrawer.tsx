@@ -22,6 +22,7 @@ import { rejouerGuide } from "@/components/demo/FirstUseGuide";
 import { useBillingState } from "@/lib/premium-gate";
 import { isNative, getPlatform } from "@/lib/platform";
 import { apiFetch } from "@/lib/api-client";
+import { mesurer } from "@/lib/mesure";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -222,7 +223,18 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                 // demande peut aboutir. Une ligne grisee sans explication ne
                 // laisserait aucune issue.
                 if (permission === "jamais_demande" || permission === "erreur") {
-                  void demanderPuisEnregistrer().then(setPermission);
+                  // On mesure la DEMANDE avant son issue : sans elle, un refus
+                  // systeme et une personne qui n a jamais touche le bouton
+                  // produisent le meme silence.
+                  mesurer("notif_demandee");
+                  void demanderPuisEnregistrer().then((etat) => {
+                    setPermission(etat);
+                    if (etat === "accorde") mesurer("notif_accordee");
+                    else if (etat === "refuse") mesurer("notif_refusee");
+                    else if (etat === "erreur") {
+                      mesurer("notif_echec", { detail: detailEchec() ?? "inconnu" });
+                    }
+                  });
                 }
               }}
               className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary disabled:hover:bg-transparent"
