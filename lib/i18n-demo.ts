@@ -80,6 +80,7 @@ type Strings = {
     notifications: string;
     notif_active: string;
     notif_reglages: string;
+    trial_days: string;
     notif_cadence: string;
     notif_activer: string;
     notif_essentiel: string;
@@ -180,6 +181,7 @@ const FR: Strings = {
     notifications: "Me prévenir",
     notif_active: "Activé",
     notif_reglages: "À réactiver dans les Réglages",
+    trial_days: "{n} j d'essai",
     notif_cadence: "Fréquence",
     notif_activer: "Activer",
     notif_essentiel: "L'essentiel",
@@ -280,6 +282,7 @@ const EN: Strings = {
     notifications: "Notify me",
     notif_active: "On",
     notif_reglages: "Turn back on in Settings",
+    trial_days: "{n} days left",
     notif_cadence: "Frequency",
     notif_activer: "Turn on",
     notif_essentiel: "Essential only",
@@ -380,6 +383,7 @@ const ES: Strings = {
     notifications: "Avisarme",
     notif_active: "Activado",
     notif_reglages: "Reactivar en Ajustes",
+    trial_days: "{n} días de prueba",
     notif_cadence: "Frecuencia",
     notif_activer: "Activar",
     notif_essentiel: "Lo esencial",
@@ -480,6 +484,7 @@ const DE: Strings = {
     notifications: "Benachrichtigen",
     notif_active: "An",
     notif_reglages: "In den Einstellungen wieder aktivieren",
+    trial_days: "noch {n} Tage",
     notif_cadence: "Häufigkeit",
     notif_activer: "Aktivieren",
     notif_essentiel: "Nur Wichtiges",
@@ -580,6 +585,7 @@ const IT: Strings = {
     notifications: "Avvisami",
     notif_active: "Attivo",
     notif_reglages: "Riattiva nelle Impostazioni",
+    trial_days: "{n} giorni di prova",
     notif_cadence: "Frequenza",
     notif_activer: "Attiva",
     notif_essentiel: "L'essenziale",
@@ -680,6 +686,7 @@ const PT: Strings = {
     notifications: "Avise-me",
     notif_active: "Ativado",
     notif_reglages: "Reativar nos Ajustes",
+    trial_days: "{n} dias de teste",
     notif_cadence: "Frequência",
     notif_activer: "Ativar",
     notif_essentiel: "O essencial",
@@ -780,6 +787,7 @@ const NL: Strings = {
     notifications: "Waarschuw me",
     notif_active: "Aan",
     notif_reglages: "Weer inschakelen in Instellingen",
+    trial_days: "nog {n} dagen",
     notif_cadence: "Frequentie",
     notif_activer: "Inschakelen",
     notif_essentiel: "Alleen belangrijk",
@@ -880,6 +888,7 @@ const JA: Strings = {
     notifications: "通知を受け取る",
     notif_active: "オン",
     notif_reglages: "設定で再度オンにしてください",
+    trial_days: "残り{n}日",
     notif_cadence: "頻度",
     notif_activer: "オンにする",
     notif_essentiel: "重要なものだけ",
@@ -980,6 +989,7 @@ const ZH: Strings = {
     notifications: "通知我",
     notif_active: "已开启",
     notif_reglages: "请在设置中重新开启",
+    trial_days: "还剩 {n} 天",
     notif_cadence: "频率",
     notif_activer: "开启",
     notif_essentiel: "仅重要内容",
@@ -1080,6 +1090,7 @@ const AR: Strings = {
     notifications: "أبلغني",
     notif_active: "مفعّل",
     notif_reglages: "أعد التفعيل من الإعدادات",
+    trial_days: "{n} أيام متبقية",
     notif_cadence: "التكرار",
     notif_activer: "تفعيل",
     notif_essentiel: "الأهم فقط",

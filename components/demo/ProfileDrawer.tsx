@@ -110,7 +110,24 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                       background: "color-mix(in srgb, var(--accent-purple) 15%, transparent)",
                       color: "var(--accent-purple)",
                     }}
-                  >Trial</span>
+                  >
+                    {/* Le decompte vivait dans la barre du haut du web, qui
+                        disparait. Un essai sans nombre de jours restants ne
+                        pousse a rien : c est justement le nombre qui decide. */}
+                    {billing.trialEnd
+                      ? t("profile.trial_days", locale).replace(
+                          "{n}",
+                          String(
+                            Math.max(
+                              0,
+                              Math.ceil(
+                                (new Date(billing.trialEnd).getTime() - Date.now()) / 86_400_000,
+                              ),
+                            ),
+                          ),
+                        )
+                      : "Trial"}
+                  </span>
                 )}
               </p>
               {streak >= 2 && (

@@ -7,7 +7,6 @@ import { cheminDepuisNotification } from "@/lib/push-routes";
 import { brancherLiensProfonds } from "@/lib/deep-links";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { UnfoldLogo } from "@/components/demo/UnfoldLogo";
 import { BottomNav } from "@/components/demo/BottomNav";
 import { ProfileDrawer } from "@/components/demo/ProfileDrawer";
 import { PremiumTeaser } from "@/components/demo/PremiumTeaser";
@@ -116,11 +115,14 @@ export default function DemoLayout({
 
   // Prevent SSR flash — demo is 100% client-side (API data, IndexedDB, etc.)
   const [mounted, setMounted] = useState(false);
-  const [streak, setStreak] = useState(0);
   useEffect(() => {
     mesurer("app_ouverte");
     setMounted(true);
-    setStreak(checkAndUpdateStreak());
+    // Enregistre la visite du jour. L affichage de la serie a demenage dans le
+    // tiroir profil avec la barre du haut, mais le COMPTAGE doit rester ici :
+    // c est l ouverture de l app qui fait la serie, pas l ouverture du tiroir.
+    // Retirer cet appel avec l affichage aurait fige la serie a zero.
+    checkAndUpdateStreak();
 
     // Native-only: hide splash screen on first render
     if (typeof window !== "undefined" && window.Capacitor) {
@@ -348,47 +350,22 @@ export default function DemoLayout({
             barre du systeme sans rien apporter (un logo, et le profil qui est
             desormais un onglet). Le compteur de serie et la pastille d essai
             attendent une nouvelle place : voir le registre du chantier. */}
-        {!hideNav && !isNative && (
-          <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-6 pb-2" style={{
-            // La barre se posait sous l ile dynamique. Elle commence maintenant
-            // sous la zone de securite, comme le veut Apple.
-            paddingTop: "calc(12px + var(--safe-top, 0px))",
-            background: "var(--glass-bg)",
-            borderBottom: "1px solid var(--glass-border)",
-            backdropFilter: `blur(var(--glass-blur))`,
-          }}>
-            {/* L heure factice n a de sens que dans la maquette telephone du web.
-                Dans l app, elle se retrouvait juste sous la vraie horloge du
-                systeme : deux heures affichees, dont une fausse et figee a 9:41.
-                Apple interdit d ailleurs d imiter les elements du systeme. */}
-            {isNative ? (
-              <span className="w-10" aria-hidden="true" />
-            ) : (
-              <span className="text-xs font-medium" style={{ color: "var(--accent-purple)", opacity: 0.5 }}>
-                9:41
-              </span>
-            )}
-            <UnfoldLogo size={22} />
-            <div className="flex items-center gap-2">
-              {/* Trial countdown — web + Android only (anti-steering iOS) */}
-              {!ios && billing.status === "trialing" && billing.trialEnd && (
-                <TrialCountdownPill
-                  trialEnd={billing.trialEnd}
-                  onClick={() => router.push("/app/pricing")}
-                />
-              )}
-              {streak >= 2 && (
-                <span
-                  className="text-[9px] font-semibold tabular-nums"
-                  style={{ color: "var(--accent-purple)", opacity: 0.6 }}
-                >
-                  {t("profile.streak_day", locale).replace("{n}", String(streak))}
-                </span>
-              )}
-              <AvatarButton onClick={() => setDrawerOpen(true)} />
-            </div>
-          </div>
-        )}
+        {/* La barre du haut est retiree, sur le web comme dans l app.
+            Elle avait ete supprimee du natif le 31 aout, et le web l avait
+            gardee — deux designs qui divergeaient pour un meme produit, ce que
+            Christophe a repere en ouvrant l apercu telephone.
+
+            Ce qu elle portait a trouve sa place ailleurs :
+              le bouton profil ....... la barre du bas en a un onglet
+              le compteur de serie ... le tiroir profil
+              le decompte d essai .... le tiroir profil, deplace ici meme
+              le logo ................ personne ne lit un logo dans sa propre app
+              la fausse heure 9:41 ... elle se posait sous la vraie horloge du
+                                       systeme, et Apple interdit d imiter les
+                                       elements du systeme
+
+            Le gain n est pas seulement esthetique : c est une bande de
+            cinquante points rendue au contenu, sur chaque ecran. */}
 
         {/* Bottom nav — absolute overlay so content scrolls behind */}
         {!hideNav && (
