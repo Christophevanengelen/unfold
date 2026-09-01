@@ -608,7 +608,13 @@ function OverviewView({
   return (
     <div className="relative flex h-full flex-col">
       {/* Scrollable timeline */}
-      <div ref={scrollRef} className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden">
+      <div
+        ref={scrollRef}
+        className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden"
+        // Meme raison que la vue liste : la bande de controles flottants doit
+        // pouvoir etre degagee par le defilement.
+        style={{ paddingBottom: "calc(var(--safe-bottom, 0px) + 88px)" }}
+      >
         <div className="relative" style={{ height: getTotalHeight() }}>
 
           {/* Month labels on the left — virtualized: only render visible range + buffer */}
@@ -1004,7 +1010,25 @@ function ListView({
         </button>
       </div>
 
-      <div ref={scrollRef} className="no-scrollbar h-full overflow-y-auto px-4 pb-6">
+      <div
+        ref={scrollRef}
+        className="no-scrollbar h-full overflow-y-auto px-4"
+        style={{
+            // De la place sous le dernier element.
+            //
+            // Trois controles flottent au-dessus de la liste — « Maintenant »,
+            // la bascule de vue, les fleches — sur une bande d environ 56
+            // points. La liste n avait que 24 points de remboursage bas, donc
+            // ses dernieres lignes restaient DEFINITIVEMENT cachees dessous :
+            // on pouvait defiler autant qu on voulait, l en-tete de mois final
+            // ne sortait jamais de derriere les boutons.
+            //
+            // Constate en regardant l app, pas en lisant le code. J avais
+            // diagnostique un probleme de contraste sur ces memes boutons ; il
+            // etait reel, mais ce n etait pas ce que Christophe voyait.
+            paddingBottom: "calc(var(--safe-bottom, 0px) + 88px)",
+        }}
+      >
       {/* Spine + virtualized rows */}
       <div className="relative ml-3">
         {/* Vertical spine */}

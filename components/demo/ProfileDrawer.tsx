@@ -57,7 +57,27 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   // tiroir : sur iOS la boite systeme ne s affiche qu une fois dans la vie de
   // l installation, et un refus ne se rattrape plus depuis l app. Elle n est
   // appelee que sur un geste explicite.
-  const [permission, setPermission] = useState<EtatPermission>("indisponible");
+  /**
+   * L etat de depart ne peut pas etre « indisponible ».
+   *
+   * « indisponible » veut dire « nous ne sommes pas dans l app, ce reglage
+   * n existe pas ici » — et c est la seule valeur qui MASQUE le bloc. En la
+   * prenant comme valeur initiale, on affirmait cette absence avant d avoir
+   * rien verifie.
+   *
+   * Concretement : le reglage n apparaissait qu APRES la resolution de
+   * etatPermission(), qui charge le greffon par import dynamique. Tant que
+   * cette promesse n avait pas repondu — et si elle ne repondait jamais — le
+   * bloc n existait pas. Christophe l a cherche en vain dans la build 120.
+   *
+   * isNative() est synchrone et fiable : dans le paquet natif, la constante de
+   * compilation suffit. On part donc de « jamais_demande », qui affiche le
+   * reglage et le rend actionnable, et la vraie valeur le corrige des qu elle
+   * arrive. Sur le web, on garde « indisponible » : la, c est vrai.
+   */
+  const [permission, setPermission] = useState<EtatPermission>(() =>
+    isNative() ? "jamais_demande" : "indisponible",
+  );
   const [cadence, setCadence] = useState<Cadence>(lireCadence);
   useEffect(() => {
     if (open) void etatPermission().then(setPermission);
