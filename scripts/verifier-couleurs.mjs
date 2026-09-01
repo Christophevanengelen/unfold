@@ -90,7 +90,7 @@ for (const f of fichiers) {
  * Quand tu corriges des couleurs, baisse ce nombre du meme compte. Le message
  * d erreur te dit lequel ecrire.
  */
-const PLAFOND = 122;
+const PLAFOND = 121;
 
 if (fuites.length === 0) {
   console.log("\n  Aucune couleur ecrite en dur. Le theme tient.\n");

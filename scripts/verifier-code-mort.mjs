@@ -33,7 +33,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
-const PLAFOND = 17;
+const PLAFOND = 7;
 
 const fichiers = execFileSync("git", ["ls-files", "components", "app", "lib"], {
   encoding: "utf8",
