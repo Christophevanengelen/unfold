@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import { KeyboardResize, KeyboardStyle } from "@capacitor/keyboard";
 
 const config: CapacitorConfig = {
   appId: "day.favorable.app",
@@ -51,8 +52,11 @@ const config: CapacitorConfig = {
     },
     Keyboard: {
       // Prevent viewport resize on keyboard open (keeps 100dvh stable)
-      resize: "none",
-      style: "DARK",
+      resize: KeyboardResize.None,
+      // Valeur de DEPART seulement. app/app/layout.tsx la reaccorde au theme a
+      // chaque changement d apparence : figee ici, elle donnait un clavier noir
+      // en theme clair.
+      style: KeyboardStyle.Dark,
       resizeOnFullScreen: true,
     },
     Haptics: {},

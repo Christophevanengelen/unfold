@@ -166,6 +166,11 @@ button, a, [role="button"], [role="link"],
    LIGHT MODE
    ============================================== */
 :root {
+  /* Sans cette declaration, WKWebView rend ses PROPRES controles — selecteurs
+     de date, barres de defilement, menus — selon le schema clair, quel que soit
+     le theme de l app. En theme sombre, ouvrir le selecteur de date de son
+     ecran de naissance faisait donc surgir un panneau blanc. */
+  color-scheme: light;
   /* Couleurs des domaines de vie.
      La base porte l identite et sert au fond teinte et a la bordure ; le texte
      en est DERIVE, parce que le motif d origine peignait le libelle avec la
@@ -324,6 +329,7 @@ button, a, [role="button"], [role="link"],
    Deep purple backgrounds, lifted accents.
    ============================================== */
 .dark {
+  color-scheme: dark;
   /* Seul le texte change : la base reste identique dans les deux themes. */
   --domaine-love-texte: #e87f9b;
   --domaine-career-texte: #9d90cf;

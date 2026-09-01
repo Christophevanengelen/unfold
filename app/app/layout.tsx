@@ -175,6 +175,14 @@ export default function DemoLayout({
       StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
       StatusBar.setBackgroundColor({ color: isDark ? "#1B1535" : "#F5F1FA" }).catch(() => {});
     });
+    // Le clavier aussi. capacitor.config le fige a « DARK », donc en theme
+    // clair on tapait sa date de naissance au-dessus d un clavier noir.
+    const sombre = resolvedTheme !== "light";
+    import("@capacitor/keyboard").then(({ Keyboard, KeyboardStyle }) => {
+      Keyboard.setStyle({
+        style: sombre ? KeyboardStyle.Dark : KeyboardStyle.Light,
+      }).catch(() => {});
+    }).catch(() => {});
   }, [resolvedTheme]);
 
   // Sync HTML lang + dir attributes with detected/picked user locale.
