@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { CelebPicker } from "@/components/landing/CelebPicker";
 import { DateInput } from "@/components/ui/DateInput";
+import { verifierCode, CLE_ACCES } from "@/lib/coupons";
 
 interface Props {
   chartCta: string;
@@ -13,15 +14,6 @@ interface Props {
   chartSub: string;
 }
 
-const COUPON_KEY = "unfold_chart_access";
-
-function getValidCoupons(): string[] {
-  const raw = process.env.NEXT_PUBLIC_CHART_COUPONS ?? "";
-  return raw
-    .split(",")
-    .map((c) => c.trim().toUpperCase())
-    .filter(Boolean);
-}
 
 const GOLD = "#b59a4a";
 
@@ -54,7 +46,7 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
 
   useEffect(() => {
     try {
-      setHasAccess(localStorage.getItem(COUPON_KEY) === "true");
+      setHasAccess(localStorage.getItem(CLE_ACCES) === "true");
     } catch {}
   }, []);
 
@@ -70,14 +62,20 @@ export function LifetimeChartTeaser({ chartCta, chartEyebrow, chartTitle, chartS
   }, []);
 
   const tryCode = () => {
-    const valid = getValidCoupons();
-    if (valid.includes(code.trim().toUpperCase())) {
-      try { localStorage.setItem(COUPON_KEY, "true"); } catch {}
+    const etat = verifierCode(code);
+    if (etat === "ok") {
+      try { localStorage.setItem(CLE_ACCES, "true"); } catch {}
       setHasAccess(true);
       setShowCoupon(false);
       window.location.href = "/app/boudin";
     } else {
-      setCouponError("Invalid code. Try again or subscribe to get access.");
+      // Voir lib/coupons.ts : « inactif » veut dire qu aucun code n existe,
+      // ce qui n est pas la faute de la personne qui vient d en saisir un.
+      setCouponError(
+        etat === "inactif"
+          ? "Access codes aren't active right now. It's not you."
+          : "This code isn't recognized. Try again or subscribe to get access.",
+      );
     }
   };
 

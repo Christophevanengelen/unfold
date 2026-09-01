@@ -1,14 +1,23 @@
 "use client";
 
+/**
+ * ORPHELINE, constate le 01/09/2026. Aucun lien du produit ne mene ici — ni le
+ * site, ni l app, ni un mail. On n y arrive qu en tapant l adresse.
+ *
+ * Et si on y arrive : elle renvoie vers /app/boudin, un ecran volontairement
+ * mis de cote du paquet natif (voir scripts/build-native.sh). Sur telephone, un
+ * code valide afficherait donc « c est bon » puis deposerait la personne sur
+ * l accueil, sans explication.
+ *
+ * Elle est laissee en place, branchee sur lib/coupons.ts comme les deux autres
+ * champs de code, en attendant qu on decide de son sort. Elle ne nuit pas :
+ * personne ne peut la trouver.
+ */
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { verifierCode, CLE_ACCES } from "@/lib/coupons";
 
-const COUPON_KEY = "unfold_chart_access";
-
-function getValidCoupons(): string[] {
-  const raw = process.env.NEXT_PUBLIC_CHART_COUPONS ?? "";
-  return raw.split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
-}
 
 export default function UnlockPage() {
   const router = useRouter();
@@ -17,13 +26,19 @@ export default function UnlockPage() {
   const [success, setSuccess] = useState(false);
 
   const tryCode = () => {
-    const valid = getValidCoupons();
-    if (valid.includes(code.trim().toUpperCase())) {
-      try { localStorage.setItem(COUPON_KEY, "true"); } catch {}
+    const etat = verifierCode(code);
+    if (etat === "ok") {
+      try { localStorage.setItem(CLE_ACCES, "true"); } catch {}
       setSuccess(true);
       setTimeout(() => router.replace("/app/boudin"), 1200);
     } else {
-      setError("Invalid code — check spelling and try again.");
+      // Voir lib/coupons.ts : aucun code n est defini en production, donc
+      // demander de verifier l orthographe accuse la personne a tort.
+      setError(
+        etat === "inactif"
+          ? "Access codes aren't active right now. It's not you."
+          : "This code isn't recognized.",
+      );
     }
   };
 

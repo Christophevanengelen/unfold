@@ -1,5 +1,8 @@
 /**
- * Les mots de l ecran de personnalisation, dans les dix langues.
+ * Les mots d interface, groupes par concept, dans les dix langues.
+ *
+ * Au depart ceux de l ecran de personnalisation, puis ceux des ecrans qui en
+ * avaient besoin — l ecran « aucune donnee » des rapports, par exemple.
  *
  * Pourquoi un fichier a part plutot qu un groupe de plus dans i18n-demo.ts :
  * la-bas, les dix versions d une meme phrase sont separees de huit cents
@@ -160,6 +163,20 @@ const MOTS: Record<string, Traduction> = {
                      pt:"Seguinte", nl:"Volgende", ja:"次へ", zh:"下一步", ar:"التالي" },
   "bouton.partir": { fr:"C'est parti", en:"Let's go", es:"Vamos", de:"Los geht's", it:"Si parte",
                      pt:"Vamos lá", nl:"We gaan", ja:"はじめる", zh:"开始吧", ar:"لنبدأ" },
+
+  // ── Ecran « aucune donnee » des rapports ────────────────────────────────
+  "vide.titre":  { fr:"Aucune donnée trouvée", en:"No data found", es:"No se encontraron datos", de:"Keine Daten gefunden", it:"Nessun dato trovato",
+                   pt:"Nenhum dado encontrado", nl:"Geen gegevens gevonden", ja:"データが見つかりません", zh:"未找到数据", ar:"لا توجد بيانات" },
+  "vide.sous":   { fr:"Génère ton {x} depuis le site.", en:"Generate your {x} from the website.", es:"Genera tu {x} desde el sitio.", de:"Erstelle dein {x} auf der Website.", it:"Genera il tuo {x} dal sito.",
+                   pt:"Gera o teu {x} a partir do site.", nl:"Genereer je {x} via de website.", ja:"{x} はサイトから作成できます。", zh:"请在网站上生成你的 {x}。", ar:"أنشئ {x} من الموقع." },
+  "vide.retour": { fr:"Retour à Favorable", en:"Back to Favorable", es:"Volver a Favorable", de:"Zurück zu Favorable", it:"Torna a Favorable",
+                   pt:"Voltar ao Favorable", nl:"Terug naar Favorable", ja:"Favorable に戻る", zh:"返回 Favorable", ar:"العودة إلى Favorable" },
+
+  // ── Codes d acces ───────────────────────────────────────────────────────
+  "code.inconnu": { fr:"Ce code n'est pas reconnu.", en:"This code isn't recognized.", es:"Este código no se reconoce.", de:"Dieser Code wird nicht erkannt.", it:"Questo codice non è riconosciuto.",
+                    pt:"Este código não é reconhecido.", nl:"Deze code wordt niet herkend.", ja:"このコードは認識できません。", zh:"无法识别此代码。", ar:"هذا الرمز غير معروف." },
+  "code.inactif": { fr:"Les codes d'accès ne sont pas actifs pour le moment. Ce n'est pas toi.", en:"Access codes aren't active right now. It's not you.", es:"Los códigos de acceso no están activos ahora. No es culpa tuya.", de:"Zugangscodes sind derzeit nicht aktiv. Es liegt nicht an dir.", it:"I codici di accesso non sono attivi al momento. Non dipende da te.",
+                    pt:"Os códigos de acesso não estão ativos de momento. Não és tu.", nl:"Toegangscodes zijn nu niet actief. Het ligt niet aan jou.", ja:"アクセスコードは現在有効ではありません。あなたのせいではありません。", zh:"访问代码当前未启用。不是你的问题。", ar:"رموز الدخول غير مفعّلة حالياً. الأمر ليس منك." },
 };
 
 /**

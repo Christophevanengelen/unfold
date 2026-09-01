@@ -22,6 +22,8 @@ import { useAuth } from "@/lib/auth-context";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { isIOSBundle } from "@/lib/platform";
 import { PLANS } from "@/lib/billing/features";
+import { verifierCode, CLE_ACCES } from "@/lib/coupons";
+import { perso } from "@/lib/perso-i18n";
 import { t, detectLocale, type Locale } from "@/lib/i18n-demo";
 import { apiFetch } from "@/lib/api-client";
 
@@ -322,12 +324,6 @@ const PAGE_COPY: Record<Locale, {
   },
 };
 
-const COUPON_KEY = "unfold_chart_access";
-
-function getValidCoupons(): string[] {
-  const raw = process.env.NEXT_PUBLIC_CHART_COUPONS ?? "";
-  return raw.split(",").map((c) => c.trim().toUpperCase()).filter(Boolean);
-}
 
 export default function DemoPricingPage() {
   const router = useRouter();
@@ -346,13 +342,16 @@ export default function DemoPricingPage() {
   const [couponSuccess, setCouponSuccess] = useState(false);
 
   const tryCoupon = () => {
-    const valid = getValidCoupons();
-    if (valid.includes(couponCode.trim().toUpperCase())) {
-      try { localStorage.setItem(COUPON_KEY, "true"); } catch {}
+    const etat = verifierCode(couponCode);
+    if (etat === "ok") {
+      try { localStorage.setItem(CLE_ACCES, "true"); } catch {}
       setCouponSuccess(true);
       setTimeout(() => router.replace("/app/timeline"), 1000);
     } else {
-      setCouponError("Invalid code — check spelling and try again.");
+      // « inactif » n est pas « inconnu » : aucun code n existe dans cet
+      // environnement, et dire a la personne de verifier son orthographe la
+      // rend responsable d une panne qui ne lui appartient pas.
+      setCouponError(perso(etat === "inactif" ? "code.inactif" : "code.inconnu", locale));
     }
   };
 
