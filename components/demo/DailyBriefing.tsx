@@ -42,6 +42,17 @@ const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 // ─── Domain colors ───────────────────────────────────────
 
+// Chaque clef de DOMAIN_COLORS pointe vers un jeton. Les valeurs hex restent
+// pour memoire de l identite ; ce sont les jetons qui s affichent.
+const DOMAIN_SLUGS: Record<string, string> = {
+  "carrière": "carriere", travail: "carriere", amour: "amour",
+  relations: "amour", couple: "amour", "santé": "sante",
+  finances: "argent", argent: "argent", famille: "famille",
+  "créativité": "creativite", communication: "communication", foyer: "foyer",
+  "spiritualité": "spiritualite", voyage: "voyage", transformation: "transformation",
+  "développement personnel": "spiritualite", "opportunités": "argent",
+};
+
 const DOMAIN_COLORS: Record<string, string> = {
   carrière: "#7B8CC4", travail: "#7B8CC4", amour: "#BC7A96",
   relations: "#BC7A96", couple: "#BC7A96", santé: "#7BA88A",
@@ -51,12 +62,28 @@ const DOMAIN_COLORS: Record<string, string> = {
   "développement personnel": "#9B85C4", opportunités: "#B8A472",
 };
 
-function getDomainColor(domain: string): string {
+/**
+ * La couleur d un domaine, en deux valeurs.
+ *
+ * `base` porte l identite et sert au fond teinte et a la bordure ; `texte` en
+ * est derive. La fonction ne renvoyait qu une seule couleur, utilisee pour les
+ * TROIS a la fois — donc le libelle etait peint dans la couleur pure sur un
+ * fond fait de cette meme couleur a 12 %. Texte et fond partageant la teinte,
+ * ils convergeaient : les onze domaines etaient entre 2,02 et 2,78 de contraste
+ * en theme clair, pour 4,5 requis. Sur l ecran principal.
+ *
+ * Les nuances de texte sont calculees dans app/globals.css, une par theme, et
+ * verifiees par scripts/verifier-contraste.mjs.
+ */
+function getDomainColor(domain: string): { base: string; texte: string } {
   const lower = domain.toLowerCase();
-  for (const [key, color] of Object.entries(DOMAIN_COLORS)) {
-    if (lower.includes(key)) return color;
+  for (const cle of Object.keys(DOMAIN_COLORS)) {
+    if (lower.includes(cle)) {
+      const slug = DOMAIN_SLUGS[cle];
+      if (slug) return { base: `var(--dom-${slug})`, texte: `var(--dom-${slug}-texte)` };
+    }
   }
-  return "var(--accent-purple)";
+  return { base: "var(--accent-purple)", texte: "var(--text-brand-strong)" };
 }
 
 function dateKey(prefix: string): string {
@@ -107,16 +134,16 @@ function useBriefingData(birthData: BirthData | null, endpoint: string, cachePre
 // ─── Atom: Domain Pill ───────────────────────────────────
 
 function DomainPill({ domain }: { domain: string }) {
-  const color = getDomainColor(domain);
+  const { base, texte } = getDomainColor(domain);
   return (
     <span
       className="inline-flex rounded-full font-medium"
       style={{
         fontSize: 10,
         padding: `${S.xs}px ${S.sm + S.xs}px`,
-        color,
-        background: `color-mix(in srgb, ${color} 12%, transparent)`,
-        border: `1px solid color-mix(in srgb, ${color} 18%, transparent)`,
+        color: texte,
+        background: `color-mix(in srgb, ${base} 12%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${base} 18%, transparent)`,
       }}
     >
       {domain}

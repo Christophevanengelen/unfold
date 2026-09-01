@@ -166,6 +166,36 @@ button, a, [role="button"], [role="link"],
    LIGHT MODE
    ============================================== */
 :root {
+  /* Couleurs de domaine du briefing et de la timeline.
+     Deuxieme palette du produit, distincte de --domaine-* qui sert a l ecran
+     de personnalisation. Meme faute que celle-ci avant correction : le libelle
+     prenait la couleur pure sur un fond fait de la MEME couleur a 12 %, donc
+     texte et fond convergeaient. Les onze domaines etaient sous le seuil en
+     theme clair, entre 2,02 et 2,78 pour 4,5 requis, sur l ecran principal.
+     Le texte est derive ; la base reste l identite. */
+  --dom-carriere: #7B8CC4;
+  --dom-carriere-texte: #5a668f;
+  --dom-amour: #BC7A96;
+  --dom-amour-texte: #89596e;
+  --dom-sante: #7BA88A;
+  --dom-sante-texte: #516f5b;
+  --dom-argent: #B8A472;
+  --dom-argent-texte: #746748;
+  --dom-famille: #C48A6A;
+  --dom-famille-texte: #875f49;
+  --dom-creativite: #A07FBD;
+  --dom-creativite-texte: #755d8a;
+  --dom-communication: #6FA3A0;
+  --dom-communication-texte: #4b6f6d;
+  --dom-foyer: #C4727A;
+  --dom-foyer-texte: #91545a;
+  --dom-spiritualite: #9B85C4;
+  --dom-spiritualite-texte: #70608d;
+  --dom-voyage: #8B80C9;
+  --dom-voyage-texte: #686097;
+  --dom-transformation: #B07AAF;
+  --dom-transformation-texte: #825a82;
+
   /* Sans cette declaration, WKWebView rend ses PROPRES controles — selecteurs
      de date, barres de defilement, menus — selon le schema clair, quel que soit
      le theme de l app. En theme sombre, ouvrir le selecteur de date de son
@@ -329,6 +359,19 @@ button, a, [role="button"], [role="link"],
    Deep purple backgrounds, lifted accents.
    ============================================== */
 .dark {
+  /* Seul le texte change : la base est identique dans les deux themes. */
+  --dom-carriere-texte: #7b8cc4;
+  --dom-amour-texte: #bc7a96;
+  --dom-sante-texte: #7ba88a;
+  --dom-argent-texte: #b8a472;
+  --dom-famille-texte: #c48a6a;
+  --dom-creativite-texte: #a282be;
+  --dom-communication-texte: #6fa3a0;
+  --dom-foyer-texte: #c6767e;
+  --dom-spiritualite-texte: #9b85c4;
+  --dom-voyage-texte: #9085cb;
+  --dom-transformation-texte: #b27db1;
+
   color-scheme: dark;
   /* Seul le texte change : la base reste identique dans les deux themes. */
   --domaine-love-texte: #e87f9b;

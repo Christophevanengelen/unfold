@@ -119,6 +119,40 @@ for (const t of themes) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Deuxieme palette : les domaines du briefing.
+//
+// Elle se verifie sur un fond teinte a 12 % — la puce de DailyBriefing —, et
+// non a 18 % comme les puces de personnalisation. Le motif etait le meme et la
+// faute aussi : les onze domaines etaient entre 2,02 et 2,78 en theme clair,
+// sur l ecran principal.
+// ─────────────────────────────────────────────────────────────────────────────
+const DOMAINES_BRIEF = [
+  "carriere", "amour", "sante", "argent", "famille", "creativite",
+  "communication", "foyer", "spiritualite", "voyage", "transformation",
+];
+
+for (const t of themes) {
+  const jetons = t.nom === "sombre" ? { ...themes[0].jetons, ...t.jetons } : t.jetons;
+  const fondBase = rgb(jetons["bg-primary"]);
+  if (!fondBase) continue;
+  console.log(`\n  Domaines du briefing, theme ${t.nom}`);
+  for (const d of DOMAINES_BRIEF) {
+    const base = rgb(jetons[`dom-${d}`]);
+    const texte = rgb(jetons[`dom-${d}-texte`]);
+    if (!base || !texte) {
+      console.log(`    ${d.padEnd(22)} jeton manquant`);
+      echecs++;
+      continue;
+    }
+    const fond = base.map((c, i) => c * 0.12 + fondBase[i] * 0.88);
+    const r = contraste(texte, fond);
+    const ok = r >= SEUIL;
+    if (!ok) echecs++;
+    console.log(`    ${d.padEnd(22)} ${r.toFixed(2).padStart(6)}  ${ok ? "ok" : "SOUS LE SEUIL"}`);
+  }
+}
+
 if (echecs > 0) {
   console.log(`\n  ${echecs} jeton(s) sous le seuil de ${SEUIL}.`);
   console.log(`  Baisse la luminosite en gardant la teinte : la couleur reste de la
