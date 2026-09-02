@@ -231,7 +231,10 @@ export async function removeRemoteConnection(inviteCode: string): Promise<void> 
     const url = `/api/connection/upsert?deviceId=${encodeURIComponent(
       deviceId,
     )}&inviteCode=${encodeURIComponent(inviteCode)}`;
-    await fetch(url, { method: "DELETE" });
+    // Seul fetch nu du fichier. Sous capacitor://localhost une URL relative ne
+    // resout rien : la suppression echouait en silence, et connections-store
+    // reinserait la connexion au demarrage suivant — elle « revenait ».
+    await apiFetch(url, { method: "DELETE" });
   } catch (err) {
     console.warn("[supabase-store] removeRemoteConnection failed:", err);
   }
