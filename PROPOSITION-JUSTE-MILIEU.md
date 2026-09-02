@@ -170,3 +170,20 @@ celui des regles : le fil rouge, ou tu en es (micro-anneau), ton passe avec
 « tu t en souviens ? », ce que tu traverses, dans 16 jours, ta prochaine
 fenetre, et aujourd hui avec les deux boutons. Verifie a l ecran : etapes 1, 2
 et 5, navigation, console vide.
+
+## Brouillons 6 → 8 — 2 septembre 2026, retours de Christophe pris un à un
+
+**B6 — deux gestes persistants.** Barre en bas sur chaque écran : *Comparer* (me rassurer) et *Quoi faire · pourquoi* (quand · quoi · comment · pourquoi). Les fiches s'ouvrent en feuille, avec rappel et calendrier.
+
+**B7 — les deux features côte à côte.** Onglets *Aujourd'hui* (ce qui est important aujourd'hui : silence + trois horizons datés, chacun ouvre sa fiche) et *Ton ID astral* (la cartographie, 7 écrans, qui finit par un résumé passé · présent · futur).
+- Écran 2 interactif : trois parties de vie (0→41 exigeante · 41→65 mitigée, tu es ici · 65→96 la plus favorable), chacune avec ses dates, ses faits donnés par l'utilisateur (1991, 1995, 1997 / 2005, 2016, 2022 / 2029), et sa bascule (déc. 2004 = janv. 2005 dans les faits ; déc. 2028).
+- Écran 3 : la réponse « c'était ça / pas vraiment » explique ce qu'elle produit — pour toi (1997 reste ou quitte la carte ; 2029 sort du même calcul), pour le calcul (le poids bouge, rien n'est effacé), ensuite (deuxième question : 2022).
+- Écran 4 : la vague d'amplitude (faible avant fév. 2020, forte jusqu'à déc. 2031, faible après) + D'où ça vient / Pourquoi ça compte / L'impact.
+
+**B8 — illustrer, sourcer, prouver.**
+- Écran 1 : la chaîne de la donnée — 3 données › 16 techniques › 1 819 périodes › 3,6 % du temps on te parle.
+- Écran 5 : 16 cases = 16 jours, puis la règle des chapitres à l'échelle (29 août 2024 → 18 sept. 2026 → 10 avr. 2028, « toi » dessus).
+- Écran 6 : trois voies — transit, chapitre, année pivot — qui ne se recouvrent que du 8 au 22 décembre 2029 (bornes des techniques non montrées : je ne les ai pas localement, rien d'inventé).
+- Comparer : « Avec Jennifer A. » (calculé pour de vrai) / « Avec la base » (vies documentées, mêmes fenêtres, faits datés — **à calculer**, c'est une demande pour Marie-Ange). Phrase de preuve : un astrologue te montre ce qui te concerne ; nous, on te dit qui d'autre ça a concerné, à quelles dates, avec la même règle. Descriptif, jamais prédictif.
+
+Vérifié par Playwright (17 captures, 0 erreur console). Pour Marie-Ange : ce qui est marqué *à calculer* est ce qu'on lui demande — la base de vies documentées interrogeable par fenêtre (sujet + accord), avec les faits datés connus.
