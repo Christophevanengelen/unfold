@@ -407,9 +407,25 @@ async function handlePost(request: NextRequest) {
       ? `\nProchaine lunation : ${briefData.nextLunation.type === "NEW_MOON" ? "Nouvelle Lune" : "Pleine Lune"} en ${briefData.nextLunation.sign} (maison ${briefData.nextLunation.natalHouse} — ${briefData.nextLunation.houseMeaning}) dans ${briefData.nextLunation.daysFromNow} jour(s).`
       : "";
 
+    // Le moteur CALCULE les domaines dominants et les rend deja en langage
+    // courant : signalSummary.dominantDomains vaut par exemple
+    // ["finances", "creativite"]. On ne les lisait pas, et on demandait au
+    // modele de produire lui-meme `activeDomains` — donc de deviner une reponse
+    // qui arrivait dans la meme reponse HTTP.
+    //
+    // On ne les affiche pas tels quels : ils sortent en francais alors que
+    // l app repond en dix langues. Ils sont donc donnes au modele comme SOURCE
+    // a reformuler, ce qui est exactement le contrat — il traduit ce qui a ete
+    // calcule, il n invente pas ce qui ne l a pas ete.
+    const domainesCalcules = briefData.signalSummary?.dominantDomains;
+    const noteDomaines =
+      Array.isArray(domainesCalcules) && domainesCalcules.length > 0
+        ? `\nDomaines calcules par le moteur (a reprendre pour activeDomains, traduits dans la langue de reponse, sans en ajouter) : ${domainesCalcules.join(", ")}.`
+        : "";
+
     const userMessage = `Signaux rapides actifs aujourd'hui (${today}) :
 
-${signalTexts}${lunationNote}`;
+${signalTexts}${lunationNote}${noteDomaines}`;
 
     // ── OpenAI call ──
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
