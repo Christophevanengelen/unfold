@@ -60,12 +60,26 @@ tel achat arrive — C16).
       ou configurer la cle API App Store Connect (recommande).
 - [ ] Produits → importer `unfold_annual_pro`.
 - [ ] Entitlements → creer `premium` → y attacher `unfold_annual_pro`.
-- [ ] Offerings → `default` → un package **Annual** → produit `unfold_annual_pro`.
+- [ ] Offerings → une offre (par ex. `default`) marquee **Current** — le code lit
+      `offerings.current` (lib/achats.ts:99) et rien d autre : une offre non
+      courante est invisible pour l app → un package **Annual** (`$rc_annual`)
+      → produit `unfold_annual_pro`.
 - [ ] Copier la clef **publique** iOS (commence par `appl_`) →
       `NEXT_PUBLIC_REVENUECAT_IOS_KEY` dans .env.local ET dans Vercel
       (Production + Preview). Jamais la clef secrete cote client.
-- [ ] Webhook RevenueCat → URL `https://favorable.day/api/billing/webhook/revenuecat`
-      avec le secret attendu par la route (voir .env.example).
+- [ ] Webhook RevenueCat → URL `https://favorable.day/api/billing/webhook/revenuecat`,
+      Authorization header = la valeur que tu mets dans `REVENUECAT_WEBHOOK_SECRET`
+      (Vercel Production + Preview). Sans elle, la route refuse tout.
+- [ ] `REVENUECAT_API_KEY` (clef secrete, cote serveur seulement) dans Vercel.
+
+## 4 bis. Le web (Stripe) — meme decision, meme produit
+- [ ] Stripe → un prix **annuel recurrent** au prix decide → son id dans
+      `STRIPE_PRICE_ANNUAL` (Vercel Production + Preview).
+- [ ] Laisser **vides** `STRIPE_PRICE_MONTHLY` et `STRIPE_PRICE_LIFETIME` : le
+      code les lit encore (lib/billing/stripe.ts:14-19) mais la decision les
+      exclut ; vides, ces chemins echouent proprement au lieu de vendre.
+- [ ] `STRIPE_WEBHOOK_SECRET` du point de terminaison
+      `https://favorable.day/api/billing/webhook/stripe`.
 
 ## 5. Verifier avant TestFlight (regle : jamais de build sans demander)
 - [ ] Users and Access → Sandbox → creer un testeur sandbox.
