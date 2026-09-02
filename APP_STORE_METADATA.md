@@ -318,19 +318,24 @@ App Preview Video (optional, 15-30 sec): Worth doing for organic ranking. Show t
 
 ---
 
-## In-App Purchases (when Phase 4 IAP ships)
+## In-App Purchases
 
-**unfold_monthly_pro**
-- Type: Auto-renewable subscription
-- Price tier a caler sur 5,99 € (EU) — prix decide le 31/08/2026, voir lib/billing/features.ts
-- Subscription group: `unfold_pro` (single)
-- Free trial: 7 days
+**Decision verrouillee le 02/09/2026 (DECISIONS.md) : UN produit, annuel,
+sans essai.** La checklist pas a pas est dans CHECKLIST-APP-STORE-CONNECT.md.
 
 **unfold_annual_pro**
-- Type: Auto-renewable subscription
-- Price tier a caler sur 39,99 € (EU) — prix decide le 31/08/2026, voir lib/billing/features.ts
-- Subscription group: `unfold_pro` (same as monthly — required for upgrade/downgrade)
-- Free trial: 7 days
+- Type: Auto-renewable subscription, duree 1 an
+- Price tier : au prix decide par Christophe — le code porte 39,99 EUR
+  (lib/billing/features.ts:94) comme valeur de travail
+- Subscription group: `unfold_pro` (single)
+- Free trial: **aucun** — en Lifestyle l essai gratuit detruit la LTV (-21,2 %)
+
+**Retire de l offre, ne pas creer** (garde ici pour memoire) :
+- `unfold_monthly_pro` — le mensuel a ete retire : plan unique, pas de bascule
+  a comprendre ; les LTV avancees pour le justifier etaient fausses.
+- Les « 7 days free trial » des deux anciens produits.
+- Tout produit non renouvelable / lifetime : le webhook RevenueCat l ignore et
+  le signale en erreur (C16).
 
 ---
 
