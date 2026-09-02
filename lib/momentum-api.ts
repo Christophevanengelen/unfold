@@ -120,6 +120,8 @@ export interface TocTocYearResponse {
     boudins?: Array<{
       id: string;
       category: string;
+      /** Niveau toc du moteur, 1 a 4 (mesure : 1..3, present 63/63). */
+      score?: number | null;
       lotType?: string | null;
       periodQuality?: string | null;
       periodHousePlacement?: { house: number; signification: string } | null;
