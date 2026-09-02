@@ -11,14 +11,45 @@ import { apiFetch } from "@/lib/api-client";
 
 // ─── API Response Types ─────────────────────────────────────
 
+/**
+ * Un evenement de `months[].topEvents[]` du paquet toctoc-year.
+ *
+ * ── Ce qui arrive VRAIMENT (mesure du 02/09/2026, 109 evenements) ──────────
+ * Sept clefs, toujours les memes : id, startDate, label, score, category,
+ * aspect, exactDate.
+ *
+ * Les champs marques « JAMAIS RECU » ci-dessous sont declares depuis longtemps
+ * et n arrivent pas. Ils ne provoquent aucune erreur — ils sont optionnels,
+ * donc `undefined` se propage en silence et le code prend sa branche de repli
+ * comme si c etait le cas normal. Trois defauts visibles en viennent :
+ *
+ *   lotType absent  -> inferDomain() retombe sur "work" : TOUTES les periodes
+ *                      ZR sont etiquetees « travail ».
+ *   periodStart/End -> les bornes reelles sont ignorees et les dates arrondies
+ *                      au mois, alors que `startDate` est la, 109 fois sur 109.
+ *
+ * Ils sont conserves, pas supprimes : ils existent ailleurs dans le moteur
+ * (sur `boudins[]`, qui porte 38 clefs). Mais ils ne doivent pas etre lus ICI
+ * sans repli explicite.
+ */
 export interface ApiEvent {
+  /** Identifiant de l evenement, "tt_15". Present 109/109.
+   *  ATTENTION : il n est PAS resoluble par toctoc-boudin-detail, qui numerote
+   *  un autre espace — mesure : {"error":"Boudin not found: tt_15",
+   *  "availableIds":["tt_80",...],"totalSausages":1870}. */
+  id: string;
+  /** Debut reel de la fenetre, "2025-02-11". Present 109/109. */
+  startDate?: string;
   label: string;
   score: number; // 1-4 (toc levels)
   category: "transit" | "zr" | "eclipse" | "station";
   aspect?: string;
   exactDate?: string;
+  /** JAMAIS RECU sur topEvents (0/109). Les bornes reelles sont `startDate`. */
   periodStart?: string;
+  /** JAMAIS RECU sur topEvents (0/109). */
   periodEnd?: string;
+  /** JAMAIS RECU sur topEvents (0/109) — d ou le repli "work" pour tous les ZR. */
   lotType?: string; // "fortune" | "spirit" | "eros"
   level?: number;
   periodSign?: string;
