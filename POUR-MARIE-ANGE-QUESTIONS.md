@@ -15,7 +15,16 @@ produit. C est le seul point d entree qui rend le rapport deja redige
 Cote corpus (`app.astrolearn.io/api/astrolearn/public/period-quality?personId=`)
 la meme technique repond. Peux-tu la remettre en service cote moteur ?
 
-**Nouvelle porte, sans toucher au calcul.** Les seize techniques d AstroLearn
+**Nouvelle porte, sans toucher au calcul — et par ou commencer.** Mesure
+faite sur les seize techniques (MOTEUR-SURFACE.md §5) : la prose deja
+redigee, celle qu un humain lambda peut lire, est concentree dans six routes.
+Si tu ouvres la porte naissance sur celles-la d abord, on a de quoi remplacer
+Astronum avec plus, pas moins : `numerology` (494 textes, en francais),
+`aspect-archetypes` (275), `planetary-periods` (145), `solar-return-timeline`
+(141), `period-quality` (80 — celle qui repond 500 cote moteur),
+`circumambulation` (44).
+
+ Les seize techniques d AstroLearn
 (`/api/astrolearn/public/*`) sont indexees par `personId`. Le calcul dessous
 part de la naissance. Accepter `birthDate/birthTime/latitude/longitude/timezone`
 en alternative a `personId` sur ces routes ouvrirait tout le moteur a l app,
