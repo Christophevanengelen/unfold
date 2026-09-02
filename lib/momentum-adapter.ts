@@ -206,6 +206,10 @@ export function yearDataToPhases(
       endDate,
       durationWeeks,
       ...(datesApproximees ? { datesApproximees: true } : {}),
+      ...(boudin?.periodHousePlacement?.house
+        ? { house: boudin.periodHousePlacement.house, houseTopic: boudin.periodHousePlacement.signification }
+        : {}),
+      ...(boudin?.periodQuality ? { periodQuality: boudin.periodQuality } : {}),
       intensity,
       score: rawMax <= 4 ? rawMax : (rawMax >= 80 ? 4 : rawMax >= 60 ? 3 : rawMax >= 40 ? 2 : 1),
       planets,
@@ -326,6 +330,7 @@ export function appDataToPhases(
       id: `phase-${i}`,
       boudinIndex: i,
       domain: domain as "love" | "health" | "work",
+      ...(maison ? { house: maison } : {}),
       title: meta.title,
       subtitle: meta.subtitle,
       description: meta.description,
