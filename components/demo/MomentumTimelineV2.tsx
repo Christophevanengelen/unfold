@@ -979,8 +979,24 @@ function ListView({
   }, [sorted, locale]);
 
   // Find the index of the current capsule for initial scroll
+  // L index sur lequel la liste s ouvre et vers lequel « revenir a maintenant »
+  // ramene. Il valait -1 des qu aucune capsule n etait en cours : pas de
+  // defilement initial (la liste s ouvrait sur sa fin, en 2100) et pas de
+  // bouton de retour, puisqu il se cache derriere `currentIndex >= 0`.
+  //
+  // Le cas n est pas rare : depuis que les dates viennent du moteur au lieu
+  // d un arrondi au mois, « en cours » est passe de 11 phases a 1 sur le
+  // paquet de reference. Sans phase en cours, « maintenant » est la prochaine
+  // a venir ; sans avenir, la derniere passee. Defaut C9.
   const currentIndex = useMemo(() => {
-    return flatItems.findIndex(item => item.type === "capsule" && item.capsule.isCurrent);
+    const enCours = flatItems.findIndex(item => item.type === "capsule" && item.capsule.isCurrent);
+    if (enCours >= 0) return enCours;
+    const prochaine = flatItems.findIndex(item => item.type === "capsule" && item.capsule.isFuture);
+    if (prochaine >= 0) return prochaine;
+    for (let i = flatItems.length - 1; i >= 0; i--) {
+      if (flatItems[i]?.type === "capsule") return i;
+    }
+    return -1;
   }, [flatItems]);
 
   const virtualizer = useVirtualizer({
