@@ -187,3 +187,9 @@ et 5, navigation, console vide.
 - Comparer : « Avec Jennifer A. » (calculé pour de vrai) / « Avec la base » (vies documentées, mêmes fenêtres, faits datés — **à calculer**, c'est une demande pour Marie-Ange). Phrase de preuve : un astrologue te montre ce qui te concerne ; nous, on te dit qui d'autre ça a concerné, à quelles dates, avec la même règle. Descriptif, jamais prédictif.
 
 Vérifié par Playwright (17 captures, 0 erreur console). Pour Marie-Ange : ce qui est marqué *à calculer* est ce qu'on lui demande — la base de vies documentées interrogeable par fenêtre (sujet + accord), avec les faits datés connus.
+
+**B9 — Comparer répond sans demander ; les boutons portent leur contexte.**
+- Retour de Christophe : imposer « Jennifer A. » et proposer « la base » en second bouton, c'est du bruit ; il faut montrer tout de suite le plus pertinent.
+- Comparer devient trois lignes directes, sans choix : **Toi** (la même fenêtre dans ton propre passé : 24 fois, la dernière 31 janv. → 21 févr. 2024, la plus forte nov. 2017 à trois techniques ; ce chapitre depuis le 29 août 2024 : zéro fenêtre), **Jennifer A. · ta connexion** (pas en déc. 2029, mais sept. 2009 partagé sur ce même sujet ; 4 moments communs : juin 1995, sept. 2009, déc. 2046, sept. 2063), **La base** en une ligne grise (à calculer par le moteur). Tout est mesuré sur les 55 + 78 fenêtres réelles.
+- Les deux boutons du bas ont une deuxième ligne qui change à chaque écran : « Comparer · ce chapitre », « Quoi faire · avant le 18 sept. », « Quoi faire · déc. 2029 ». On sent que le geste concerne la section où l'on est.
+- Retiré : la bascule de Jennifer à 41 ans (je ne peux pas garantir que les bornes des trois parties soient les mêmes pour tout le monde).
