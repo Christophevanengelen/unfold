@@ -106,7 +106,13 @@ async function handlePost(request: NextRequest) {
     // ── Cache check for connection-brief only ──
     let cacheKey: { pair: string; month: string } | null = null;
     if (endpoint === "connection-brief" && payload.personA && payload.personB) {
-      const pair = pairKey(payload.personA, payload.personB, payload);
+      // Le client envoie la fenetre sous responseWindow.months, pas au premier
+      // niveau ; le rapport du moteur est en francais quelle que soit la langue,
+      // donc la langue n entre pas dans la clef.
+      const pair = pairKey(payload.personA, payload.personB, {
+        relationship: payload.relationship,
+        months: payload.responseWindow?.months,
+      });
       const month = getTargetMonth(payload.targetDate);
       cacheKey = { pair, month };
       const cached = await getCachedBrief(pair, month);
