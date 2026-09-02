@@ -57,6 +57,7 @@
  *   garde_indisponible     503  le garde-fou ne peut pas se prononcer
  */
 
+import { lignesContexteUtilisateur } from "@/lib/profil-prompt";
 import { NextRequest, NextResponse } from "next/server";
 import {
   enforceAiBudget,
@@ -332,7 +333,9 @@ async function handlePost(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { birthData, locale } = body as { birthData: BirthDataPayload; locale?: string };
+    const { birthData, locale, userProfile } = body as {
+      birthData: BirthDataPayload; locale?: string; userProfile?: Record<string, unknown> | null;
+    };
 
     if (!birthData?.birthDate || !birthData?.birthTime) {
       return echec("birthdata_manquant", 400);
@@ -390,11 +393,12 @@ async function handlePost(request: NextRequest) {
     }
 
     // ── GPT synthesis ────────────────────────────────────
+    const contexteUtilisateur = userProfile ? "\n\n" + lignesContexteUtilisateur(userProfile) : "";
     const userMessage = `Moment de la journée: ${timeContext}
 
 Signaux actifs (${signalDetails.length}):
 
-${signalDetails.map((s, i) => `--- Signal ${i + 1} ---\n${s}`).join("\n\n")}`;
+${signalDetails.map((s, i) => `--- Signal ${i + 1} ---\n${s}`).join("\n\n")}${contexteUtilisateur}`;
 
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
