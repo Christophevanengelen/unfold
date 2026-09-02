@@ -123,6 +123,14 @@ export interface TocTocYearResponse {
       lotType?: string | null;
       periodQuality?: string | null;
       periodHousePlacement?: { house: number; signification: string } | null;
+      /** Bornes de la periode, "YYYY-MM-DD". startDate 53/53, endDate 50/53 :
+       *  seules les stations (ponctuelles) n ont pas de endDate. */
+      startDate?: string | null;
+      endDate?: string | null;
+      /** Fenetre d activation reelle : transit 16/16, profections 6/6,
+       *  anniversaires 3/3. Jamais sur zr, eclipse, station. */
+      windowStart?: string | null;
+      windowEnd?: string | null;
     }>;
     computeTimeSeconds?: number;
   };
