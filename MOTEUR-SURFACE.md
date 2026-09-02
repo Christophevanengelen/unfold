@@ -94,3 +94,34 @@ solar-return-timeline, period-quality, circumambulation. Toutes indexees par
 personId : la porte date-heure-lieu est a demander en priorite sur celles-la.
 La reformulation en dix langues est le travail du modele — il traduit une
 prose calculee, il n invente rien (contrat REPORTING-REGLES.md).
+
+## 6. La donnee TECHNIQUE — ce que le modele doit recevoir (releve du 02/09, apres-midi)
+
+Critere corrige par Christophe : ne pas retenir ce que le moteur a deja
+traduit (prose de pro pour des pros), mais la donnee technique structuree —
+dates, ages, maisons, qualites, scores, statuts — que NOTRE couche OpenAI
+transforme en cle d insight et cle d action. Schema mesure sur une personne :
+
+| Technique | Structure calculee (extraits) | Datee par |
+|---|---|---|
+| period-quality | chapters[62] {level, sign, ruler, duration, signQuality (MOST_POSITIVE…MOST_NEGATIVE), houseTopic, startDate, endDate, startAge, endAge, isPeakPeriod, peakType, planetsAspecting[]} ; lifeParts.parts[3] {startAge, endAge, quality, qualityScore, status} ; currentBackground {sign, ruler, startDate, endDate, grade} | date, age |
+| planetary-periods | currentlyActive / nextMilestone / allMilestones[21] {planet, period greater/minor, years, activationDate, daysFromToday, status} ; planetaryYears | date exacte |
+| aspect-archetypes | presentAspects[13] {pair, activationAge, activationDate, status past/active/upcoming, archetypeTheme, keywords, signs} ; chartSummary.planets {sign, house, condition} ; stats | age, date |
+| solar-return-timeline | rows[74] {year, age, birthdayStart/End, sr {ascendant, mc, srAscNatalHouse, angularPlanets}, profection.annual {house}, pivotal {score, isPivotal, isTop10, reasons[]}} ; pivotalTop10Years ; peakYears | annee |
+| circumambulation | primaryTimeLord {planet, bound, periodStartAge, periodEndAge, natalHouse, activityLevel} ; participatingTimeLords[21] {planet, aspectType, ageOfContact} | age |
+| numerology | coreNumbers {lifePath, expression, soulUrge, personality, birthday, maturity, pinacles {ages[3], values}} ; hundredYearCycles[100] {year, age, dateStart, dateEnd, personalYear, universalYear, lifePeriod} ; challenges[4] ; toolbox[9] {missing} | annee |
+| profections | annualProfection {house, sign, ruler, rulerLocation {house}, planetsInHouse[]} ; monthlyProfection {house} ; dailyProfection {house, daysPerSign} ; profectionFromSun / FromMoon ; handingOverAnalysis[] | date cible |
+| progressed | tier1_progressed_moon {phase, sign, degree, house, upcoming_sign_changes[4]} ; tier2_progressed_sun {sign_change {from, to, age}} ; tier3_angles ; tier4_inner_planets {sign_changes, stations} | age |
+| solar-return | exactMoment, ascendant, mc, houseCusps[12], planets, comparisonToNatal | annee |
+| transit-cycles | [79] {transitPlanet, natalPoint, aspect, firstHit, lastHit, periods[] {startDate, endDate, bestHit}} — 11,8 s | date |
+| eclipses | [7 series] {axis, zodiacAxis, seriesStart, seriesEnd, lastAxisTouch, allEclipses[] {date, type, sign, degree}, natalHits[]} | date |
+| planetary-condition | par planete : position {sign, house}, sect {ofTheSect, role}, zodiacalDignity {dignities[], debilities[]}, solarPhase, lunarPhenomena | — (natal) |
+| chart-worksheet | angles, houses[12] {sign, formatted}, planets, wshHouseLords[12], aspects | — (natal) |
+| hd | type, strategy, authority, profile 4/6, definition, notSelfTheme, signature | — (natal) |
+| chart-data | planets {longitudes}, cusps[12], person | — (natal) |
+| zr | natalChart complet, lots, releasing.periods[] {subPeriods[] {housePlacement}}, loosingOfBond, foreshadowing | date |
+
+Regle d usage : le modele recoit ces structures et rend deux choses par
+periode — la cle d insight (quel domaine, quelle qualite, jusqu a quand) et la
+cle d action — sans produire une date, un chiffre ou un nom de technique qui
+ne soit pas dans l entree.
