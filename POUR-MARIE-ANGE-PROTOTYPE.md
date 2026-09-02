@@ -5,6 +5,8 @@ Marie-Ange,
 Voici où on en est, et ce qu'on te propose. Le prototype est là, sur un utilisateur de démo (Brad, ta fiche 5507) :
 https://claude.ai/code/artifact/2f5f30a1-dea0-4e44-853a-3c8540a4ca42
 
+**D'abord, ce que c'est.** C'est un **artefact** : une maquette qui montre le futur, sur un utilisateur de démo. Ce n'est pas l'app, ce n'est pas une intégration. Ne regarde ni le menu, ni comment ça se branche dans l'expérience actuelle — ça, c'est à nous de trouver l'intelligence pour l'intégrer, et on le fera après. Ce qu'on te demande de regarder, c'est le fond : les insights, les données, ce qu'on dit et ce qu'on ne dit pas, ce que ton moteur devra répondre. Ouvre-le sur ton téléphone, il prend tout l'écran.
+
 **L'approche.** Ce qu'on a aujourd'hui dans l'app — la timeline et la liste — c'est un mode *investigation* : l'utilisateur explore, scrolle, clique. Il reste. Ce qu'on ajoute est complémentaire et ne le remplace pas : deux features *clés en main*, qui prennent les grandes clés à sa place et lui donnent tout de suite le plus important, sans discovery.
 
 1. **Aujourd'hui** — une réponse par jour. Souvent le silence, et c'est une bonne nouvelle : on ne parle que quand au moins deux techniques indépendantes pointent le même sujet au même moment (chez Brad : 3,6 % du temps). Puis trois horizons datés : le prochain changement de chapitre, le décor de fond, la prochaine fenêtre.
