@@ -133,8 +133,32 @@ export function yearDataToPhases(
     }
 
     phases.push({
-      id: `api-${phaseIndex}`,
-      boudinIndex: phaseIndex++,
+      id: `api-${phaseIndex++}`,
+      // ── Pourquoi PAS de boudinIndex ici (mesure du 02/09/2026) ───────────
+      //
+      // On envoyait `phaseIndex++`, un compteur local, dans le champ que le
+      // moteur lit comme un RANG dans les 1 870 boudins d une vie entiere. La
+      // fiche decrivait donc un autre evenement que celui touche — souvent la
+      // petite enfance — avec un aplomb complet. `boudinIndex: 0` rend un
+      // transit de l annee de naissance.
+      //
+      // La fenetre n est pas theorique : le paquet annuel repond en 1,3 s et le
+      // paquet viager en 67 s. Pendant cette minute, et definitivement si le
+      // long echoue, chaque capsule touchee mentait.
+      //
+      // Le vrai identifiant existe pourtant : `ev.id` vaut "tt_15" sur 109/109
+      // topEvents. Mais il n est PAS resoluble par toctoc-boudin-detail, qui
+      // numerote un autre espace — mesure : {"error":"Boudin not found: tt_15",
+      // "availableIds":["tt_80","tt_251",...],"totalSausages":1870}.
+      //
+      // On transmet donc l identifiant reel et rien d autre. L appel echoue
+      // proprement au lieu de reussir sur le mauvais boudin, et la capsule
+      // s affiche sans texte. Un echec visible vaut mieux qu une reponse fausse
+      // et sure d elle : c est la meme regle que partout ailleurs ici.
+      //
+      // Les phases du paquet VIAGER, elles, portent un boudinId qui resout
+      // (appDataToPhases, plus bas) : le texte arrive des que le long a repondu.
+      boudinId: ev.id,
       domain,
       title: meta.title,
       subtitle: meta.subtitle,
