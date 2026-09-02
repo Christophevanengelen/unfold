@@ -12,6 +12,7 @@
  * The previous in-memory limiter is gone: see the note where it used to live.
  */
 
+import { lignesContexteUtilisateur } from "@/lib/profil-prompt";
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/db";
 import { getUserIdFromRequest } from "@/lib/billing/auth-helper";
@@ -469,60 +470,12 @@ function buildUserProfileContext(
     "Commence TOUJOURS le corps par le nom complet de la planète transitante (ex: 'Pluton', pas 'uton').",
     "Tutoie l'utilisateur (tu/ton/ta/tes).",
     "",
-    "--- CONTEXTE UTILISATEUR ---",
   ];
 
-  if (userProfile.lifePhase) {
-    const phases: Record<string, string> = {
-      stable: "Phase de consolidation — angle : ajustement, continuité",
-      transition: "Phase de transition — angle : pivot, réorientation, clarification",
-      crisis: "Phase de crise — angle : protection, recentrage, simplification. Ton contenant, pas alarmiste.",
-      reconstruction: "Phase de reconstruction — angle : reprise, redéfinition",
-      expansion: "Phase d'expansion — angle : croissance, opportunité, déploiement",
-    };
-    lines.push(`Phase de vie : ${phases[userProfile.lifePhase as string] ?? userProfile.lifePhase}`);
-  }
-
-  if (userProfile.effectivePriorities) {
-    // `?? "declared"` faisait passer pour DECLAREES des priorites dont on
-    // ignorait l origine — et sautait du meme coup l avertissement de prudence.
-    // Le modele affirmait alors « tu as dit que… » sur une deduction. Origine
-    // inconnue = meme prudence qu une observation.
-    const source = typeof userProfile.prioritySource === "string" ? userProfile.prioritySource : "inconnue";
-    lines.push(`Priorités (${source}) : ${(userProfile.effectivePriorities as string[]).join(", ")}`);
-    if (source !== "declared") {
-      lines.push("⚠ Priorités non déclarées par la personne — personnaliser avec prudence, ne pas sur-affirmer.");
-    }
-  }
-
-  if (userProfile.effectiveStyle) {
-    const styles: Record<string, string> = {
-      direct: "Style direct — net, court, sans détour",
-      reassuring: "Style rassurant — doux, contenant, pas alarmiste",
-      inspiring: "Style inspirant — mobilisateur, visionnaire",
-      pragmatic: "Style pragmatique — concret, actionnable, utilitaire",
-    };
-    lines.push(`Ton : ${styles[userProfile.effectiveStyle as string] ?? userProfile.effectiveStyle}`);
-  }
-
-  if (userProfile.effectiveStress === "high") {
-    lines.push("⚠ Stress élevé — éviter formulations alarmistes, rester concret et contenant.");
-  }
-
-  if (userProfile.currentGoal) {
-    lines.push(`Objectif actuel : ${userProfile.currentGoal}`);
-  }
-
-  if (userProfile.workStatus) {
-    lines.push(`Situation pro : ${userProfile.workStatus}`);
-  }
-
-  if (userProfile.relationshipStatus) {
-    lines.push(`Situation relationnelle : ${userProfile.relationshipStatus}`);
-  }
-
-  lines.push("--- FIN CONTEXTE UTILISATEUR ---");
-  return lines.join("\n");
+  // Le contexte lui-meme (priorites, phase de vie, ton, stress, situations)
+  // vient de lib/profil-prompt.ts, partage avec les deux briefings : une seule
+  // source pour dire qui est la personne.
+  return lines.join("\n") + "\n" + lignesContexteUtilisateur(userProfile);
 }
 
 // ─── Route handler ───────────────────────────────────────

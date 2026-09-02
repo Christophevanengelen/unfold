@@ -34,6 +34,9 @@
  * ca allume la pastille pour rien.
  */
 
+import { buildEffectiveProfile } from "@/lib/effective-profile";
+import { getObservedProfileSync } from "@/lib/observed-profile";
+import { getUserProfileSync } from "@/lib/user-profile";
 import { useEffect } from "react";
 import { useMomentum } from "@/lib/momentum-store";
 import { storage } from "@/lib/storage";
@@ -110,7 +113,10 @@ async function collecter(birthData: BirthData, source: (typeof SOURCES)[number])
         method: "POST",
         // La langue part avec la requete. Sans elle, le modele repondait dans
         // celle de son prompt systeme — le francais — a tout le monde.
-        body: JSON.stringify({ birthData, locale: detectLocale() }),
+        // Le profil effectif — priorites declarees dans l onboarding, phase de
+        // vie, ton — part avec la requete, memes sources que la fiche capsule.
+        // Sans lui, le briefing etait le meme pour tout le monde.
+        body: JSON.stringify({ birthData, locale: detectLocale(), userProfile: profilEffectif() }),
       });
       briefing = res.ok ? ((await res.json()) as Briefing) : null;
     } catch {
@@ -143,6 +149,12 @@ async function collecter(birthData: BirthData, source: (typeof SOURCES)[number])
  * Le nom du composant est conserve : il est importe ailleurs, et le renommer
  * aurait pose un diff de deplacement par-dessus un diff de fond.
  */
+/** Memes sources que CapsuleDetailSheet : declare + observe, ou null. */
+function profilEffectif() {
+  const declare = getUserProfileSync();
+  return declare ? buildEffectiveProfile(declare, getObservedProfileSync()) : null;
+}
+
 export function DailyBriefing() {
   const { birthData } = useMomentum();
 

@@ -53,6 +53,7 @@
  *   garde_indisponible     503  le garde-fou ne peut pas se prononcer
  */
 
+import { lignesContexteUtilisateur } from "@/lib/profil-prompt";
 import { NextRequest, NextResponse } from "next/server";
 import {
   enforceAiBudget,
@@ -310,7 +311,9 @@ async function handlePost(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { birthData, locale } = body as { birthData: BirthDataPayload; locale?: string };
+    const { birthData, locale, userProfile } = body as {
+      birthData: BirthDataPayload; locale?: string; userProfile?: Record<string, unknown> | null;
+    };
 
     if (!birthData?.birthDate || !birthData?.birthTime) {
       return echec("birthdata_manquant", 400);
@@ -423,9 +426,14 @@ async function handlePost(request: NextRequest) {
         ? `\nDomaines calcules par le moteur (a reprendre pour activeDomains, traduits dans la langue de reponse, sans en ajouter) : ${domainesCalcules.join(", ")}.`
         : "";
 
+    // Les priorites, la phase de vie et le ton de la personne — declares dans
+    // l onboarding, jamais transmis au briefing jusqu ici. C est pourtant ici
+    // que « du contenu oriente vers ses besoins » se joue chaque jour.
+    const contexteUtilisateur = userProfile ? "\n\n" + lignesContexteUtilisateur(userProfile) : "";
+
     const userMessage = `Signaux rapides actifs aujourd'hui (${today}) :
 
-${signalTexts}${lunationNote}${noteDomaines}`;
+${signalTexts}${lunationNote}${noteDomaines}${contexteUtilisateur}`;
 
     // ── OpenAI call ──
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
