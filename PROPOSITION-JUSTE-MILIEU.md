@@ -136,3 +136,24 @@ decembre 2046 et septembre 2063. La regle de silence appliquee a deux.
 Ce que Christophe demande encore : voir l outil de Marie-Ange en utilisateur
 CONNECTE (« add life events, and more »), au-dela de la page publique. Voie :
 sa session Chrome.
+
+## Brouillon 4 — deux resumes, cles en main (02/09, soir)
+
+Verdict de Christophe sur le brouillon 3 : la ligne a parcourir reproduit la
+navigation de la frise existante ; du scrolling et du clicking sans valeur
+ajoutee. Les deux features sont des RESUMES, pas des parcours. Et le waouh ne
+doit pas se payer en complexite : cles en main, l insight d abord.
+
+Brouillon 4, meme adresse :
+- **Aujourd hui** — une phrase (« Rien de marquant. Et c est une bonne
+  nouvelle. »), le prochain changement dans 16 jours avec ses deux domaines et
+  l action, l annee et le mois, et la promesse de silence (« on te previendra
+  30 jours avant chaque fenetre »).
+- **Ton ID astral** — le fil rouge (« Le Batisseur »), un anneau de vie ou l on
+  lit d un regard l age, les trois parties de vie (0-41 / 41-65 / 65-96 avec
+  leur qualite), les annees pivots, la prochaine fenetre qui s allume,
+  aujourd hui qui pulse ; trois faits ; ce que tu traverses ; les deux boutons.
+  L animation assemble l ecran une fois ; rien a parcourir.
+
+Verifie a l ecran en local (accents, geometrie de l anneau, console vide).
+Toutes les valeurs sont celles de Brad P. par naissance.
