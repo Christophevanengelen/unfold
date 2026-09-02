@@ -83,8 +83,20 @@ for (const f of fichiers) {
 
 morts.sort();
 
+// `--liste` montre le detail meme sous le plafond. Un compte qu on ne peut pas
+// ouvrir cache la dette au lieu de la montrer : on finit par lire « 7 » comme
+// « rien », alors que ce sont sept fonctionnalites que plus personne n affiche.
+const DETAIL = process.argv.includes("--liste");
+
 if (morts.length <= PLAFOND) {
   console.log(`\n  ${morts.length} composant(s) non importe(s), plafond ${PLAFOND}. Rien de neuf.\n`);
+  if (DETAIL) {
+    for (const f of morts) {
+      const lignes = (source.get(f) ?? "").split("\n").length;
+      console.log(`    ${f}  (${lignes} lignes)`);
+    }
+    console.log("");
+  }
   if (morts.length < PLAFOND) {
     console.log(`  Le plafond peut descendre a ${morts.length} dans scripts/verifier-code-mort.mjs.\n`);
   }
