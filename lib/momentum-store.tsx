@@ -68,7 +68,13 @@ async function fetchYear(bd: BirthData): Promise<MomentumPhase[]> {
   const res = await fetchYearData(bd);
   if (!res?.data?.success) throw new Error("Year API failed");
   const phases = yearDataToPhases(res);
-  if (phases.length === 0) throw new Error("No signals found");
+  // Zero phase n est PAS une panne. On levait ici « No signals found », et
+  // l ecran affichait « connexion perdue » alors que le moteur avait repondu :
+  // il n avait simplement rien a dire sur la fenetre. La regle du produit est
+  // que le silence est une fonctionnalite (REPORTING-REGLES.md). On rend une
+  // liste vide — et on ne la met PAS en cache : trente jours de vide seraient
+  // une vraie panne, silencieuse celle-la.
+  if (phases.length === 0) return phases;
   persist(cleAnnee(bd), phases);
   // Le widget iOS lit un resume depose ici. Ce sont les phases de l annee qui
   // l alimentent et non celles de la vie entiere : le widget ne montre que la

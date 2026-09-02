@@ -278,7 +278,11 @@ async function dispatchEvent(evt: RCEvent, source: string, db: DB) {
 
     // ── One-time purchase (not a sub) — no-op for sub model ─────────────────
     case "NON_RENEWING_PURCHASE":
-      console.log("[rc/webhook] NON_RENEWING_PURCHASE — skipped for sub model:", evt.product_id);
+      // Coherent avec le modele verrouille (abonnement annuel, DECISIONS.md) :
+      // aucun produit non renouvelable ne doit exister. Si cet evenement
+      // arrive quand meme, c est qu un tel produit a ete cree dans le magasin
+      // et qu une personne a PAYE pour rien. Ca ne doit pas passer en console.log.
+      console.error("[rc/webhook] NON_RENEWING_PURCHASE recu et IGNORE — un produit non renouvelable existe dans le magasin, a retirer :", evt.product_id);
       break;
 
     // ── Trial converted to paid (use RENEWAL handler) ────────────────────────
