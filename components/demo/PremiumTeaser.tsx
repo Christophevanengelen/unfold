@@ -1,5 +1,6 @@
 "use client";
 
+import { nomMaison } from "@/lib/maisons-i18n";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
@@ -140,8 +141,13 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
     return prochainePeriodeForte(phases ?? [], d);
   }, [phases]);
 
+  // La maison calculee par le moteur, nommee parmi les douze, quand la phase
+  // la porte. Le rabattement a trois libelles ne sert plus que de repli pour
+  // une phase sans maison : c etait le dernier endroit ou l app reduisait la
+  // donnee sous les yeux de la personne.
   const nomDomaine = apercu
-    ? perso(
+    ? (apercu.house ? nomMaison(apercu.house, locale) : null) ??
+      perso(
         apercu.domaine === "love" ? "priorite.love"
           : apercu.domaine === "health" ? "priorite.health_energy"
           : "priorite.career",

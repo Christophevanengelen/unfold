@@ -150,6 +150,8 @@ export interface ApercuPeriode {
   dureeJours: number;
   /** Le domaine de vie concerne. */
   domaine: string;
+  /** La maison calculee par le moteur (1-12), quand la phase la porte. */
+  house?: number;
   /** 0-100. Sert a dire « marquee » sans donner de chiffre. */
   intensite: number;
 }
@@ -192,6 +194,7 @@ export function prochainePeriodeForte(
     dansJours: Math.max(0, Math.round((debut - base) / JOUR)),
     dureeJours: Math.max(1, Math.round((fin - debut) / JOUR)),
     domaine: p.domain,
+    ...(p.house ? { house: p.house } : {}),
     intensite: p.intensity,
   };
 }

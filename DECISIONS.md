@@ -68,3 +68,10 @@ vers 7h. Verification faite dans le code juste apres : c est DEJA le cas.
 - **Rien a migrer, rien a restructurer.** Le mot « migration », employe a
   tort ce matin, est retire. Toute evolution des trois cartes satellites est
   une decision de design de Christophe, quand il le voudra.
+
+**Origine des trois domaines, verifiee le 02/09 :** l onboarding imposait trois
+priorites jusqu au 31 aout 2026 (StepPriorities.tsx:7). Depuis, le choix est
+libre. Les trois cartes de resume (SatelliteScores) ne sont montees que dans
+StepHabit, etape morte ; domainConfig est marque @deprecated. Les trois
+domaines sont un vestige. Ce qui les utilise encore a l ecran est a ameliorer
+dans le sens de la donnee — inventaire dans le journal de session.
