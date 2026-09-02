@@ -26,6 +26,7 @@ import useSWR from "swr";
 import { getBirthData, getBirthDataSync, saveBirthData, birthHash, type BirthData } from "@/lib/birth-data";
 import { migrateFromLocalStorage, storage } from "@/lib/storage";
 import { fetchYearData, fetchAppData } from "@/lib/momentum-api";
+import { fetchHighlights, type HighlightsResponse } from "@/lib/momentum-highlights";
 import { referentielDepuisAnnee, type Referentiel } from "@/lib/maison-du-boudin";
 import {
   votesDepuisBoudins, fenetresDeConvergence, etatDuJour, enJours, SEUIL_FOND_JOURS,
@@ -72,6 +73,27 @@ const cleViager = (b: BirthData | null) => `${CACHE_LIFETIME_BASE}_${b ? birthHa
 // les 372 Ko de votes complets. Mesure sur le theme de reference : 101
 // fenetres sur cent ans, 5,1 % du temps couvert.
 const CACHE_SILENCE_BASE = "favorable_cache_silence_v1";
+
+// ─── Les points saillants, en donnees ────────────────────────────────────────
+// toctoc-highlights rend biggestYear, peakYears, challengingYears : « ta plus
+// grande annee a ete 1992, a 28 ans » est la phrase la plus lisible que le
+// moteur sache produire. Le client existait sans importeur. Un appel de ~48 s,
+// une fois par theme, garde un an (TTL_VIE cote momentum-api). Aucun ecran ne
+// le lit encore : couche de donnees, en attente du design.
+const CACHE_HIGHLIGHTS_BASE = "favorable_cache_highlights_v1";
+const cleSaillants = (b: BirthData | null) => `${CACHE_HIGHLIGHTS_BASE}_${b ? birthHash(b) : "vide"}`;
+function lireSaillants(key: string): HighlightsResponse | null {
+  if (typeof window === "undefined") return null;
+  try { const raw = localStorage.getItem(key); return raw ? (JSON.parse(raw) as HighlightsResponse) : null; } catch { return null; }
+}
+async function fetchSaillants(bd: BirthData): Promise<HighlightsResponse | null> {
+  const h = await fetchHighlights(bd);
+  if (h && Array.isArray(h.yearlyTimeline) && h.yearlyTimeline.length > 0) {
+    storage.setPersistent(cleSaillants(bd), h).catch(() => {});
+    try { localStorage.setItem(cleSaillants(bd), JSON.stringify(h)); } catch { /* quota */ }
+  }
+  return h;
+}
 const cleSilence = (b: BirthData | null) => `${CACHE_SILENCE_BASE}_${b ? birthHash(b) : "vide"}`;
 interface SilenceEnCache { fenetres: FenetreDAccord[]; fonds: Vote[]; calculeLe: string }
 const referentiels = new Map<string, Referentiel>();
@@ -174,6 +196,8 @@ interface MomentumContextValue {
    * ne la lit encore : couche de donnees, en attente du design.
    */
   silence: EtatDuJour | null;
+  /** biggestYear, peakYears, challengingYears — ou null tant que non calcule. Aucun ecran ne le lit encore. */
+  saillants: HighlightsResponse | null;
   birthData: BirthData | null;
   birthDateStr: string;
   needsOnboarding: boolean;
@@ -232,6 +256,14 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
       dedupingInterval: 60_000, // don't refetch within 1 min
     }
   );
+
+  // SWR: points saillants (lent, ~48 s, garde un an). Ne bloque rien.
+  const { data: saillantsCharges } = useSWR(
+    birthData ? ["highlights", birthHash(birthData)] : null,
+    () => fetchSaillants(birthData!),
+    { fallbackData: lireSaillants(cleSaillants(birthData)), revalidateOnFocus: false, revalidateOnReconnect: false, dedupingInterval: 24 * 60 * 60 * 1000 },
+  );
+  const saillants = saillantsCharges ?? null;
 
   // SWR: lifetime phases (slow, 30-120s)
   const {
@@ -303,12 +335,13 @@ export function MomentumProvider({ children }: { children: ReactNode }) {
     isLive,
     isLoadingLifetime,
     silence,
+    saillants,
     birthData,
     birthDateStr,
     needsOnboarding,
     loadSignals,
     reessayer,
-  }), [phases, timelinePhases, state, errorMsg, isLive, isLoadingLifetime, silence, birthData, birthDateStr, needsOnboarding, loadSignals, reessayer]);
+  }), [phases, timelinePhases, state, errorMsg, isLive, isLoadingLifetime, silence, saillants, birthData, birthDateStr, needsOnboarding, loadSignals, reessayer]);
 
   return (
     <MomentumContext.Provider value={value}>
