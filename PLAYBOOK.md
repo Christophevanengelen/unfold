@@ -446,3 +446,92 @@ applique a un CONTROLE, puis quatre couches empilees pour sauver le chiffre.
 - [ ] **Reste à faire par Christophe :** l'invitation GitHub en *write* (il faut
       l'identifiant de Marie-Ange), l'invitation Vercel (son adresse mail), et
       l'envoi du `.env.local` en main propre.
+
+---
+
+# Recherche marché — 2 septembre 2026
+
+Cinq équipes. Tout ce qui suit est **vérifié par lecture directe de la source**.
+Une équipe a fabriqué une section entière (affaires FTC, rachat de Co-Star,
+numéros de dossier) et s'est rétractée ; rien de cette section n'est repris ici.
+
+## Ce qui change la décision
+
+- [ ] **AstroLearn est déjà publié, par Zebrapad Inc., et n'a AUCUN avis.**
+      17,99 $ achat unique + 14,99 $/an. Contact sur la fiche irlandaise :
+      `marieangelevan@gmail.com` + numéro belge. Sa fiche met déjà en avant la
+      « Database of Notable Figures » avec alignement d'événements.
+      **Le moteur n'est pas le problème. La portée l'est.**
+      → Question à trancher avec Marie-Ange : Favorable REMPLACE AstroLearn, ou
+      en devient la façade grand public sous une entité distincte ? Deux fiches
+      du même éditeur vendant le même moteur à deux prix, c'est le motif de
+      refus 4.3(a).
+
+- [ ] **Apple 4.3(b) nomme « fortune telling ».** Seul terme divinatoire du
+      document. Durcissement du 08/06/2026 : Apple peut désormais RETIRER une
+      app qui « does not attract customers ». Le motif de rejet réel, relevé
+      sur le forum développeur, dit « astrology, horoscopes… considered a form
+      of spam ». Un cas de mars 2026 montre un dashboard B2B rejeté en boucle
+      malgré le retrait de tous les mots-clés astro.
+
+- [ ] **Guideline 1.1.6 : « Stating that the app is "for entertainment
+      purposes" won't overcome this guideline. »** La parade standard du
+      secteur ne protège pas.
+
+## Le modèle économique est à revoir
+
+Données RevenueCat 2026 (115 000 apps) et Adapty 2026 (16 000 apps) :
+
+| Fait | Conséquence |
+|---|---|
+| En Lifestyle, l'essai gratuit fait **−21,2 % de LTV** — seule catégorie | L'essai 7 jours actuel coûte de l'argent |
+| Social & Lifestyle : **pire renouvellement** de toutes les catégories (25 % annuel, 42 % mensuel) | L'abonnement est le mauvais modèle ici |
+| LTV par install à 12 mois : **0,70 $**, avant-dernier | |
+| Hard paywall vs freemium : **10,7 % vs 2,1 %** | |
+| Le prix HAUT convertit mieux : **2,8 % vs 1,4 %** | Ne pas descendre sous 9,99 |
+| Achat unique = **26 %** du CA de la catégorie | Time Nomad : 8,99 $ une fois, 4,8/5, 2 700 avis |
+
+Apple 3.1.2(a) exige une « valeur continue » pour un abonnement — difficile à
+défendre pour une frise calculée une fois.
+
+## Le trou, mesuré
+
+Timing hellénistique + frise datée + langage clair + iOS = **3 apps, 19 avis
+cumulés**. En face : Co-Star 205 615, CHANI 58 103, Sanctuary 44 114,
+TimePassages 43 939, The Pattern 14 939.
+
+Aucune app occidentale ne facture une **fenêtre datée**. Elles facturent
+l'accès à un flux. Le plus proche est « Time Travel » chez The Pattern, et
+c'est ce qui déclenche le paiement.
+
+**Mais le calcul ne vaut rien** : Astro-Seek fait ZR L1→L8, profections,
+firdaria, circumambulations, gratuitement et mieux que des logiciels à 550 $.
+AstroDatabank publie 129 000 personnes avec biographies. Ce qui manque
+ailleurs, c'est la lecture — pas le calcul.
+
+## Conformité — deux échéances
+
+- [ ] **AI Act article 50, applicable depuis le 02/08/2026.** Les lectures sont
+      générées par LLM : information obligatoire de la personne, et marquage
+      lisible par machine des sorties. Délai de grâce jusqu'au **02/12/2026**
+      pour les systèmes mis sur le marché avant le 02/08/2026.
+- [ ] **RGPD article 9.** La CNIL a sanctionné Cosmospace 250 000 € et
+      Telemaque 150 000 € le 26/09/2024 — pas pour les données de naissance,
+      mais pour ce que les gens confient (santé, convictions, vie sexuelle) et
+      ce qu'on en déduit, sans consentement explicite.
+
+## Ce qui rendrait l'abonnement défendable
+
+Une route exposant le corpus d'événements **par forme de période** — « dans les
+périodes comme la tienne, voilà ce qui arrive ». Le corpus grossit, donc
+l'abonnement se justifie. Sans elle, on vend une frise calculée une fois, et ça
+se vend une fois.
+
+À demander à Marie-Ange. Aucune route existante ne l'expose : `life-events.php`,
+`events.php` et leurs variantes répondent 404.
+
+## Sécurité — fait le 02/09
+
+- [x] **Mot de passe Postgres en clair dans un dépôt public**, trois
+      occurrences. Sorti du code, contrôle posé (`verifier-secrets.mjs`).
+      **Reste à faire : CHANGER le mot de passe.** L'historique git le garde.
