@@ -13,7 +13,7 @@ import Link from "next/link";
 import { ArrowLeft } from "flowbite-react-icons/outline";
 import { PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitives";
 import { fetchConnectionBrief, type ActivePeriod } from "@/lib/connection-brief-api";
-import { getConnectionDelineation, type ConnectionDelineation } from "@/lib/connection-delineation";
+import { getConnectionDelineation, estMurPayant, type ConnectionDelineation } from "@/lib/connection-delineation";
 import type { MatchingWindow } from "@/lib/matching-narratives";
 import { perso } from "@/lib/perso-i18n";
 import { useLocale } from "@/lib/use-locale";
@@ -64,7 +64,7 @@ function WindowCard({
       PERSON_A.birthDate,
       PERSON_B.birthDate,
     )
-      .then(setDel)
+      .then((r) => setDel(estMurPayant(r) ? null : r))
       .finally(() => setDelLoading(false));
   }, [period]);
 
