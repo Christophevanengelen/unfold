@@ -222,7 +222,7 @@ const EN: TranslationMap = {
   "pricing.premium.f6": "Advanced compatibility",
   "pricing.justification":
     "Premium evolves with you — your timeline updates as new planetary signals shape your rhythm.",
-  "pricing.trial": "7 days free, then your plan. Cancel anytime.",
+  "pricing.trial": "One plan, billed yearly. Cancel anytime.",
 
   // Final CTA + footer
   "cta.title": "Download Favorable",
@@ -409,7 +409,7 @@ const FR: TranslationMap = {
   "pricing.justification":
     "Premium évolue avec toi — ta chronologie se met à jour à mesure que de nouveaux signaux planétaires façonnent ton rythme.",
   "pricing.trial":
-    "7 jours d’essai, puis votre formule. Annulable à tout moment.",
+    "Une formule, facturée à l’année. Annulable à tout moment.",
 
   "cta.title": "Télécharge Favorable",
   "cta.subtitle":
@@ -443,7 +443,7 @@ const ES: TranslationMap = {
   "pricing.title": "Gratis para empezar",
   "pricing.subtitle":
     "Prueba Pro de 7 días sin tarjeta. Cancela cuando quieras.",
-  "pricing.trial": "7 días de prueba, luego tu plan. Cancela cuando quieras.",
+  "pricing.trial": "Un plan, facturado al año. Cancela cuando quieras.",
   "footer.legal": "© 2026 Favorable. Todos los derechos reservados.",
 };
 
@@ -469,8 +469,8 @@ const PT: TranslationMap = {
   "teaser.spirit.cta": "Ver minha Spirit Wave",
   "pricing.title": "Grátis para começar",
   "pricing.subtitle":
-    "Teste Pro de 7 dias sem cartão. Cancele quando quiser.",
-  "pricing.trial": "Teste Pro de 7 dias sem cartão. Cancele quando quiser.",
+    "Um plano, cobrado ao ano. Cancele quando quiser.",
+  "pricing.trial": "Um plano, cobrado ao ano. Cancele quando quiser.",
   "footer.legal": "© 2026 Favorable. Todos os direitos reservados.",
 };
 
@@ -496,8 +496,8 @@ const DE: TranslationMap = {
   "teaser.spirit.cta": "Meine Spirit Wave sehen",
   "pricing.title": "Kostenlos starten",
   "pricing.subtitle":
-    "7-Tage-Pro-Test, keine Kreditkarte. Jederzeit kündbar.",
-  "pricing.trial": "7-Tage-Pro-Test, keine Kreditkarte. Jederzeit kündbar.",
+    "Ein Tarif, jährlich abgerechnet. Jederzeit kündbar.",
+  "pricing.trial": "Ein Tarif, jährlich abgerechnet. Jederzeit kündbar.",
   "footer.legal": "© 2026 Favorable. Alle Rechte vorbehalten.",
 };
 
@@ -523,8 +523,8 @@ const IT: TranslationMap = {
   "teaser.spirit.cta": "Vedi la mia Spirit Wave",
   "pricing.title": "Gratis per iniziare",
   "pricing.subtitle":
-    "Prova Pro di 7 giorni senza carta. Annulla quando vuoi.",
-  "pricing.trial": "Prova Pro di 7 giorni senza carta. Annulla quando vuoi.",
+    "Un piano, fatturato all’anno. Annulla quando vuoi.",
+  "pricing.trial": "Un piano, fatturato all’anno. Annulla quando vuoi.",
   "footer.legal": "© 2026 Favorable. Tutti i diritti riservati.",
 };
 
@@ -550,9 +550,9 @@ const NL: TranslationMap = {
   "teaser.spirit.cta": "Bekijk mijn Spirit Wave",
   "pricing.title": "Gratis te starten",
   "pricing.subtitle":
-    "7-daagse Pro-proefperiode, geen creditcard. Altijd opzegbaar.",
+    "Eén abonnement, jaarlijks gefactureerd. Altijd opzegbaar.",
   "pricing.trial":
-    "7-daagse Pro-proefperiode, geen creditcard. Altijd opzegbaar.",
+    "Eén abonnement, jaarlijks gefactureerd. Altijd opzegbaar.",
   "footer.legal": "© 2026 Favorable. Alle rechten voorbehouden.",
 };
 
@@ -578,9 +578,9 @@ const JA: TranslationMap = {
   "teaser.spirit.cta": "Spirit Waveを見る",
   "pricing.title": "無料で始める",
   "pricing.subtitle":
-    "7日間Proトライアル、クレジットカード不要。いつでもキャンセル。",
+    "プランは1つ、年払い。いつでもキャンセル。",
   "pricing.trial":
-    "7日間Proトライアル、クレジットカード不要。いつでもキャンセル。",
+    "プランは1つ、年払い。いつでもキャンセル。",
   "footer.legal": "© 2026 Favorable. 全権利所有。",
 };
 
@@ -606,8 +606,8 @@ const ZH: TranslationMap = {
   "teaser.spirit.cta": "查看我的Spirit Wave",
   "pricing.title": "免费开始",
   "pricing.subtitle":
-    "7天Pro试用，无需信用卡。随时取消。",
-  "pricing.trial": "7天Pro试用，无需信用卡。随时取消。",
+    "一个方案，按年计费。随时取消。",
+  "pricing.trial": "一个方案，按年计费。随时取消。",
   "footer.legal": "© 2026 Favorable. 保留所有权利。",
 };
 
@@ -640,9 +640,9 @@ const AR: TranslationMap = {
     "انظر Spirit Wave الخاصة بي",
   "pricing.title": "مجاني للبدء",
   "pricing.subtitle":
-    "تجربة Pro لمدة 7 أيام، بدون بطاقة ائتمان. إلغاء في أي وقت.",
+    "خطة واحدة، تُدفع سنوياً. إلغاء في أي وقت.",
   "pricing.trial":
-    "تجربة Pro لمدة 7 أيام، بدون بطاقة ائتمان. إلغاء في أي وقت.",
+    "خطة واحدة، تُدفع سنوياً. إلغاء في أي وقت.",
   "footer.legal":
     "© 2026 Favorable. جميع الحقوق محفوظة.",
 };

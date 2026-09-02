@@ -89,3 +89,20 @@ importeur jusqu ici) alimente desormais `silence` dans le contexte momentum —
 parle / se tait / prochaine fenetre. Aucun ecran ne le lit : ce qu on montre
 quand l app se tait est un dessin de Christophe. Mesure sur le theme de
 reference : 101 fenetres sur cent ans, 5,1 % du temps.
+
+## 02/09/2026, 12h — objectif : etre accepte sur les stores
+
+Christophe a delegue la ponderation : « objectif, etre accepte sur les
+stores, c est la seule facon d avoir le premier dollar ». Decisions prises
+par Claude sur ce critere :
+
+- **Compte developpeur : Zebrapad, Inc., NOUVELLE fiche** (pas un
+  remplacement d Astronum). Un compte avec une app deja approuvee, les
+  accords signes et le statut DSA en place est le chemin le plus court ;
+  une nouvelle fiche evite le signal « app reorientee » d une mise a jour
+  qui change de finalite, et laisse Astronum intacte. Marie-Ange ajoute
+  Christophe comme App Manager. Pas de societe ni de compte pro a creer.
+- **Un seul produit, annuel.** Le mensuel reste dans le code, dormant.
+- **Aucun essai gratuit, nulle part** : page de prix, site vitrine, Stripe.
+  L essai n est pas un avantage decisif face aux concurrents, et promettre
+  un essai que le magasin n a pas est un motif de refus.

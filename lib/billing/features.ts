@@ -67,6 +67,14 @@ export const FEATURES: Record<FeatureKey, FeatureSpec> = {
 };
 
 /** Plans available for purchase. Family plan deferred Phase 2. */
+/**
+ * Un seul plan vendu (DECISIONS.md, 02/09/2026) : l annuel. Le mensuel reste
+ * defini ci-dessous, dormant — rien n est efface — mais la page de prix ne
+ * montre ni bascule ni « economie », qui n ont de sens qu a deux plans.
+ * Mettre null pour retrouver la bascule.
+ */
+export const PLAN_UNIQUE: "annual" | "monthly" | null = "annual";
+
 export const PLANS = {
   // Prix decides le 31 aout 2026 apres analyse de marche : 5,99 €/mois,
   // 39,99 €/an, essai de sept jours. Le code portait encore 9,99 / 89, ce que
