@@ -110,6 +110,20 @@ export interface TocTocYearResponse {
     peakUpcomingMonths: MonthData[];
     years: YearData[];
     months: MonthData[];
+    /**
+     * Present dans chaque reponse (63 entrees mesurees le 02/09/2026) et
+     * jamais declare jusqu ici — donc jamais lu. Les ids sont les memes que
+     * ceux de months[].topEvents[] (53/53), ce qui permet de retrouver, pour
+     * chaque evenement, la maison et le lot calcules par le moteur.
+     * Seules les clefs utilisees sont declarees ; le boudin en porte 38.
+     */
+    boudins?: Array<{
+      id: string;
+      category: string;
+      lotType?: string | null;
+      periodQuality?: string | null;
+      periodHousePlacement?: { house: number; signification: string } | null;
+    }>;
     computeTimeSeconds?: number;
   };
 }

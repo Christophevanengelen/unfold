@@ -79,11 +79,38 @@ const LOT_DOMAIN: Record<string, DomainKey> = {
   courage: "health",
 };
 
+/**
+ * Rabat les douze maisons du moteur sur les trois domaines de l app.
+ *
+ * Les ancres viennent de DOMAIN_TO_HOUSE (lib/detail-helpers.ts) : love = 7,
+ * health = 6, work = 10. Le reste est un choix de produit, ecrit ici pour etre
+ * discutable et non enfoui dans une condition :
+ *   corps, quotidien, interieur  -> health   (1, 6, 12)
+ *   foyer, coeur, couple, intime -> love     (4, 5, 7, 8)
+ *   argent, echanges, horizon,
+ *   carriere, reseau             -> work     (2, 3, 9, 10, 11)
+ *
+ * C est la maison calculee par le moteur (periodHousePlacement.house) qui
+ * arrive ici — jamais un indice de tableau ni une planete devinee.
+ */
+const HOUSE_DOMAIN: Record<number, DomainKey> = {
+  1: "health", 2: "work", 3: "work", 4: "love", 5: "love", 6: "health",
+  7: "love", 8: "love", 9: "work", 10: "work", 11: "work", 12: "health",
+};
+
+export function houseToDomain(house: number | null | undefined): DomainKey | null {
+  return house != null ? HOUSE_DOMAIN[house] ?? null : null;
+}
+
 export function inferDomain(
   category: string,
   label: string,
-  lotType?: string
+  lotType?: string,
+  house?: number | null
 ): DomainKey {
+  // La maison calculee par le moteur prime sur tout : c est SA traduction.
+  const parMaison = houseToDomain(house);
+  if (parMaison) return parMaison;
   // ZR events — use lot type
   if (category === "zr" && lotType) {
     const lt = Array.isArray(lotType) ? lotType[0] : lotType;
