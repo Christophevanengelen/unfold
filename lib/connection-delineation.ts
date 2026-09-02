@@ -28,6 +28,12 @@ export interface EnsembleDelineation {
   aFaireEnsemble: string;   // 2-3 actionable sentences
 }
 
+/** Le serveur a repondu 402 : la fonctionnalite demande le plan payant. */
+export interface MurPayant { murPayant: true; feature?: string }
+export function estMurPayant(r: unknown): r is MurPayant {
+  return !!r && typeof r === "object" && (r as MurPayant).murPayant === true;
+}
+
 export interface ConnectionDelineation {
   personA: PersonDelineation;
   personB: PersonDelineation;
@@ -73,7 +79,7 @@ export async function getConnectionDelineation(
   relationship: RelationshipType,
   personAArg: PersonArg,
   personBArg: PersonArg,
-): Promise<ConnectionDelineation | null> {
+): Promise<ConnectionDelineation | MurPayant | null> {
   const idA = toIdentity(personAArg);
   const idB = toIdentity(personBArg);
   const key = cacheKey(idA.birthDate, idB.birthDate, relationship, period.monthKey);
@@ -121,7 +127,18 @@ export async function getConnectionDelineation(
       body: JSON.stringify({ ...payload, locale: detectLocale() }),
     });
 
-    if (!res.ok) return null;
+    // Un 402 n est pas une panne : c est le serveur qui dit « il faut payer ».
+    // Il etait avale comme un 502, l ecran retombait sur le texte brut du
+    // moteur, et l utilisateur gratuit ne voyait jamais le mur. Defaut C12.
+    if (res.status === 402) {
+      let feature: string | undefined;
+      try { feature = ((await res.json()) as { feature?: string }).feature; } catch {}
+      return { murPayant: true, feature };
+    }
+    if (!res.ok) {
+      if (process.env.NODE_ENV !== "production") console.error("[connection-delineation] HTTP", res.status);
+      return null;
+    }
 
     const delineation = await res.json() as ConnectionDelineation;
     if (!delineation?.personA || !delineation?.personB || !delineation?.ensemble) {

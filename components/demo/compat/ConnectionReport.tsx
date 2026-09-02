@@ -1,5 +1,6 @@
 "use client";
 
+import { usePremiumTeaser } from "@/components/demo/PremiumTeaserContext";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
@@ -7,6 +8,7 @@ import { PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitive
 import { fetchConnectionBrief, type ActivePeriod } from "@/lib/connection-brief-api";
 import {
   getConnectionDelineation,
+  estMurPayant,
   type ConnectionDelineation,
 } from "@/lib/connection-delineation";
 import type { MatchingWindow, RelationshipType } from "@/lib/matching-narratives";
@@ -149,6 +151,7 @@ function WindowCard({
   // theme sombre, ou elles passent. On derive au rendu (regle 3).
   const theme = resolvedTheme === "light" ? "clair" : "sombre";
   const [del, setDel] = useState<ConnectionDelineation | null>(null);
+  const openPremium = usePremiumTeaser();
   const [delLoading, setDelLoading] = useState(true);
 
   useEffect(() => {
@@ -169,9 +172,15 @@ function WindowCard({
         longitude: theirBirthData.longitude,
       },
     )
-      .then(setDel)
+      .then((r) => {
+        // 402 : le serveur demande le plan. On ouvre le mur au lieu de servir
+        // en silence le texte brut du moteur. Le texte de repli reste affiche
+        // derriere, pour qu un refus du mur ne laisse pas un ecran vide.
+        if (estMurPayant(r)) { openPremium(); setDel(null); return; }
+        setDel(r);
+      })
       .finally(() => setDelLoading(false));
-  }, [period, w.relationship, myBirthData, theirBirthData]);
+  }, [period, w.relationship, myBirthData, theirBirthData, openPremium]);
 
   const isActive = w.status === "active";
 
