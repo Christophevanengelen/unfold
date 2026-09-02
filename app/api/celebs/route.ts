@@ -1,16 +1,33 @@
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
 
-// Direct connection to the astrolearn DB — credentials confirmed working
-const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  database: "astrolearn",
-  user: "postgres",
-  password: "L{3Agn/Ycr%[<~?XJ5zU",
-});
+/**
+ * Connexion a la base astrolearn.
+ *
+ * ─── POURQUOI CE FICHIER A CHANGE LE 02/09/2026 ────────────────────────────
+ *
+ * Le mot de passe Postgres etait ecrit ici EN CLAIR, et ce depot est PUBLIC.
+ * Il etait donc lisible par n importe qui, et il l est encore dans l historique
+ * git — le retirer du fichier ne le retire pas des commits passes.
+ *
+ * **Ce mot de passe doit etre considere comme compromis et change.** Le
+ * supprimer d ici ferme la porte pour la suite ; il reste a tourner la clef.
+ *
+ * La chaine vient desormais de l environnement. Sans elle, la route refuse au
+ * lieu de tenter une connexion avec des identifiants devines.
+ */
+const CHAINE = process.env.ASTROLEARN_DATABASE_URL?.trim();
+
+const pool = CHAINE ? new Pool({ connectionString: CHAINE }) : null;
 
 export async function GET() {
+  if (!pool) {
+    // Pas de chaine de connexion : on le dit, on ne devine pas.
+    return NextResponse.json(
+      { ok: false, raison: "base_non_configuree" },
+      { status: 503 },
+    );
+  }
   try {
     const { rows } = await pool.query(`
       SELECT
