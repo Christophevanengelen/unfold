@@ -27,9 +27,18 @@ tel achat arrive — C16).
 - [ ] App Store Connect → Accords, taxes et banque → **Paid Apps** : accepte.
 - [ ] Coordonnees bancaires et formulaire fiscal completes (sinon les produits
       restent « Missing Metadata » sans explication).
-- [ ] Question d entite : sous quel compte developpeur ? Si c est celui de
-      Zebrapad, Inc. (Astronum), la fiche publiee porte cette entite — voir
-      CONFORMITE.md sur l adresse publiee (DSA).
+- [ ] **Question d entite, a trancher avant tout le reste.** Christophe est
+      personne physique, sans societe ni compte bancaire professionnel.
+      - Ce qui passe techniquement : Apple accepte un compte developpeur
+        *Individual* paye sur un compte bancaire personnel ; Stripe accepte un
+        compte *particulier* avec un IBAN personnel ; RevenueCat n a pas de banque.
+      - Ce qui coince, et releve d un comptable, pas de ce depot : en UE,
+        vendre dans l App Store impose le statut de professionnel (DSA) et
+        l ADRESSE PERSONNELLE est publiee sur la fiche ; en Belgique, un revenu
+        commercial regulier suppose en principe un statut d independant.
+      - L alternative pratique : publier sous le compte de Zebrapad, Inc.
+        (celui d Astronum) avec le contrat 50/50 — la fiche porte alors cette
+        entite et son adresse. Decision entre Christophe et Marie-Ange.
 
 ## 2. La fiche de l app
 - [ ] Une app avec le Bundle ID `day.favorable.app` (ou la decision
