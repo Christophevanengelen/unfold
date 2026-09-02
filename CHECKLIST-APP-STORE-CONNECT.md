@@ -3,52 +3,53 @@
 Une seule fois, dans l ordre. Chaque valeur en `code` est celle que l app
 attend : la taper autrement, c est une vente qui n arrive jamais.
 
-**Prealable : la decision verrouillee (DECISIONS.md, 02/09/2026).** Un seul
-produit, abonnement annuel, sans essai gratuit, sans mensuel. Le prix est a
-toi ; le code porte 39,99 EUR (lib/billing/features.ts:94) comme valeur de
-travail.
+**Prealable : la decision (DECISIONS.md, 02/09/2026, 12h30).** On remplace
+Astronum par une mise a jour ; deux abonnements, annuel en avant et mensuel
+disponible, sans essai gratuit. Prix dans le code : 39,99 EUR/an, 5,99 EUR/mois.
 
 ## 0. Ce que le code attend
 
 | Quoi | Valeur exacte | Ou dans le code |
 |---|---|---|
-| Bundle ID de l app | `day.favorable.app` | capacitor.config.ts, project.pbxproj |
-| Bundle ID du widget | `day.favorable.app.widget` | project.pbxproj |
+| Bundle ID de l app | **celui d Astronum — a obtenir de Marie-Ange** ; le code porte encore `day.favorable.app` et doit etre rekeye | capacitor.config.ts, project.pbxproj |
+| Bundle ID du widget | `<bundle Astronum>.widget` | project.pbxproj |
 | Groupe d abonnement | `unfold_pro` | APP_STORE_METADATA.md |
-| Produit (auto-renouvelable, 1 an) | `unfold_annual_pro` | APP_STORE_METADATA.md |
+| Produit annuel (auto-renouvelable, 1 an) | `unfold_annual_pro` | APP_STORE_METADATA.md |
+| Produit mensuel (auto-renouvelable, 1 mois) | `unfold_monthly_pro` | APP_STORE_METADATA.md |
 | Droit RevenueCat (entitlement) | `premium` | lib/achats.ts:DROIT |
 | Clef publique RevenueCat iOS | a coller dans `NEXT_PUBLIC_REVENUECAT_IOS_KEY` | lib/achats.ts:42 |
 
-**A ne PAS creer :** `unfold_monthly_pro` (mensuel retire de l offre), aucun
-produit non renouvelable ni « lifetime » (le webhook l ignore, et hurle si un
-tel achat arrive — C16).
+**A ne PAS creer :** aucun produit non renouvelable ni « lifetime » (le
+webhook l ignore, et hurle si un tel achat arrive — C16). Aucune offre
+d introduction ni essai sur aucun des deux.
 
 ## 1. Accords et banque (bloque tout le reste, souvent oublie)
 - [ ] App Store Connect → Accords, taxes et banque → **Paid Apps** : accepte.
 - [ ] Coordonnees bancaires et formulaire fiscal completes (sinon les produits
       restent « Missing Metadata » sans explication).
-- [ ] **Entite : decidee le 02/09 — compte Zebrapad, Inc., nouvelle fiche.**
-      Marie-Ange ajoute Christophe dans Users and Access (role App Manager,
-      acces a l app et aux achats integres). Rien a creer cote societe, banque
-      ou fisc : les accords et le statut professionnel du compte s appliquent.
-      Le partage des revenus est regle par le contrat 50/50.
+- [ ] **Entite : compte Zebrapad, Inc. — on met a jour Astronum.** Marie-Ange
+      ajoute Christophe dans Users and Access (App Manager). Rien a creer cote
+      societe, banque ou fisc. Le partage des revenus est regle par le 50/50.
 
 ## 2. La fiche de l app
-- [ ] Une NOUVELLE app sur le compte Zebrapad, Bundle ID `day.favorable.app`
-      (pas une mise a jour d Astronum : une app qui change de finalite passe
-      une revue complete et porte le signal 4.3(b) ; Astronum reste intacte).
+- [ ] **La fiche existante d Astronum** : nouveau nom, nouvelles captures,
+      nouvelle description, et le texte « Nouveautes » = le message d accueil
+      de Christophe. Le Bundle ID reste celui d Astronum : rekeyer le code
+      (capacitor.config.ts appId, project.pbxproj, widget, APNs, RevenueCat).
+- [ ] Verifier avec Marie-Ange qu Astronum n a aucun abonne actif ni produit
+      d achat integre existant qui entrerait en conflit.
 - [ ] App Privacy : reponses coherentes avec APP_STORE_METADATA.md §Privacy.
 - [ ] URL de politique de confidentialite et de conditions (favorable.day).
 
 ## 3. Le produit
 - [ ] Fonctionnalites → Abonnements → **Creer un groupe** : `unfold_pro`.
-- [ ] Dans le groupe, **Creer un abonnement** :
-      - Product ID : `unfold_annual_pro` (exact, insensible au copier-coller ?
-        non — le taper tel quel)
-      - Duree : 1 an
-      - Nom de reference : Favorable annuel
-- [ ] Prix : choisir le palier au prix decide (le code dit 39,99 EUR).
-      Verifier l equivalent dans les autres pays proposes.
+- [ ] Dans le groupe, **Creer deux abonnements** (meme groupe : necessaire
+      pour passer de l un a l autre) :
+      - `unfold_annual_pro` — duree 1 an — nom de reference : Favorable annuel
+      - `unfold_monthly_pro` — duree 1 mois — nom de reference : Favorable mensuel
+      Taper les Product ID tels quels.
+- [ ] Prix : paliers a 39,99 EUR (annuel) et 5,99 EUR (mensuel), ceux du
+      code. Verifier l equivalent dans les autres pays proposes.
 - [ ] Localisation de l abonnement : nom affiche + description, au minimum
       FR et EN (l app est en dix langues ; les autres peuvent suivre).
 - [ ] **Aucune offre d introduction, aucun essai gratuit** (decision).
@@ -60,8 +61,8 @@ tel achat arrive — C16).
 - [ ] Coller le **App-Specific Shared Secret** d App Store Connect (Fiche de
       l app → Informations generales → Cle secrete partagee specifique a l app),
       ou configurer la cle API App Store Connect (recommande).
-- [ ] Produits → importer `unfold_annual_pro`.
-- [ ] Entitlements → creer `premium` → y attacher `unfold_annual_pro`.
+- [ ] Produits → importer `unfold_annual_pro` et `unfold_monthly_pro`.
+- [ ] Entitlements → creer `premium` → y attacher les deux produits.
 - [ ] Offerings → une offre (par ex. `default`) marquee **Current** — le code lit
       `offerings.current` (lib/achats.ts:99) et rien d autre : une offre non
       courante est invisible pour l app → un package **Annual** (`$rc_annual`)
@@ -74,12 +75,12 @@ tel achat arrive — C16).
       (Vercel Production + Preview). Sans elle, la route refuse tout.
 - [ ] `REVENUECAT_API_KEY` (clef secrete, cote serveur seulement) dans Vercel.
 
-## 4 bis. Le web (Stripe) — meme decision, meme produit
-- [ ] Stripe → un prix **annuel recurrent** au prix decide → son id dans
-      `STRIPE_PRICE_ANNUAL` (Vercel Production + Preview).
-- [ ] Laisser **vides** `STRIPE_PRICE_MONTHLY` et `STRIPE_PRICE_LIFETIME` : le
-      code les lit encore (lib/billing/stripe.ts:14-19) mais la decision les
-      exclut ; vides, ces chemins echouent proprement au lieu de vendre.
+## 4 bis. Le web (Stripe) — memes plans
+- [ ] Stripe → deux prix recurrents, 39,99 EUR/an et 5,99 EUR/mois → leurs id
+      dans `STRIPE_PRICE_ANNUAL` et `STRIPE_PRICE_MONTHLY` (Vercel Production
+      + Preview). Aucun essai sur les prix.
+- [ ] Laisser **vide** `STRIPE_PRICE_LIFETIME` : le code le lit encore mais la
+      decision l exclut ; vide, ce chemin echoue proprement au lieu de vendre.
 - [ ] `STRIPE_WEBHOOK_SECRET` du point de terminaison
       `https://favorable.day/api/billing/webhook/stripe`.
 
