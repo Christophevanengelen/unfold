@@ -1,0 +1,499 @@
+{
+ "brad": {
+  "n": 55,
+  "couv": 0.036658213581290504,
+  "mediane": 21,
+  "profil": {
+   "3": 0.6909090909090909,
+   "6": 0.07272727272727272,
+   "12": 0.12727272727272726,
+   "1": 0.05454545454545454,
+   "2": 0.05454545454545454
+  },
+  "dominant": 3,
+  "part_dom": 0.6909090909090909,
+  "T": 35490,
+  "t0": "1966-07-29",
+  "t1": "2063-09-28"
+ },
+ "rows": [
+  [
+   71,
+   "TEMPLE GRANDIN",
+   5471,
+   {
+    "score": 71,
+    "sujets": 74,
+    "ov": 5,
+    "attendu": 10.9,
+    "ratio": 0.46,
+    "meme": 1,
+    "rythme": 95,
+    "dens": 38,
+    "sb": null
+   }
+  ],
+  [
+   62,
+   "PEDRO ALMODÓVAR",
+   5434,
+   {
+    "score": 62,
+    "sujets": 56,
+    "ov": 9,
+    "attendu": 7.3,
+    "ratio": 1.23,
+    "meme": 1,
+    "rythme": 88,
+    "dens": 53,
+    "sb": null
+   }
+  ],
+  [
+   59,
+   "ALAN CUMMING",
+   5430,
+   {
+    "score": 59,
+    "sujets": 46,
+    "ov": 7,
+    "attendu": 5.3,
+    "ratio": 1.33,
+    "meme": 0,
+    "rythme": 76,
+    "dens": 81,
+    "sb": null
+   }
+  ],
+  [
+   56,
+   "NIKKI GIOVANNI",
+   5466,
+   {
+    "score": 56,
+    "sujets": 51,
+    "ov": 11,
+    "attendu": 7.4,
+    "ratio": 1.48,
+    "meme": 3,
+    "rythme": 75,
+    "dens": 51,
+    "sb": null
+   }
+  ],
+  [
+   49,
+   "DONNY OSMOND",
+   5553,
+   {
+    "score": 49,
+    "sujets": 46,
+    "ov": 13,
+    "attendu": 12.5,
+    "ratio": 1.04,
+    "meme": 4,
+    "rythme": 71,
+    "dens": 33,
+    "sb": null
+   }
+  ],
+  [
+   48,
+   "IRVINE WELSH",
+   5439,
+   {
+    "score": 48,
+    "sujets": 34,
+    "ov": 12,
+    "attendu": 10.3,
+    "ratio": 1.17,
+    "meme": 5,
+    "rythme": 100,
+    "dens": 39,
+    "sb": null
+   }
+  ],
+  [
+   47,
+   "ANDREW LLOYD WEBBER",
+   5433,
+   {
+    "score": 47,
+    "sujets": 27,
+    "ov": 5,
+    "attendu": 7.1,
+    "ratio": 0.71,
+    "meme": 0,
+    "rythme": 100,
+    "dens": 55,
+    "sb": null
+   }
+  ],
+  [
+   44,
+   "PHIL HARTMAN",
+   5479,
+   {
+    "score": 44,
+    "sujets": 29,
+    "ov": 8,
+    "attendu": 6.8,
+    "ratio": 1.17,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 61,
+    "sb": null
+   }
+  ],
+  [
+   39,
+   "GENE SIMMONS",
+   5488,
+   {
+    "score": 39,
+    "sujets": 11,
+    "ov": 1,
+    "attendu": 2.5,
+    "ratio": 0.4,
+    "meme": 0,
+    "rythme": 100,
+    "dens": 64,
+    "sb": null
+   }
+  ],
+  [
+   39,
+   "DEMI MOORE",
+   5508,
+   {
+    "score": 39,
+    "sujets": 14,
+    "ov": 5,
+    "attendu": 5.2,
+    "ratio": 0.96,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 80,
+    "sb": null
+   }
+  ],
+  [
+   37,
+   "FRANCESCA EASTWOOD",
+   5403,
+   {
+    "score": 37,
+    "sujets": 15,
+    "ov": 5,
+    "attendu": 7.3,
+    "ratio": 0.68,
+    "meme": 0,
+    "rythme": 84,
+    "dens": 53,
+    "sb": null
+   }
+  ],
+  [
+   37,
+   "CLAUDIA SCHIFFER",
+   5484,
+   {
+    "score": 37,
+    "sujets": 9,
+    "ov": 5,
+    "attendu": 5.1,
+    "ratio": 0.98,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 87,
+    "sb": null
+   }
+  ],
+  [
+   36,
+   "SANJAY GANDHI",
+   5470,
+   {
+    "score": 36,
+    "sujets": 13,
+    "ov": 8,
+    "attendu": 9.8,
+    "ratio": 0.82,
+    "meme": 0,
+    "rythme": 100,
+    "dens": 41,
+    "sb": null
+   }
+  ],
+  [
+   36,
+   "MICHAEL JACKSON",
+   5491,
+   {
+    "score": 36,
+    "sujets": 13,
+    "ov": 5,
+    "attendu": 6.2,
+    "ratio": 0.81,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 70,
+    "sb": null
+   }
+  ],
+  [
+   36,
+   "FABIO LANZONI",
+   5435,
+   {
+    "score": 36,
+    "sujets": 13,
+    "ov": 5,
+    "attendu": 9.4,
+    "ratio": 0.53,
+    "meme": 1,
+    "rythme": 100,
+    "dens": 43,
+    "sb": null
+   }
+  ],
+  [
+   36,
+   "CHARLOTTE RAE",
+   5448,
+   {
+    "score": 36,
+    "sujets": 13,
+    "ov": 10,
+    "attendu": 9.3,
+    "ratio": 1.07,
+    "meme": 0,
+    "rythme": 95,
+    "dens": 46,
+    "sb": null
+   }
+  ],
+  [
+   35,
+   "SALMAN RUSHDIE",
+   5400,
+   {
+    "score": 35,
+    "sujets": 8,
+    "ov": 8,
+    "attendu": 8.0,
+    "ratio": 1.0,
+    "meme": 0,
+    "rythme": 100,
+    "dens": 52,
+    "sb": null
+   }
+  ],
+  [
+   35,
+   "PAULINE COLLINS",
+   5443,
+   {
+    "score": 35,
+    "sujets": 10,
+    "ov": 4,
+    "attendu": 7.4,
+    "ratio": 0.54,
+    "meme": 0,
+    "rythme": 91,
+    "dens": 54,
+    "sb": null
+   }
+  ],
+  [
+   35,
+   "CONAN O'BRIEN",
+   5545,
+   {
+    "score": 35,
+    "sujets": 12,
+    "ov": 8,
+    "attendu": 9.6,
+    "ratio": 0.84,
+    "meme": 0,
+    "rythme": 95,
+    "dens": 43,
+    "sb": null
+   }
+  ],
+  [
+   32,
+   "OPRAH WINFREY",
+   5515,
+   {
+    "score": 32,
+    "sujets": 14,
+    "ov": 12,
+    "attendu": 9.0,
+    "ratio": 1.33,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 46,
+    "sb": null
+   }
+  ],
+  [
+   32,
+   "FREDDIE MERCURY",
+   5428,
+   {
+    "score": 32,
+    "sujets": 7,
+    "ov": 12,
+    "attendu": 10.9,
+    "ratio": 1.1,
+    "meme": 0,
+    "rythme": 100,
+    "dens": 37,
+    "sb": null
+   }
+  ],
+  [
+   31,
+   "SEBASTIAN JUNGER",
+   5473,
+   {
+    "score": 31,
+    "sujets": 10,
+    "ov": 16,
+    "attendu": 15.2,
+    "ratio": 1.05,
+    "meme": 0,
+    "rythme": 95,
+    "dens": 27,
+    "sb": null
+   }
+  ],
+  [
+   31,
+   "CATHERINE OXENBERG",
+   5558,
+   {
+    "score": 31,
+    "sujets": 11,
+    "ov": 8,
+    "attendu": 12.2,
+    "ratio": 0.65,
+    "meme": 0,
+    "rythme": 88,
+    "dens": 34,
+    "sb": null
+   }
+  ],
+  [
+   27,
+   "LINDA GOODMAN",
+   5469,
+   {
+    "score": 27,
+    "sujets": 5,
+    "ov": 10,
+    "attendu": 9.6,
+    "ratio": 1.04,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 45,
+    "sb": null
+   }
+  ],
+  [
+   27,
+   "CRYSTAL GAYLE",
+   5459,
+   {
+    "score": 27,
+    "sujets": 7,
+    "ov": 5,
+    "attendu": 10.0,
+    "ratio": 0.5,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 44,
+    "sb": null
+   }
+  ],
+  [
+   26,
+   "EDNA O'BRIEN",
+   5526,
+   {
+    "score": 26,
+    "sujets": 10,
+    "ov": 18,
+    "attendu": 15.5,
+    "ratio": 1.16,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 29,
+    "sb": null
+   }
+  ],
+  [
+   25,
+   "STEPHEN HAWKING",
+   5481,
+   {
+    "score": 25,
+    "sujets": 8,
+    "ov": 14,
+    "attendu": 14.1,
+    "ratio": 0.99,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 30,
+    "sb": null
+   }
+  ],
+  [
+   24,
+   "JIMMY OSMOND",
+   5554,
+   {
+    "score": 24,
+    "sujets": 6,
+    "ov": 23,
+    "attendu": 14.1,
+    "ratio": 1.63,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 30,
+    "sb": null
+   }
+  ],
+  [
+   22,
+   "AMY GRANT",
+   5472,
+   {
+    "score": 22,
+    "sujets": 6,
+    "ov": 25,
+    "attendu": 23.6,
+    "ratio": 1.06,
+    "meme": 0,
+    "rythme": 71,
+    "dens": 18,
+    "sb": null
+   }
+  ]
+ ],
+ "doms": {
+  "échanges, entourage": 3,
+  "argent, ressources": 3,
+  "retrait, intériorité": 1,
+  "toi-même": 7,
+  "ce qui est partagé": 3,
+  "création, enfants": 4,
+  "santé, quotidien": 3,
+  "foyer, famille": 1,
+  "idées, voyages": 2,
+  "carrière, réputation": 3
+ },
+ "n": 30,
+ "same": 3
+}
