@@ -8,7 +8,8 @@
  * Backend: C:\wamp64\www\ai.zebrapad.io\full-suite-spiritual-api\toctoc-highlights.php
  * Proxied: POST /api/toctoc  { endpoint: "toctoc-highlights", ...birthData }
  */
-import { apiFetch } from "@/lib/api-client";
+import { callProxy } from "@/lib/momentum-api";
+import type { BirthData } from "@/lib/birth-data";
 
 /** One entry in the yearlyTimeline[] array — one row per year. */
 export interface YearlyEntry {
@@ -81,35 +82,24 @@ export interface HighlightsResponse {
  * Fetch highlights for a person by birth data.
  *
  * @example
- * const h = await fetchHighlights({
- *   birthDate: "1980-10-24",
- *   birthTime: "01:41",
- *   latitude: 50.85,
- *   longitude: 4.35,
- *   timezone: "Europe/Brussels",
- * });
+ * const h = await fetchHighlights(birth);
  * console.log("Biggest year:", h?.biggestYear?.year);
  * console.log("Peak years:", h?.summary.peakYears.slice(0, 3));
  */
-export async function fetchHighlights(birthData: {
-  birthDate: string;
-  birthTime?: string;
-  latitude?: number;
-  longitude?: number;
-  timezone?: string;
-  username?: string;
-}): Promise<HighlightsResponse | null> {
+export async function fetchHighlights(
+  birth: BirthData,
+): Promise<HighlightsResponse | null> {
   try {
-    const res = await apiFetch("/api/toctoc", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint: "toctoc-highlights", ...birthData }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    // Handle both flat and wrapped response shapes from the calculator
-    return (data?.data ?? data) as HighlightsResponse;
-  } catch {
+    const brut = await callProxy("toctoc-highlights", birth);
+    const enveloppe = brut as { data?: unknown };
+    return (enveloppe?.data ?? brut) as HighlightsResponse;
+  } catch (err) {
+    // Un echec ici n empeche pas l app de tourner : la frise reste lisible sans
+    // les points saillants. On renvoie null, mais on le DIT en dev, sinon la
+    // panne redevient invisible et le code redevient mort.
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[highlights] appel echoue", err);
+    }
     return null;
   }
 }
