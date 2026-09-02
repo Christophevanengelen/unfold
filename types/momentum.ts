@@ -15,6 +15,13 @@ export interface MomentumPhase {
   startDate: string; // ISO date
   endDate?: string; // null = ongoing or future
   durationWeeks: number;
+  /**
+   * Vrai seulement quand les bornes n ont PAS pu etre lues dans le paquet du
+   * moteur et ont ete deduites (mois d apparition, ou fenetre autour d une date
+   * exacte). L ecran doit alors montrer le mois, jamais un jour precis : un jour
+   * affiche est une promesse, et une promesse deduite est une donnee fabriquee.
+   */
+  datesApproximees?: boolean;
   intensity: number; // 0-100 — visual intensity
   score?: number; // 1-4 raw API score — determines tier directly (1=TOC, 2=TOCTOC, 3-4=TOCTOCTOC)
   planets: PlanetKey[]; // 1-5 planetary transits active during this phase

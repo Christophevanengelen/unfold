@@ -96,11 +96,37 @@ export function yearDataToPhases(
     let startDate: string;
     let endDate: string;
 
-    if (ev.periodStart && ev.periodEnd) {
+    let datesApproximees = false;
+
+    // ── D ou viennent les dates (mesure du 02/09/2026 sur le paquet reel) ──
+    //
+    // `ev.periodStart/periodEnd` n arrivent JAMAIS (0/109) : la branche ZR
+    // ne s executait pas, et toutes les periodes tombaient dans l arrondi au
+    // mois. Les transits recevaient une fenetre INVENTEE de ±21 ou ±45 jours :
+    // un transit reel de 14 jours s affichait sur 42, un de 28 sur 90.
+    //
+    // Les vraies bornes sont dans le boudin jumeau, dans cet ordre :
+    //   1. windowStart/End  — fenetre d activation (transit 16/16,
+    //      profections 6/6, anniversaires 3/3)
+    //   2. startDate/endDate — la periode (zr, eclipse)
+    //   3. startDate seul   — evenement ponctuel (station) : un point
+    // Les branches d en dessous ne sont atteintes que sans jumeau, et
+    // portent alors le drapeau datesApproximees.
+    if (boudin?.windowStart && boudin.windowEnd) {
+      startDate = boudin.windowStart;
+      endDate = boudin.windowEnd;
+    } else if (boudin?.startDate && boudin.endDate) {
+      startDate = boudin.startDate;
+      endDate = boudin.endDate;
+    } else if (boudin?.startDate) {
+      startDate = boudin.startDate;
+      endDate = boudin.startDate;
+    } else if (ev.periodStart && ev.periodEnd) {
       // ZR events have explicit period dates
       startDate = ev.periodStart;
       endDate = ev.periodEnd;
     } else if (ev.exactDate) {
+      datesApproximees = true;
       // Transit events: use exact date as center, expand by score
       const exact = new Date(ev.exactDate);
       const windowDays = Math.abs(ev.score) >= 3 ? 45 : 21;
@@ -110,6 +136,7 @@ export function yearDataToPhases(
       endDate = end.toISOString().split("T")[0];
     } else {
       // Fallback: span the months this event appears in
+      datesApproximees = true;
       startDate = `${group.firstMonth}-01`;
       const lastDate = new Date(`${group.lastMonth}-01`);
       lastDate.setMonth(lastDate.getMonth() + 1);
@@ -178,6 +205,7 @@ export function yearDataToPhases(
       startDate,
       endDate,
       durationWeeks,
+      ...(datesApproximees ? { datesApproximees: true } : {}),
       intensity,
       score: rawMax <= 4 ? rawMax : (rawMax >= 80 ? 4 : rawMax >= 60 ? 3 : rawMax >= 40 ? 2 : 1),
       planets,
