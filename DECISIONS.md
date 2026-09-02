@@ -83,3 +83,9 @@ dans le sens de la donnee — inventaire dans le journal de session.
 controles statiques et `next build`, jamais les 23 parcours Playwright. Ils ne
 tournent que localement, par `npm run avant-build`. A ajouter au CI quand un
 executeur avec navigateurs sera decide.
+
+**02/09, regle de silence branchee en donnees :** lib/silence.ts (zero
+importeur jusqu ici) alimente desormais `silence` dans le contexte momentum —
+parle / se tait / prochaine fenetre. Aucun ecran ne le lit : ce qu on montre
+quand l app se tait est un dessin de Christophe. Mesure sur le theme de
+reference : 101 fenetres sur cent ans, 5,1 % du temps.
