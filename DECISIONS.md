@@ -5,21 +5,24 @@ Chacune porte sa raison : sans la raison, on la rouvre tous les trois mois.
 
 ## 02/09/2026 — le modele economique
 
-**Achat unique. Pas d abonnement. 24,99 EUR.**
+**Abonnement annuel, plan unique, sans essai. Prix a fixer par Christophe.**
+Decision verrouillee le 02/09 apres le master plan ; elle REMPLACE l achat
+unique envisage le meme jour.
 
-- Un rapport se vend une fois : c est un objet, pas un service.
-- En Lifestyle, le renouvellement est le pire de toutes les categories
-  (25 % annuel, 42 % mensuel) et l essai gratuit detruit la LTV (-21,2 %).
-- Apple 3.1.2(a) exige une « ongoing value » pour un abonnement. Apres la
-  mesure du 02/09 (MESURE-FAUX-POSITIF.md), on ne peut rien promettre
-  quotidiennement qui soit a la fois vrai et vendable. Un abonnement serait
-  donc soit malhonnete, soit refuse.
-- Prix haut assume : 2,8 % de conversion contre 1,4 % pour un prix bas. Un prix
-  bas signale un produit sans valeur.
+- Ce que le benchmark (RevenueCat, Adapty) a tranche et qui n a pas bouge :
+  pas d essai gratuit (LTV -21,2 % en Lifestyle), mur dur et non freemium
+  (10,7 % contre 2,1 %), plan unique sans bascule, prix haut (2,8 % contre 1,4 %).
+- Ce que le benchmark n a jamais tranche : abonnement contre achat unique. Ses
+  donnees portent sur des apps a abonnement ; un achat unique n y figure pas.
+  L argument qui a fait pencher : Apple 3.1.2(a) exige une « ongoing value »,
+  et `profection_year_change` en fournit une CALCULEE — une nouvelle maison
+  profectee chaque annee — sans rien promettre que la mesure du faux positif
+  interdit.
+- Le mensuel est retire de l offre ; les LTV avancees pour le justifier
+  (10,33 / 53,32 EUR) etaient fausses et sont abandonnees.
 
-**Faiblesse connue, non masquee :** aucun revenu recurrent. La croissance
-dependra eternellement de nouveaux utilisateurs. C est le vrai trou de la
-strategie. Il est prefere a un abonnement qu on ne saurait pas honorer.
+**Faiblesse connue :** aucun revenu tant que les produits iOS ne sont pas
+crees dans App Store Connect (defaut C17) — geste de Christophe, pas du code.
 
 ## 02/09/2026 — ou se place le mur payant
 
