@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     // Subscription-only fields (omitted for lifetime one-time payment)
     ...(isLifetime ? {} : {
       subscription_data: {
-        trial_period_days: TRIAL_DAYS,
+        ...(TRIAL_DAYS > 0 ? { trial_period_days: TRIAL_DAYS } : {}),
         metadata: { userId, locale: rawLocale ?? "" },
       },
     }),
