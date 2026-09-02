@@ -110,3 +110,29 @@ Ce que le brouillon 2 ne resout pas encore : la couche de traduction n est
 pas branchee (phrases a la main) ; le persona de demonstration est une figure
 publique du corpus, pas la persona a 5 EUR — des que la porte naissance est
 ouverte, la meme page tourne sur une personne fictive.
+
+## Brouillon 3 — la ligne (02/09, fin d apres-midi)
+
+Demande de Christophe : sortir des blocs de texte, une experience interactive,
+illustree, animee — et derriere chaque bouton une vraie experience.
+
+- **La ligne de vie elle-meme** : cent ans a faire defiler, le passe en haut,
+  l avenir en bas ; chaque fenetre d accord est une lueur (force 2 douce,
+  force 3 vive) ; aujourd hui pulse ; ages-cles et annees pivots en marge ;
+  un HUD colle en haut dit l annee sous le doigt et l etat (calme / fenetre).
+- **« Qui traverse ca avec toi ? »** : la seconde ligne (Jennifer A., nee le
+  11/02/1969) apparait a cote, les moments communs s allument en vert, et le
+  verdict est honnete.
+- **« M y preparer »** : domaine, qualite, trois actions, rappel 30 jours
+  avant (mecanique existante de planification), ajout au calendrier.
+
+**Corrections de fond, mesurees sur les paquets de Brad par naissance** (et
+non plus sur le theme de test du matin) : 1 819 periodes, **55 fenetres,
+3,6 %** du temps ; prochaine **2029‑12‑08 → 12‑22, maison 3, force 2** — le
+« 3 techniques » du brouillon 2 venait d un comptage a la main hors de la
+regle. Brad × Jennifer : **4 chevauchements en deux vies**, les prochains en
+decembre 2046 et septembre 2063. La regle de silence appliquee a deux.
+
+Ce que Christophe demande encore : voir l outil de Marie-Ange en utilisateur
+CONNECTE (« add life events, and more »), au-dela de la page publique. Voie :
+sa session Chrome.
