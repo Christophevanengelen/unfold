@@ -78,10 +78,18 @@ export function yearDataToPhases(
     const planet = extractPlanet(label);
     // Year endpoint scores are raw values (8-90+), not 1-4 toc levels.
     // Map directly: abs(score) → intensity, clamped 30-98.
+    // ── Intensite : la meme loi que la vue viager (defaut C7) ──────────────
+    // topEvents[].score est un score BRUT dont l echelle depend de la categorie
+    // (mesure : profection 3, transit 18..45, zr 26..90, eclipse 78..120). Le
+    // multiplier par 1,1 et le borner 30..98 comparait l incomparable : une
+    // eclipse etait toujours « forte », une profection toujours « faible ».
+    // Le jumeau dans boudins[] porte le niveau toc du moteur (1..4, 53/53) :
+    // c est lui qui fait l intensite, comme scoreToIntensity(b.sc) plus bas.
     const rawMax = Math.max(...group.events.map((e) => Math.abs(e.score)));
-    const intensity = rawMax <= 4
-      ? scoreToIntensity(rawMax, ev.cyclePasses)  // toc-level score
-      : Math.min(98, Math.max(30, Math.round(rawMax * 1.1))); // raw score → intensity
+    const niveau = typeof boudin?.score === "number" ? boudin.score : rawMax <= 4 ? rawMax : undefined;
+    const intensity = niveau !== undefined
+      ? scoreToIntensity(niveau, ev.cyclePasses)
+      : Math.min(98, Math.max(30, Math.round(rawMax * 1.1))); // sans jumeau : ancien repli
     const meta = getEventMeta(
       ev.category,
       label,
@@ -211,7 +219,7 @@ export function yearDataToPhases(
         : {}),
       ...(boudin?.periodQuality ? { periodQuality: boudin.periodQuality } : {}),
       intensity,
-      score: rawMax <= 4 ? rawMax : (rawMax >= 80 ? 4 : rawMax >= 60 ? 3 : rawMax >= 40 ? 2 : 1),
+      score: niveau ?? (rawMax >= 80 ? 4 : rawMax >= 60 ? 3 : rawMax >= 40 ? 2 : 1),
       planets,
       status,
       keyInsight: meta.keyInsight,

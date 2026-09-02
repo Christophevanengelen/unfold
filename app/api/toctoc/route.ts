@@ -20,8 +20,26 @@ function personKey(p: { birthDate?: string; birthTime?: string; latitude?: numbe
   return `${p.birthDate ?? ""}_${normalizeTime(p.birthTime)}_${lat}_${lng}`;
 }
 
-function pairKey(a: object, b: object): string {
-  return [personKey(a), personKey(b)].sort().join("|");
+/**
+ * La clef de cache d un rapport de couple. Defaut C13 du master plan :
+ *
+ * - elle TRIAIT la paire, alors que personA est toujours « Vous » : le texte
+ *   ecrit pour A etait servi a B, roles inverses, des que B ouvrait le meme
+ *   couple le meme mois ;
+ * - elle ignorait la relation et la langue : un autre type de lien, ou une
+ *   autre langue, recevait le meme texte ;
+ * - elle etait la meme pour un {success:false}, mis en cache 24 h (voir plus bas).
+ *
+ * La paire reste ORDONNEE, la relation et la langue entrent dans la clef, et
+ * le prefixe de version ecarte toutes les lignes ecrites sous l ancienne loi —
+ * dont on ne sait pas lesquelles sont inversees. pair_hash est un TEXT libre :
+ * aucun changement de schema.
+ */
+function pairKey(a: object, b: object, extra: { relationship?: unknown; locale?: unknown; months?: unknown }): string {
+  const rel = typeof extra.relationship === "string" ? extra.relationship : "";
+  const loc = typeof extra.locale === "string" ? extra.locale : "";
+  const mo = typeof extra.months === "number" || typeof extra.months === "string" ? String(extra.months) : "";
+  return `v2|${personKey(a)}|${personKey(b)}|${rel}|${loc}|${mo}`;
 }
 
 function getTargetMonth(targetDate: unknown): string {
@@ -88,7 +106,7 @@ async function handlePost(request: NextRequest) {
     // ── Cache check for connection-brief only ──
     let cacheKey: { pair: string; month: string } | null = null;
     if (endpoint === "connection-brief" && payload.personA && payload.personB) {
-      const pair = pairKey(payload.personA, payload.personB);
+      const pair = pairKey(payload.personA, payload.personB, payload);
       const month = getTargetMonth(payload.targetDate);
       cacheKey = { pair, month };
       const cached = await getCachedBrief(pair, month);
@@ -106,8 +124,11 @@ async function handlePost(request: NextRequest) {
 
     const data = await res.json();
 
-    // Fire-and-forget cache write
-    if (cacheKey && res.ok) {
+    // Fire-and-forget cache write — jamais pour un echec : un {success:false}
+    // mis en cache etait servi pendant 24 h a chaque ouverture, sans rappel
+    // du moteur, alors que la panne etait passagere.
+    const reussi = !!data && typeof data === "object" && (data as { success?: unknown }).success !== false;
+    if (cacheKey && res.ok && reussi) {
       cacheBrief(cacheKey.pair, cacheKey.month, data);
     }
 
