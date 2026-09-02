@@ -78,3 +78,8 @@ libre. Les trois cartes de resume (SatelliteScores) ne sont montees que dans
 StepHabit, etape morte ; domainConfig est marque @deprecated. Les trois
 domaines sont un vestige. Ce qui les utilise encore a l ecran est a ameliorer
 dans le sens de la donnee — inventaire dans le journal de session.
+
+**Faiblesse connue, 02/09 :** le CI (.github/workflows/apps.yml) lance les
+controles statiques et `next build`, jamais les 23 parcours Playwright. Ils ne
+tournent que localement, par `npm run avant-build`. A ajouter au CI quand un
+executeur avec navigateurs sera decide.

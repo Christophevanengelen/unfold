@@ -45,7 +45,28 @@ const TELEPHONE = {
   timezoneId: "Europe/Brussels",
 };
 
-const SERVEUR_LOCAL = "http://localhost:3333";
+// ── Un port PAR COPIE DE TRAVAIL ──────────────────────────────────────────
+//
+// Les parcours tournaient sur le port fixe 3333 avec `reuseExistingServer` :
+// le premier serveur trouve gagnait, quel que soit le code qu il servait. Le
+// 02/09/2026, 23 parcours ont annonce « passed » contre le serveur d une AUTRE
+// copie de travail — du code jamais charge. Un test qui ment vaut moins que
+// pas de test.
+//
+// Le port derive du chemin de cette copie : deux clones ne partagent jamais
+// un serveur, et reutiliser celui de CE clone redevient sans danger.
+// `npm run dev` garde 3333 pour les humains.
+import { createHash } from "node:crypto";
+const PORT_PARCOURS = 4100 + (parseInt(createHash("sha1").update(process.cwd()).digest("hex").slice(0, 6), 16) % 800);
+//
+// Next n autorise qu UNE instance `next dev` par dossier (.next/dev/lock). Si
+// `npm run dev` tourne deja dans ce clone, le serveur des parcours ne peut pas
+// demarrer et Playwright le dit en clair (« is another instance of next dev
+// running? ») : arreter le serveur de travail, puis relancer. C est voulu. Un
+// premier repli basculait sur 3333 des que le fichier de verrou existait — or
+// Next le laisse derriere lui a l arret : un verrou PERIME renvoyait les tests
+// sur le port partage, et rouvrait la porte au serveur d un autre clone.
+const SERVEUR_LOCAL = `http://localhost:${PORT_PARCOURS}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -92,10 +113,10 @@ export default defineConfig({
       },
     },
   ],
-  // Le serveur de developpement est demarre s il ne tourne pas deja. Il tourne
-  // presque toujours pendant le travail, d ou `reuseExistingServer`.
+  // Le serveur des parcours est demarre s il ne tourne pas deja SUR CE PORT —
+  // qui n appartient qu a cette copie de travail (voir PORT_PARCOURS).
   webServer: {
-    command: "npm run dev",
+    command: `npx next dev --port ${PORT_PARCOURS}`,
     url: SERVEUR_LOCAL,
     reuseExistingServer: true,
     timeout: 180_000,
