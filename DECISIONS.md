@@ -50,3 +50,21 @@ liste par erreur comme une decision de Christophe. Le mot de passe a ete trouve
 en clair dans un depot public (trois occurrences, retirees), il doit etre
 considere comme compromis, et l effacer du code ne l efface pas de l historique
 git. Le geste lui revient, sur son serveur.
+
+## 02/09/2026 — les domaines de vie
+
+**L app s adapte a la donnee, pas l inverse.** Decision de Christophe, le 02/09
+vers 7h. Verification faite dans le code juste apres : c est DEJA le cas.
+
+- La fiche d une capsule (CapsuleDetailSheet) affiche la maison calculee par
+  le moteur, parmi les douze, en mots (houseConfig + maisons-i18n). C est le
+  vocabulaire que Christophe voit. Depuis les corrections C5/C6, c est la bonne
+  maison qui s y affiche (avant : fausse 3 fois sur 4 pour le ZR).
+- Les trois domaines — amour, sante, travail — n existent que pour les trois
+  scores satellites (SatelliteScores) et les compteurs d occurrence de la
+  frise. C est un resume dessine par Christophe, pas une reduction de la
+  donnee : la donnee complete reste sur chaque phase. Depuis la correction
+  C2, ce rangement suit la maison calculee (avant : tout tombait dans travail).
+- **Rien a migrer, rien a restructurer.** Le mot « migration », employe a
+  tort ce matin, est retire. Toute evolution des trois cartes satellites est
+  une decision de design de Christophe, quand il le voudra.
