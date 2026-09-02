@@ -29,7 +29,20 @@ export interface CapsuleData {
 // ─── Tier helpers ───────────────────────────────────────────
 const LANE_COUNT = 3;
 
-export function getTier(intensity: number): Tier {
+/**
+ * LA loi de palier. Il y en avait deux : celle-ci sur l intensite (85/70) et
+ * une autre dans la frise sur le score (3/2). Elles ne coincidaient que par
+ * hasard, l intensite de la vue annuelle etant derivee d un score brut par une
+ * autre formule. Le score est le niveau donne par le moteur lui-meme —
+ * toc, toc toc, toc toc toc — donc il prime ; l intensite ne sert qu en repli
+ * quand une phase n en porte pas.
+ */
+export function getTier(intensity: number, score?: number): Tier {
+  if (typeof score === "number" && Number.isFinite(score)) {
+    if (score >= 3) return "toctoctoc";
+    if (score >= 2) return "toctoc";
+    return "toc";
+  }
   if (intensity >= 85) return "toctoctoc";
   if (intensity >= 70) return "toctoc";
   return "toc";
@@ -81,7 +94,7 @@ export function buildCapsules(phases: MomentumPhase[]): CapsuleData[] {
 
     domainCounter[phase.domain] = (domainCounter[phase.domain] || 0) + 1;
 
-    const tier = getTier(phase.intensity);
+    const tier = getTier(phase.intensity, phase.score);
     const lane = getTierLane(tier);
 
     capsules.push({

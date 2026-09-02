@@ -1,5 +1,6 @@
 "use client";
 
+import { getTier as getTierCapsules } from "@/lib/capsules";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, startTransition } from "react";
 
 /**
@@ -115,12 +116,10 @@ const LANE_SPACING = 6;
 const MIN_GAP_MS = 0;
 
 // Tier from raw API score (1-4) — no interpretation, direct from backend
-function getTier(_intensity: number, score?: number): Tier {
-  const s = score ?? 1;
-  if (s >= 3) return "toctoctoc"; // score 3-4 — major transits (large)
-  if (s >= 2) return "toctoc";    // score 2 — clear transits (medium)
-  return "toc";                   // score 1 — subtle (thin)
-}
+// Une seule loi de palier pour toute l app : celle de lib/capsules.ts.
+// La copie locale (score 3/2) et celle des capsules (intensite 85/70)
+// pouvaient classer une meme phase differemment. Defaut C10.
+const getTier = getTierCapsules;
 function getTierWidth(tier: Tier): number {
   if (tier === "toc") return 14;       // score 1 — fin
   if (tier === "toctoc") return 21;    // score 2 — moyen (x1.5)
