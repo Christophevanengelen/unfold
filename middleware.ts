@@ -51,10 +51,20 @@ export function middleware(request: NextRequest) {
   }
 
   // Skip public files, API routes, demo, and Next.js internals
+  //
+  // /unlock est ici parce qu elle n existe qu a la racine : la page vit dans
+  // app/unlock/, pas dans app/[locale]/unlock/. Sans cette ligne, le prefixe de
+  // langue ajoute plus bas envoyait /unlock vers /en/unlock, qui n existe pas.
+  // Verifie en production le 02/09/2026 : /unlock repondait 307 vers
+  // /en/unlock, puis 404. Un coupon remis a quelqu un ne pouvait donc pas etre
+  // utilise, meme par lien direct — la page n etait pas seulement orpheline,
+  // elle etait injoignable.
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/app") ||
+    pathname === "/unlock" ||
+    pathname.startsWith("/unlock/") ||
     PUBLIC_FILE.test(pathname)
   ) {
     return applySecurityHeaders(NextResponse.next());

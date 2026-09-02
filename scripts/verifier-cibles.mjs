@@ -22,8 +22,11 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
 const PLAFOND = 0;
+// `--others --exclude-standard` ajoute les fichiers pas encore indexes, en
+// respectant .gitignore : sans eux, ce controle ne voit que le passe et laisse
+// passer tout fichier neuf jusqu au commit suivant.
 
-const fichiers = execFileSync("git", ["ls-files", "components", "app"], { encoding: "utf8" })
+const fichiers = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "components", "app"], { encoding: "utf8" })
   .split("\n")
   .filter((f) => f.endsWith(".tsx") && !f.includes("/astro/"))
   // `git ls-files` liste ce que git CONNAIT, pas ce qui existe sur le disque :

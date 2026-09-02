@@ -16,8 +16,11 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+// `--others --exclude-standard` ajoute les fichiers pas encore indexes, en
+// respectant .gitignore : sans eux, ce controle ne voit que le passe et laisse
+// passer tout fichier neuf jusqu au commit suivant.
 
-const fichiers = execFileSync("git", ["ls-files"], { encoding: "utf8" })
+const fichiers = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { encoding: "utf8" })
   .split("\n")
   .filter((f) => /\.(tsx?|mjs|js|json|ya?ml|sh)$/.test(f))
   .filter((f) => existsSync(f))
@@ -69,7 +72,7 @@ for (const f of fichiers) {
 
 console.log("");
 if (trouves.length) {
-  console.log(`  ${trouves.length} secret(s) probable(s) dans du code suivi par git :\n`);
+  console.log(`  ${trouves.length} secret(s) probable(s) dans le code :\n`);
   for (const t of trouves) console.log(`    ${t.f}:${t.ligne}  ${t.nom}\n        ${t.extrait}`);
   console.log("\n  Un secret commite doit etre CHANGE, pas seulement efface :");
   console.log("  l historique git le garde. Sors-le du code, mets-le dans");

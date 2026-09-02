@@ -81,7 +81,7 @@ function verifierClesPerso() {
   return { connues: connues.size, fautives };
 }
 
-const PLAFOND = 16;
+const PLAFOND = 14;
 
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [
@@ -154,7 +154,17 @@ function ressembleAUnTexte(v) {
   return /[A-Za-zÀ-ÿ]{3,}/.test(v);
 }
 
-const fichiers = execFileSync("git", ["ls-files", "components", "app"], { encoding: "utf8" })
+// `--others --exclude-standard` ajoute les fichiers PAS ENCORE indexes, en
+// respectant .gitignore. Sans eux le controle ne voyait que le passe : on
+// ecrivait un composant neuf plein d anglais en dur, on lancait la
+// verification, elle passait — le fichier etant inconnu de git — et elle ne
+// mordait qu au tour suivant, une fois le commit fait. Le moment ou l on
+// verifie est justement celui ou le fichier est encore neuf.
+const fichiers = execFileSync(
+  "git",
+  ["ls-files", "--cached", "--others", "--exclude-standard", "components", "app"],
+  { encoding: "utf8" },
+)
   .split("\n")
   .filter((f) => f.endsWith(".tsx"))
   // `git ls-files` liste ce que git CONNAIT, pas ce qui existe sur le disque :
@@ -218,8 +228,18 @@ if (fautives.length > 0) {
   process.exit(1);
 }
 
+// `--liste` montre le detail meme sous le plafond : un compte qu on ne peut pas
+// ouvrir cache la dette au lieu de la montrer.
+const DETAIL = process.argv.includes("--liste");
+
 if (fuites.length <= PLAFOND) {
   console.log(`\n  ${fuites.length} texte(s) en dur, plafond ${PLAFOND}. Rien de neuf.\n`);
+  if (DETAIL) {
+    for (const x of fuites) {
+      console.log(`    ${x.f}:${x.ligne}  ${x.prop}: "${x.texte.slice(0, 60)}"`);
+    }
+    console.log("");
+  }
   process.exit(0);
 }
 
