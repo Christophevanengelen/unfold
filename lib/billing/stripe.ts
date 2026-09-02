@@ -18,7 +18,9 @@ export const STRIPE_PRICE_IDS = {
   lifetime: process.env.STRIPE_PRICE_LIFETIME ?? "",
 };
 
-export const TRIAL_DAYS = 7;
+// Zero : aucun essai (DECISIONS.md, 02/09/2026). Stripe refuse
+// trial_period_days: 0 — le checkout doit OMETTRE le champ quand c est zero.
+export const TRIAL_DAYS = 0;
 
 /**
  * Map our app locale to a Stripe Checkout Session `locale` value.
