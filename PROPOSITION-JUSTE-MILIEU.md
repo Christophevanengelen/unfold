@@ -157,3 +157,16 @@ Brouillon 4, meme adresse :
 
 Verifie a l ecran en local (accents, geometrie de l anneau, console vide).
 Toutes les valeurs sont celles de Brad P. par naissance.
+
+## Brouillon 5 — un recit en sept ecrans (02/09, soir)
+
+Verdict de Christophe sur le brouillon 4 : bonne direction, mais « un tableau
+de statistiques » — il faut etre statisticien pour en tirer l important. Il
+veut une remise en main propre, pas a pas.
+
+Brouillon 5, meme adresse : sept ecrans, UN insight par ecran, en grand, une
+seule illustration au plus, on avance d un tap (ou des fleches). L ordre est
+celui des regles : le fil rouge, ou tu en es (micro-anneau), ton passe avec
+« tu t en souviens ? », ce que tu traverses, dans 16 jours, ta prochaine
+fenetre, et aujourd hui avec les deux boutons. Verifie a l ecran : etapes 1, 2
+et 5, navigation, console vide.
