@@ -218,6 +218,14 @@ export function yearDataToPhases(
         ? { house: boudin.periodHousePlacement.house, houseTopic: boudin.periodHousePlacement.signification }
         : {}),
       ...(boudin?.periodQuality ? { periodQuality: boudin.periodQuality } : {}),
+      // Les champs que CapsuleDetailSheet lit depuis toujours sans qu aucun
+      // ecrivain n existe (windowStart/End, parileDate, exactDates,
+      // isVipTransit). Ils viennent du jumeau ; mesure : 16, 13, 12 et 8 sur
+      // 53. isReturn n est PAS ecrit : il n existe pas dans ce paquet.
+      ...(boudin?.windowStart && boudin.windowEnd ? { windowStart: boudin.windowStart, windowEnd: boudin.windowEnd } : {}),
+      ...(boudin?.parileDate ? { parileDate: boudin.parileDate } : {}),
+      ...(Array.isArray(boudin?.exactDates) && boudin.exactDates.length ? { exactDates: boudin.exactDates } : {}),
+      ...(boudin?.isVipTransit ? { isVipTransit: true } : {}),
       intensity,
       score: niveau ?? (rawMax >= 80 ? 4 : rawMax >= 60 ? 3 : rawMax >= 40 ? 2 : 1),
       planets,

@@ -133,6 +133,11 @@ export interface TocTocYearResponse {
        *  anniversaires 3/3. Jamais sur zr, eclipse, station. */
       windowStart?: string | null;
       windowEnd?: string | null;
+      /** Date de l orbe le plus serre (13/53), et toutes les dates exactes (12/53). */
+      parileDate?: string | null;
+      exactDates?: string[] | null;
+      /** Transit « VIP » selon le moteur (8/53). */
+      isVipTransit?: boolean | null;
     }>;
     computeTimeSeconds?: number;
   };
