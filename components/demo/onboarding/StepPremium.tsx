@@ -38,7 +38,7 @@ const features = [
  * s alignait meme pas sur le jour ou l on se trouvait.
  */
 function ForecastTimeline() {
-  const { phases } = useMomentum();
+  const { phases, state } = useMomentum();
   const locale = detectLocale();
   const prevision = useMemo(() => {
     const debut = new Date();
@@ -49,6 +49,13 @@ function ForecastTimeline() {
     () => new Intl.DateTimeFormat(locale, { weekday: "short" }),
     [locale],
   );
+
+  // Sans phases, previsionSemaine retombe sur une semaine plate a 62 : sept
+  // points identiques, sans pic. Ce n est pas une donnee fabriquee, mais sur
+  // l ecran de VENTE ca se lit comme la semaine de la personne alors que rien
+  // n a ete calcule pour elle. La regle du produit vaut ici plus qu ailleurs :
+  // sans valeur calculee, on n affiche pas le champ.
+  if (phases.length === 0 || state !== "ready") return null;
 
   return (
     <div className="flex items-end justify-between px-2">
