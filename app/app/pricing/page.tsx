@@ -52,7 +52,7 @@ import { ChevronLeft } from "flowbite-react-icons/outline";
 import { useAuth } from "@/lib/auth-context";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { isIOSBundle } from "@/lib/platform";
-import { PLANS, PLAN_UNIQUE, economieAnnuelle } from "@/lib/billing/features";
+import { PLANS, PLAN_UNIQUE, PLAN_PAR_DEFAUT, economieAnnuelle } from "@/lib/billing/features";
 import { verifierCode, CLE_ACCES } from "@/lib/coupons";
 import { perso } from "@/lib/perso-i18n";
 import { t, type Locale } from "@/lib/i18n-demo";
@@ -452,7 +452,7 @@ function euros(n: number): string {
 export default function DemoPricingPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
-  const [billing, setBilling] = useState<"monthly" | "annual">(PLAN_UNIQUE ?? "monthly");
+  const [billing, setBilling] = useState<"monthly" | "annual">(PLAN_UNIQUE ?? PLAN_PAR_DEFAUT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);

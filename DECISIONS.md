@@ -106,3 +106,24 @@ par Claude sur ce critere :
 - **Aucun essai gratuit, nulle part** : page de prix, site vitrine, Stripe.
   L essai n est pas un avantage decisif face aux concurrents, et promettre
   un essai que le magasin n a pas est un motif de refus.
+
+## 02/09/2026, 12h30 — deux faits nouveaux, deux decisions revisees
+
+**Astronum : on la REMPLACE.** Marie-Ange a donne son accord a Christophe.
+Une mise a jour d une app deja approuvee passe une revue d update, plus legere
+que la revue initiale ou 4.3(b) frappe le plus fort ; et les installations
+existantes recoivent la nouvelle version, avec le message d accueil de
+Christophe dans « Nouveautes » (« merci d avoir teste notre premiere version,
+ca change de nom, nouvelle experience »). Remplace la « nouvelle fiche » de
+12h. **Consequence : le bundle ID de l app devient celui d Astronum** —
+capacitor.config.ts, le widget, APNs, RevenueCat, tout est a rekeyer dessus.
+A obtenir de Marie-Ange. Le nom peut changer ; c est permis.
+
+**Le modele : annuel EN AVANT, mensuel DISPONIBLE, sans essai.** Principe de
+Christophe : ne pas reinventer un modele prouve — tous les concurrents vendent
+annuel et mensuel — et prendre une part de marche en etant un peu moins cher
+et meilleur. 39,99 EUR/an et 5,99 EUR/mois contre ~90 USD/an et ~15 USD/mois
+chez The Pattern ou Co-Star. Le mauvais renouvellement mensuel (42 %) est une
+question de valeur a vie, pas d acceptation ni de part de marche : il
+n interdit pas d offrir le mensuel, il interdit de compter dessus. Remplace
+« un seul produit annuel » de 12h. Le « sans essai » ne bouge pas.
