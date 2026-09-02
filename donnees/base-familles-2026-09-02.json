@@ -1,0 +1,305 @@
+{
+ "familles": {
+  "échanges, entourage": [
+   [
+    "Brad Pitt",
+    75
+   ],
+   [
+    "Pedro Almodóvar",
+    31
+   ],
+   [
+    "Temple Grandin",
+    52
+   ],
+   [
+    "Brad Pitt",
+    69
+   ]
+  ],
+  "argent, ressources": [
+   [
+    "Francesca Eastwood",
+    39
+   ],
+   [
+    "Freddie Mercury",
+    51
+   ],
+   [
+    "Salman Rushdie",
+    50
+   ]
+  ],
+  "retrait, intériorité": [
+   [
+    "Irvine Welsh",
+    41
+   ]
+  ],
+  "toi-même": [
+   [
+    "Stephen Hawking",
+    63
+   ],
+   [
+    "Michael Jackson",
+    29
+   ],
+   [
+    "Sanjay Gandhi",
+    53
+   ],
+   [
+    "Oprah Winfrey",
+    40
+   ],
+   [
+    "Claudia Schiffer",
+    40
+   ],
+   [
+    "Demi Moore",
+    43
+   ],
+   [
+    "Conan O'Brien",
+    33
+   ]
+  ],
+  "ce qui est partagé": [
+   [
+    "Fabio Lanzoni",
+    30
+   ],
+   [
+    "Pauline Collins",
+    49
+   ],
+   [
+    "Catherine Oxenberg",
+    41
+   ]
+  ],
+  "création, enfants": [
+   [
+    "Edna O'Brien",
+    43
+   ],
+   [
+    "Crystal Gayle",
+    85
+   ],
+   [
+    "Charlotte Rae",
+    49
+   ],
+   [
+    "Sebastian Junger",
+    71
+   ]
+  ],
+  "santé, quotidien": [
+   [
+    "Phil Hartman",
+    41
+   ],
+   [
+    "Nikki Giovanni",
+    25
+   ],
+   [
+    "Donny Osmond",
+    39
+   ]
+  ],
+  "foyer, famille": [
+   [
+    "Amy Grant",
+    55
+   ]
+  ],
+  "idées, voyages": [
+   [
+    "Andrew Lloyd Webber",
+    41
+   ],
+   [
+    "Alan Cumming",
+    30
+   ]
+  ],
+  "carrière, réputation": [
+   [
+    "Linda Goodman",
+    64
+   ],
+   [
+    "Jimmy Osmond",
+    57
+   ],
+   [
+    "Gene Simmons",
+    41
+   ]
+  ]
+ },
+ "rarete": [
+  [
+   2.3,
+   "Gene Simmons",
+   5488
+  ],
+  [
+   3.7,
+   "Brad Pitt",
+   5507
+  ],
+  [
+   4.2,
+   "Brad Pitt",
+   5507
+  ],
+  [
+   4.2,
+   "Claudia Schiffer",
+   5484
+  ],
+  [
+   4.5,
+   "Alan Cumming",
+   5430
+  ],
+  [
+   4.6,
+   "Demi Moore",
+   5508
+  ],
+  [
+   5.2,
+   "Michael Jackson",
+   5491
+  ],
+  [
+   6.0,
+   "Phil Hartman",
+   5479
+  ],
+  [
+   6.7,
+   "Andrew Lloyd Webber",
+   5433
+  ],
+  [
+   6.7,
+   "Pauline Collins",
+   5443
+  ],
+  [
+   6.9,
+   "Francesca Eastwood",
+   5403
+  ],
+  [
+   7.0,
+   "Pedro Almodóvar",
+   5434
+  ],
+  [
+   7.1,
+   "Salman Rushdie",
+   5400
+  ],
+  [
+   7.2,
+   "Nikki Giovanni",
+   5466
+  ],
+  [
+   7.9,
+   "Oprah Winfrey",
+   5515
+  ],
+  [
+   8.0,
+   "Charlotte Rae",
+   5448
+  ],
+  [
+   8.1,
+   "Linda Goodman",
+   5469
+  ],
+  [
+   8.4,
+   "Crystal Gayle",
+   5459
+  ],
+  [
+   8.6,
+   "Conan O'Brien",
+   5545
+  ],
+  [
+   8.6,
+   "Fabio Lanzoni",
+   5435
+  ],
+  [
+   9.0,
+   "Sanjay Gandhi",
+   5470
+  ],
+  [
+   9.4,
+   "Irvine Welsh",
+   5439
+  ],
+  [
+   9.7,
+   "Temple Grandin",
+   5471
+  ],
+  [
+   10.0,
+   "Freddie Mercury",
+   5428
+  ],
+  [
+   10.9,
+   "Catherine Oxenberg",
+   5558
+  ],
+  [
+   11.0,
+   "Donny Osmond",
+   5553
+  ],
+  [
+   12.2,
+   "Jimmy Osmond",
+   5554
+  ],
+  [
+   12.3,
+   "Stephen Hawking",
+   5481
+  ],
+  [
+   12.9,
+   "Edna O'Brien",
+   5526
+  ],
+  [
+   13.6,
+   "Sebastian Junger",
+   5473
+  ],
+  [
+   20.3,
+   "Amy Grant",
+   5472
+  ]
+ ]
+}
