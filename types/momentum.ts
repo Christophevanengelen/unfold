@@ -22,6 +22,16 @@ export interface MomentumPhase {
    * affiche est une promesse, et une promesse deduite est une donnee fabriquee.
    */
   datesApproximees?: boolean;
+  /**
+   * Ce que le moteur dit vraiment de cette periode, garde tel quel.
+   * `domain` (3 valeurs) n est qu un rangement pour les scores satellites ;
+   * la verite est ici : la maison (1-12), sa signification en toutes lettres
+   * quand le moteur l envoie, et sa qualite (MOST_POSITIVE, NEUTRAL, ...).
+   * L app s adapte a la donnee, pas l inverse (DECISIONS.md, 02/09/2026).
+   */
+  house?: number;
+  houseTopic?: string;
+  periodQuality?: string;
   intensity: number; // 0-100 — visual intensity
   score?: number; // 1-4 raw API score — determines tier directly (1=TOC, 2=TOCTOC, 3-4=TOCTOCTOC)
   planets: PlanetKey[]; // 1-5 planetary transits active during this phase
