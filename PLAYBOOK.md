@@ -535,3 +535,107 @@ se vend une fois.
 - [x] **Mot de passe Postgres en clair dans un dépôt public**, trois
       occurrences. Sorti du code, contrôle posé (`verifier-secrets.mjs`).
       **Reste à faire : CHANGER le mot de passe.** L'historique git le garde.
+
+## Corrections et compléments — synthèse finale
+
+**Deux faits que j'avais écartés à tort.** Un agent avait fabriqué des numéros
+de dossier ; un autre a confirmé les faits sous-jacents par d'autres sources,
+ouvertes et lues :
+
+- **Co-Star a été rachetée par Midjourney**, annoncé le 24/07/2026, ~4,3 M
+  d'utilisateurs actifs mensuels ([Gizmodo](https://gizmodo.com/were-at-a-crazy-moment-in-history-midjourney-buys-astrology-app-co-star-2000790434)).
+  L'app la plus installée de la catégorie a été absorbée par un labo d'IA.
+- **La FTC poursuit le groupe Genesis Tech, dont Obrio/Nebula.** ~250 M$ de CA
+  début 2023 → mi-2025, ~700 M$ de flux PayPal sur 12 mois, sociétés-écrans
+  pour échapper au contrôle des app stores
+  ([TechCrunch, 17/06/2026](https://techcrunch.com/2026/06/17/ftc-lawsuit-reveals-how-subscription-scam-networks-evade-app-store-enforcement/)).
+  Le numéro de dossier reste non vérifié : ne pas le citer.
+
+## Le calcul qui vaut plus que le reste du dossier
+
+- [ ] **Mesurer le taux de faux positifs du corpus.**
+
+      Treize techniques, des périodes emboîtées à plusieurs niveaux : à ce
+      niveau de couverture, chaque année d'une vie tombe forcément dans
+      plusieurs « périodes marquées ». **Un corpus qui ne peut pas échouer ne
+      prouve rien**, et c'est la première question qu'un journaliste ou un
+      régulateur posera.
+
+      Ce qu'il faut compter, sur les données déjà en base :
+        — combien de périodes marquées SANS aucun événement biographique
+        — combien d'événements majeurs HORS période marquée
+        — les périodes définies AVANT de regarder les événements
+
+      Si le résultat est bon, ce n'est plus une app à 5,99 € : c'est un
+      résultat, et il vaut infiniment plus cher. Si le résultat est mauvais, il
+      vaut mieux le savoir avant de fonder la promesse dessus.
+
+      Aucune recherche supplémentaire n'est nécessaire. Les données sont déjà là.
+
+## La règle qui prime sur la décision de prix
+
+- [ ] **Ne pas relancer un actif dont l'échec précédent n'est pas expliqué.**
+
+      AstroLearn vend le corpus et le timing hellénistique sur iOS depuis 2024,
+      à 17,99 $, et compte ZÉRO avis. Avant de fixer quoi que ce soit pour
+      Favorable, savoir laquelle des deux causes joue :
+
+        — **zéro acquisition** → l'actif n'a rien invalidé, le créneau reste
+          ouvert, Favorable est une deuxième chance légitime ;
+        — **acquisition sans rétention** → changer le nom, l'interface et le
+          prix ne changera rien.
+
+      Ce que Pew mesure (terrain 10/2024, n=9 593, publié 21/05/2025) : 30 %
+      consultent au moins une fois par an, 14 % au moins mensuellement, **20 %
+      « juste pour s'amuser » contre 10 % pour des insights utiles**, et **1 %
+      s'y fient « beaucoup » pour des décisions importantes**. La cible « veut
+      la donnée mais ne sait pas l'interpréter » est dans les 10 %, pas dans
+      les 30 %.
+
+      Un test d'acquisition payante de 1 000 € donnant un coût par abonné sous
+      30 € trancherait mieux que toute cette recherche.
+
+## Prix — trois réglages
+
+- [ ] **Mensuel 5,99 € → 9,99 €.** Il est aujourd'hui SOUS le marché (CHANI
+      13,49 €, The Pattern 11,99 €, Co-Star 9,99 €) pour un produit plus
+      difficile. Et le prix haut convertit MIEUX : 2,8 % contre 1,4 %.
+- [x] **Annuel 39,99 €** — bien calé, et le seul format dont la rétention
+      tienne (44,1 % à 12 mois contre 17,0 % en mensuel). À mettre en avant.
+- [ ] **Essai 7 jours** : en Lifestyle il détruit 21,2 % de LTV et 39,8 % des
+      gens annulent le jour même. 43,6 % de la catégorie n'offre aucun essai.
+      Soit pas d'essai, soit un essai long (17-32 jours convertit à 42,5 %
+      contre 25,5 % pour ≤4 jours).
+
+## Un positionnement neuf, gratuit
+
+- [ ] **« Moteur de calcul déterministe, pas de génération. »**
+
+      Le rejet de l'IA monte fort dans les avis 2025-2026 : « remove the AI
+      please » chez The Pattern, un avis Co-Star titré « Bought by AI ». Dans un
+      marché dont le leader vient d'être racheté par Midjourney, c'est un
+      argument commercial que personne d'autre ne peut tenir — nos périodes
+      sont calculées, pas inventées par un modèle.
+
+      Attention à la cohérence : les briefings, eux, SONT générés par LLM. Le
+      positionnement ne tient que si la frontière est dite clairement.
+
+## Ce qu'il ne faut pas écrire
+
+- [ ] **Jamais « validé sur des événements réels ».** Trois fronts s'ouvrent en
+      même temps : le taux de faux positifs sans réponse publiable ; Dean &
+      Kelly 2003 (*Journal of Consciousness Studies* 10(6-7):175-198, 2 011
+      personnes nées à moins de cinq minutes d'intervalle, 110 variables,
+      « uniformly negative ») qui a testé exactement cette corrélation ; et la
+      guideline Apple 1.1.6 qui interdit de couvrir une affirmation fausse par
+      « à titre de divertissement ».
+
+      La formulation défendable est DESCRIPTIVE — « voici la période, voici ce
+      qui est arrivé à ces gens-là pendant la leur » — jamais inférentielle.
+
+- [ ] **Ne jamais citer** : « marché de 12,8 Md$ selon IBISWorld » (c'est Allied
+      Market Research, chiffre de 2021 ; IBISWorld dit 2,3 Md$ sur un tout autre
+      périmètre) ; le sondage Harris « 29 % paient mensuellement » (commanditaire
+      non divulgué, contredit Pew d'un ordre de grandeur) ; l'article arXiv de
+      mars 2026 sur l'astrologie et l'apprentissage automatique (canular d'avril,
+      *Acta Prima Aprilia*, données synthétiques).
