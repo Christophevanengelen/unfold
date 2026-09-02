@@ -660,6 +660,19 @@ async function handlePost(request: NextRequest) {
     const systemPrompt = detail.systemPrompt ?? detail.data?.systemPrompt;
     const llmPayload = detail.llmPayload ?? detail.data?.llmPayload;
 
+    // La convergence est CALCULEE par le moteur et arrive dans la meme reponse
+    // HTTP que le reste (toctoc-boudin-detail renvoie `convergence` a la racine :
+    // {level, overlappingEvents, sameHouseEvents, events[]}). Elle n etait jamais
+    // lue, et on demandait pourtant au modele d ecrire une `convergenceNote` —
+    // c est-a-dire d inventer une reponse dont le calcul etait deja sur la table.
+    //
+    // On la lui donne. Il reformule, il ne devine plus.
+    const charge =
+      detail.convergence ?? detail.data?.convergence
+        ? { ...llmPayload, convergence: detail.convergence ?? detail.data?.convergence }
+        : llmPayload;
+
+
     // ── DEBUG: trace pipeline for Marie Ange audit ──
     console.log("[AUDIT] === PIPELINE TRACE ===");
     console.log("[AUDIT] Input:", JSON.stringify({ boudinId, boudinIndex, birthDate: birthData.birthDate }));
@@ -732,7 +745,7 @@ async function handlePost(request: NextRequest) {
         model: OPENAI_MODEL,
         messages: [
           { role: "system", content: fullSystemPrompt },
-          { role: "user", content: JSON.stringify(llmPayload) },
+          { role: "user", content: JSON.stringify(charge) },
         ],
         response_format: { type: "json_object" },
         temperature: 0.65,
@@ -799,7 +812,15 @@ async function handlePost(request: NextRequest) {
         corps: corpsRaw,
         avecLeRecul,
         domainesActives: parsed.domainesActives ?? [],
-        intensite: parsed.intensite ?? 0,
+        // L intensite venait de `parsed`, donc du modele — un CHIFFRE invente,
+        // puis mis en cache Supabase et relu ensuite comme s il sortait du
+        // moteur. Le score calcule etait en main dans llmPayload depuis le
+        // debut. Un modele de langue n a pas a produire de nombre : c est la
+        // forme la plus pure de la donnee fabriquee.
+        intensite:
+          typeof (llmPayload as { score?: unknown } | null)?.score === "number"
+            ? (llmPayload as { score: number }).score
+            : 0,
         ...meta,
         story: corpsRaw,
         insight: sousTitre,
