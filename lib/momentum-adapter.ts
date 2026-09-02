@@ -59,10 +59,22 @@ export function yearDataToPhases(
     }
   }
 
+  // Chaque topEvent a son jumeau dans data.boudins[] (meme id, 53/53 mesure).
+  // C est la que vivent lotType et periodHousePlacement — les topEvents ne les
+  // portent pas, d ou l etiquette « travail » collee a toutes les periodes ZR
+  // jusqu ici : inferDomain recevait toujours undefined et prenait son repli.
+  const boudinParId = new Map((data.boudins ?? []).map((b) => [b.id, b]));
+
   let phaseIndex = 0;
   for (const [label, group] of eventGroups) {
     const ev = group.events[0]; // Representative event
-    const domain = inferDomain(ev.category, label, ev.lotType);
+    const boudin = boudinParId.get(ev.id);
+    const domain = inferDomain(
+      ev.category,
+      label,
+      boudin?.lotType ?? ev.lotType,
+      boudin?.periodHousePlacement?.house,
+    );
     const planet = extractPlanet(label);
     // Year endpoint scores are raw values (8-90+), not 1-4 toc levels.
     // Map directly: abs(score) → intensity, clamped 30-98.
