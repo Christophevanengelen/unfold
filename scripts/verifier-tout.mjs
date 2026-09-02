@@ -49,6 +49,7 @@ const CONTROLES = [
   { nom: "Recits en dix langues", cmd: ["node", ["scripts/verifier-recits.mjs"]] },
   { nom: "Pages jetables", cmd: ["node", ["scripts/verifier-pages-jetables.mjs"]] },
   { nom: "Gabarit d environnement", cmd: ["node", ["scripts/verifier-env-exemple.mjs"]] },
+  { nom: "Secrets en clair", cmd: ["node", ["scripts/verifier-secrets.mjs"]] },
 ];
 
 /**
