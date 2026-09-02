@@ -224,14 +224,29 @@ export interface TocTocAppShortResponse {
 // ─── API Calls ──────────────────────────────────────────────
 
 const API_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
-const ALLOWED_ENDPOINTS = ["toctoc", "toctoc-app", "toctoc-app-short", "toctoc-year", "toctoc-timeline"];
+const ALLOWED_ENDPOINTS = [
+  "toctoc",
+  "toctoc-app",
+  "toctoc-app-short",
+  "toctoc-year",
+  "toctoc-timeline",
+  "toctoc-highlights",
+];
 
 /**
  * Dual-mode API caller:
  * - Dev (Next.js server running): uses /api/toctoc proxy (avoids CORS)
  * - Static export / Capacitor: calls external API directly
  */
-async function callProxy(
+/**
+ * Le seul transport autorise vers le moteur.
+ *
+ * Il existe parce que l origine native est `capacitor://localhost` : une route
+ * `/api/*` n y existe pas, le build statique n embarque aucun serveur Next.js.
+ * Tout appel qui court-circuite cette fonction marche en dev et meurt en
+ * production, sans erreur visible. C est ce qui a garde `fetchHighlights` mort.
+ */
+export async function callProxy(
   endpoint: string,
   birth: BirthData
 ): Promise<unknown> {
