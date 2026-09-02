@@ -81,9 +81,10 @@ const CONTRATS = [
     chemin: "toctoc-year.php",
     quoi: "les periodes de l annee, qui remplissent la timeline au chargement rapide",
     corps: { ...THEME, year: new Date().getFullYear() },
-    // ATTENTION : ce point d entree ne rend PAS de `boudins`. La premiere
-    // version de ce controle l attendait, par analogie avec toctoc-app-short,
-    // et annoncait donc un contrat rompu sur un moteur parfaitement correct.
+    // toctoc-year.php REND un tableau `boudins` — 58 a 63 entrees de 20 a 38
+    // clefs, mesure le 02/09/2026 — en plus de `months`. Ce commentaire disait
+    // le contraire, et un commit du meme jour a affirme l avoir corrige sans
+    // l avoir fait : son motif ne trouvait pas ce texte sur deux lignes.
     // Une fausse alerte envoyee a Marie-Ange lui aurait fait chercher un defaut
     // inexistant, et aurait use la confiance dans ce controle des le premier
     // usage. `lib/momentum-adapter.ts:29` lit `response.data.months`.
