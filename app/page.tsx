@@ -1,65 +1,66 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import { defaultLocale, locales } from "@/i18n/config";
 
-export default function Home() {
+/**
+ * Le filet de la racine.
+ *
+ * Sur le web, personne n arrive ici : middleware.ts intercepte « / » et
+ * redirige vers « /{langue} » selon l en-tete Accept-Language (verifie le
+ * 02/09/2026 — favorable.day repond 307 vers /en).
+ *
+ * Ce fichier est ce qui s affiche SI cette redirection ne se produit pas : le
+ * matcher du middleware change, une exportation statique le desactive, un
+ * hebergeur ne l execute pas. Il contenait encore le gabarit de demarrage de
+ * Next.js — logo Next, « To get started, edit the page.tsx file. » et un bouton
+ * « Deploy Now » vers Vercel. Le filet renvoyait donc chez quelqu un d autre.
+ *
+ * Pas de redirect() ici : le build natif exporte en statique, ou une
+ * redirection cote serveur n existe pas. Une balise refresh fonctionne dans les
+ * deux mondes, et les liens en clair restent utilisables si elle est ignoree.
+ */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+  // La redirection passe par les metadonnees : app/layout.tsx rend deja
+  // <html> et <head>, une page ne peut pas rendre les siens.
+  other: { refresh: `0; url=/${defaultLocale}` },
+};
+
+export default function Racine() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+    <main
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "1.5rem",
+        background: "var(--bg-primary)",
+        color: "var(--text-heading)",
+      }}
+    >
+      <p style={{ margin: 0, fontSize: "1.125rem" }}>Favorable</p>
+      <nav
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.75rem",
+          justifyContent: "center",
+          maxWidth: "28rem",
+        }}
+      >
+        {locales.map((l) => (
           <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            key={l.code}
+            href={`/${l.code}`}
+            hrefLang={l.code}
+            dir={l.dir}
+            style={{ color: "inherit", textDecoration: "underline" }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
+            {l.nativeName}
           </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        ))}
+      </nav>
+    </main>
   );
 }

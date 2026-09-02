@@ -1,22 +1,29 @@
 "use client";
 
 /**
- * ORPHELINE, constate le 01/09/2026. Aucun lien du produit ne mene ici — ni le
- * site, ni l app, ni un mail. On n y arrive qu en tapant l adresse.
+ * Le chemin du coupon avait trois ruptures independantes. Deux sont reparees.
  *
- * Et si on y arrive : elle renvoie vers /app/boudin, un ecran volontairement
- * mis de cote du paquet natif (voir scripts/build-native.sh). Sur telephone, un
- * code valide afficherait donc « c est bon » puis deposerait la personne sur
- * l accueil, sans explication.
+ * 1. INJOIGNABLE (corrige le 02/09/2026). La page vit dans app/unlock/, pas
+ *    dans app/[locale]/unlock/ : le middleware prefixait l adresse par la
+ *    langue et /unlock partait vers /en/unlock, qui n existe pas. Mesure en
+ *    production : 307 puis 404. Elle n etait donc pas seulement orpheline, elle
+ *    etait inaccessible meme par lien direct — un code remis a quelqu un ne
+ *    pouvait pas servir. middleware.ts la laisse desormais passer.
  *
- * Elle est laissee en place, branchee sur lib/coupons.ts comme les deux autres
- * champs de code, en attendant qu on decide de son sort. Elle ne nuit pas :
- * personne ne peut la trouver.
+ * 2. MAUVAISE DESTINATION (corrige le 02/09/2026). Voir plus bas.
+ *
+ * 3. AUCUN CODE EN PRODUCTION. lib/coupons.ts n en definit pas. Tant que c est
+ *    le cas, tout code saisi repond « inactif ». Ce n est pas un defaut a
+ *    corriger ici : c est une decision commerciale — veut-on des coupons, et
+ *    lesquels.
+ *
+ * Aucun lien du produit ne mene encore ici. C est voulu tant que 3 tient.
  */
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { verifierCode, CLE_ACCES } from "@/lib/coupons";
+import { isNative } from "@/lib/platform";
 
 
 export default function UnlockPage() {
@@ -30,7 +37,13 @@ export default function UnlockPage() {
     if (etat === "ok") {
       try { localStorage.setItem(CLE_ACCES, "true"); } catch {}
       setSuccess(true);
-      setTimeout(() => router.replace("/app/boudin"), 1200);
+      // /app/boudin est mis de cote du paquet natif (scripts/build-native.sh).
+      // Y envoyer un telephone affichait « c est bon » puis deposait la
+      // personne sur l accueil, sans un mot, au moment precis ou elle venait
+      // d utiliser un code. L acces est deja pose dans localStorage : l app
+      // sait quoi montrer sans qu on la force sur un ecran qui n existe pas.
+      const destination = isNative() ? "/app" : "/app/boudin";
+      setTimeout(() => router.replace(destination), 1200);
     } else {
       // Voir lib/coupons.ts : aucun code n est defini en production, donc
       // demander de verifier l orthographe accuse la personne a tort.
