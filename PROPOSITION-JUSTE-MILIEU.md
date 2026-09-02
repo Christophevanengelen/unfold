@@ -84,3 +84,29 @@ personne de demonstration. Le jour ou la porte s ouvre, seule l entree change.
 
 Ordre propose : A (francais, pret, promesse d Astronum) → D (verifiable de
 memoire, le mecanisme de credibilite) → C → B → F → E (des que Q1 est levee).
+
+---
+
+## Le prototype « Ta ligne de vie » — brouillons et critique (02/09, apres-midi)
+
+Adresse : claude.ai/code/artifact/2f5f30a1-dea0-4e44-853a-3c8540a4ca42
+(brouillon 1 puis 2, meme page). Donnees reelles de la personne 5507 du
+corpus ; phrases ecrites a la main comme cibles pour la couche de traduction.
+
+**Critique du brouillon 1, contre le persona et la concurrence** (etude de
+marche du PLAYBOOK : les 10 % qui veulent comprendre, pas les 20 % qui
+s amusent ; Co-Star vit du retour quotidien ; The Pattern declenche le
+paiement sur une fenetre datee, « Time Travel ») :
+
+| Reproche | Reponse dans le brouillon 2 |
+|---|---|
+| Ne repond pas a « et aujourd hui ? » en un regard — c est ce qui fait revenir | Bandeau « Aujourd hui » en tete : la regle de silence comme reponse, « rien de marquant, prochaine fenetre fin 2029, prochain chapitre le 18 septembre » |
+| Le passe est passif | « Est-ce que tu te reconnais ? » oui / pas vraiment sur chaque age-cle : engagement, personnalisation, et la mesure du faux positif sur de vraies personnes |
+| Rien a partager ; le matching est le levier viral nomme par Christophe | Le heros porte « Qui traverse ca avec toi ? » ; une carte de partage « Ma prochaine annee pivot : 2029 » |
+| Le heros est a trois ans ; a 5 EUR il faut d abord le proche | « Les 90 prochains jours » avant tout : le 18 septembre est dans 16 jours |
+| Le jargon fuit ; « la plus exigeante » frole l alarmisme ; la frontiere calcule / traduit n est pas dite | Sources repliees sous « pour qui veut verifier » ; « periode dense » ; chaque phrase traduite porte un point « traduit par IA depuis le calcul » (positionnement « calcule, pas genere » + AI Act art. 50) |
+
+Ce que le brouillon 2 ne resout pas encore : la couche de traduction n est
+pas branchee (phrases a la main) ; le persona de demonstration est une figure
+publique du corpus, pas la persona a 5 EUR — des que la porte naissance est
+ouverte, la meme page tourne sur une personne fictive.
