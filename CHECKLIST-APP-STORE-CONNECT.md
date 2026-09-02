@@ -27,23 +27,16 @@ tel achat arrive — C16).
 - [ ] App Store Connect → Accords, taxes et banque → **Paid Apps** : accepte.
 - [ ] Coordonnees bancaires et formulaire fiscal completes (sinon les produits
       restent « Missing Metadata » sans explication).
-- [ ] **Question d entite, a trancher avant tout le reste.** Christophe est
-      personne physique, sans societe ni compte bancaire professionnel.
-      - Ce qui passe techniquement : Apple accepte un compte developpeur
-        *Individual* paye sur un compte bancaire personnel ; Stripe accepte un
-        compte *particulier* avec un IBAN personnel ; RevenueCat n a pas de banque.
-      - Ce qui coince, et releve d un comptable, pas de ce depot : en UE,
-        vendre dans l App Store impose le statut de professionnel (DSA) et
-        l ADRESSE PERSONNELLE est publiee sur la fiche ; en Belgique, un revenu
-        commercial regulier suppose en principe un statut d independant.
-      - L alternative pratique : publier sous le compte de Zebrapad, Inc.
-        (celui d Astronum) avec le contrat 50/50 — la fiche porte alors cette
-        entite et son adresse. Decision entre Christophe et Marie-Ange.
+- [ ] **Entite : decidee le 02/09 — compte Zebrapad, Inc., nouvelle fiche.**
+      Marie-Ange ajoute Christophe dans Users and Access (role App Manager,
+      acces a l app et aux achats integres). Rien a creer cote societe, banque
+      ou fisc : les accords et le statut professionnel du compte s appliquent.
+      Le partage des revenus est regle par le contrat 50/50.
 
 ## 2. La fiche de l app
-- [ ] Une app avec le Bundle ID `day.favorable.app` (ou la decision
-      Astronum : transferer la fiche existante — une mise a jour qui change de
-      finalite passe une revue complete).
+- [ ] Une NOUVELLE app sur le compte Zebrapad, Bundle ID `day.favorable.app`
+      (pas une mise a jour d Astronum : une app qui change de finalite passe
+      une revue complete et porte le signal 4.3(b) ; Astronum reste intacte).
 - [ ] App Privacy : reponses coherentes avec APP_STORE_METADATA.md §Privacy.
 - [ ] URL de politique de confidentialite et de conditions (favorable.day).
 

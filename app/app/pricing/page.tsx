@@ -52,7 +52,7 @@ import { ChevronLeft } from "flowbite-react-icons/outline";
 import { useAuth } from "@/lib/auth-context";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { isIOSBundle } from "@/lib/platform";
-import { PLANS, economieAnnuelle } from "@/lib/billing/features";
+import { PLANS, PLAN_UNIQUE, economieAnnuelle } from "@/lib/billing/features";
 import { verifierCode, CLE_ACCES } from "@/lib/coupons";
 import { perso } from "@/lib/perso-i18n";
 import { t, type Locale } from "@/lib/i18n-demo";
@@ -452,7 +452,7 @@ function euros(n: number): string {
 export default function DemoPricingPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
-  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [billing, setBilling] = useState<"monthly" | "annual">(PLAN_UNIQUE ?? "monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
@@ -680,7 +680,7 @@ export default function DemoPricingPage() {
       </div>
 
       {/* Mensuel / annuel — web uniquement, iOS affiche les prix du magasin */}
-      {!ios && (
+      {!ios && !PLAN_UNIQUE && (
         <div className="mb-4 flex justify-center">
           <div
             className="flex rounded-full p-1"
@@ -722,7 +722,7 @@ export default function DemoPricingPage() {
           sort en douceur est une ligne qui peut rester coincee. « 31,89 € de
           moins sur l annee » suspendue au-dessus d un tarif mensuel serait une
           affirmation fausse sur un ecran de paiement. Elle disparait net. */}
-      {billing === "annual" && !ios && (
+      {billing === "annual" && !ios && !PLAN_UNIQUE && (
         <motion.p
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
