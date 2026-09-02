@@ -258,7 +258,20 @@ export function appDataToPhases(
 
     const label = b.lbl || "";
     const lotType = Array.isArray(b.lotType) ? b.lotType[0] : undefined;
-    const domain = inferDomain(b.cat, label, lotType);
+    // ── La maison principale vient du CALCUL, jamais d un indice de tableau ──
+    // Mesure du 02/09/2026 sur 1 758 boudins d une vie : pour le ZR, pH est
+    // dans th 642/642 mais en PREMIERE position 161/642 seulement ; th[0]
+    // donnait donc le mauvais domaine principal — et le mauvais conseil, puisque
+    // apiTopics[0].house pilote la phrase d action — pour 3 periodes sur 4.
+    // Pour transit/station, nh est en tete 931/931 : deja juste. Les 185
+    // eclipses n ont ni th, ni nh, ni pH : l ancien repli `idx + 1` leur
+    // FABRIQUAIT une maison qui passait maisonConnue() et sortait un conseil
+    // sur du vide. Inconnu vaut desormais 0, que maisonConnue ecarte.
+    const maison: number | undefined =
+      b.cat === "zr" ? b.pH
+      : b.cat === "transit" || b.cat === "station" ? b.nh
+      : undefined;
+    const domain = inferDomain(b.cat, label, lotType, maison);
     const intensity = scoreToIntensity(b.sc);
 
     // ZR boudins have no planets — they're time-lord technique, not transits
@@ -337,7 +350,19 @@ export function appDataToPhases(
       natalPoint: b.np,
       aspect: b.asp,
       cycle: rawCycle,
-      apiTopics: topicColors.map((c, idx) => ({ house: b.th?.[idx] ?? b.nh ?? b.pH ?? idx + 1, color: c, topic: '', source: '' })),
+      apiTopics: (() => {
+        // tc[] et th[] sont deux tableaux PARALLELES du moteur : une couleur par
+        // maison. On ne reordonne jamais l un sans l autre.
+        const paires = topicColors.map((color, idx) => ({
+          house: b.th?.[idx] ?? 0,   // 0 = inconnu ; jamais idx + 1
+          color, topic: '', source: '',
+        }));
+        if (maison == null) return paires;
+        const i = paires.findIndex((p) => p.house === maison);
+        if (i > 0) { const [p] = paires.splice(i, 1); paires.unshift(p); }
+        else if (i < 0) paires.unshift({ house: maison, color: b.nhc ?? firstTopicColor, topic: '', source: '' });
+        return paires;
+      })(),
       lotType,
       zrLevel: b.lvl,
       periodSign: b.pSign,
