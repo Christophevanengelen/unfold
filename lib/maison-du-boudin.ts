@@ -70,6 +70,18 @@ export interface Referentiel {
 
 interface BoudinAnnee {
   category?: string;
+  // ── Alias du paquet COURT (toctoc-app-short), memes valeurs, noms abreges.
+  // Sans eux, maisonDuBoudin ne resolvait AUCUNE maison sur la vie entiere
+  // (mesure : 0 vote sur 1 758 boudins, « categorie-inconnue:absente ») alors
+  // qu elle en resolvait 39/63 sur le paquet annuel. La logique etait juste,
+  // seuls les noms manquaient.
+  cat?: string;
+  np?: string | null;
+  pSign?: string | null;
+  pH?: number | null;
+  /** Maison natale du point vise, donnee par le moteur (931/931 sur transit et station). */
+  nh?: number | null;
+  eSign?: string | null;
   type?: string;
   natalPoint?: string | null;
   periodSign?: string | null;
@@ -187,12 +199,21 @@ export function maisonDuBoudin(b: BoudinAnnee, ref: Referentiel | null): MaisonR
     (p ? DOMICILES[p] ?? [] : []).map(S).filter((h): h is number => h != null);
   const jeu = (...h: Array<number | null>) => [...new Set(h.filter((x): x is number => x != null))];
 
-  switch (b.category) {
+  // Une seule lecture des champs, quel que soit le paquet d origine.
+  const category = b.category ?? b.cat;
+  const natalPoint = b.natalPoint ?? b.np ?? null;
+  const periodSign = b.periodSign ?? b.pSign ?? null;
+  const periodHouse = b.periodHousePlacement?.house ?? b.pH ?? null;
+  const eclipseSign = b.eclipseSign ?? b.eSign ?? null;
+  // La maison natale du point vise, quand le moteur l ecrit lui-meme : elle
+  // prime sur la resolution par referentiel, qui n est qu un secours.
+  const natale = (p?: string | null) => (typeof b.nh === "number" ? b.nh : M(p));
+  switch (category) {
     // ── zr : le moteur donne la maison. Rien a deduire. Echec attendu : 0 %.
     case "zr": {
-      const h = b.periodHousePlacement?.house ?? S(b.periodSign);
-      return { maison: h ?? null, maisons: jeu(h), donneeDuMoteur: !!b.periodHousePlacement?.house,
-               source: b.periodHousePlacement?.house ? "periodHousePlacement" : "periodSign+ASC" };
+      const h = periodHouse ?? S(periodSign);
+      return { maison: h ?? null, maisons: jeu(h), donneeDuMoteur: periodHouse != null,
+               source: periodHouse != null ? "periodHousePlacement" : "periodSign+ASC" };
     }
 
     // ── profection / anniversaire : `profectedHouse` est un ENTIER de premiere
@@ -221,9 +242,9 @@ export function maisonDuBoudin(b: BoudinAnnee, ref: Referentiel | null): MaisonR
     //    `maisonNatale` a ete nourri, 100 % sinon.
     case "transit":
     case "station": {
-      const occupee = M(b.natalPoint);
-      if (occupee == null) return VIDE("natalPoint-non-resolu:" + (b.natalPoint ?? "absent"));
-      return { maison: occupee, maisons: jeu(occupee, ...regies(b.natalPoint)),
+      const occupee = natale(natalPoint);
+      if (occupee == null) return VIDE("natalPoint-non-resolu:" + (natalPoint ?? "absent"));
+      return { maison: occupee, maisons: jeu(occupee, ...regies(natalPoint)),
                source: "natalPoint+maisonNatale", donneeDuMoteur: true };
     }
 
@@ -238,11 +259,11 @@ export function maisonDuBoudin(b: BoudinAnnee, ref: Referentiel | null): MaisonR
     //    de reference, une eclipse en Belier porte `eclipseAxis: "1-7"` alors
     //    que le Belier y est la maison 11. Echec attendu : 0 %.
     case "eclipse": {
-      const occupee = M(b.natalPoint);
-      const degre = S(b.eclipseSign);
+      const occupee = natale(natalPoint);
+      const degre = S(eclipseSign);
       const h = occupee ?? degre;
       if (h == null) return VIDE("eclipse-non-resolue");
-      return { maison: h, maisons: jeu(occupee, degre, ...regies(b.natalPoint)),
+      return { maison: h, maisons: jeu(occupee, degre, ...regies(natalPoint)),
                source: occupee != null ? "natalPoint+maisonNatale" : "eclipseSign+ASC",
                donneeDuMoteur: occupee != null };
     }
