@@ -26,7 +26,7 @@
  *  3. chaque identifiant appele par le code existe dans la page ;
  *  4. aucune formule bannie ne subsiste (les regles produit de Christophe :
  *     pas de jargon de moteur, pas de question qui fait douter du calcul) ;
- *  5. le bloc des remarques est vide — les remarques traitees ne doivent pas
+ *  5. le tampon de version est present, et le bloc des remarques est vide — les remarques traitees ne doivent pas
  *     revenir dans la liste au chargement suivant.
  *
  * Les identifiants sont cherches dans TOUT le fichier, pas seulement dans le
@@ -139,7 +139,15 @@ for (const nom of fichiers) {
     }
   }
 
-  // 5. le bloc des remarques est vide.
+  // 5. le tampon de version. Christophe a passe un quart d heure a tester une
+  //    version perimee servie par un vieux lien, en croyant a une regression.
+  //    Un ecran de maquette doit dire de quand il date, sans qu on ait a le
+  //    demander.
+  if (!/<div class="tampon">[^<]*\d{4}[^<]*<\/div>/.test(page)) {
+    problemes.push(`${nom} · pas de tampon de version en bas du premier ecran — impossible de savoir si on regarde du vieux`);
+  }
+
+  // 6. le bloc des remarques est vide.
   const bloc = /<script type="application\/json" id="remarques">([\s\S]*?)<\/script>/.exec(page);
   if (!bloc) {
     problemes.push(`${nom} · le bloc des remarques a disparu — le mode ✎ ne peut plus rien enregistrer`);
