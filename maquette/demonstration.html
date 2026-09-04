@@ -28,16 +28,17 @@
 
   <!-- ── Feature 1 : ce qui est important aujourd'hui ── -->
   <section class="vue" id="vueA">
-    <h1 class="t1">Rien de marquant.<br><em>Et c'est une bonne nouvelle.</em></h1>
-    <p class="std">Aujourd'hui, rien d'important pour toi. On te préviendra quand il y aura quelque chose. La prochaine date qui compte : le <b>18 septembre</b>.</p>
-    <div class="eb a">À l'horizon</div>
+    <h1 class="t1">Rien de neuf aujourd'hui.<br><em>Voilà où tu en es.</em></h1>
+    <p class="std">En cours : <b>tes idées, tes voyages</b>, depuis le 22 mars, jusqu'en octobre 2027. Le prochain signal commence <b>dans 4 jours</b>.</p>
+    <div class="eb a">Ce qui arrive</div>
     <div class="tl">
+      <button type="button" data-quoi="A"><i class="pt" style="background:var(--ech-sauge)"></i><span class="tx"><b>Du 6 au 18 septembre, deux semaines sur ton travail quotidien, ta santé</b><small>un signal seul, court : on te le dit, sans en faire plus</small><em><u style="background:var(--ech-sauge)"></u>commence dans 4 jours</em></span><span class="n"><span data-count="4">4</span><small>jours</small></span></button>
       <button type="button" data-quoi="3"><i class="pt" style="background:var(--ech-or)"></i><span class="tx"><b>Le 18 septembre, tu passes de « ce que tu partages » à « tes idées, tes voyages »</b><small>ce qui est en commun se règle avant : un compte, un accord, une dette</small><em><u style="background:var(--ech-or)"></u>à régler avant</em></span><span class="n"><span data-count="16">16</span><small>jours</small></span></button>
-      <button type="button" data-quoi="2"><i class="pt" style="background:var(--ech-violet-chaud)"></i><span class="tx"><b>Jusqu'en 2031, tout est plus contrasté</b><small>les hauts plus hauts, les bas plus bas</small><em><u style="background:var(--ech-violet-chaud)"></u>décider lentement</em></span><span class="n"><span>2031</span><small>fin</small></span></button>
-      <button type="button" data-quoi="4"><i class="pt" style="background:var(--ech-sauge)"></i><span class="tx"><b>Décembre 2029, ton prochain moment fort</b><small>du 8 au 22 · sujet : tes proches, ce qui doit être dit</small><em><u style="background:var(--ech-sauge)"></u>on te prévient avant</em></span><span class="n"><span>2029</span><small>prévenu en nov.</small></span></button>
+      <button type="button" data-quoi="A"><i class="pt" style="background:var(--ech-violet-chaud)"></i><span class="tx"><b>Du 14 au 28 octobre, l'argent, ce que tu possèdes</b><small>puis du 16 au 30, ce que tu crées</small><em><u style="background:var(--ech-violet-chaud)"></u>on te le rappelle le 14</em></span><span class="n"><span>oct.</span><small>2 semaines</small></span></button>
+      <button type="button" data-quoi="4"><i class="pt" style="background:var(--brand)"></i><span class="tx"><b>Décembre 2029, ton prochain moment fort</b><small>du 8 au 22 · sujet : tes proches, ce qui doit être dit</small><em><u style="background:var(--brand)"></u>on te prévient avant</em></span><span class="n"><span>2029</span><small>prévenu en nov.</small></span></button>
     </div>
     <button type="button" class="lien" id="versB">Voir ma carte complète →</button>
-    <div class="tampon">Maquette du 3 septembre 2026, 17 h 27</div>
+    <div class="tampon">Maquette du 4 septembre 2026, 17 h 23</div>
   </section>
 
   <!-- ── Feature 2 : la cartographie de ma vie ── -->
@@ -212,7 +213,7 @@ document.getElementById('cases').innerHTML='<i></i>'.repeat(16);
 
 // ── les deux gestes, a chaque ecran ──
 const QUOI={
- A:{b:"",k:"Quoi faire · aujourd'hui",t:"Rien à décider aujourd'hui.",h:`<p class="std">Une chose à régler <b>avant le 18 septembre</b> : ce qui est en commun avec quelqu'un — un compte, un accord, une dette. Ensuite, on veille pour toi : on te prévient <b>trente jours avant</b> chaque moment fort.</p><div class="qqc"><div><b>Pourquoi</b><span>aucun moment fort n'est en cours aujourd'hui. On ne te parle que quand il y en a un, avec sa date et son sujet.</span></div></div><div class="liste"><label><span>Me rappeler le 11 septembre</span><input type="checkbox"></label></div>`},
+ A:{b:"",k:"Quoi faire · aujourd'hui",t:"Rien à décider aujourd'hui.",h:`<p class="std">Ce qui vient : le <b>6 septembre</b>, deux semaines sur ton travail quotidien et ta santé ; le <b>18</b>, le sujet change ; du <b>14 au 28 octobre</b>, l'argent. Une chose à régler <b>avant le 18 septembre</b> : ce qui est en commun avec quelqu'un — un compte, un accord, une dette.</p><div class="qqc"><div><b>Pourquoi</b><span>aujourd'hui, un seul signal est en cours : ta période « tes idées, tes voyages », depuis le 22 mars. Dès qu'un nouveau signal commence, on te le dit ici — un jour sans rien reste un jour sans rien.</span></div></div><div class="liste"><label><span>Me rappeler le 6 septembre</span><input type="checkbox"></label></div>`},
  0:{b:"jusqu'à 65 ans",k:"Quoi faire · les trois parties",t:"Jusqu'à 65 ans : la partie « expression ».",h:`<div class="qqc"><div><b>Quand</b><span>de tes 41 ans à tes 65 ans — <strong>encore 2 ans et 3 mois</strong></span></div><div><b>Quoi</b><span>la période où ce que tu as construit s'exprime ; la suivante, dès 65 ans, est la plus porteuse des trois</span></div><div><b>Comment</b><span><strong>Finir ce qui est commencé</strong> plutôt qu'ouvrir : ce que tu portes jusqu'à 65 ans arrive dans une phase qui le soutient.</span></div><div><b>Pourquoi</b><span>ta vie se découpe en trois parties à partir de ton heure de naissance, chacune avec une qualité. La deuxième est ni bonne ni mauvaise, la troisième est la plus favorable des trois — c'est calculé, pas interprété.</span></div></div>`},
  1:{b:"1997",k:"Quoi faire · ton passé",t:"Rien à faire — c'est passé.",h:`<p class="std">1997 est passée. Elle est là pour une raison : c'est l'année la plus forte de ta vie selon ta carte, et 2029, ta prochaine, sort du même calcul. Ce que 1997 a été, 2029 le sera à sa façon.</p><div class="qqc"><div><b>Pourquoi</b><span>1997 est l'année la plus forte de ta vie selon le calcul — et à 33 ans, tout le monde traverse un âge-clé tourné vers l'amour et le soin.</span></div></div>`},
  2:{b:"jusqu'en 2031",k:"Quoi faire · ce que tu traverses",t:"Une période qui bouge, jusqu'en 2031.",h:`<div class="qqc"><div><b>Quand</b><span>depuis février 2020, <strong>jusqu'au 21 décembre 2031</strong></span></div><div><b>Quoi</b><span>une phase à forte amplitude : les hauts et les bas sont plus marqués que d'habitude</span></div><div><b>Comment</b><span><strong>Décider plus lentement</strong> qu'à ton habitude ; ne pas prendre un pic pour une tendance, ni un creux pour une fin.</span></div><div><b>Pourquoi</b><span>la longue période de fond en cours (2020 → 2031) est notée instable par le calcul : ni bonne ni mauvaise, mais sans rien de tiède.</span></div></div>`},
@@ -251,7 +252,7 @@ const INVITE=`<div class="cercle">3 · Quelqu'un que tu choisis</div><div class=
 const barre=document.getElementById("barre"),feuille=document.getElementById("feuille");
 const cle=()=>mode==='A'?'A':n;
 function majBarre(){barre.hidden=(mode==='B');const k=cle();if(QUOI[k])qCtx.textContent=QUOI[k].b;if(COMP[k])cCtx.textContent=COMP[k].b;}
-const NOTIFS=[["forts","Les moments forts seulement","recommandé · chez toi, 3,6 % du temps"],["sujets","Les moments forts et les changements de sujet","quelques fois par an"],["tout","Tout ce qui est calculé","plusieurs fois par mois"]];
+const NOTIFS=[["forts","Les moments forts seulement","recommandé · chez toi, 3,5 % du temps"],["sujets","Les moments forts et les changements de sujet","quelques fois par an"],["tout","Chaque nouveau signal","chez toi, une à trois fois par mois"]];
 function rendreNotifs(){const el=document.getElementById('notifs');if(!el)return;let v=null;try{v=localStorage.getItem('favorable_notifs')}catch(e){}
  if(v){const o=NOTIFS.find(n=>n[0]===v)||NOTIFS[0];el.innerHTML=`<div class="cercle">Tes notifications</div><div class="regle-ok"><b>Réglé : ${o[1].toLowerCase()}.</b><span>Tu peux toujours changer ça dans les paramètres, si tu reçois trop de notifications — ou pas assez.</span></div>`;return;}
  el.innerHTML=`<div class="cercle">Tes notifications</div><p class="std">De quoi veux-tu être prévenu ? Tu peux changer ça plus tard dans les paramètres.</p><div class="choixn">${NOTIFS.map((n,i)=>`<label><input type="radio" name="notif" value="${n[0]}" ${i===0?'checked':''}><span><b>${n[1]}</b><small>${n[2]}</small></span></label>`).join('')}</div><button class="btn p" type="button" id="notifOk">Enregistrer</button>`;}
@@ -259,7 +260,7 @@ document.addEventListener('click',e=>{if(e.target.id==='notifOk'){const r=docume
 function ouvrirFeuille(src,k){const c=src[k??cle()];if(!c)return;fK.textContent=c.k;fTitre.textContent=c.t;fCorps.innerHTML=(src===COMP)?'<div id="intro" style="display:flex;flex-direction:column;gap:18px">'+INTRO+'</div><div class="resultat" id="resultat" hidden>'+BASECARD+'<div class="cercle">2 · Toi, face à ton propre passé</div>'+c.h+INVITE+DUO+'</div>':c.h;feuille.scrollTop=0;feuille.classList.add("ouverte");compter(feuille);rendreNotifs();}
 function fermerFeuille(){feuille.classList.remove("ouverte");}
 document.getElementById("bQuoi").addEventListener("click",()=>ouvrirFeuille(QUOI));document.getElementById("bComparer").addEventListener("click",()=>ouvrirFeuille(COMP));
-document.querySelectorAll('.tl button').forEach(b=>b.addEventListener('click',()=>ouvrirFeuille(QUOI,+b.dataset.quoi)));
+document.querySelectorAll('.tl button').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.quoi;ouvrirFeuille(QUOI,isNaN(+k)?k:+k);}));
 document.getElementById("fermer").addEventListener("click",fermerFeuille);
 const duo=document.getElementById('duo');
 document.addEventListener('click',e=>{if(e.target.id==='voirResultat'){const r=document.getElementById('resultat');document.getElementById('intro').style.display='none';r.hidden=false;feuille.scrollTop=0;compter(r);}if(e.target.id==='voirDuo'){duo.scrollTop=0;duo.classList.add('ouverte');compter(duo);}});
