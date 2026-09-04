@@ -9,7 +9,9 @@ import { fetchConnectionBrief, type ActivePeriod } from "@/lib/connection-brief-
 import {
   getConnectionDelineation,
   estMurPayant,
+  estSilence,
   type ConnectionDelineation,
+  type SilenceDelineation,
 } from "@/lib/connection-delineation";
 import type { MatchingWindow, RelationshipType } from "@/lib/matching-narratives";
 import type { RealConnection } from "@/lib/connections-store";
@@ -150,7 +152,7 @@ function WindowCard({
   // valent 2,02 a 3,19 sur le fond clair — elles ont ete choisies pour le
   // theme sombre, ou elles passent. On derive au rendu (regle 3).
   const theme = resolvedTheme === "light" ? "clair" : "sombre";
-  const [del, setDel] = useState<ConnectionDelineation | null>(null);
+  const [del, setDel] = useState<ConnectionDelineation | SilenceDelineation | null>(null);
   const openPremium = usePremiumTeaser();
   const [delLoading, setDelLoading] = useState(true);
 
@@ -183,6 +185,8 @@ function WindowCard({
   }, [period, w.relationship, myBirthData, theirBirthData, openPremium]);
 
   const isActive = w.status === "active";
+  const silencieux = estSilence(del);
+  const lecture = del && !silencieux ? del : null;
 
   return (
     <motion.div
@@ -230,10 +234,22 @@ function WindowCard({
 
       <div className="px-4 pb-4">
         <h3 className="text-base font-bold text-text-heading mt-1">
-          {del ? del.ensemble.titre : w.title}
+          {lecture ? lecture.ensemble.titre : silencieux ? "Rien de marquant" : w.title}
         </h3>
         <p className="text-[11px] text-text-body-subtle mt-0.5">{w.dateRange}</p>
 
+        {silencieux ? (
+          <div
+            className="mt-3 rounded-xl px-3.5 py-2.5"
+            style={{ background: `color-mix(in srgb, ${w.tierColor} 8%, transparent)` }}
+          >
+            <p className="text-xs text-text-body leading-relaxed">
+              Pas de signal partagé assez solide ce mois-ci pour une lecture à deux.
+              On se tait plutôt que d&apos;inventer.
+            </p>
+          </div>
+        ) : (
+          <>
         <div
           className="mt-3 rounded-xl px-3.5 py-2.5"
           style={{ background: `color-mix(in srgb, ${w.tierColor} 8%, transparent)` }}
@@ -245,14 +261,14 @@ function WindowCard({
             />
           ) : (
             <p className="text-xs font-semibold text-text-heading">
-              {del ? del.ensemble.pourquoiCeMois : w.sharedTheme}
+              {lecture ? lecture.ensemble.pourquoiCeMois : w.sharedTheme}
             </p>
           )}
         </div>
 
-        {del && (
+        {lecture && (
           <p className="mt-2 text-[11px] italic text-text-body-subtle leading-relaxed">
-            {del.ensemble.dynamique}
+            {lecture.ensemble.dynamique}
           </p>
         )}
 
@@ -262,12 +278,12 @@ function WindowCard({
               <EyebrowLabel color="var(--accent-purple)" className="mb-1">
                 Vous
               </EyebrowLabel>
-              {del && (
+              {lecture && (
                 <span
                   className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
                   style={{ color: "var(--accent-purple)", opacity: 0.5 }}
                 >
-                  {del.personA.titre}
+                  {lecture.personA.titre}
                 </span>
               )}
             </div>
@@ -279,11 +295,11 @@ function WindowCard({
             ) : (
               <>
                 <p className="text-xs text-text-body leading-relaxed">
-                  {del ? del.personA.corps : w.you.description}
+                  {lecture ? lecture.personA.corps : w.you.description}
                 </p>
-                {del && (
+                {lecture && (
                   <p className="mt-1.5 text-[10px] text-text-body-subtle italic leading-snug">
-                    {del.personA.defi}
+                    {lecture.personA.defi}
                   </p>
                 )}
               </>
@@ -298,7 +314,7 @@ function WindowCard({
               <EyebrowLabel color={texteLisible(relColor, theme, 0)} className="mb-1">
                 {theirName}
               </EyebrowLabel>
-              {del && (
+              {lecture && (
                 <span
                   className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
                   // L opacite 0,5 divisait par deux un contraste deja sous le
@@ -306,7 +322,7 @@ function WindowCard({
                   // qui sont deja la ; l opacite ne fait qu effacer.
                   style={{ color: texteLisible(relColor, theme, 0) }}
                 >
-                  {del.personB.titre}
+                  {lecture.personB.titre}
                 </span>
               )}
             </div>
@@ -318,11 +334,11 @@ function WindowCard({
             ) : (
               <>
                 <p className="text-xs text-text-body leading-relaxed">
-                  {del ? del.personB.corps : w.them.description}
+                  {lecture ? lecture.personB.corps : w.them.description}
                 </p>
-                {del && (
+                {lecture && (
                   <p className="mt-1.5 text-[10px] text-text-body-subtle italic leading-snug">
-                    {del.personB.defi}
+                    {lecture.personB.defi}
                   </p>
                 )}
               </>
@@ -349,10 +365,12 @@ function WindowCard({
             </div>
           ) : (
             <p className="text-xs text-text-heading font-medium leading-relaxed">
-              {del ? del.ensemble.aFaireEnsemble : w.action}
+              {lecture ? lecture.ensemble.aFaireEnsemble : w.action}
             </p>
           )}
         </div>
+          </>
+        )}
       </div>
     </motion.div>
   );
