@@ -35,7 +35,7 @@
  */
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import vm from "node:vm";
 
 // Le dossier peut etre surcharge — c est ce qui permet de tester ce controle
@@ -139,7 +139,23 @@ for (const nom of fichiers) {
     }
   }
 
-  // 5. aucun jeton de couleur appele sans etre defini. Le 04/09/2026, en
+  // 5. les commentaires CSS sont equilibres. Le 04/09/2026, un nettoyage a
+  //    laisse la fin d un commentaire orpheline juste devant le bloc des
+  //    couleurs du theme clair : pour le navigateur, ce texte devient un
+  //    selecteur invalide, et TOUT le bloc est ignore. La page s affichait
+  //    sans fond, sans couleurs — « on dirait qu il n y a pas de design ».
+  //    Une ouverture orpheline fait l inverse : elle avale les regles qui
+  //    suivent jusqu au prochain commentaire.
+  for (const [k, style] of [...page.matchAll(/<style>([\s\S]*?)<\/style>/g)].entries()) {
+    const css = style[1].replace(/url\(data:[^)]*\)/g, "url()");
+    const ouvertures = (css.match(/\/\*/g) || []).length;
+    const fermetures = (css.match(/\*\//g) || []).length;
+    if (ouvertures !== fermetures) {
+      problemes.push(`${nom} · style ${k + 1} : ${ouvertures} ouverture(s) de commentaire pour ${fermetures} fermeture(s) — une regle est avalee ou un bloc devient invalide`);
+    }
+  }
+
+  // 6. aucun jeton de couleur appele sans etre defini. Le 04/09/2026, en
   //    retirant les jetons morts, une seule expression de trop aurait suffi a
   //    vider une couleur : un texte reste alors lisible en clair, invisible en
   //    sombre, et personne ne s en apercoit avant la capture d ecran.
@@ -154,7 +170,7 @@ for (const nom of fichiers) {
     problemes.push(`${nom} · la couleur --${jeton} est utilisee mais n est definie nulle part`);
   }
 
-  // 6. le tampon de version. Christophe a passe un quart d heure a tester une
+  // 7. le tampon de version. Christophe a passe un quart d heure a tester une
   //    version perimee servie par un vieux lien, en croyant a une regression.
   //    Un ecran de maquette doit dire de quand il date, sans qu on ait a le
   //    demander.
@@ -162,7 +178,7 @@ for (const nom of fichiers) {
     problemes.push(`${nom} · pas de tampon de version en bas du premier ecran — impossible de savoir si on regarde du vieux`);
   }
 
-  // 7. le bloc des remarques est vide.
+  // 8. le bloc des remarques est vide.
   const bloc = /<script type="application\/json" id="remarques">([\s\S]*?)<\/script>/.exec(page);
   if (!bloc) {
     problemes.push(`${nom} · le bloc des remarques a disparu — le mode ✎ ne peut plus rien enregistrer`);
@@ -172,6 +188,45 @@ for (const nom of fichiers) {
   }
 }
 
+// 9. Dans un vrai navigateur. Tout ce qui precede lit du texte ; seul un moteur
+//    de rendu sait si le CSS est reellement applique. On charge chaque page sur
+//    un ecran de telephone, dans les deux themes, et on exige : un fond opaque
+//    sur la page et sur le telephone, aucune erreur de script, la police de
+//    marque chargee. C est le controle qui aurait vu le bug du 04/09/2026 en
+//    trois secondes, la ou quatre controles statiques n ont rien vu.
+try {
+  const { chromium, devices } = await import("@playwright/test");
+  const navigateur = await chromium.launch();
+  for (const nom of fichiers) {
+    for (const theme of ["light", "dark"]) {
+      const ctx = await navigateur.newContext({ ...devices["iPhone 13"], colorScheme: theme });
+      const p = await ctx.newPage();
+      const erreurs = [];
+      p.on("pageerror", (e) => erreurs.push(e.message));
+      await p.goto("file://" + resolve(DOSSIER, nom));
+      await p.waitForTimeout(800);
+      const etat = await p.evaluate(() => {
+        const opaque = (el) => el && !/rgba\(0, 0, 0, 0\)|transparent/.test(getComputedStyle(el).backgroundColor);
+        return {
+          fondPage: opaque(document.body),
+          fondTel: opaque(document.querySelector(".tel")),
+          police: [...document.fonts].some((f) => f.family.includes("Uniform") && f.status === "loaded"),
+        };
+      });
+      if (!etat.fondPage) problemes.push(`${nom} · theme ${theme} : la page n a pas de fond — le CSS des couleurs n est pas applique`);
+      if (!etat.fondTel) problemes.push(`${nom} · theme ${theme} : le telephone n a pas de fond`);
+      if (!etat.police) problemes.push(`${nom} · theme ${theme} : la police de marque ne se charge pas`);
+      for (const e of erreurs) problemes.push(`${nom} · theme ${theme} : erreur de script au chargement — ${e}`);
+      await ctx.close();
+    }
+  }
+  await navigateur.close();
+} catch (e) {
+  // Playwright absent (poste sans navigateur) : on le dit, on n echoue pas —
+  // un controle qui plante ne controle rien.
+  console.log(`  (controle navigateur saute : ${e.message.split("\n")[0]})`);
+}
+
 if (problemes.length > 0) {
   console.log("");
   for (const p of problemes) console.log(`  ✗ ${p}`);
@@ -179,4 +234,4 @@ if (problemes.length > 0) {
   process.exit(1);
 }
 
-console.log(`ok — ${fichiers.length} maquette(s) : scripts compiles, boutons branches, textes conformes`);
+console.log(`ok — ${fichiers.length} maquette(s) : scripts compiles, boutons branches, textes conformes, rendu verifie dans les deux themes`);
