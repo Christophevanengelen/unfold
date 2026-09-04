@@ -1,0 +1,114 @@
+<meta charset="utf-8">
+<title>Briefing intégration Favorable</title>
+<style>
+:root{--bg:#F5F1FA;--card:#FFFFFF;--ink:#150F2A;--body:#5C5083;--muted:#76669E;--accent:#5C4B9B;--rule:#E2DCEE;--ok:#2F7A4F;--ok-bg:#E4F3E9;--warn:#7A5A14;--warn-bg:#F7EDD0;--no:#8C3B3B;--no-bg:#F6E1E1}
+:root:not([data-theme="light"]){@media (prefers-color-scheme:dark){--bg:#150F2E;--card:#1B1535;--ink:#E6E2F2;--body:#C7C2D8;--muted:#A8A1C4;--accent:#BFAFE0;--rule:#2A244B;--ok:#8FD0A4;--ok-bg:#1B2E23;--warn:#E4C071;--warn-bg:#33291A;--no:#E39A9A;--no-bg:#361F1D}}
+:root[data-theme="dark"]{--bg:#150F2E;--card:#1B1535;--ink:#E6E2F2;--body:#C7C2D8;--muted:#A8A1C4;--accent:#BFAFE0;--rule:#2A244B;--ok:#8FD0A4;--ok-bg:#1B2E23;--warn:#E4C071;--warn-bg:#33291A;--no:#E39A9A;--no-bg:#361F1D}
+body{background:var(--bg);color:var(--body);font-family:"Uniform Rounded",Manrope,system-ui,-apple-system,sans-serif;line-height:1.6;padding:32px 20px 60px}
+main{max-width:760px;margin:0 auto;background:var(--card);border:1px solid var(--rule);border-radius:24px;padding:36px 32px}
+h1{font-size:26px;line-height:1.2;color:var(--ink);margin:0 0 6px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:19px;color:var(--ink);margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--rule)}
+h3{font-size:16px;color:var(--ink);margin:20px 0 6px}
+p{margin:0 0 12px;font-size:16px}b{color:var(--ink)}em{color:var(--accent);font-style:normal}
+.sous{color:var(--muted);font-size:14px;margin-bottom:22px}
+ol,ul{padding-left:22px;margin:0 0 12px}li{margin-bottom:7px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;background:var(--bg);padding:1px 6px;border-radius:6px;color:var(--ink)}
+pre{background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;overflow-x:auto;font-size:13px;line-height:1.5;margin:0 0 14px}
+pre code{background:none;padding:0}
+.tab{overflow-x:auto;margin:0 0 14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--rule)}
+th{color:var(--muted);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+td b{white-space:nowrap}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.ok{background:var(--ok-bg);color:var(--ok)}.warn{background:var(--warn-bg);color:var(--warn)}.no{background:var(--no-bg);color:var(--no)}
+.enc{background:var(--bg);border:1px solid var(--rule);border-radius:14px;padding:14px 16px;margin:0 0 14px}
+.sig{margin-top:26px;color:var(--ink);font-weight:700}
+a{color:var(--accent);word-break:break-all}
+@media (max-width:480px){main{padding:24px 18px;border-radius:18px}}
+</style>
+<main>
+<h1>De la fiche de Brad au profil de n'importe qui</h1>
+<p class="sous">Briefing pour Marie-Ange · 4 septembre 2026 · ce qui a construit le prototype, ce qu'il faut pour le faire tourner sur une naissance libre, et le flux des connexions entre utilisateurs.</p>
+
+<p>Marie-Ange,</p>
+<p>Le prototype que tu as vu tourne sur <b>Brad, ta fiche 5507</b>. Tout ce qu'il affiche vient de calculs réels, mais une partie n'est possible aujourd'hui que pour une fiche déjà dans ta base. Ce briefing dit exactement d'où vient chaque donnée, ce qu'il manque pour un utilisateur qui vient de s'inscrire avec sa date, son heure et son lieu, et comment on veut gérer les connexions entre utilisateurs. Prototype : <a href="https://claude.ai/code/artifact/d9fc1c02-4e97-40f2-aff1-568bd8e231cc">ouvrir</a>.</p>
+
+<h2>1. Ce qui a construit la fiche de Brad</h2>
+<p>Deux sources de calcul, plus trois traitements faits chez nous.</p>
+<div class="tab"><table>
+<tr><th>Source</th><th>Entrée</th><th>Ce qu'on en a tiré</th><th>Naissance libre ?</th></tr>
+<tr><td><b>AstroLearn public</b><br><code>app.astrolearn.io/api/astrolearn/public/</code></td><td><code>personId</code> seulement</td><td><code>chart-data</code> (naissance complète), <code>events</code> (faits datés), et les routes techniques : <b>chapitres</b> (période courante, suivante, d'après, fond, et les <b>trois parties de vie</b>), <b>pivots</b> (années les plus chargées et leurs scores), firdaria, profections, numérologie, âges clés.</td><td><span class="tag no">non</span></td></tr>
+<tr><td><b>Zebrapad</b><br><code>ai.zebrapad.io/full-suite-spiritual-api/</code></td><td>date + heure + lat/long + fuseau</td><td><code>toctoc-app-short</code> : ~1 800 signaux datés sur la vie (transits, périodes, éclipses, stations) avec maison natale et score. <code>toctoc-year</code> : scores mensuels, Lot de Fortune, périodes autour de l'année.</td><td><span class="tag ok">oui</span></td></tr>
+<tr><td><b>Chez nous · référentiel</b></td><td>signaux Zebrapad</td><td>Le paquet annuel sert à voter l'Ascendant de référence ; chaque signal reçoit sa maison. Sans référentiel, rien ne suit.</td><td><span class="tag warn">chez nous, à trancher</span></td></tr>
+<tr><td><b>Chez nous · signaux et moments forts</b></td><td>signaux + maisons</td><td>L'écran du jour parle dès qu'<b>un</b> signal est actif. Un <b>moment fort</b> est un croisement de plusieurs techniques sur la même maison au même moment (chez Brad : 3,5 % des jours). Les moments forts nourrissent les notifications par défaut et Comparer.</td><td><span class="tag warn">chez nous, à trancher</span></td></tr>
+<tr><td><b>Chez nous · correspondance</b></td><td>39 fiches de ta base</td><td>Même chaîne sur chaque vie, puis score sur trois axes (sujets 60 %, rythme 20 %, rareté 20 %), familles de sujets, rang de rareté, calendrier à âge égal contre le hasard, faits datés tombés dans un moment fort.</td><td><span class="tag no">scripts locaux</span></td></tr>
+</table></div>
+
+<h3>Écran par écran</h3>
+<div class="tab"><table>
+<tr><th>Écran</th><th>Donnée affichée</th><th>Vient de</th><th>Naissance libre ?</th></tr>
+<tr><td><b>Aujourd'hui</b></td><td>signal en cours, prochains signaux datés, prochain moment fort</td><td>Zebrapad + nos traitements</td><td><span class="tag ok">oui</span></td></tr>
+<tr><td><b>Aujourd'hui</b></td><td>le changement de sujet (18 septembre), le fond jusqu'en 2031</td><td>AstroLearn <code>chapitres</code></td><td><span class="tag no">non</span></td></tr>
+<tr><td><b>ID astral 1 · Où tu en es</b></td><td>les trois parties de vie, leur qualité, leurs dates</td><td>AstroLearn <code>chapitres.parties</code></td><td><span class="tag no">non</span> — c'est l'écran manquant</td></tr>
+<tr><td><b>ID astral 2 · Ton passé</b></td><td>les deux années les plus fortes</td><td>AstroLearn <code>pivots</code></td><td><span class="tag warn">partiel</span> — reconstituable depuis les signaux, à valider</td></tr>
+<tr><td><b>ID astral 3 · Ce que tu traverses</b></td><td>le fond 2020 → 2031</td><td>AstroLearn <code>chapitres.fond</code></td><td><span class="tag no">non</span></td></tr>
+<tr><td><b>ID astral 4 · Dans 16 jours</b></td><td>période courante → suivante, à l'échelle</td><td>AstroLearn <code>chapitres</code></td><td><span class="tag warn">partiel</span> — les périodes L2 sont dans Zebrapad, sans la qualité</td></tr>
+<tr><td><b>ID astral 5 · Prochain moment fort</b></td><td>décembre 2029, son sujet</td><td>Zebrapad + nos traitements</td><td><span class="tag ok">oui</span></td></tr>
+<tr><td><b>Quoi faire · pourquoi</b></td><td>quand, quoi, pourquoi, rappel, calendrier</td><td>maison du signal → sujet → gabarit de phrase</td><td><span class="tag ok">oui</span> si le sujet est fourni</td></tr>
+<tr><td><b>Comparer</b></td><td>famille, rareté, visages, correspondances</td><td>nos scripts sur ta base</td><td><span class="tag no">route à créer</span></td></tr>
+<tr><td><b>Vous deux</b></td><td>deux vies superposées, prochain moment commun</td><td>même chaîne sur deux naissances</td><td><span class="tag ok">oui</span> dès que la chaîne tourne</td></tr>
+</table></div>
+
+<h2>2. Ce qu'on te demande, précisément</h2>
+<p>Le format d'entrée est le même partout, celui que Zebrapad accepte déjà :</p>
+<pre><code>{ "birthDate": "1977-09-27", "birthTime": "00:00",
+  "latitude": 50.8503, "longitude": 4.3517, "timezone": "Europe/Brussels" }</code></pre>
+
+<h3>Route A · les périodes et les trois parties de vie</h3>
+<p>Ce que <code>chapitres</code> donne pour une fiche, sur une naissance libre : la période courante, la suivante, celle d'après, le fond, et les trois parties de vie, chacune avec <b>signe, qualité, sujet, du, au</b>. C'est l'écran d'ouverture de l'ID astral et deux lignes de l'écran du jour. Sans elle, un nouvel inscrit n'a que cinq écrans sur six.</p>
+
+<h3>Route B · les années les plus chargées</h3>
+<p>Ce que <code>pivots</code> donne : les dix années au score le plus élevé, leur score, et la maison dominante de chacune. On sait reconstituer une approximation depuis les signaux, mais on préfère ta règle, la même que pour ta base.</p>
+
+<h3>Route C · la correspondance sur toute la base</h3>
+<p>Entrée : une naissance. Sortie : pour chaque vie de la base, le score sur les trois axes ; le classement ; la distribution des sujets dominants ; le rang de rareté ; et pour les N plus proches, leurs faits datés tombés dans un moment fort du même sujet. Aujourd'hui c'est fait par des scripts chez nous sur 39 fiches, ça ne peut pas tourner en production.</p>
+
+<h3>Route D · deux naissances</h3>
+<p>Entrée : deux naissances. Sortie : les moments forts de chacune, et les moments où les deux ont un signal sur la même maison, avec les dates. C'est ce qui fait vivre une connexion dans le temps (section 3). On peut le calculer chez nous à partir de deux appels, mais une route évite de recalculer à chaque notification.</p>
+
+<h3>À trancher ensemble</h3>
+<ul>
+<li><b>Le référentiel et les moments forts</b> sont aujourd'hui des règles chez nous. Soit elles restent chez nous et on te les documente, soit elles passent chez toi. Une seule implémentation, pas deux.</li>
+<li><b>Neuf vies sur trente-neuf</b> n'ont pas de référentiel : le vote d'Ascendant n'aboutit pas sur leur paquet annuel. Qu'est-ce qui diffère chez elles ?</li>
+<li><b>Brad donne 55 moments forts</b> avec un paquet annuel et 68 avec un autre. Quelle année de référence veux-tu qu'on prenne ?</li>
+<li>Chez Christophe, <b>un trou d'un an</b> entre deux périodes L2 (octobre 2026 → octobre 2027). Normal ou pas ?</li>
+</ul>
+
+<h2>3. Les connexions entre utilisateurs</h2>
+<p>C'est la suite naturelle de Comparer : après avoir vu les personnalités de ta base, l'utilisateur invite quelqu'un de son cercle. Ce qu'on veut, et ce que ça demande.</p>
+
+<h3>Le flux</h3>
+<ol>
+<li><b>L'invitation.</b> L'utilisateur choisit une personne de son cercle et lui envoie un lien. Il ne saisit pas la naissance de l'autre : c'est l'invité qui la donne, ou qui accepte depuis son propre compte.</li>
+<li><b>L'acceptation.</b> L'invité accepte, et voit la même chose que l'invitant : la phrase qui nomme leur connexion, leurs trois prochaines années à tour de rôle, le prochain moment commun. Les deux reçoivent la même lecture.</li>
+<li><b>La connexion vit.</b> Une connexion acceptée n'est pas une lecture unique, on la garde. Elle entre dans l'historique des connexions de chacun, consultable à tout moment. On ne l'efface jamais sans un geste de l'utilisateur.</li>
+<li><b>L'app parle au bon moment.</b> Pour chaque connexion gardée, l'app surveille les deux vies et prévient : <em>voici ce qui se termine maintenant entre vous, voici pourquoi c'est important, voici comment t'y préparer</em>. Une période qui arrive, un moment commun, une bascule chez l'autre. C'est ça l'accompagnement dans le temps.</li>
+<li><b>Réglable.</b> Dans les paramètres du compte, l'utilisateur choisit ce qu'il reçoit de ses connexions : les moments forts communs seulement, ou aussi les changements chez l'autre, ou tout. Connexion par connexion s'il le veut.</li>
+</ol>
+
+<h3>Ce que ça demande</h3>
+<div class="tab"><table>
+<tr><th>Côté moteur</th><th>Côté app</th></tr>
+<tr><td>Rien de nouveau en principe : la même chaîne sur deux naissances, superposée. Aucun « calcul de couple ». La route D évite de tout recalculer à chaque réveil.</td><td>Stocker les connexions acceptées (deux comptes, date d'acceptation, réglages), avec le consentement explicite de l'invité sur sa naissance. Planifier les notifications par connexion. Un historique consultable. Les gabarits de phrases pour « ce qui se termine, pourquoi, comment se préparer ».</td></tr>
+</table></div>
+
+<h2>4. Ce qu'on fait de notre côté</h2>
+<ul>
+<li>Un <b>contrat de données par écran</b> : ce que chaque écran consomme, d'où ça vient, et ce qu'il fait quand la donnée manque. Tu recevras ce document pour vérifier que tes routes rendent exactement ça.</li>
+<li>Les <b>gabarits de phrases</b> dans nos dix langues, à partir des textes du prototype.</li>
+<li>Le <b>portage écran par écran</b> dans l'app, en commençant par Aujourd'hui, dès que la route A répond.</li>
+</ul>
+<div class="enc">Tout ce qui est marqué « vient de » dans ce briefing est mesuré sur des calculs réels : Brad, Christophe, et 39 fiches de ta base. Rien n'est inventé. Dis-nous ce qui est faux, faisable, ou à jeter.</div>
+<p class="sig">Christophe</p>
+</main>
