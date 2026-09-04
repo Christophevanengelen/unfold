@@ -58,7 +58,7 @@ function loadSystemPrompt(): string {
 const OPENAI_MODEL = "gpt-4o";
 
 /** Bump when connection-prompt.md rules change meaningfully (invalidates all cached couple delineations). */
-const PROMPT_VERSION = "v3";
+const PROMPT_VERSION = "v4";
 
 // ─── L2 Cache helpers ─────────────────────────────────────
 
@@ -269,7 +269,7 @@ async function handlePost(req: NextRequest) {
       model: OPENAI_MODEL,
       temperature: 0.4,
       response_format: { type: "json_object" },
-      max_tokens: 1200,
+      max_tokens: 2000,
       messages: [
         { role: "system", content: SYSTEM_PROMPT + instructionLangue(body.locale) },
         { role: "user", content: JSON.stringify(body) },

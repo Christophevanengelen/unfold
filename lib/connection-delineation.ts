@@ -4,31 +4,56 @@
  * and returns structured French prose for the compatibility UI.
  *
  * Cache: IndexedDB, 7-day TTL (transits don't change day to day).
- * Cache key: connection_delineation_v1_{birthDateA}_{birthDateB}_{rel}_{monthKey}
  */
 
 import { storage } from "@/lib/storage";
-import type { ActivePeriod } from "@/lib/connection-brief-api";
+import type { ActivePeriod, PersonFocus, RawEvent } from "@/lib/connection-brief-api";
 import type { RelationshipType } from "@/lib/matching-narratives";
 import { apiFetch } from "@/lib/api-client";
 import { detectLocale } from "@/lib/i18n-demo";
 
 // ─── Types ────────────────────────────────────────────────
 
+/**
+ * Lecture par personne, découpée par technique.
+ * `annee` est obligatoire ; eclipse / passage / fond sont null si absents
+ * des données — le modèle ne doit pas inventer.
+ */
 export interface PersonDelineation {
-  titre: string;   // 3-5 words
-  corps: string;   // 2-3 sentences
-  defi: string;    // 1 sentence challenge
-  /** Recopie de comparaison.tempo — verifie que le modele a lu la comparaison. */
+  titre: string;
+  /** Profection : le domaine ouvert pour TOUTE l'année. */
+  annee: string;
+  /** Eclipse + axe, seulement si un événement eclipse est dans `pistes`. */
+  eclipse: string | null;
+  /** Transit / station principal du mois, seulement si présent. */
+  passage: string | null;
+  /** Chapitre de fond (ZR) seulement si marqueur Cu/LB ou seul signal utile. */
+  fond: string | null;
+  /** Point dur vécu — pour l'empathie de l'autre. */
+  defi: string;
   tempo?: "lent" | "moyen" | "rapide";
 }
 
 export interface EnsembleDelineation {
-  titre: string;            // shared dynamic title
-  pourquoiCeMois: string;   // why this month matters for both
-  dynamique: string;        // nature of the dynamic
-  aFaireEnsemble: string;   // 2-3 actionable sentences
+  titre: string;
+  /** Comparaison des deux années (profections). */
+  annees: string;
+  /** Comparaison des axes d'éclipse si l'un ou l'autre en a. */
+  eclipses: string | null;
+  /** Comparaison des passages du mois. */
+  passages: string | null;
+  /** Ce que chacun doit comprendre du cycle de l'autre. */
+  empathie: string;
+  aFaireEnsemble: string;
 }
+
+/** @deprecated Conservé pour lectures v3 encore en cache local avant v8. */
+export type LegacyPersonFlat = {
+  titre: string;
+  corps: string;
+  defi: string;
+  tempo?: "lent" | "moyen" | "rapide";
+};
 
 /** Le serveur a repondu 402 : la fonctionnalite demande le plan payant. */
 export interface MurPayant { murPayant: true; feature?: string }
@@ -51,11 +76,23 @@ export interface ConnectionDelineation {
 
 export type DelineationResult = ConnectionDelineation | SilenceDelineation | MurPayant | null;
 
+export function estLectureStructuree(r: unknown): r is ConnectionDelineation {
+  if (!r || typeof r !== "object") return false;
+  const d = r as ConnectionDelineation;
+  return !!(
+    d.personA?.annee &&
+    d.personB?.annee &&
+    d.ensemble?.annees &&
+    d.ensemble?.empathie &&
+    d.ensemble?.aFaireEnsemble
+  );
+}
+
 // ─── Cache config ──────────────────────────────────────────
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-/** v7 : comparaison injectee + regle de silence + prompt qui reformule sans inventer. */
-const CACHE_VERSION = "v7";
+/** v8 : lecture par technique (année / eclipse / passage) + empathie croisée. */
+const CACHE_VERSION = "v8";
 
 function cacheKey(
   birthDateA: string,
@@ -66,12 +103,95 @@ function cacheKey(
   return `connection_delineation_${CACHE_VERSION}_${birthDateA}_${birthDateB}_${relationship}_${monthKey}`;
 }
 
-// ─── Main function ────────────────────────────────────────
+// ─── Technique picks (ce que le modèle doit écrire, pas inventer) ──
+
+function scoreEvent(e: RawEvent): number {
+  return typeof e.score === "number" ? e.score : 0;
+}
+
+function pickBest(events: RawEvent[], pred: (e: RawEvent) => boolean): RawEvent | null {
+  const hits = events.filter(pred).sort((a, b) => scoreEvent(b) - scoreEvent(a));
+  return hits[0] ?? null;
+}
 
 /**
- * Per-person identity payload for delineation. Includes coords so the
- * server-side cache can key on chart identity, not just birth date.
+ * Extrait les pistes à écrire pour UNE personne.
+ * Empêche le modèle de tout ramener au ZR permanent (« période majeure »).
  */
+export function pistesTechniques(focus: PersonFocus) {
+  const events = focus.rawData?.events ?? [];
+  const profection = focus.rawData?.profection ?? {
+    house: focus.profectionHouse,
+    houseName: focus.profectionTheme ?? focus.dominantDomains?.[0],
+    annualTheme: undefined as string | undefined,
+  };
+
+  const eclipse = pickBest(events, (e) => e.category === "eclipse");
+  const transit = pickBest(
+    events,
+    (e) => e.category === "transit" || e.category === "station",
+  );
+  // Fond de chapitre : seulement un pic / une fin, sinon le ZR le plus fort
+  // mais marqué comme décor (pas comme « ce mois »).
+  const fondMarque = pickBest(
+    events,
+    (e) =>
+      e.category === "zr" &&
+      Array.isArray(e.markers) &&
+      e.markers.some((m) => m === "Cu" || m === "LB" || m === "pre-LB"),
+  );
+  const fondZr = fondMarque ?? pickBest(events, (e) => e.category === "zr");
+
+  return {
+    annee: {
+      house: profection.house ?? focus.profectionHouse ?? null,
+      houseName: profection.houseName ?? focus.profectionTheme ?? null,
+      annualTheme: profection.annualTheme ?? null,
+    },
+    eclipse: eclipse
+      ? {
+          label: eclipse.label,
+          houses: eclipse.houses ?? [],
+          axis: eclipse.eclipseAxis ?? null,
+          seriesId: eclipse.eclipseSeriesId ?? null,
+          startDate: eclipse.startDate ?? eclipse.date ?? null,
+          endDate: eclipse.endDate ?? null,
+          score: eclipse.score,
+        }
+      : null,
+    passage: transit
+      ? {
+          label: transit.label,
+          category: transit.category,
+          aspect: transit.aspect,
+          houses: transit.houses ?? [],
+          startDate: transit.startDate ?? transit.date ?? null,
+          endDate: transit.endDate ?? null,
+          cycle: transit.cycle ?? null,
+          score: transit.score,
+        }
+      : null,
+    fond: fondZr
+      ? {
+          label: fondZr.label,
+          houses: fondZr.houses ?? [],
+          markers: fondZr.markers ?? [],
+          lotType: fondZr.lotType ?? null,
+          level: fondZr.level ?? null,
+          periodSign: fondZr.periodSign ?? null,
+          startDate: fondZr.startDate ?? null,
+          endDate: fondZr.endDate ?? null,
+          score: fondZr.score,
+          /** true = pic/fin ; false = décor permanent, ne pas dramatiser. */
+          estPicOuFin: !!(fondMarque),
+        }
+      : null,
+    monthScore: focus.rawData?.monthScore ?? null,
+  };
+}
+
+// ─── Main function ────────────────────────────────────────
+
 interface PersonIdentity {
   birthDate: string;
   birthTime?: string;
@@ -79,17 +199,12 @@ interface PersonIdentity {
   longitude?: number;
 }
 
-/** Backwards-compatible: accepts either `string` (birthDate only) or full identity. */
 type PersonArg = string | PersonIdentity;
 
 function toIdentity(arg: PersonArg): PersonIdentity {
   return typeof arg === "string" ? { birthDate: arg } : arg;
 }
 
-/**
- * Si le modele recopie un tempo qui contredit comparaison, la reponse est
- * fausse : on la jette avant affichage (test gratuit du §7).
- */
 function tempoIncoherent(
   del: ConnectionDelineation,
   comparaison: ActivePeriod["comparaison"],
@@ -99,6 +214,14 @@ function tempoIncoherent(
   const b = del.personB.tempo;
   if (a && a !== comparaison.tempo.A) return true;
   if (b && b !== comparaison.tempo.B) return true;
+  return false;
+}
+
+/** Même texte pour A et B = lecture générique — on jette. */
+function textesIdentiques(del: ConnectionDelineation): boolean {
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  if (norm(del.personA.annee) === norm(del.personB.annee)) return true;
+  if (norm(del.personA.defi) === norm(del.personB.defi)) return true;
   return false;
 }
 
@@ -112,54 +235,37 @@ export async function getConnectionDelineation(
   const idB = toIdentity(personBArg);
   const key = cacheKey(idA.birthDate, idB.birthDate, relationship, period.monthKey);
 
-  // L1 check — IndexedDB (offline-capable, per-device)
   const cached = await storage.get<ConnectionDelineation | SilenceDelineation>(key, CACHE_TTL_MS);
-  if (cached) return cached;
+  if (cached) {
+    if (estSilence(cached)) return cached;
+    if (estLectureStructuree(cached)) return cached;
+    // Ancien format v7 en cache : on ignore et on recalcule.
+  }
 
-  // Silence calcule cote moteur : inutile d appeler OpenAI pour inventer
-  // une lecture. Une carte vide vaut mieux qu un texte fabrique.
   if (period.comparaison?.silence === true) {
     const silent: SilenceDelineation = { silence: true };
     await storage.set(key, silent);
     return silent;
   }
 
-  // Build payload — `events` porte depuis le 04/09/2026 les maisons, les vraies
-  // bornes de periode et les marqueurs. Le modele n a plus a deviner.
-  const buildPersonPayload = (focus: typeof period.personAFocus, id: PersonIdentity) => ({
+  const buildPersonPayload = (focus: PersonFocus, id: PersonIdentity) => ({
     birthDate: id.birthDate,
     birthTime: id.birthTime,
     latitude: id.latitude,
     longitude: id.longitude,
-    primarySignal: focus.primarySignal,
-    dominantDomains: focus.dominantDomains,
-    profection: focus.rawData?.profection ?? {
-      house: focus.profectionHouse,
-      houseName: focus.profectionTheme,
-    },
+    // Pistes déjà triées : le modèle écrit à partir de ça, pas de la liste brute.
+    pistes: pistesTechniques(focus),
+    // Events complets en secours (dates, marqueurs) — ne pas tout lister dans le texte.
     events: focus.rawData?.events ?? [],
-    monthScore: focus.rawData?.monthScore,
-    // `challenges` n est PLUS envoye. C etait un gabarit du moteur
-    // (« Naviguer une transition de cycle majeure dans le registre de X »),
-    // identique pour les deux personnes au mot pres. On amorçait le modele
-    // avec la phrase generique qu on lui demandait de remplacer.
+    primarySignal: focus.primarySignal,
   });
 
   const payload = {
     relationship,
     monthKey: period.monthKey,
     tier: period.tier,
-    // Sans la date du jour, `startDate`/`endDate` ne situent rien : le modele
-    // ne peut pas dire « ça se termine ces jours-ci » s il ignore quel jour on
-    // est. C est la seule information que le moteur ne peut pas fournir.
     aujourdhui: new Date().toISOString().slice(0, 10),
-    // Comparaison DEJA CALCULEE par le moteur. Le modele reformule, il ne
-    // deduit plus « deux transitions simultanees » tout seul.
     comparaison: period.comparaison ?? null,
-    // sharedTheme / sharedInsight / actionTogether ne sont plus envoyes non
-    // plus : mesures le 02/09, ce sont trois gabarits a variables. Le prompt v1
-    // demandait au modele de « partir de » sharedTheme — donc de partir du
-    // texte generique qu il devait remplacer.
     personA: buildPersonPayload(period.personAFocus, idA),
     personB: buildPersonPayload(period.personBFocus, idB),
   };
@@ -168,14 +274,9 @@ export async function getConnectionDelineation(
     const res = await apiFetch("/api/openai/connection-delineation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // La langue de la personne, sinon le rapport de compatibilite revient en
-      // francais quelle que soit l app qu elle lit.
       body: JSON.stringify({ ...payload, locale: detectLocale() }),
     });
 
-    // Un 402 n est pas une panne : c est le serveur qui dit « il faut payer ».
-    // Il etait avale comme un 502, l ecran retombait sur le texte brut du
-    // moteur, et l utilisateur gratuit ne voyait jamais le mur. Defaut C12.
     if (res.status === 402) {
       let feature: string | undefined;
       try { feature = ((await res.json()) as { feature?: string }).feature; } catch {}
@@ -193,13 +294,16 @@ export async function getConnectionDelineation(
       return raw;
     }
 
-    if (!raw?.personA || !raw?.personB || !("ensemble" in raw) || !raw.ensemble) {
+    if (!estLectureStructuree(raw)) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[connection-delineation] schéma v8 incomplet — reponse jetee");
+      }
       return null;
     }
 
-    if (tempoIncoherent(raw, period.comparaison)) {
+    if (tempoIncoherent(raw, period.comparaison) || textesIdentiques(raw)) {
       if (process.env.NODE_ENV !== "production") {
-        console.warn("[connection-delineation] tempo contredit comparaison — reponse jetee");
+        console.warn("[connection-delineation] tempo ou textes identiques — reponse jetee");
       }
       return null;
     }

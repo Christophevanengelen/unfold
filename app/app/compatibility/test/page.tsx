@@ -127,14 +127,14 @@ function WindowCard({
               style={{ background: `color-mix(in srgb, ${w.tierColor} 20%, transparent)` }} />
           ) : (
             <p className="text-xs font-semibold text-text-heading">
-              {lecture ? lecture.ensemble.pourquoiCeMois : w.sharedTheme}
+              {lecture ? lecture.ensemble.annees : w.sharedTheme}
             </p>
           )}
         </div>
 
-        {lecture && (
+        {lecture?.ensemble.empathie && (
           <p className="mt-2 text-[11px] italic text-text-body-subtle leading-relaxed">
-            {lecture.ensemble.dynamique}
+            {lecture.ensemble.empathie}
           </p>
         )}
 
@@ -160,8 +160,11 @@ function WindowCard({
             ) : (
               <>
                 <p className="text-xs text-text-body leading-relaxed">
-                  {lecture ? lecture.personA.corps : w.you.description}
+                  {lecture ? lecture.personA.annee : w.you.description}
                 </p>
+                {lecture?.personA.passage && (
+                  <p className="mt-1 text-xs text-text-body leading-relaxed">{lecture.personA.passage}</p>
+                )}
                 {lecture && (
                   <p className="mt-1.5 text-[10px] text-text-body-subtle italic leading-snug">
                     {lecture.personA.defi}
@@ -192,8 +195,11 @@ function WindowCard({
             ) : (
               <>
                 <p className="text-xs text-text-body leading-relaxed">
-                  {lecture ? lecture.personB.corps : w.them.description}
+                  {lecture ? lecture.personB.annee : w.them.description}
                 </p>
+                {lecture?.personB.passage && (
+                  <p className="mt-1 text-xs text-text-body leading-relaxed">{lecture.personB.passage}</p>
+                )}
                 {lecture && (
                   <p className="mt-1.5 text-[10px] text-text-body-subtle italic leading-snug">
                     {lecture.personB.defi}

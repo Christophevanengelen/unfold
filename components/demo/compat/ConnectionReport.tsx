@@ -11,6 +11,7 @@ import {
   estMurPayant,
   estSilence,
   type ConnectionDelineation,
+  type PersonDelineation,
   type SilenceDelineation,
 } from "@/lib/connection-delineation";
 import type { MatchingWindow, RelationshipType } from "@/lib/matching-narratives";
@@ -261,97 +262,52 @@ function WindowCard({
             />
           ) : (
             <p className="text-xs font-semibold text-text-heading">
-              {lecture ? lecture.ensemble.pourquoiCeMois : w.sharedTheme}
+              {lecture ? lecture.ensemble.annees : w.sharedTheme}
             </p>
           )}
         </div>
 
-        {lecture && (
-          <p className="mt-2 text-[11px] italic text-text-body-subtle leading-relaxed">
-            {lecture.ensemble.dynamique}
-          </p>
+        {lecture?.ensemble.eclipses && (
+          <TechniqueLine label="Éclipses" text={lecture.ensemble.eclipses} />
+        )}
+        {lecture?.ensemble.passages && (
+          <TechniqueLine label="Ce mois" text={lecture.ensemble.passages} />
         )}
 
         <div className="mt-3 space-y-2">
-          <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
-            <div className="flex items-start justify-between gap-2">
-              <EyebrowLabel color="var(--accent-purple)" className="mb-1">
-                Vous
-              </EyebrowLabel>
-              {lecture && (
-                <span
-                  className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
-                  style={{ color: "var(--accent-purple)", opacity: 0.5 }}
-                >
-                  {lecture.personA.titre}
-                </span>
-              )}
-            </div>
-            {delLoading ? (
-              <div className="space-y-1">
-                <div className="h-2.5 rounded animate-pulse w-full" style={{ background: "var(--surface-medium)" }} />
-                <div className="h-2.5 rounded animate-pulse w-4/5" style={{ background: "var(--surface-medium)" }} />
-              </div>
-            ) : (
-              <>
-                <p className="text-xs text-text-body leading-relaxed">
-                  {lecture ? lecture.personA.corps : w.you.description}
-                </p>
-                {lecture && (
-                  <p className="mt-1.5 text-[10px] text-text-body-subtle italic leading-snug">
-                    {lecture.personA.defi}
-                  </p>
-                )}
-              </>
-            )}
-            {w.you.planet && <PlanetPill planet={w.you.planet} className="mt-1.5" />}
-          </div>
-
-          <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
-            <div className="flex items-start justify-between gap-2">
-              {/* Pose sur --surface-light : la couleur du type de relation y
-                  vaut 1,85 a 2,90 en clair. C est le NOM de la personne. */}
-              <EyebrowLabel color={texteLisible(relColor, theme, 0)} className="mb-1">
-                {theirName}
-              </EyebrowLabel>
-              {lecture && (
-                <span
-                  className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
-                  // L opacite 0,5 divisait par deux un contraste deja sous le
-                  // seuil. La hierarchie passe par la graisse et la taille,
-                  // qui sont deja la ; l opacite ne fait qu effacer.
-                  style={{ color: texteLisible(relColor, theme, 0) }}
-                >
-                  {lecture.personB.titre}
-                </span>
-              )}
-            </div>
-            {delLoading ? (
-              <div className="space-y-1">
-                <div className="h-2.5 rounded animate-pulse w-full" style={{ background: "var(--surface-medium)" }} />
-                <div className="h-2.5 rounded animate-pulse w-4/5" style={{ background: "var(--surface-medium)" }} />
-              </div>
-            ) : (
-              <>
-                <p className="text-xs text-text-body leading-relaxed">
-                  {lecture ? lecture.personB.corps : w.them.description}
-                </p>
-                {lecture && (
-                  <p className="mt-1.5 text-[10px] text-text-body-subtle italic leading-snug">
-                    {lecture.personB.defi}
-                  </p>
-                )}
-              </>
-            )}
-            {w.them.planet && <PlanetPill planet={w.them.planet} className="mt-1.5" />}
-          </div>
+          <PersonTechniqueCard
+            eyebrow="Vous"
+            eyebrowColor="var(--accent-purple)"
+            titre={lecture?.personA.titre}
+            person={lecture?.personA}
+            fallback={w.you.description}
+            loading={delLoading}
+            planet={w.you.planet}
+          />
+          <PersonTechniqueCard
+            eyebrow={theirName}
+            eyebrowColor={texteLisible(relColor, theme, 0)}
+            titre={lecture?.personB.titre}
+            person={lecture?.personB}
+            fallback={w.them.description}
+            loading={delLoading}
+            planet={w.them.planet}
+            titreColor={texteLisible(relColor, theme, 0)}
+          />
         </div>
+
+        {lecture?.ensemble.empathie && (
+          <div className="mt-2 rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-text-body-subtle">
+              Se comprendre
+            </p>
+            <p className="text-xs text-text-body leading-relaxed">{lecture.ensemble.empathie}</p>
+          </div>
+        )}
 
         <div
           className="mt-2 rounded-xl px-3.5 py-2.5"
           style={{
-            // Encart pose DANS la carte : son propre fond a 10 % suffit a le
-            // detacher de la surface qui le contient.
             background: `color-mix(in srgb, ${w.tierColor} 10%, transparent)`,
           }}
         >
@@ -373,5 +329,80 @@ function WindowCard({
         )}
       </div>
     </motion.div>
+  );
+}
+
+function TechniqueLine({ label, text }: { label: string; text: string }) {
+  return (
+    <p className="mt-2 text-[11px] text-text-body-subtle leading-relaxed">
+      <span className="font-semibold text-text-body">{label} · </span>
+      {text}
+    </p>
+  );
+}
+
+function PersonTechniqueCard({
+  eyebrow,
+  eyebrowColor,
+  titre,
+  person,
+  fallback,
+  loading,
+  planet,
+  titreColor,
+}: {
+  eyebrow: string;
+  eyebrowColor: string;
+  titre?: string;
+  person?: PersonDelineation;
+  fallback: string;
+  loading: boolean;
+  planet: MatchingWindow["you"]["planet"];
+  titreColor?: string;
+}) {
+  return (
+    <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
+      <div className="flex items-start justify-between gap-2">
+        <EyebrowLabel color={eyebrowColor} className="mb-1">
+          {eyebrow}
+        </EyebrowLabel>
+        {titre && (
+          <span
+            className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
+            style={{ color: titreColor ?? eyebrowColor, opacity: titreColor ? 1 : 0.5 }}
+          >
+            {titre}
+          </span>
+        )}
+      </div>
+      {loading ? (
+        <div className="space-y-1">
+          <div className="h-2.5 rounded animate-pulse w-full" style={{ background: "var(--surface-medium)" }} />
+          <div className="h-2.5 rounded animate-pulse w-4/5" style={{ background: "var(--surface-medium)" }} />
+        </div>
+      ) : person ? (
+        <div className="space-y-2">
+          <TechniqueBlock label="Cette année" text={person.annee} />
+          {person.eclipse && <TechniqueBlock label="Éclipse" text={person.eclipse} />}
+          {person.passage && <TechniqueBlock label="Ce mois" text={person.passage} />}
+          {person.fond && <TechniqueBlock label="Chapitre" text={person.fond} />}
+          <p className="text-[10px] text-text-body-subtle italic leading-snug">{person.defi}</p>
+        </div>
+      ) : (
+        <p className="text-xs text-text-body leading-relaxed">{fallback}</p>
+      )}
+      {planet && <PlanetPill planet={planet} className="mt-1.5" />}
+    </div>
+  );
+}
+
+function TechniqueBlock({ label, text }: { label: string; text: string }) {
+  return (
+    <div>
+      <p className="text-[9px] font-bold uppercase tracking-wider text-text-body-subtle mb-0.5">
+        {label}
+      </p>
+      <p className="text-xs text-text-body leading-relaxed">{text}</p>
+    </div>
   );
 }
