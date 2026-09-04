@@ -19,6 +19,8 @@ export interface PersonDelineation {
   titre: string;   // 3-5 words
   corps: string;   // 2-3 sentences
   defi: string;    // 1 sentence challenge
+  /** Recopie de comparaison.tempo — verifie que le modele a lu la comparaison. */
+  tempo?: "lent" | "moyen" | "rapide";
 }
 
 export interface EnsembleDelineation {
@@ -34,16 +36,26 @@ export function estMurPayant(r: unknown): r is MurPayant {
   return !!r && typeof r === "object" && (r as MurPayant).murPayant === true;
 }
 
+/** Le moteur (ou le modele) dit qu il n y a rien a dire ce mois-ci. */
+export interface SilenceDelineation { silence: true }
+export function estSilence(r: unknown): r is SilenceDelineation {
+  return !!r && typeof r === "object" && (r as SilenceDelineation).silence === true
+    && !("personA" in (r as object));
+}
+
 export interface ConnectionDelineation {
   personA: PersonDelineation;
   personB: PersonDelineation;
   ensemble: EnsembleDelineation;
 }
 
+export type DelineationResult = ConnectionDelineation | SilenceDelineation | MurPayant | null;
+
 // ─── Cache config ──────────────────────────────────────────
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-const CACHE_VERSION = "v5"; // bumped: simplified prompt + API synthesis fields in payload
+/** v7 : comparaison injectee + regle de silence + prompt qui reformule sans inventer. */
+const CACHE_VERSION = "v7";
 
 function cacheKey(
   birthDateA: string,
@@ -74,22 +86,46 @@ function toIdentity(arg: PersonArg): PersonIdentity {
   return typeof arg === "string" ? { birthDate: arg } : arg;
 }
 
+/**
+ * Si le modele recopie un tempo qui contredit comparaison, la reponse est
+ * fausse : on la jette avant affichage (test gratuit du §7).
+ */
+function tempoIncoherent(
+  del: ConnectionDelineation,
+  comparaison: ActivePeriod["comparaison"],
+): boolean {
+  if (!comparaison?.tempo) return false;
+  const a = del.personA.tempo;
+  const b = del.personB.tempo;
+  if (a && a !== comparaison.tempo.A) return true;
+  if (b && b !== comparaison.tempo.B) return true;
+  return false;
+}
+
 export async function getConnectionDelineation(
   period: ActivePeriod,
   relationship: RelationshipType,
   personAArg: PersonArg,
   personBArg: PersonArg,
-): Promise<ConnectionDelineation | MurPayant | null> {
+): Promise<DelineationResult> {
   const idA = toIdentity(personAArg);
   const idB = toIdentity(personBArg);
   const key = cacheKey(idA.birthDate, idB.birthDate, relationship, period.monthKey);
 
   // L1 check — IndexedDB (offline-capable, per-device)
-  const cached = await storage.get<ConnectionDelineation>(key, CACHE_TTL_MS);
+  const cached = await storage.get<ConnectionDelineation | SilenceDelineation>(key, CACHE_TTL_MS);
   if (cached) return cached;
 
-  // Build payload — include rawData (profection + event list) so the LLM
-  // can reason from actual transit labels, scores, and ZR details.
+  // Silence calcule cote moteur : inutile d appeler OpenAI pour inventer
+  // une lecture. Une carte vide vaut mieux qu un texte fabrique.
+  if (period.comparaison?.silence === true) {
+    const silent: SilenceDelineation = { silence: true };
+    await storage.set(key, silent);
+    return silent;
+  }
+
+  // Build payload — `events` porte depuis le 04/09/2026 les maisons, les vraies
+  // bornes de periode et les marqueurs. Le modele n a plus a deviner.
   const buildPersonPayload = (focus: typeof period.personAFocus, id: PersonIdentity) => ({
     birthDate: id.birthDate,
     birthTime: id.birthTime,
@@ -103,17 +139,27 @@ export async function getConnectionDelineation(
     },
     events: focus.rawData?.events ?? [],
     monthScore: focus.rawData?.monthScore,
-    challenges: focus.challenges,
+    // `challenges` n est PLUS envoye. C etait un gabarit du moteur
+    // (« Naviguer une transition de cycle majeure dans le registre de X »),
+    // identique pour les deux personnes au mot pres. On amorçait le modele
+    // avec la phrase generique qu on lui demandait de remplacer.
   });
 
   const payload = {
     relationship,
     monthKey: period.monthKey,
     tier: period.tier,
-    // API's own synthesis — LLM uses these as anchors, not as-is
-    sharedTheme: period.sharedTheme,
-    sharedInsight: period.sharedInsight,
-    apiSuggestedAction: period.actionTogether,
+    // Sans la date du jour, `startDate`/`endDate` ne situent rien : le modele
+    // ne peut pas dire « ça se termine ces jours-ci » s il ignore quel jour on
+    // est. C est la seule information que le moteur ne peut pas fournir.
+    aujourdhui: new Date().toISOString().slice(0, 10),
+    // Comparaison DEJA CALCULEE par le moteur. Le modele reformule, il ne
+    // deduit plus « deux transitions simultanees » tout seul.
+    comparaison: period.comparaison ?? null,
+    // sharedTheme / sharedInsight / actionTogether ne sont plus envoyes non
+    // plus : mesures le 02/09, ce sont trois gabarits a variables. Le prompt v1
+    // demandait au modele de « partir de » sharedTheme — donc de partir du
+    // texte generique qu il devait remplacer.
     personA: buildPersonPayload(period.personAFocus, idA),
     personB: buildPersonPayload(period.personBFocus, idB),
   };
@@ -140,14 +186,26 @@ export async function getConnectionDelineation(
       return null;
     }
 
-    const delineation = await res.json() as ConnectionDelineation;
-    if (!delineation?.personA || !delineation?.personB || !delineation?.ensemble) {
+    const raw = await res.json() as ConnectionDelineation | SilenceDelineation;
+
+    if (estSilence(raw)) {
+      await storage.set(key, raw);
+      return raw;
+    }
+
+    if (!raw?.personA || !raw?.personB || !("ensemble" in raw) || !raw.ensemble) {
       return null;
     }
 
-    // Cache the result
-    await storage.set(key, delineation);
-    return delineation;
+    if (tempoIncoherent(raw, period.comparaison)) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[connection-delineation] tempo contredit comparaison — reponse jetee");
+      }
+      return null;
+    }
+
+    await storage.set(key, raw);
+    return raw;
   } catch (err) {
     console.error("[connection-delineation] Failed:", err);
     return null;

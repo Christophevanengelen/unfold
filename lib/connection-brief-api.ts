@@ -14,19 +14,75 @@ import { apiFetch } from "@/lib/api-client";
 // ─── API response types (exported for delineation pipeline) ──
 
 export interface ConnectionBriefSignal {
-  category: "transit" | "eclipse" | "zr";
+  /** Observé en direct : aussi `station`, `profection`, `unknown`. */
+  category: "transit" | "eclipse" | "zr" | "station" | "profection" | "unknown" | string;
   planetOrType: string;
   natalPoint: string;
   aspectOrMarker: string;
   score: number;
+  houses?: number[];
+  startDate?: string | null;
+  endDate?: string | null;
+  cycle?: { hitNumber: number; totalHits: number; pattern?: string };
 }
 
+/**
+ * Un evenement du moteur.
+ *
+ * Les sept derniers champs sont arrives cote moteur le 04/09/2026. Avant eux,
+ * le prompt demandait au modele d ecrire « ZR L3 Scorpion (Spirit) » et de
+ * situer une periode dans le temps, alors que rien dans la reponse ne portait
+ * ni le lot, ni le niveau, ni une date : le modele les inventait. Et surtout
+ * `houses` manquait — donc rien ne permettait de dire que deux personnes
+ * travaillent le meme domaine, qui est pourtant tout le produit.
+ *
+ * Ils ne sont pas optionnels par prudence : ils le sont parce qu un evenement
+ * `transit` n a ni `lotType` ni `level`, et qu un evenement peut arriver sans
+ * `markers`.
+ */
 export interface RawEvent {
   label: string;
   score: number;
   category: string;
   aspect: string | null;
   date?: string | null;
+  /** Bornes reelles de la periode. Un ZR dure des mois ou des annees. */
+  startDate?: string | null;
+  endDate?: string | null;
+  /** Les domaines de vie touches. La seule base d une comparaison entre deux personnes. */
+  houses?: number[];
+  /** `Cu` culmination, `LB` fin de chapitre, `pre-LB` approche de la fin. */
+  markers?: string[];
+  /** ZR seulement. */
+  lotType?: "fortune" | "spirit" | "eros" | string;
+  level?: number;
+  periodSign?: string;
+  /** Transits a passages multiples. */
+  cycle?: { hitNumber: number; totalHits: number; pattern?: string };
+  /** Eclipses. */
+  eclipseAxis?: string;
+  eclipseSeriesId?: string;
+  eclipseSeriesStart?: string;
+  eclipseSeriesEnd?: string;
+}
+
+/**
+ * Comparaison deja calculee par le moteur (couche 3, 02/09/2026).
+ * Le modele ne compare plus : il reformule cet objet.
+ */
+export interface Comparaison {
+  memesDomaines: number[];
+  domainesA: number[];
+  domainesB: number[];
+  memeAxeEclipse: string | null;
+  charge: { A: "vide" | "leger" | "charge" | "pic"; B: "vide" | "leger" | "charge" | "pic" };
+  tonalite: { A: "soutien" | "mixte" | "friction" | "neutre"; B: "soutien" | "mixte" | "friction" | "neutre" };
+  tempo: { A: "lent" | "moyen" | "rapide"; B: "lent" | "moyen" | "rapide" };
+  ecart: "synchrone" | "decale" | "asymetrique" | "aucun";
+  techniquesAccordA: number;
+  techniquesAccordB: number;
+  /** Vrai = la carte doit se taire plutot que fabriquer une lecture. */
+  silence: boolean;
 }
 
 export interface RawProfection {
@@ -60,6 +116,8 @@ export interface ActivePeriod {
   sharedTheme: string;
   sharedInsight: string;
   actionTogether: string;
+  /** Calcule cote moteur depuis le 02/09/2026. Absent = ancien cache. */
+  comparaison?: Comparaison;
 }
 
 export interface ConnectionBriefResult {
@@ -129,6 +187,26 @@ const MONTH_SHORT = [
   "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc",
 ];
 
+/**
+ * Le moteur envoie encore « Zodiaque Déchaîné » dans `constructiveDirection`
+ * (B0bis — traduction litterale de Zodiacal Releasing). Ce texte s affiche
+ * tel quel des que l IA echoue ou que la personne n est pas payante. On le
+ * neutralise cote app en attendant la correction moteur.
+ */
+function nettoyerRepliMoteur(texte: string | undefined | null): string {
+  if (!texte) return "";
+  return texte
+    .replace(/\s*dans votre Zodiaque\s+D[ée]cha[îi]n[ée]\.?/gi, ".")
+    .replace(/Zodiaque\s+D[ée]cha[îi]n[ée]/gi, "chapitre de vie")
+    .replace(/lib[ée]ration\s+zodiacale/gi, "chapitre de vie")
+    .replace(/Lot de Fortune/gi, "circonstances")
+    .replace(/Lot d['']Esprit/gi, "direction")
+    .replace(/Lot d['']?[ÉE]ros/gi, "liens")
+    .replace(/\.\s*\./g, ".")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 // ─── Adapter: ActivePeriod[] → MatchingWindow[] ──────────
 
 function adaptPeriods(
@@ -183,12 +261,12 @@ function adaptPeriods(
       tierColor,
       relationship,
       you: {
-        description: p.personAFocus.constructiveDirection,
+        description: nettoyerRepliMoteur(p.personAFocus.constructiveDirection),
         planet: toPlanetKey(p.personAFocus.primarySignal),
         category: p.personAFocus.primarySignal.category,
       },
       them: {
-        description: p.personBFocus.constructiveDirection,
+        description: nettoyerRepliMoteur(p.personBFocus.constructiveDirection),
         planet: toPlanetKey(p.personBFocus.primarySignal),
         category: p.personBFocus.primarySignal.category,
       },
