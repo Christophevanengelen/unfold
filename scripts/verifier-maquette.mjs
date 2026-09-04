@@ -139,7 +139,22 @@ for (const nom of fichiers) {
     }
   }
 
-  // 5. le tampon de version. Christophe a passe un quart d heure a tester une
+  // 5. aucun jeton de couleur appele sans etre defini. Le 04/09/2026, en
+  //    retirant les jetons morts, une seule expression de trop aurait suffi a
+  //    vider une couleur : un texte reste alors lisible en clair, invisible en
+  //    sombre, et personne ne s en apercoit avant la capture d ecran.
+  const definis = new Set([...page.matchAll(/--([\w-]+)\s*:/g)].map((x) => x[1]));
+  const manquants = new Set();
+  for (const [, jeton] of page.matchAll(/var\(\s*--([\w-]+)\s*[),]/g)) {
+    if (!definis.has(jeton)) manquants.add(jeton);
+  }
+  // Une couleur manquante est signalee une fois, pas une fois par usage : un
+  // rapport qui repete cinquante fois la meme ligne ne se lit plus.
+  for (const jeton of manquants) {
+    problemes.push(`${nom} · la couleur --${jeton} est utilisee mais n est definie nulle part`);
+  }
+
+  // 6. le tampon de version. Christophe a passe un quart d heure a tester une
   //    version perimee servie par un vieux lien, en croyant a une regression.
   //    Un ecran de maquette doit dire de quand il date, sans qu on ait a le
   //    demander.
@@ -147,7 +162,7 @@ for (const nom of fichiers) {
     problemes.push(`${nom} · pas de tampon de version en bas du premier ecran — impossible de savoir si on regarde du vieux`);
   }
 
-  // 6. le bloc des remarques est vide.
+  // 7. le bloc des remarques est vide.
   const bloc = /<script type="application\/json" id="remarques">([\s\S]*?)<\/script>/.exec(page);
   if (!bloc) {
     problemes.push(`${nom} · le bloc des remarques a disparu — le mode ✎ ne peut plus rien enregistrer`);
