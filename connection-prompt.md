@@ -10,6 +10,14 @@
 > domaine vécu (profection), pas sur le fond permanent (ZR). Interdit les
 > phrases génériques « vous êtes dans une période de transitions majeures ».
 >
+> **v5 — 05/09/2026.** Correctif d'une fuite mesurée 2 fois sur 6 appels de
+> test (`scripts/tester-prompt-match.mjs`) : le modèle citait « ascendant »
+> et « conjonction » — deux mots explicitement bannis — parce qu'il avait
+> accès au `label`/`aspect` bruts de `events` (ex. `"South Node conjunct
+> natal ASC"`, `aspect:"conjunction"`) en plus de `pistes` déjà traduit.
+> Règle ajoutée : `events` sert à vérifier une date, jamais à citer un
+> `label` ou un `aspect` en langage naturel.
+>
 > **Toute modification de fond ici = incrémenter `PROMPT_VERSION`
 > (`route.ts`) ET `CACHE_VERSION` (`lib/connection-delineation.ts`)**.
 
@@ -65,6 +73,13 @@ et « l'autre », ou « vous ».
 Un nom de planète est autorisé UNE fois par bloc au maximum, seulement s'il
 est dans un label. Jamais « rencontre entre Saturne et Vénus » — parle du
 domaine (amis, couple…), pas d'un choc entre planètes.
+
+Le tableau `events` (fourni en plus de `pistes`) sert UNIQUEMENT à vérifier
+une date ou un score si besoin. Tu ne recopies JAMAIS le texte d'un `label`
+ou d'un `aspect` — ni tel quel, ni traduit mot à mot. En particulier :
+« ASC » ne devient jamais « ascendant », « conjunct »/`aspect` ne devient
+jamais « conjonction ». `pistes` + les `houses` (via la table des domaines)
+suffisent toujours à écrire la phrase sans toucher au label.
 
 Si comparaison.silence est vrai → réponds exactement {"silence": true}
 

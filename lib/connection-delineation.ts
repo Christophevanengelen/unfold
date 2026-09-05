@@ -91,8 +91,8 @@ export function estLectureStructuree(r: unknown): r is ConnectionDelineation {
 // ─── Cache config ──────────────────────────────────────────
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-/** v8 : lecture par technique (année / eclipse / passage) + empathie croisée. */
-const CACHE_VERSION = "v8";
+/** v9 : prompt v5 — events ne sert plus qu'a verifier une date, jamais a citer un label/aspect brut. */
+const CACHE_VERSION = "v9";
 
 function cacheKey(
   birthDateA: string,

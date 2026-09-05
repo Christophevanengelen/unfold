@@ -138,6 +138,13 @@ Le controle utilise (`scripts/tester-prompt-match.mjs`) bannit deja
 `\bascendant\b` et `\bconjonctions?\b` en mots entiers — c'est lui qui a
 detecte les deux echecs.
 
+**Corrige en v5 (05/09/2026).** Regle ajoutee au prompt : `events` sert
+uniquement a verifier une date ou un score, jamais a citer un `label` ou un
+`aspect` en langage naturel — `pistes` + `houses` suffisent toujours.
+`PROMPT_VERSION` v4 → v5, `CACHE_VERSION` v8 → v9. **Teste : 6/6 correctes sur
+deux passages complets**, y compris la periode d'octobre qui echouait 2 fois
+sur 2 avant le correctif.
+
 ---
 
 ## 1. La chaine — deux appels reseau, pas un

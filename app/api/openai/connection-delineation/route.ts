@@ -58,7 +58,7 @@ function loadSystemPrompt(): string {
 const OPENAI_MODEL = "gpt-4o";
 
 /** Bump when connection-prompt.md rules change meaningfully (invalidates all cached couple delineations). */
-const PROMPT_VERSION = "v4";
+const PROMPT_VERSION = "v5";
 
 // ─── L2 Cache helpers ─────────────────────────────────────
 
