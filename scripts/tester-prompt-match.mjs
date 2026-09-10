@@ -1,0 +1,308 @@
+/**
+ * TESTER LE PROMPT DU MATCH SUR LA VRAIE DONNEE, SANS PASSER PAR L APP.
+ *
+ *     node scripts/tester-prompt-match.mjs
+ *     node scripts/tester-prompt-match.mjs --brut
+ */
+
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const BASE =
+  process.env.NEXT_PUBLIC_API_BASE?.trim() ||
+  "https://ai.zebrapad.io/full-suite-spiritual-api";
+
+const PERSONNE_A = {
+  birthDate: "1985-04-12", birthTime: "08:30",
+  latitude: 50.8503, longitude: 4.3517, timezone: "Europe/Brussels",
+};
+const PERSONNE_B = {
+  birthDate: "1980-10-24", birthTime: "01:41",
+  latitude: 48.8566, longitude: 2.3522, timezone: "Europe/Paris",
+};
+const RELATION = "friend";
+
+function chargerCle() {
+  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
+  for (const f of [".env.local", ".env"]) {
+    try {
+      const ligne = readFileSync(join(process.cwd(), f), "utf8")
+        .split("\n")
+        .find((l) => l.startsWith("OPENAI_API_KEY="));
+      if (ligne) return ligne.slice("OPENAI_API_KEY=".length).trim().replace(/^["']|["']$/g, "");
+    } catch {}
+  }
+  return null;
+}
+
+function chargerPrompt() {
+  const brut = readFileSync(join(process.cwd(), "connection-prompt.md"), "utf8");
+  const m = brut.match(/## SYSTEM PROMPT\s*\n```[^\n]*\n([\s\S]*?)\n```/);
+  if (!m?.[1]) throw new Error("Bloc SYSTEM PROMPT introuvable dans connection-prompt.md");
+  return m[1].trim();
+}
+
+/** Miroir de pistesTechniques (lib/connection-delineation.ts). */
+function pistesTechniques(focus) {
+  const events = focus.rawData?.events ?? [];
+  const profection = focus.rawData?.profection ?? {
+    house: focus.profectionHouse,
+    houseName: focus.profectionTheme,
+  };
+  const best = (pred) =>
+    events.filter(pred).sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0] ?? null;
+
+  const eclipse = best((e) => e.category === "eclipse");
+  const transit = best((e) => e.category === "transit" || e.category === "station");
+  const fondMarque = best(
+    (e) =>
+      e.category === "zr" &&
+      Array.isArray(e.markers) &&
+      e.markers.some((m) => m === "Cu" || m === "LB" || m === "pre-LB"),
+  );
+  const fondZr = fondMarque ?? best((e) => e.category === "zr");
+
+  return {
+    annee: {
+      house: profection.house ?? focus.profectionHouse ?? null,
+      houseName: profection.houseName ?? focus.profectionTheme ?? null,
+      annualTheme: profection.annualTheme ?? null,
+    },
+    eclipse: eclipse
+      ? {
+          label: eclipse.label,
+          houses: eclipse.houses ?? [],
+          axis: eclipse.eclipseAxis ?? null,
+          startDate: eclipse.startDate ?? eclipse.date ?? null,
+          endDate: eclipse.endDate ?? null,
+          score: eclipse.score,
+        }
+      : null,
+    passage: transit
+      ? {
+          label: transit.label,
+          category: transit.category,
+          aspect: transit.aspect,
+          houses: transit.houses ?? [],
+          startDate: transit.startDate ?? transit.date ?? null,
+          endDate: transit.endDate ?? null,
+          cycle: transit.cycle ?? null,
+          score: transit.score,
+        }
+      : null,
+    fond: fondZr
+      ? {
+          label: fondZr.label,
+          houses: fondZr.houses ?? [],
+          markers: fondZr.markers ?? [],
+          startDate: fondZr.startDate ?? null,
+          endDate: fondZr.endDate ?? null,
+          score: fondZr.score,
+          estPicOuFin: !!fondMarque,
+        }
+      : null,
+    monthScore: focus.rawData?.monthScore ?? null,
+  };
+}
+
+function payloadPersonne(focus) {
+  return {
+    pistes: pistesTechniques(focus),
+    events: focus.rawData?.events ?? [],
+    primarySignal: focus.primarySignal,
+  };
+}
+
+const INTERDITS = [
+  /zodiaque\s+d[ée]cha[îi]n[ée]/i, /lib[ée]ration\s+zodiacale/i, /zodiacal\s+releasing/i,
+  /\bZR\b/, /\bL[123]\b/,
+  /lot\s+(de|d')\s*(fortune|esprit|[ée]ros)/i, /\blots?\b/i,
+  /\bprofections?\b/i, /\btransits?\b/i, /\bascendant\b/i, /th[èe]me\s+natal/i,
+  /\bcarr[ée]s?\b/i, /\boppositions?\b/i, /\btrigones?\b/i, /\bsextiles?\b/i,
+  /\bconjonctions?\b/i,
+  /maisons?\s+\d{1,2}\b/i,
+  /\bkarma\b/i, /\bdestin\b/i, /\b[ée]preuves?\b/i, /\bpr[ée]dictions?\b/i,
+  /\bvibrations?\b/i,
+  /person[AB]\b/i, /personne\s+[AB]\b/i,
+  // Le slogans générique qu'on combat.
+  /vous\s+[êe]tes\s+dans\s+une\s+p[ée]riode/i,
+  /tu\s+es\s+dans\s+une\s+p[ée]riode/i,
+  /p[ée]riode\s+de\s+transitions?\s+(majeures?|de\s+fond|importantes?)/i,
+  /pourrai(t|ent)\s+(avoir\s+lieu|se\s+produire|arriver|se\s+pr[ée]senter|survenir)/i,
+  /il\s+se\s+pourrait/i, /attends-toi\s+[àa]/i,
+  /(se\s+pr[ée]sentera|va\s+arriver|vas\s+rencontrer|se\s+pr[ée]pare)\b/i,
+  /\b(opportunit[ée]s?|occasions?)\s+(qui|à\s+saisir|qui\s+se)/i,
+];
+
+function valeurs(o) {
+  if (typeof o === "string") return [o];
+  if (Array.isArray(o)) return o.flatMap(valeurs);
+  if (o && typeof o === "object") return Object.values(o).flatMap(valeurs);
+  return [];
+}
+
+function controler(json) {
+  const texte = valeurs(json).join(" \0 ");
+  return INTERDITS.filter((r) => r.test(texte)).map((r) => r.source);
+}
+
+function schemaOk(d) {
+  return !!(
+    d?.personA?.annee &&
+    d?.personB?.annee &&
+    d?.ensemble?.annees &&
+    d?.ensemble?.empathie &&
+    d?.ensemble?.aFaireEnsemble
+  );
+}
+
+function afficherPersonne(label, p) {
+  console.log(`  ${label} — ${p.titre}`);
+  console.log(`    ANNÉE   ${p.annee}`);
+  if (p.eclipse) console.log(`    ÉCLIPSE ${p.eclipse}`);
+  if (p.passage) console.log(`    MOIS    ${p.passage}`);
+  if (p.fond) console.log(`    CHAPITRE ${p.fond}`);
+  console.log(`    · ${p.defi}\n`);
+}
+
+async function main() {
+  const brut = process.argv.includes("--brut");
+  const cle = chargerCle();
+  if (!cle) { console.error("Pas de OPENAI_API_KEY (env, .env.local ou .env)."); process.exit(1); }
+  const SYSTEME = chargerPrompt();
+  console.log(`prompt systeme : ${SYSTEME.length} caracteres\n`);
+
+  const res = await fetch(`${BASE}/connection-brief.php`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      relationship: RELATION,
+      targetDate: new Date().toISOString().slice(0, 10),
+      personA: PERSONNE_A,
+      personB: PERSONNE_B,
+      responseWindow: { mode: "connection_month_plus_next", months: 3 },
+    }),
+  });
+  if (!res.ok) { console.error(`connection-brief ${res.status}`); process.exit(1); }
+  const data = await res.json();
+  const periodes = (data.data ?? data)?.connectionBrief?.activePeriods ?? [];
+  if (!periodes.length) { console.error("Aucune periode."); process.exit(1); }
+
+  let echecs = 0;
+  for (const p of periodes) {
+    const corps = {
+      relationship: RELATION,
+      monthKey: p.monthKey,
+      tier: p.tier,
+      aujourdhui: new Date().toISOString().slice(0, 10),
+      comparaison: p.comparaison ?? null,
+      personA: payloadPersonne(p.personAFocus),
+      personB: payloadPersonne(p.personBFocus),
+      locale: "fr",
+    };
+
+    if (p.comparaison?.silence === true) {
+      console.log("─".repeat(72));
+      console.log(`${p.monthKey}  SILENCE (comparaison.silence=true — pas d'appel OpenAI)`);
+      continue;
+    }
+
+    const t0 = Date.now();
+    const oa = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        temperature: 0.4,
+        response_format: { type: "json_object" },
+        max_tokens: 2000,
+        messages: [
+          { role: "system", content: SYSTEME },
+          { role: "user", content: JSON.stringify(corps) },
+        ],
+      }),
+    });
+    const secondes = ((Date.now() - t0) / 1000).toFixed(1);
+
+    console.log("─".repeat(72));
+    console.log(`${p.monthKey}  (${secondes} s)`);
+    if (p.comparaison) {
+      console.log(`  comparaison: ecart=${p.comparaison.ecart} silence=${p.comparaison.silence} memesDomaines=[${(p.comparaison.memesDomaines || []).join(",")}] tempo=${p.comparaison.tempo?.A}/${p.comparaison.tempo?.B}`);
+    }
+    const pa = corps.personA.pistes;
+    const pb = corps.personB.pistes;
+    console.log(`  pistes A: année H${pa.annee.house} eclipse=${!!pa.eclipse} passage=${!!pa.passage} fondPic=${pa.fond?.estPicOuFin ?? false}`);
+    console.log(`  pistes B: année H${pb.annee.house} eclipse=${!!pb.eclipse} passage=${!!pb.passage} fondPic=${pb.fond?.estPicOuFin ?? false}`);
+
+    if (!oa.ok) {
+      echecs++;
+      console.log(`  ECHEC OpenAI ${oa.status} : ${(await oa.text()).slice(0, 200)}`);
+      continue;
+    }
+    const rep = await oa.json();
+    let d;
+    try { d = JSON.parse(rep.choices?.[0]?.message?.content ?? "{}"); }
+    catch { echecs++; console.log("  ECHEC : JSON illisible"); continue; }
+
+    if (d.silence === true && !d.personA) {
+      console.log(`  SILENCE — carte vide (correct)`);
+      continue;
+    }
+
+    if (!schemaOk(d)) {
+      echecs++;
+      console.log("  ECHEC : schéma v8 incomplet (annee / annees / empathie requis)");
+      console.log("  " + JSON.stringify(d).slice(0, 400));
+      continue;
+    }
+
+    const norm = (s) => String(s).trim().toLowerCase().replace(/\s+/g, " ");
+    if (norm(d.personA.annee) === norm(d.personB.annee)) {
+      echecs++;
+      console.log("  ECHEC : annee A et B identiques (lecture générique)");
+    }
+
+    if (p.comparaison?.tempo) {
+      if (d.personA.tempo && d.personA.tempo !== p.comparaison.tempo.A) {
+        echecs++;
+        console.log(`  ECHEC tempo A : modele=${d.personA.tempo} attendu=${p.comparaison.tempo.A}`);
+      }
+      if (d.personB.tempo && d.personB.tempo !== p.comparaison.tempo.B) {
+        echecs++;
+        console.log(`  ECHEC tempo B : modele=${d.personB.tempo} attendu=${p.comparaison.tempo.B}`);
+      }
+    }
+
+    // Si pas d'eclipse en piste, le champ doit être null.
+    if (!pa.eclipse && d.personA.eclipse) {
+      echecs++;
+      console.log("  ECHEC : eclipse inventée pour A");
+    }
+    if (!pb.eclipse && d.personB.eclipse) {
+      echecs++;
+      console.log("  ECHEC : eclipse inventée pour B");
+    }
+
+    if (brut) { console.log(JSON.stringify(d, null, 2)); continue; }
+
+    console.log(`\n  ${d.ensemble.titre}`);
+    console.log(`  ANNÉES   ${d.ensemble.annees}`);
+    if (d.ensemble.eclipses) console.log(`  ÉCLIPSES ${d.ensemble.eclipses}`);
+    if (d.ensemble.passages) console.log(`  MOIS     ${d.ensemble.passages}`);
+    console.log(`  EMPATHIE ${d.ensemble.empathie}\n`);
+    afficherPersonne("VOUS", d.personA);
+    afficherPersonne("ELLE/LUI", d.personB);
+    console.log(`  ENSEMBLE`);
+    console.log(`  ${d.ensemble.aFaireEnsemble}\n`);
+
+    const fautes = controler(d);
+    if (fautes.length) { echecs++; console.log(`  MOTS INTERDITS : ${fautes.join(", ")}`); }
+    else console.log(`  aucun mot interdit`);
+  }
+
+  console.log("─".repeat(72));
+  console.log(echecs ? `${echecs} periode(s) en echec sur ${periodes.length}` : `${periodes.length}/${periodes.length} correctes`);
+  process.exit(echecs ? 1 : 0);
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });
