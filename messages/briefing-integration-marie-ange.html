@@ -28,14 +28,15 @@ a{color:var(--accent);word-break:break-all}
 @media (max-width:480px){main{padding:24px 18px;border-radius:18px}}
 </style>
 <main>
-<h1>De la fiche de Brad au profil de n'importe qui</h1>
+<h1>Nos utilisateurs ne sont pas des fiches</h1>
 <p class="sous">Briefing pour Marie-Ange · 11 septembre 2026 · ce qui a construit le prototype, ce qu'il faut pour le faire tourner sur une naissance libre, et le flux des connexions entre utilisateurs.</p>
 
 <p>Marie-Ange,</p>
-<p>Le prototype que tu as vu tourne sur <b>Brad, ta fiche 5507</b>. Tout ce qu'il affiche vient de calculs réels, mais une partie n'est possible aujourd'hui que pour une fiche déjà dans ta base. Ce briefing dit exactement d'où vient chaque donnée, ce qu'il manque pour un utilisateur qui vient de s'inscrire avec sa date, son heure et son lieu, et comment on veut gérer les connexions entre utilisateurs. Prototype : <a href="https://claude.ai/code/artifact/d9fc1c02-4e97-40f2-aff1-568bd8e231cc">ouvrir</a>.</p>
+<p>Une distinction d'abord, parce que tout le reste en découle. <b>Ta base de personnalités et nos utilisateurs sont deux choses différentes.</b> La base — Brad, Temple Grandin, les autres — est un corpus documenté, l'équivalent d'une encyclopédie : elle sert à <b>comparer</b>, à montrer à quelqu'un qui d'autre a vécu un moment comme le sien, et c'est notre différence. Mais le produit ne s'adresse pas à elle. Il s'adresse à des gens qui s'inscrivent avec leur date, leur heure et leur lieu de naissance, et qui n'auront jamais d'identifiant dans ta base.</p>
+<p>Le prototype tourne sur <b>Brad, ta fiche 5507</b>, uniquement pour que tu puisses vérifier chaque chiffre dans ton propre outil. C'est un choix de démonstration, pas le produit. Ce briefing dit d'où vient chaque donnée, et surtout laquelle existe aujourd'hui pour un utilisateur ordinaire — et laquelle n'existe pas. Prototype : <a href="https://claude.ai/code/artifact/d9fc1c02-4e97-40f2-aff1-568bd8e231cc">ouvrir</a>.</p>
 
-<h2>1. Ce qui a construit la fiche de Brad</h2>
-<p>Deux sources de calcul, plus trois traitements faits chez nous.</p>
+<h2>1. Ce qui a construit la démonstration</h2>
+<p>Deux sources de calcul, plus trois traitements faits chez nous. La colonne de droite est la seule qui compte pour le produit : elle dit si un utilisateur, qui arrive avec une naissance et rien d'autre, obtient cette donnée.</p>
 <div class="tab"><table>
 <tr><th>Source</th><th>Entrée</th><th>Ce qu'on en a tiré</th><th>Naissance libre ?</th></tr>
 <tr><td><b>AstroLearn public</b><br><code>app.astrolearn.io/api/astrolearn/public/</code></td><td><code>personId</code> seulement</td><td><code>chart-data</code> (naissance complète), <code>events</code> (faits datés), et surtout <code>period-quality</code> : <b>les trois parties de vie</b> avec leur qualité notée et l'âge de bascule, le <b>fond</b> daté avec son grade, et <b>62 chapitres</b> avec leur qualité. Plus <code>planetary-periods</code>, <code>solar-return-timeline</code>, <code>eclipses</code>, <code>transit-cycles</code>.</td><td><span class="tag no">non</span></td></tr>
@@ -115,6 +116,6 @@ a{color:var(--accent);word-break:break-all}
 <li>Les <b>gabarits de phrases</b> dans nos dix langues, à partir des textes du prototype.</li>
 <li>Le <b>portage écran par écran</b> dans l'app, en commençant par Aujourd'hui, dès que la route A répond.</li>
 </ul>
-<div class="enc">Tout ce qui est marqué « vient de » dans ce briefing est mesuré sur des calculs réels : Brad, Christophe, et 39 fiches de ta base. Rien n'est inventé. Dis-nous ce qui est faux, faisable, ou à jeter.</div>
+<div class="enc">Tout ce qui est marqué « vient de » dans ce briefing est mesuré sur des calculs réels : Brad, Christophe, et 39 fiches de ta base. Rien n'est inventé. Dis-nous ce qui est faux, faisable, ou à jeter.<br><br><b>Et si tu ne retiens qu'une phrase :</b> tant que les routes riches ne répondent qu'à un identifiant de fiche, ce produit sait parler de Brad Pitt et pas de la personne qui vient de s'inscrire.</div>
 <p class="sig">Christophe</p>
 </main>
