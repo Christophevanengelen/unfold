@@ -10,7 +10,7 @@ import type { BirthData } from "@/lib/birth-data";
 import { ConnectionRow } from "./ConnectionRow";
 import { ConnectionListSection } from "./ConnectionListSection";
 import { ConnectionActionSheet } from "./ConnectionActionSheet";
-import { detectLocale } from "@/lib/i18n-demo";
+import { detectLocale, type Locale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 
 interface ConnectionListProps {
@@ -31,7 +31,7 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
   const [sheetConn, setSheetConn] = useState<RealConnection | null>(null);
 
   // Group summaries by status once they're loaded.
-  const summaries = useConnectionSummaries(connections, myBirthData);
+  const summaries = useConnectionSummaries(connections, myBirthData, locale);
 
   const groups = useMemo(() => {
     const buckets: Record<"active" | "upcoming" | "calm" | "unknown", Array<{ conn: RealConnection; summary: ConnectionSummary | undefined; loading: boolean }>> = {
@@ -162,6 +162,7 @@ interface SummaryState {
 function useConnectionSummaries(
   connections: RealConnection[],
   myBirthData: BirthData | null,
+  locale: Locale,
 ): Record<string, SummaryState> {
   // Single SWR subscription keyed by the list shape. The fetcher runs
   // fetchConnectionBrief for every connection in parallel — each call hits
@@ -204,7 +205,7 @@ function useConnectionSummaries(
   for (const conn of connections) {
     const r = data?.[conn.id];
     out[conn.id] = {
-      summary: extractSummary(r?.data ?? null),
+      summary: extractSummary(r?.data ?? null, new Date(), locale),
       loading: canFetch && (isLoading || (!data && !error)),
       error: Boolean(r?.error),
     };

@@ -83,6 +83,30 @@ function verifierClesPerso() {
 
 const PLAFOND = 0;
 
+/**
+ * Les modules qui FABRIQUENT du texte affiche.
+ *
+ * Le 11/09/2026, `lib/connection-summary.ts` rendait la ligne lue sous chaque
+ * connexion — « Fenetre forte maintenant · Chapitre ZR » — en francais, pour
+ * tout le monde, et en nommant la technique. Le champ s appelait `headlineFR` :
+ * la dette etait connue, ecrite, et invisible pour ce controle, qui ne lisait
+ * que le JSX.
+ *
+ * Ici on cherche l inverse du JSX : une chaine francaise assez longue pour etre
+ * une phrase, rendue par une fonction. La liste des modules est explicite — un
+ * scan de tout `lib/` ferait echouer sur des messages d erreur techniques.
+ */
+const MODULES_DE_TEXTE = ["lib/connection-summary.ts", "lib/matching-narratives.ts"];
+/**
+ * Cliquet propre a ces modules. `matching-narratives.ts` porte 145 phrases de
+ * repli du Match — celles qui s affichent quand le modele echoue ou que la
+ * personne n est pas abonnee, donc le cas le plus frequent. Les traduire d un
+ * coup n est pas raisonnable ; les laisser sans controle, c est les voir
+ * grossir. Le nombre ne peut que descendre.
+ */
+const PLAFOND_MODULES = 145;
+const PHRASE_FR = /["`]([A-ZÀ-Ü][a-zà-ÿ']+(?: [a-zà-ÿ'{}]+){2,})["`]/g;
+
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [
   { motif: /^app\/(api|admin)\//, raison: "serveur et back-office" },
@@ -211,6 +235,32 @@ for (const f of fichiers) {
     }
   });
 }
+
+// Les modules qui FABRIQUENT du texte affiche (voir MODULES_DE_TEXTE).
+const fuitesModules = [];
+for (const module of MODULES_DE_TEXTE) {
+  if (!existsSync(module)) continue;
+  const lignes = readFileSync(module, "utf8").split("\n");
+  lignes.forEach((ligne, i) => {
+    // Un commentaire qui cite la phrase explique le defaut, il ne le cree pas.
+    const code = ligne.replace(/\/\/.*$/, "");
+    if (/^\s*\*/.test(ligne)) return;
+    for (const m of code.matchAll(PHRASE_FR)) {
+      fuitesModules.push({ f: module, ligne: i + 1, prop: "texte rendu", texte: m[1] });
+    }
+  });
+}
+
+if (fuitesModules.length > PLAFOND_MODULES) {
+  console.log(`\n  ${fuitesModules.length} phrase(s) rendue(s) en une seule langue, plafond ${PLAFOND_MODULES} :\n`);
+  for (const x of fuitesModules.slice(0, 12)) console.log(`    ${x.f}:${x.ligne}  ${x.texte}`);
+  console.log(`
+  Ces modules fabriquent du texte affiche : il ne passe par aucun dictionnaire.
+  Ajoute une clef dans lib/perso-i18n.ts et rends perso("compat.clef", locale).
+`);
+  process.exit(1);
+}
+console.log(`  ${fuitesModules.length} phrase(s) de repli en une seule langue, plafond ${PLAFOND_MODULES}. Rien de neuf.`);
 
 // Une cle inconnue passee a t() ou perso() s afficherait telle quelle a l ecran.
 const fautivesT = verifierClesT();

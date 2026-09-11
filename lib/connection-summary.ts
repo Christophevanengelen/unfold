@@ -8,6 +8,8 @@
  * per-connection on the list is fast on warm cache.
  */
 
+import { perso } from "@/lib/perso-i18n";
+import type { Locale } from "@/lib/i18n-demo";
 import type { ConnectionBriefResult, ActivePeriod } from "@/lib/connection-brief-api";
 import type { MatchingWindow } from "@/lib/matching-narratives";
 
@@ -61,80 +63,67 @@ function daysBetween(a: Date, b: Date): number {
 }
 
 /** "2026-03" → "en mar". null quand la cle n est pas un mois lisible. */
-function moisCourt(monthKey: string | null): string | null {
+function moisCourt(monthKey: string | null, locale: Locale): string | null {
   if (!monthKey) return null;
-  const [, m] = monthKey.split("-").map(Number);
+  const [a, m] = monthKey.split("-").map(Number);
   if (!Number.isFinite(m) || m < 1 || m > 12) return null;
-  return `en ${MONTH_SHORT_FR[m - 1]}`;
+  // Le nom du mois vient d Intl, pas d une table francaise : « en mar » se
+  // lisait « en mar » en japonais comme en arabe.
+  const nom = new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(Date.UTC(a || 2026, m - 1, 1)));
+  return perso("compat.q_en_mois", locale).replace("{mois}", nom);
 }
 
 // Une cle absente de la table passait par capitalize() et s affichait quand
 // meme comme un nom de planete : « Mc », « Chiron-a »… La ligne annonçait alors
 // un corps celeste que le moteur n a pas nomme. On renvoie "" — le titre se lit
 // tres bien sans le suffixe « · planete ».
-function prettyPlanet(p: string | undefined | null): string {
-  if (!p) return "";
-  const map: Record<string, string> = {
-    saturn: "Saturne",
-    jupiter: "Jupiter",
-    venus: "Vénus",
-    mars: "Mars",
-    moon: "Lune",
-    sun: "Soleil",
-    mercury: "Mercure",
-    uranus: "Uranus",
-    neptune: "Neptune",
-    pluto: "Pluton",
-    "north-node": "Nœud nord",
-    "south-node": "Nœud sud",
-    "solar-eclipse": "Éclipse solaire",
-    "lunar-eclipse": "Éclipse lunaire",
-    zr: "Chapitre ZR",
-  };
-  return map[p] ?? "";
-}
+// Le suffixe « · Saturne », « · Chapitre ZR » nommait la technique sous chaque
+// connexion — ce que les regles du produit interdisent, et ce qui n existait
+// qu en francais. La ligne dit ce qui se passe, jamais par quel rouage.
+
 
 function headline({
   status,
   tier,
   daysUntilNext,
-  planet,
   nextWindowMonthKey,
+  locale,
 }: {
   status: SummaryStatus;
   tier: SummaryTier | null;
   daysUntilNext: number | null;
-  planet?: string;
   nextWindowMonthKey: string | null;
+  locale: Locale;
 }): string {
-  const p = prettyPlanet(planet);
   if (status === "active") {
-    const base =
-      tier === "PEAK" ? "Fenêtre forte maintenant"
-        : tier === "CLEAR" ? "Alignement clair en cours"
-          : "Alignement subtil en cours";
-    return p ? `${base} · ${p}` : base;
+    return perso(
+      tier === "PEAK" ? "compat.forte_maintenant"
+        : tier === "CLEAR" ? "compat.accord_clair"
+          : "compat.accord_subtil",
+      locale,
+    );
   }
   if (status === "upcoming" && daysUntilNext !== null) {
     const when =
-      daysUntilNext <= 0 ? "aujourd'hui"
-        : daysUntilNext === 1 ? "demain"
-          : daysUntilNext <= 14 ? `dans ${daysUntilNext} j`
+      daysUntilNext <= 0 ? perso("compat.q_aujourdhui", locale)
+        : daysUntilNext === 1 ? perso("compat.q_demain", locale)
+          : daysUntilNext <= 14 ? perso("compat.q_dans_j", locale).replace("{n}", String(daysUntilNext))
             // MONTH_SHORT_FR[m - 1] rendait « en undefined » quand le monthKey
             // n etait pas lisible : un mois invente, affiche comme une date de
             // fenetre. On retombe sur le compte de jours, qui lui est mesure.
-            : (moisCourt(nextWindowMonthKey) ?? `dans ${daysUntilNext} j`);
-    const base =
-      tier === "PEAK" ? `Fenêtre forte ${when}`
-        : tier === "CLEAR" ? `Alignement clair ${when}`
-          : `Alignement ${when}`;
-    return p ? `${base} · ${p}` : base;
+            : (moisCourt(nextWindowMonthKey, locale) ?? perso("compat.q_dans_j", locale).replace("{n}", String(daysUntilNext)));
+    return perso(
+      tier === "PEAK" ? "compat.forte_quand"
+        : tier === "CLEAR" ? "compat.accord_clair_quand"
+          : "compat.accord_quand",
+      locale,
+    ).replace("{quand}", when);
   }
   // Le retour par defaut disait « Calme ce mois » — y compris pour un statut
   // « upcoming » dont on ignore l echeance. On n annonçait pas le calme, on le
   // deduisait d une donnee manquante. Seul le vrai calme le dit.
-  if (status === "calm") return "Calme ce mois";
-  return "Signal indisponible";
+  if (status === "calm") return perso("compat.calme_mois", locale);
+  return perso("compat.signal_indispo", locale);
 }
 
 function planetOfPeriod(period: ActivePeriod | undefined): string | undefined {
@@ -166,6 +155,7 @@ function planetOfPeriod(period: ActivePeriod | undefined): string | undefined {
 export function extractSummary(
   result: ConnectionBriefResult | null | undefined,
   today: Date = new Date(),
+  locale: Locale = "fr",
 ): ConnectionSummary {
   if (!result || result.periods.length === 0) {
     return {
@@ -177,7 +167,7 @@ export function extractSummary(
       // Voir SummaryStatus : sans donnees, on ne sait pas — on ne declare pas
       // le calme.
       status: "unknown",
-      headlineFR: "Signal indisponible",
+      headlineFR: perso("compat.signal_indispo", locale),
       // sortScore valait 0, soit exactement STATUS_WEIGHT.calm : l intention
       // ecrite juste au-dessus — « unknown » passe APRES « calm » — n etait pas
       // appliquee, et une connexion sans donnees se melait aux calmes.
@@ -211,8 +201,8 @@ export function extractSummary(
         status: "active",
         tier,
         daysUntilNext: null,
-        planet,
         nextWindowMonthKey: null,
+        locale,
       }),
       sortScore: STATUS_WEIGHT.active + TIER_WEIGHT[tier] * 10 + (currentPeriod?.tierScore ?? 0),
     };
@@ -234,8 +224,8 @@ export function extractSummary(
         status: "upcoming",
         tier,
         daysUntilNext: upcomingWindow.daysLeft,
-        planet,
         nextWindowMonthKey: upcomingWindow.monthKey,
+        locale,
       }),
       sortScore: STATUS_WEIGHT.upcoming + TIER_WEIGHT[tier] * 10 + (upcomingPeriod?.tierScore ?? 0),
     };
@@ -257,7 +247,7 @@ export function extractSummary(
     daysUntilNext: firstFuture?.daysLeft ?? null,
     status: "calm",
     planet,
-    headlineFR: "Calme ce mois",
+    headlineFR: perso("compat.calme_mois", locale),
     sortScore: STATUS_WEIGHT.calm,
   };
   // Silence unused param lint (reserved for future server-side TTL logic)
