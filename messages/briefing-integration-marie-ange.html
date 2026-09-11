@@ -65,10 +65,16 @@ a{color:var(--accent);word-break:break-all}
 
 <h3>La demande n° 1 — la porte date, heure, lieu sur les routes riches</h3>
 <p>C'est la seule qui bloque, et c'est celle que tu as toi-même écrite en B4. <code>period-quality</code>, <code>planetary-periods</code>, <code>solar-return-timeline</code>, <code>eclipses</code>, <code>transit-cycles</code> ne répondent qu'à un <code>personId</code> : <code>{"error":"Invalid personId"}</code> sur tout autre paramètre, en GET comme en POST. Elles ne servent donc que les personnes déjà dans ta base.</p>
-<p>Le format d'entrée qu'on voudrait est celui que Zebrapad accepte déjà :</p>
+<p>Pour nous ce n'est pas une commodité, c'est le principe : <b>une naissance, c'est une date, une heure et un lieu</b>. Un identifiant de fiche est un raccourci interne à ta base ; il ne peut pas être la porte d'entrée d'un produit où chacun arrive avec sa propre naissance. Le format qu'on voudrait est celui que Zebrapad accepte déjà :</p>
 <pre><code>{ "birthDate": "1977-09-27", "birthTime": "00:00",
   "latitude": 50.8503, "longitude": 4.3517, "timezone": "Europe/Brussels" }</code></pre>
 <p>Avec cette porte, l'écran d'ouverture de l'ID astral — les trois parties de vie — existe pour n'importe quel inscrit. Sans elle, il n'existe que pour Brad et les autres fiches de ta base. C'est le seul écran manquant du prototype, et la seule raison pour laquelle la version calculée sur la naissance de Christophe n'a que cinq écrans au lieu de six.</p>
+
+<h3>La demande n° 1 bis — une question de définition, mesurée aujourd'hui</h3>
+<p>Le prototype affiche « les trois parties de la vie de Brad » ainsi : <b>0 → 41 ans</b> (exigeante), <b>41 → 65 ans</b> (ni bonne ni mauvaise, il y est), <b>65 → 96 ans</b> (la plus favorable). Ces valeurs viennent d'un relevé de ta base fait début septembre.</p>
+<p><code>period-quality</code> aujourd'hui donne autre chose, sous <code>lifeParts.parts</code> : <b>0 → 54,4 ans</b> (qualité « - », maître la Lune), <b>54,4 → 91,7 ans</b> (« ± », Vénus, et c'est là qu'il est à 62 ans), <b>91,7 → 136 ans</b> (« ++ », Mars), bascule à 54,4 ans. Et <code>chapters</code> ne contient que du niveau 2, 62 entrées, aucun niveau 1.</p>
+<p>Les deux découpages sont défendables — l'un par les maîtres de triplicité, l'autre par les grandes périodes du <i>zodiacal releasing</i> — mais ils racontent deux vies différentes : dans le premier, la bascule de Brad est à venir dans deux ans ; dans le second, elle est passée depuis 2018. <b>Lequel fait foi pour « les trois parties de ta vie » ?</b> C'est l'écran d'ouverture du produit, on ne peut pas en afficher deux. La réponse d'aujourd'hui est archivée chez nous, <code>donnees/brad-period-quality-2026-09-11.json</code>.</p>
+<p class="sous">À noter aussi : une troisième partie qui commence à 91,7 ans et finit à 136 ans ne se montre pas telle quelle à quelqu'un. Si c'est ce découpage qui fait foi, on affichera le début, jamais la fin.</p>
 
 <h3>La demande n° 2 — la grille d'insight</h3>
 <p>C'est ton B6, et tu l'appelles toi-même le vrai livrable attendu. Sans elle, le prompt du Match reste une réorganisation : il dit mieux, il ne dit pas plus.</p>
