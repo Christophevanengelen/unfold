@@ -145,7 +145,7 @@ export default function ConnectionsPage() {
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <span>{perso("compat.astuce", locale)}</span>
+          <span>{perso("compat.balayer", locale)}</span>
           <span className="text-[10px] font-semibold" style={{ color: "var(--accent-purple)" }}>
             {t("connexions.compris", locale)}
           </span>

@@ -238,15 +238,15 @@ for (const f of fichiers) {
 
 // Les modules qui FABRIQUENT du texte affiche (voir MODULES_DE_TEXTE).
 const fuitesModules = [];
-for (const module of MODULES_DE_TEXTE) {
-  if (!existsSync(module)) continue;
-  const lignes = readFileSync(module, "utf8").split("\n");
+for (const chemin of MODULES_DE_TEXTE) {
+  if (!existsSync(chemin)) continue;
+  const lignes = readFileSync(chemin, "utf8").split("\n");
   lignes.forEach((ligne, i) => {
     // Un commentaire qui cite la phrase explique le defaut, il ne le cree pas.
     const code = ligne.replace(/\/\/.*$/, "");
     if (/^\s*\*/.test(ligne)) return;
     for (const m of code.matchAll(PHRASE_FR)) {
-      fuitesModules.push({ f: module, ligne: i + 1, prop: "texte rendu", texte: m[1] });
+      fuitesModules.push({ f: chemin, ligne: i + 1, prop: "texte rendu", texte: m[1] });
     }
   });
 }
