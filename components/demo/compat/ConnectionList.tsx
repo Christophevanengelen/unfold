@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ShareNodes } from "flowbite-react-icons/outline";
 import useSWR from "swr";
 import { fetchConnectionBrief } from "@/lib/connection-brief-api";
 import { extractSummary, type ConnectionSummary } from "@/lib/connection-summary";
@@ -10,6 +9,7 @@ import type { BirthData } from "@/lib/birth-data";
 import { ConnectionRow } from "./ConnectionRow";
 import { ConnectionListSection } from "./ConnectionListSection";
 import { ConnectionActionSheet } from "./ConnectionActionSheet";
+import { VitrineBase } from "./VitrineBase";
 import { detectLocale, type Locale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 
@@ -127,26 +127,12 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
         </p>
       )}
 
-      {/* Empty state if somehow connections all return nothing */}
-      {connections.length === 0 && (
-        <div
-          className="mt-6 flex flex-col items-center gap-3 rounded-2xl px-6 py-8 text-center"
-          style={{ background: "var(--surface-subtle)" }}
-        >
-          <div
-            className="h-12 w-12 rounded-full flex items-center justify-center"
-            style={{ background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)" }}
-          >
-            {/* L icone reprenait --accent-purple sur une tuile faite du meme
-                --accent-purple : 3,40 en clair. --text-brand est la valeur
-                derivee de la meme famille. */}
-            <ShareNodes size={20} style={{ color: "var(--text-brand)" }} />
-          </div>
-          <p className="text-sm text-text-body">
-            Partagez votre code ou entrez celui d&apos;un proche pour comparer vos rythmes.
-          </p>
-        </div>
-      )}
+      {/* Personne n est encore connecte : on montre ce que ca donne, sur des
+          vies documentees. Ce cadre disait, en francais pour tout le monde,
+          « Partagez votre code ou entrez celui d un proche » — c est-a-dire
+          exactement ce que disent les deux boutons places juste dessous. Il
+          occupait la moitie de l ecran pour repeter la page. */}
+      {connections.length === 0 && <VitrineBase locale={locale} />}
     </>
   );
 }

@@ -204,6 +204,17 @@ type Strings = {
     sous_titre: string;
     bouton: string;
   };
+  vitrine: {
+    eyebrow: string;
+    titre: string;
+    sous: string;
+    familles: string;
+    mesure: string;
+    puis: string;
+    /** Les dix sujets, tels que les donnees mesurees les nomment (clef en
+     *  francais, cote producteur) — traduits pour l affichage. */
+    sujets: Record<string, string>;
+  };
   boudin: {
     titre: string;
   };
@@ -361,6 +372,26 @@ const FR: Strings = {
     titre: "Entre ton code d'accès",
     sous_titre: "Saisis ton code ci-dessous pour débloquer la carte de vie.",
     bouton: "Débloquer →",
+  },
+  vitrine: {
+    eyebrow: "Avant d'inviter",
+    titre: "Ce que ça donne, sur des vies documentées.",
+    sous: "{n} personnalités dont on connaît la naissance à la minute, et dont la vie est datée. Chacune passe dans la même règle que toi.",
+    familles: "De quoi leur vie parle le plus",
+    mesure: "Chez la vie médiane, on ne parle que {p} % du temps. Le reste, c'est le silence — et c'est une bonne nouvelle.",
+    puis: "Invite quelqu'un de ton cercle : vous verrez vos deux rythmes côte à côte.",
+    sujets: {
+      "toi-même": "toi-même",
+      "échanges, entourage": "échanges, entourage",
+      "argent, ressources": "argent, ressources",
+      "retrait, intériorité": "retrait, intériorité",
+      "ce qui est partagé": "ce qui est partagé",
+      "création, enfants": "création, enfants",
+      "santé, quotidien": "santé, quotidien",
+      "foyer, famille": "foyer, famille",
+      "idées, voyages": "idées, voyages",
+      "carrière, réputation": "carrière, réputation",
+    },
   },
   boudin: {
     titre: "Timeline de vie",
@@ -520,6 +551,26 @@ const EN: Strings = {
     sous_titre: "Type your coupon code below to unlock the Lifetime Chart.",
     bouton: "Unlock →",
   },
+  vitrine: {
+    eyebrow: "Before you invite",
+    titre: "Here's what it looks like, on documented lives.",
+    sous: "{n} public figures whose birth time is known to the minute, and whose life is dated. Each one goes through the same rule as you.",
+    familles: "What their life is mostly about",
+    mesure: "For the median life, we only speak {p} % of the time. The rest is silence — and that's good news.",
+    puis: "Invite someone from your circle: you'll see both rhythms side by side.",
+    sujets: {
+      "toi-même": "yourself",
+      "échanges, entourage": "exchanges, close circle",
+      "argent, ressources": "money, resources",
+      "retrait, intériorité": "withdrawal, inner life",
+      "ce qui est partagé": "what is shared",
+      "création, enfants": "creation, children",
+      "santé, quotidien": "health, daily life",
+      "foyer, famille": "home, family",
+      "idées, voyages": "ideas, travel",
+      "carrière, réputation": "career, standing",
+    },
+  },
   boudin: {
     titre: "Lifetime timeline",
   },
@@ -677,6 +728,26 @@ const ES: Strings = {
     titre: "Introduce tu código de acceso",
     sous_titre: "Escribe tu código abajo para desbloquear la carta de vida.",
     bouton: "Desbloquear →",
+  },
+  vitrine: {
+    eyebrow: "Antes de invitar",
+    titre: "Esto es lo que da, sobre vidas documentadas.",
+    sous: "{n} personalidades cuyo nacimiento se conoce al minuto y cuya vida está fechada. Cada una pasa por la misma regla que tú.",
+    familles: "De qué habla más su vida",
+    mesure: "En la vida mediana solo hablamos el {p} % del tiempo. El resto es silencio, y es una buena noticia.",
+    puis: "Invita a alguien de tu círculo: veréis vuestros dos ritmos juntos.",
+    sujets: {
+      "toi-même": "tú mismo",
+      "échanges, entourage": "intercambios, entorno",
+      "argent, ressources": "dinero, recursos",
+      "retrait, intériorité": "retiro, interioridad",
+      "ce qui est partagé": "lo que se comparte",
+      "création, enfants": "creación, hijos",
+      "santé, quotidien": "salud, vida diaria",
+      "foyer, famille": "hogar, familia",
+      "idées, voyages": "ideas, viajes",
+      "carrière, réputation": "carrera, reputación",
+    },
   },
   boudin: {
     titre: "Línea de tiempo de vida",
@@ -836,6 +907,26 @@ const DE: Strings = {
     sous_titre: "Gib unten deinen Code ein, um die Lebenskarte freizuschalten.",
     bouton: "Freischalten →",
   },
+  vitrine: {
+    eyebrow: "Bevor du einlädst",
+    titre: "So sieht es aus, an dokumentierten Leben.",
+    sous: "{n} Persönlichkeiten, deren Geburt auf die Minute bekannt und deren Leben datiert ist. Jede durchläuft dieselbe Regel wie du.",
+    familles: "Wovon ihr Leben am meisten handelt",
+    mesure: "Beim mittleren Leben sprechen wir nur {p} % der Zeit. Der Rest ist Stille — und das ist eine gute Nachricht.",
+    puis: "Lade jemanden aus deinem Kreis ein: ihr seht eure beiden Rhythmen nebeneinander.",
+    sujets: {
+      "toi-même": "du selbst",
+      "échanges, entourage": "Austausch, Umfeld",
+      "argent, ressources": "Geld, Mittel",
+      "retrait, intériorité": "Rückzug, Innenleben",
+      "ce qui est partagé": "was geteilt wird",
+      "création, enfants": "Schöpfung, Kinder",
+      "santé, quotidien": "Gesundheit, Alltag",
+      "foyer, famille": "Zuhause, Familie",
+      "idées, voyages": "Ideen, Reisen",
+      "carrière, réputation": "Beruf, Ansehen",
+    },
+  },
   boudin: {
     titre: "Lebens-Zeitleiste",
   },
@@ -993,6 +1084,26 @@ const IT: Strings = {
     titre: "Inserisci il tuo codice d'accesso",
     sous_titre: "Scrivi qui sotto il tuo codice per sbloccare la carta di vita.",
     bouton: "Sblocca →",
+  },
+  vitrine: {
+    eyebrow: "Prima di invitare",
+    titre: "Ecco cosa dà, su vite documentate.",
+    sous: "{n} personalità di cui si conosce la nascita al minuto e la cui vita è datata. Ognuna passa nella stessa regola che vale per te.",
+    familles: "Di cosa parla di più la loro vita",
+    mesure: "Nella vita mediana parliamo solo il {p} % del tempo. Il resto è silenzio — ed è una buona notizia.",
+    puis: "Invita qualcuno della tua cerchia: vedrete i vostri due ritmi affiancati.",
+    sujets: {
+      "toi-même": "te stesso",
+      "échanges, entourage": "scambi, cerchia",
+      "argent, ressources": "denaro, risorse",
+      "retrait, intériorité": "ritiro, interiorità",
+      "ce qui est partagé": "ciò che è condiviso",
+      "création, enfants": "creazione, figli",
+      "santé, quotidien": "salute, quotidiano",
+      "foyer, famille": "casa, famiglia",
+      "idées, voyages": "idee, viaggi",
+      "carrière, réputation": "carriera, reputazione",
+    },
   },
   boudin: {
     titre: "Timeline di vita",
@@ -1152,6 +1263,26 @@ const PT: Strings = {
     sous_titre: "Escreve o teu código abaixo para desbloquear a carta de vida.",
     bouton: "Desbloquear →",
   },
+  vitrine: {
+    eyebrow: "Antes de convidar",
+    titre: "É isto que dá, em vidas documentadas.",
+    sous: "{n} personalidades cujo nascimento se conhece ao minuto e cuja vida está datada. Cada uma passa pela mesma regra que tu.",
+    familles: "Do que fala mais a vida delas",
+    mesure: "Na vida mediana só falamos {p} % do tempo. O resto é silêncio — e é uma boa notícia.",
+    puis: "Convida alguém do teu círculo: vão ver os dois ritmos lado a lado.",
+    sujets: {
+      "toi-même": "ti próprio",
+      "échanges, entourage": "trocas, círculo",
+      "argent, ressources": "dinheiro, recursos",
+      "retrait, intériorité": "recolhimento, interioridade",
+      "ce qui est partagé": "o que é partilhado",
+      "création, enfants": "criação, filhos",
+      "santé, quotidien": "saúde, quotidiano",
+      "foyer, famille": "casa, família",
+      "idées, voyages": "ideias, viagens",
+      "carrière, réputation": "carreira, reputação",
+    },
+  },
   boudin: {
     titre: "Linha do tempo de vida",
   },
@@ -1309,6 +1440,26 @@ const NL: Strings = {
     titre: "Voer je toegangscode in",
     sous_titre: "Typ hieronder je code om de levenskaart te ontgrendelen.",
     bouton: "Ontgrendelen →",
+  },
+  vitrine: {
+    eyebrow: "Voor je uitnodigt",
+    titre: "Zo ziet het eruit, op gedocumenteerde levens.",
+    sous: "{n} bekende personen van wie de geboorte op de minuut bekend is en van wie het leven gedateerd is. Elk gaat door dezelfde regel als jij.",
+    familles: "Waar hun leven vooral over gaat",
+    mesure: "Bij het mediane leven spreken we maar {p} % van de tijd. De rest is stilte — en dat is goed nieuws.",
+    puis: "Nodig iemand uit je kring uit: jullie zien beide ritmes naast elkaar.",
+    sujets: {
+      "toi-même": "jezelf",
+      "échanges, entourage": "uitwisselingen, kring",
+      "argent, ressources": "geld, middelen",
+      "retrait, intériorité": "terugtrekking, binnenleven",
+      "ce qui est partagé": "wat gedeeld wordt",
+      "création, enfants": "creatie, kinderen",
+      "santé, quotidien": "gezondheid, dagelijks leven",
+      "foyer, famille": "thuis, gezin",
+      "idées, voyages": "ideeën, reizen",
+      "carrière, réputation": "loopbaan, aanzien",
+    },
   },
   boudin: {
     titre: "Levenstijdlijn",
@@ -1468,6 +1619,26 @@ const JA: Strings = {
     sous_titre: "下にコードを入力してライフチャートを解除してください。",
     bouton: "解除する →",
   },
+  vitrine: {
+    eyebrow: "招待する前に",
+    titre: "記録の残る人生で見ると、こうなります。",
+    sous: "誕生時刻が分単位でわかり、出来事に日付がある{n}人。あなたと同じ規則を通します。",
+    familles: "その人生が主に語ること",
+    mesure: "中央値の人生では、語るのは全体の{p}％だけ。残りは沈黙で、それは良い知らせです。",
+    puis: "身近な人を招待すると、二つのリズムを並べて見られます。",
+    sujets: {
+      "toi-même": "自分自身",
+      "échanges, entourage": "人との行き来",
+      "argent, ressources": "お金と資源",
+      "retrait, intériorité": "内にこもる時間",
+      "ce qui est partagé": "分かち合うもの",
+      "création, enfants": "創作と子ども",
+      "santé, quotidien": "健康と日常",
+      "foyer, famille": "家と家族",
+      "idées, voyages": "考えと旅",
+      "carrière, réputation": "仕事と評判",
+    },
+  },
   boudin: {
     titre: "生涯タイムライン",
   },
@@ -1625,6 +1796,26 @@ const ZH: Strings = {
     titre: "输入你的访问码",
     sous_titre: "在下方输入你的代码以解锁生命图。",
     bouton: "解锁 →",
+  },
+  vitrine: {
+    eyebrow: "邀请之前",
+    titre: "在有记录的人生上，效果是这样的。",
+    sous: "{n}位出生时间精确到分钟、生平有明确日期的人物。每一位都经过与你相同的规则。",
+    familles: "他们的人生最常谈论什么",
+    mesure: "在中位数的人生里，我们只在{p}%的时间开口。其余是沉默——这是好消息。",
+    puis: "邀请你身边的人：你们会并排看到两种节奏。",
+    sujets: {
+      "toi-même": "你自己",
+      "échanges, entourage": "交流与身边人",
+      "argent, ressources": "金钱与资源",
+      "retrait, intériorité": "退隐与内心",
+      "ce qui est partagé": "共有之事",
+      "création, enfants": "创造与子女",
+      "santé, quotidien": "健康与日常",
+      "foyer, famille": "家庭",
+      "idées, voyages": "思想与远行",
+      "carrière, réputation": "事业与名声",
+    },
   },
   boudin: {
     titre: "一生时间线",
@@ -1784,6 +1975,26 @@ const AR: Strings = {
     sous_titre: "اكتب رمزك أدناه لفتح خارطة الحياة.",
     bouton: "فتح →",
   },
+  vitrine: {
+    eyebrow: "قبل أن تدعو",
+    titre: "هكذا تبدو النتيجة على حيوات موثَّقة.",
+    sous: "{n} شخصية تُعرف ولادتها بالدقيقة وحياتها مؤرَّخة. كل واحدة تمرّ بالقاعدة نفسها التي تمرّ بها أنت.",
+    familles: "عمَّ تتحدث حياتهم أكثر",
+    mesure: "في الحياة الوسيطة لا نتكلم سوى {p} % من الوقت. الباقي صمت — وهذه بشرى.",
+    puis: "ادعُ أحداً من دائرتك: سترَون إيقاعيكما جنباً إلى جنب.",
+    sujets: {
+      "toi-même": "أنت نفسك",
+      "échanges, entourage": "التواصل والمحيط",
+      "argent, ressources": "المال والموارد",
+      "retrait, intériorité": "الانسحاب والحياة الداخلية",
+      "ce qui est partagé": "ما يُشارَك",
+      "création, enfants": "الإبداع والأبناء",
+      "santé, quotidien": "الصحة والحياة اليومية",
+      "foyer, famille": "البيت والعائلة",
+      "idées, voyages": "الأفكار والأسفار",
+      "carrière, réputation": "المهنة والسمعة",
+    },
+  },
   boudin: {
     titre: "الجدول الزمني للحياة",
   },
@@ -1832,3 +2043,10 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   zh: "中文",
   ar: "العربية",
 };
+
+/** Les sujets de la base, traduits. La clef reste celle des donnees mesurees :
+ *  c est le producteur qui la fixe, pas l interface. Une clef inconnue rend la
+ *  clef elle-meme, qui est deja lisible en francais. */
+export function STRINGS_VITRINE_SUJETS(locale: Locale): Record<string, string> {
+  return (STRINGS[locale] ?? EN).vitrine.sujets;
+}
