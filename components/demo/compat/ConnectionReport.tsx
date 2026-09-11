@@ -1,10 +1,11 @@
 "use client";
 
-import { usePremiumTeaser } from "@/components/demo/PremiumTeaserContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type RefObject } from "react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { PlanetPill, TierBadge, EyebrowLabel } from "@/components/demo/primitives";
+import { PremiumBlur } from "@/components/demo/PremiumBlur";
+import { usePremiumStatus } from "@/lib/premium-gate";
 import { fetchConnectionBrief, type ActivePeriod } from "@/lib/connection-brief-api";
 import {
   getConnectionDelineation,
@@ -19,8 +20,9 @@ import type { RealConnection } from "@/lib/connections-store";
 import type { BirthData } from "@/lib/birth-data";
 import { relationshipConfig } from "./relationshipConfig";
 import { texteLisible } from "@/lib/contraste";
-import { detectLocale, t } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
+import { useLocale } from "@/lib/use-locale";
+import type { Locale } from "@/lib/i18n-demo";
 
 interface ConnectionReportProps {
   connection: RealConnection;
@@ -35,7 +37,7 @@ interface ConnectionReportProps {
  * rendered standalone OR inside ConnectionCarousel for swipeable detail.
  */
 export function ConnectionReport({ connection, myBirthData, embedded }: ConnectionReportProps) {
-  const locale = detectLocale();
+  const locale = useLocale();
   const [windows, setWindows] = useState<MatchingWindow[]>([]);
   const [periods, setPeriods] = useState<ActivePeriod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,8 +100,8 @@ export function ConnectionReport({ connection, myBirthData, embedded }: Connecti
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-20 text-center">
           <p className="text-sm text-text-body">
             {connection.birthData
-              ? "Pas assez de données pour comparer vos rythmes."
-              : `${connection.name} n'a pas encore partagé ses données de naissance.`}
+              ? perso("compat.pas_assez", locale)
+              : perso("compat.pas_partage", locale).replace("{n}", connection.name)}
           </p>
         </div>
       );
@@ -116,6 +118,9 @@ export function ConnectionReport({ connection, myBirthData, embedded }: Connecti
             theirName={connection.name}
             myBirthData={myBirthData}
             theirBirthData={connection.birthData}
+            // Le mois en cours part tout de suite. Les autres attendent d etre
+            // approches du regard — voir useVisible().
+            immediat={i === 0 || w.status === "active"}
           />
         ))}
         <div className="h-4" />
@@ -127,7 +132,46 @@ export function ConnectionReport({ connection, myBirthData, embedded }: Connecti
   return <div className="flex min-h-0 flex-col">{body}</div>;
 }
 
-// ─── WindowCard (unchanged from previous detail page) ────
+/* ─────────────────────────────────────────────────────────────────────────
+ * Vrai des que la carte approche de l ecran — et le reste.
+ *
+ * Avant : les six cartes lançaient leur lecture au modele a l instant ou
+ * l ecran s ouvrait. Six appels en parallele, dont cinq pour des mois que
+ * personne n avait fait defiler, et un ecran entier de barres grises qui
+ * clignotent. Chaque appel se paie, et le premier — le seul qu on regarde —
+ * attendait derriere les cinq autres.
+ *
+ * Le cache de getConnectionDelineation() ne protegeait de rien la premiere
+ * fois : c est precisement la premiere fois qui compte.
+ * ───────────────────────────────────────────────────────────────────────── */
+function useVisible(ref: RefObject<HTMLElement | null>, immediat: boolean): boolean {
+  const [vu, setVu] = useState(immediat);
+
+  useEffect(() => {
+    if (vu) return;
+    const el = ref.current;
+    if (!el) return;
+    // Vue native ancienne, ou test : pas d observateur, donc on ne cache
+    // rien. Le report d un tour evite d appeler setState pendant l effet.
+    if (typeof IntersectionObserver === "undefined") {
+      const t = setTimeout(() => setVu(true), 0);
+      return () => clearTimeout(t);
+    }
+    const io = new IntersectionObserver(
+      (entrees) => {
+        if (entrees.some((e) => e.isIntersecting)) { setVu(true); io.disconnect(); }
+      },
+      // De quoi charger juste avant que la carte entre, pas pendant.
+      { rootMargin: "240px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref, vu]);
+
+  return vu;
+}
+
+// ─── WindowCard ──────────────────────────────────────────
 
 function WindowCard({
   w,
@@ -137,6 +181,7 @@ function WindowCard({
   theirName,
   myBirthData,
   theirBirthData,
+  immediat,
 }: {
   w: MatchingWindow;
   period: ActivePeriod;
@@ -145,20 +190,27 @@ function WindowCard({
   theirName: string;
   myBirthData: BirthData | null;
   theirBirthData: BirthData;
+  immediat: boolean;
 }) {
-  const locale = detectLocale();
+  const locale = useLocale();
   const { resolvedTheme } = useTheme();
   // w.tierColor et relColor sortent du moteur : ils ne sont pas connus a
   // l avance, donc aucun jeton ne peut les couvrir. Les couleurs de palier
   // valent 2,02 a 3,19 sur le fond clair — elles ont ete choisies pour le
   // theme sombre, ou elles passent. On derive au rendu (regle 3).
   const theme = resolvedTheme === "light" ? "clair" : "sombre";
+
+  const carte = useRef<HTMLDivElement>(null);
+  const visible = useVisible(carte, immediat);
+  const premium = usePremiumStatus();
+
   const [del, setDel] = useState<ConnectionDelineation | SilenceDelineation | null>(null);
-  const openPremium = usePremiumTeaser();
-  const [delLoading, setDelLoading] = useState(true);
+  const [mur, setMur] = useState(false);
+  const [repondu, setRepondu] = useState(false);
 
   useEffect(() => {
-    if (!myBirthData) return;
+    if (!visible || !myBirthData) return;
+    let annule = false;
     getConnectionDelineation(
       period,
       w.relationship,
@@ -176,22 +228,159 @@ function WindowCard({
       },
     )
       .then((r) => {
-        // 402 : le serveur demande le plan. On ouvre le mur au lieu de servir
-        // en silence le texte brut du moteur. Le texte de repli reste affiche
-        // derriere, pour qu un refus du mur ne laisse pas un ecran vide.
-        if (estMurPayant(r)) { openPremium(); setDel(null); return; }
+        if (annule) return;
+        // 402. Avant, la carte appelait openPremium() ici : l ecran de vente
+        // se dressait tout seul, jusqu a six fois, devant quelqu un qui
+        // n avait encore rien lu. Et il arrivait sans savoir quel mois etait
+        // regarde, alors que memoriserDeclencheur() existe pour ca depuis le
+        // 01/09 et que tout le reste de l app s en sert.
+        //
+        // Maintenant le voile se pose SUR la carte. Il nomme le mois, il
+        // attend un doigt, et il retient ce qui etait regarde.
+        if (estMurPayant(r)) { setMur(true); setDel(null); return; }
+        setMur(false);
         setDel(r);
       })
-      .finally(() => setDelLoading(false));
-  }, [period, w.relationship, myBirthData, theirBirthData, openPremium]);
+      .finally(() => { if (!annule) setRepondu(true); });
+    return () => { annule = true; };
+    // `premium` est dans la liste exprès : au retour d un achat, la carte
+    // refait sa lecture au lieu de se contenter d enlever le flou d un texte
+    // de repli. Un 402 n est jamais mis en cache, donc l appel repart.
+  }, [visible, premium, period, w.relationship, myBirthData, theirBirthData]);
+
+  const chargement = !!myBirthData && visible && !repondu;
+  const murVisible = mur && !premium;
 
   const isActive = w.status === "active";
+  const estPasse = w.status === "past";
   const silencieux = estSilence(del);
   const lecture = del && !silencieux ? del : null;
 
+  const statut = isActive
+    ? perso("compat.actif", locale)
+    : estPasse
+      ? perso("compat.passe", locale)
+      : perso("compat.a_venir", locale);
+  const compte = isActive
+    ? perso("compat.jours_restants", locale).replace("{n}", String(w.daysLeft))
+    : estPasse
+      ? ""
+      : perso("compat.dans_jours", locale).replace("{n}", String(w.daysLeft));
+
+  const titre = lecture
+    ? lecture.ensemble.titre
+    : silencieux
+      ? perso("compat.rien_marquant", locale)
+      : w.title;
+  // w.title EST deja le mois : ne pas le repeter juste en dessous.
+  const sousTitre = titre === w.title ? "" : w.dateRange;
+
+  // Un mois passe garde son chapeau et se tait sur le reste : personne n a
+  // besoin qu on lui propose « cette semaine, dites-vous… » pour un mois qui
+  // est fini. Avant, la carte le proposait quand meme.
+  const detaille = !estPasse;
+
+  const corps = (
+    <>
+      {/* Le chapeau — les deux annees, et ce qui les prolonge */}
+      <div
+        className="mt-3 rounded-xl px-3.5 py-2.5"
+        style={{ background: `color-mix(in srgb, ${w.tierColor} 8%, transparent)` }}
+      >
+        {chargement && !lecture ? (
+          <Barre couleur={`color-mix(in srgb, ${w.tierColor} 20%, transparent)`} largeur="w-3/4" />
+        ) : (
+          <p className="text-xs font-semibold leading-relaxed text-text-heading">
+            {lecture ? lecture.ensemble.annees : w.sharedTheme}
+          </p>
+        )}
+        {lecture?.ensemble.eclipses && (
+          <Suite label={perso("compat.eclipses", locale)} texte={lecture.ensemble.eclipses} />
+        )}
+        {lecture?.ensemble.passages && (
+          <Suite label={perso("compat.ce_mois", locale)} texte={lecture.ensemble.passages} />
+        )}
+      </div>
+
+      {detaille && (
+        <>
+          <div className="mt-3 space-y-2">
+            <CartePersonne
+              eyebrow={perso("compat.vous", locale)}
+              eyebrowColor="var(--accent-purple)"
+              person={lecture?.personA}
+              fallback={w.you.description}
+              chargement={chargement && !lecture}
+              planet={w.you.planet}
+              locale={locale}
+            />
+            <CartePersonne
+              eyebrow={theirName}
+              eyebrowColor={texteLisible(relColor, theme, 0)}
+              person={lecture?.personB}
+              fallback={w.them.description}
+              chargement={chargement && !lecture}
+              planet={w.them.planet}
+              titreColor={texteLisible(relColor, theme, 0)}
+              locale={locale}
+            />
+          </div>
+
+          {/* « Qu est-ce que l un doit comprendre de ce que l autre porte ? »
+              C est la phrase que le produit vend. Elle etait posee dans un
+              encart identique aux deux blocs personne, en 12 px : on passait
+              dessus. Elle a maintenant le violet de l app, un filet, et le
+              corps le plus lisible de la carte. */}
+          {lecture?.ensemble.empathie && (
+            <div
+              className="mt-2.5 rounded-xl px-3.5 py-3"
+              style={{
+                background: "var(--surface-medium)",
+                borderLeft: "2px solid var(--accent-purple)",
+              }}
+            >
+              <p
+                className="mb-1 text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: "var(--accent-purple)" }}
+              >
+                {perso("compat.se_comprendre", locale)}
+              </p>
+              <p className="text-[13px] leading-relaxed text-text-body">
+                {lecture.ensemble.empathie}
+              </p>
+            </div>
+          )}
+
+          <div
+            className="mt-2 rounded-xl px-3.5 py-2.5"
+            style={{ background: `color-mix(in srgb, ${w.tierColor} 10%, transparent)` }}
+          >
+            <p
+              className="mb-1 text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: w.tierColor }}
+            >
+              {perso("compat.ensemble", locale)}
+            </p>
+            {chargement && !lecture ? (
+              <div className="space-y-1">
+                <Barre couleur={`color-mix(in srgb, ${w.tierColor} 15%, transparent)`} largeur="w-full" />
+                <Barre couleur={`color-mix(in srgb, ${w.tierColor} 15%, transparent)`} largeur="w-3/5" />
+              </div>
+            ) : (
+              <p className="text-xs font-medium leading-relaxed text-text-heading">
+                {lecture ? lecture.ensemble.aFaireEnsemble : w.action}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </>
+  );
+
   return (
     <motion.div
-      className="rounded-2xl overflow-hidden"
+      ref={carte}
+      className="overflow-hidden rounded-2xl"
       style={{
         // La carte tenait sur --surface-subtle (4 % de violet translucide) et
         // sur un lisere a la couleur du palier. Le trait retire, c est le fond
@@ -205,7 +394,7 @@ function WindowCard({
       transition={{ delay: 0.05 + i * 0.05 }}
     >
       {/* Status bar */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-1">
+      <div className="flex items-center justify-between px-4 pb-1 pt-3">
         <div className="flex items-center gap-2">
           <div
             className="h-2 w-2 rounded-full"
@@ -217,192 +406,162 @@ function WindowCard({
           <span
             className="text-[10px] font-bold uppercase tracking-widest"
             style={{
-              color: isActive
-                ? texteLisible(w.tierColor, theme, 0)
-                : "var(--text-body-subtle)",
+              color: isActive ? texteLisible(w.tierColor, theme, 0) : "var(--text-body-subtle)",
             }}
           >
-            {isActive ? perso("compat.actif", locale) : w.status === "past" ? "Passé" : "À venir"}
+            {statut}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <TierBadge tier={w.tier} color={w.tierColor} />
-          <span className="text-[10px] text-text-body-subtle">
-            {isActive ? `${w.daysLeft}j restants` : w.status === "past" ? "" : `dans ${w.daysLeft}j`}
-          </span>
+          <span className="text-[10px] text-text-body-subtle">{compte}</span>
         </div>
       </div>
 
       <div className="px-4 pb-4">
-        <h3 className="text-base font-bold text-text-heading mt-1">
-          {lecture ? lecture.ensemble.titre : silencieux ? "Rien de marquant" : w.title}
+        {/* Le mois en cours porte le titre le plus gros de l ecran : c est
+            celui qu on est venu lire. Les autres restent des reperes. */}
+        <h3
+          className={`mt-1 font-bold text-text-heading ${isActive ? "text-[17px] leading-tight" : "text-base"}`}
+        >
+          {titre}
         </h3>
-        <p className="text-[11px] text-text-body-subtle mt-0.5">{w.dateRange}</p>
+        {sousTitre && <p className="mt-0.5 text-[11px] text-text-body-subtle">{sousTitre}</p>}
 
         {silencieux ? (
+          // Se taire est une reponse, pas une panne. Elle a droit a la meme
+          // mise en page que les autres — pas a un rectangle gris vide.
           <div
             className="mt-3 rounded-xl px-3.5 py-2.5"
             style={{ background: `color-mix(in srgb, ${w.tierColor} 8%, transparent)` }}
           >
-            <p className="text-xs text-text-body leading-relaxed">
-              Pas de signal partagé assez solide ce mois-ci pour une lecture à deux.
-              On se tait plutôt que d&apos;inventer.
+            <p className="text-xs leading-relaxed text-text-body">
+              {perso("compat.silence_corps", locale)}
             </p>
           </div>
+        ) : murVisible ? (
+          <PremiumBlur
+            quand={w.dateRange}
+            capsuleId={w.monthKey}
+            titre={perso("flou.titre_match", locale).replace("{d}", w.title)}
+          >
+            {corps}
+          </PremiumBlur>
         ) : (
-          <>
-        <div
-          className="mt-3 rounded-xl px-3.5 py-2.5"
-          style={{ background: `color-mix(in srgb, ${w.tierColor} 8%, transparent)` }}
-        >
-          {delLoading ? (
-            <div
-              className="h-3 rounded animate-pulse w-3/4"
-              style={{ background: `color-mix(in srgb, ${w.tierColor} 20%, transparent)` }}
-            />
-          ) : (
-            <p className="text-xs font-semibold text-text-heading">
-              {lecture ? lecture.ensemble.annees : w.sharedTheme}
-            </p>
-          )}
-        </div>
-
-        {lecture?.ensemble.eclipses && (
-          <TechniqueLine label="Éclipses" text={lecture.ensemble.eclipses} />
-        )}
-        {lecture?.ensemble.passages && (
-          <TechniqueLine label="Ce mois" text={lecture.ensemble.passages} />
-        )}
-
-        <div className="mt-3 space-y-2">
-          <PersonTechniqueCard
-            eyebrow="Vous"
-            eyebrowColor="var(--accent-purple)"
-            titre={lecture?.personA.titre}
-            person={lecture?.personA}
-            fallback={w.you.description}
-            loading={delLoading}
-            planet={w.you.planet}
-          />
-          <PersonTechniqueCard
-            eyebrow={theirName}
-            eyebrowColor={texteLisible(relColor, theme, 0)}
-            titre={lecture?.personB.titre}
-            person={lecture?.personB}
-            fallback={w.them.description}
-            loading={delLoading}
-            planet={w.them.planet}
-            titreColor={texteLisible(relColor, theme, 0)}
-          />
-        </div>
-
-        {lecture?.ensemble.empathie && (
-          <div className="mt-2 rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
-            <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-text-body-subtle">
-              {t("interface_.se_comprendre", locale)}
-            </p>
-            <p className="text-xs text-text-body leading-relaxed">{lecture.ensemble.empathie}</p>
-          </div>
-        )}
-
-        <div
-          className="mt-2 rounded-xl px-3.5 py-2.5"
-          style={{
-            background: `color-mix(in srgb, ${w.tierColor} 10%, transparent)`,
-          }}
-        >
-          <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: w.tierColor }}>
-            {perso("compat.ensemble", locale)}
-          </p>
-          {delLoading ? (
-            <div className="space-y-1">
-              <div className="h-2.5 rounded animate-pulse w-full" style={{ background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)` }} />
-              <div className="h-2.5 rounded animate-pulse w-3/5" style={{ background: `color-mix(in srgb, ${w.tierColor} 15%, transparent)` }} />
-            </div>
-          ) : (
-            <p className="text-xs text-text-heading font-medium leading-relaxed">
-              {lecture ? lecture.ensemble.aFaireEnsemble : w.action}
-            </p>
-          )}
-        </div>
-          </>
+          corps
         )}
       </div>
     </motion.div>
   );
 }
 
-function TechniqueLine({ label, text }: { label: string; text: string }) {
+function Barre({ couleur, largeur }: { couleur: string; largeur: string }) {
   return (
-    <p className="mt-2 text-[11px] text-text-body-subtle leading-relaxed">
+    <div
+      className={`h-2.5 animate-pulse rounded ${largeur}`}
+      style={{ background: couleur }}
+    />
+  );
+}
+
+/** Une comparaison qui prolonge le chapeau, sans lui voler la vedette. */
+function Suite({ label, texte }: { label: string; texte: string }) {
+  return (
+    <p className="mt-1.5 text-[11px] leading-relaxed text-text-body-subtle">
       <span className="font-semibold text-text-body">{label} · </span>
-      {text}
+      {texte}
     </p>
   );
 }
 
-function PersonTechniqueCard({
+function CartePersonne({
   eyebrow,
   eyebrowColor,
-  titre,
   person,
   fallback,
-  loading,
+  chargement,
   planet,
   titreColor,
+  locale,
 }: {
   eyebrow: string;
   eyebrowColor: string;
-  titre?: string;
   person?: PersonDelineation;
   fallback: string;
-  loading: boolean;
+  chargement: boolean;
   planet: MatchingWindow["you"]["planet"];
   titreColor?: string;
+  locale: Locale;
 }) {
+  // Les trois techniques secondaires etaient trois blocs empiles, chacun avec
+  // son etiquette en capitales au-dessus : jusqu a huit paragraphes etiquetes
+  // par carte, pour deux personnes. Ca se lisait comme un formulaire.
+  //
+  // Elles tiennent en un seul paragraphe, l echelle de temps en tete de phrase.
+  // Le decompte de Marie-Ange tient toujours : deux a trois phrases, pas plus.
+  const suites = person
+    ? ([
+        person.eclipse ? { cle: "e", label: perso("compat.eclipse", locale), texte: person.eclipse } : null,
+        person.passage ? { cle: "p", label: perso("compat.ce_mois", locale), texte: person.passage } : null,
+        person.fond ? { cle: "f", label: perso("compat.chapitre", locale), texte: person.fond } : null,
+      ].filter(Boolean) as { cle: string; label: string; texte: string }[])
+    : [];
+
   return (
     <div className="rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
       <div className="flex items-start justify-between gap-2">
         <EyebrowLabel color={eyebrowColor} className="mb-1">
           {eyebrow}
         </EyebrowLabel>
-        {titre && (
+        {person?.titre && (
           <span
-            className="text-[9px] font-semibold uppercase tracking-widest shrink-0"
+            className="shrink-0 text-[9px] font-semibold uppercase tracking-widest"
             style={{ color: titreColor ?? eyebrowColor, opacity: titreColor ? 1 : 0.5 }}
           >
-            {titre}
+            {person.titre}
           </span>
         )}
       </div>
-      {loading ? (
+
+      {chargement ? (
         <div className="space-y-1">
-          <div className="h-2.5 rounded animate-pulse w-full" style={{ background: "var(--surface-medium)" }} />
-          <div className="h-2.5 rounded animate-pulse w-4/5" style={{ background: "var(--surface-medium)" }} />
+          <Barre couleur="var(--surface-medium)" largeur="w-full" />
+          <Barre couleur="var(--surface-medium)" largeur="w-4/5" />
         </div>
       ) : person ? (
-        <div className="space-y-2">
-          <TechniqueBlock label="Cette année" text={person.annee} />
-          {person.eclipse && <TechniqueBlock label="Éclipse" text={person.eclipse} />}
-          {person.passage && <TechniqueBlock label="Ce mois" text={person.passage} />}
-          {person.fond && <TechniqueBlock label="Chapitre" text={person.fond} />}
-          <p className="text-[10px] text-text-body-subtle italic leading-snug">{person.defi}</p>
-        </div>
+        <>
+          <p className="text-xs leading-relaxed text-text-body">{person.annee}</p>
+          {suites.length > 0 && (
+            <p className="mt-1.5 text-xs leading-relaxed text-text-body">
+              {suites.map((s, k) => (
+                <span key={s.cle}>
+                  {k > 0 && " "}
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-body-subtle">
+                    {s.label}
+                    {" · "}
+                  </span>
+                  {s.texte}
+                </span>
+              ))}
+            </p>
+          )}
+          {person.defi && (
+            // Le point dur : c est ce que l autre doit comprendre. Un filet a
+            // la couleur de la personne le detache de sa lecture, au lieu de
+            // le laisser finir le paragraphe en italique plus clair.
+            <p
+              className="mt-2 border-l-2 pl-2.5 text-[11px] italic leading-snug text-text-body-subtle"
+              style={{ borderColor: `color-mix(in srgb, ${eyebrowColor} 45%, transparent)` }}
+            >
+              {person.defi}
+            </p>
+          )}
+        </>
       ) : (
-        <p className="text-xs text-text-body leading-relaxed">{fallback}</p>
+        <p className="text-xs leading-relaxed text-text-body">{fallback}</p>
       )}
-      {planet && <PlanetPill planet={planet} className="mt-1.5" />}
-    </div>
-  );
-}
 
-function TechniqueBlock({ label, text }: { label: string; text: string }) {
-  return (
-    <div>
-      <p className="text-[9px] font-bold uppercase tracking-wider text-text-body-subtle mb-0.5">
-        {label}
-      </p>
-      <p className="text-xs text-text-body leading-relaxed">{text}</p>
+      {planet && <PlanetPill planet={planet} className="mt-1.5" />}
     </div>
   );
 }

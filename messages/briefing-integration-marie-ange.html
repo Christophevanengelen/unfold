@@ -96,12 +96,17 @@ a{color:var(--accent);word-break:break-all}
 
 <h3>Le flux</h3>
 <ol>
+<li><b>Avant toute invitation, la base sert de vitrine.</b> Tant que l'utilisateur n'a invité personne, on lui montre ce que ça donne avec les personnalités de ta base : voilà qui te ressemble, voilà qui a vécu un moment comme le tien. C'est ce qui donne envie d'inviter quelqu'un de vrai.</li>
 <li><b>L'invitation.</b> L'utilisateur choisit une personne de son cercle et lui envoie un lien. Il ne saisit pas la naissance de l'autre : c'est l'invité qui la donne, ou qui accepte depuis son propre compte.</li>
 <li><b>L'acceptation.</b> L'invité accepte, et voit la même chose que l'invitant : la phrase qui nomme leur connexion, leurs trois prochaines années à tour de rôle, le prochain moment commun. Les deux reçoivent la même lecture.</li>
-<li><b>La connexion vit.</b> Une connexion acceptée n'est pas une lecture unique, on la garde. Elle entre dans l'historique des connexions de chacun, consultable à tout moment. On ne l'efface jamais sans un geste de l'utilisateur.</li>
+<li><b>La connexion vit.</b> Une connexion acceptée n'est pas une lecture unique, on la garde. Chacun se constitue ainsi sa propre base de proches, consultable à tout moment — c'est elle, et non la base des personnalités, qui devient le cœur du Match une fois l'utilisateur installé. On n'efface jamais une connexion sans un geste de l'utilisateur.</li>
 <li><b>L'app parle au bon moment.</b> Pour chaque connexion gardée, l'app surveille les deux vies et prévient : <em>voici ce qui se termine maintenant entre vous, voici pourquoi c'est important, voici comment t'y préparer</em>. Une période qui arrive, un moment commun, une bascule chez l'autre. C'est ça l'accompagnement dans le temps.</li>
 <li><b>Réglable.</b> Dans les paramètres du compte, l'utilisateur choisit ce qu'il reçoit de ses connexions : les moments forts communs seulement, ou aussi les changements chez l'autre, ou tout. Connexion par connexion s'il le veut.</li>
 </ol>
+
+<h3>Où on en est déjà, mesuré dans le code</h3>
+<p>Une bonne partie existe : les connexions acceptées sont conservées — nom, lien choisi (partenaire, ami, famille, collègue), naissance, date de connexion, code d'invitation — en double écriture, sur l'appareil et sur notre serveur. La liste est consultable, le rapport à deux s'ouvre depuis chaque connexion, la délinéation est mise en cache sept jours, et la boucle d'invitation complète est là : je partage un lien, l'autre accepte, on est connectés.</p>
+<p>Ce qui n'existe pas encore, et c'est le cœur de ce qu'on veut : <b>les notifications ne regardent que la vie de la personne</b>, jamais ses connexions. Elles savent pointer vers l'écran d'une connexion, mais rien ne les déclenche sur ce qui se passe <i>entre deux personnes</i>. C'est ce qui transforme une lecture unique en accompagnement dans le temps, et c'est ce qu'on va construire.</p>
 
 <h3>Ce que ça demande</h3>
 <div class="tab"><table>

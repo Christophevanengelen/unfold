@@ -52,6 +52,7 @@ const CONTROLES = [
   { nom: "Secrets en clair", cmd: ["node", ["scripts/verifier-secrets.mjs"]] },
   { nom: "Consentement aux cookies", cmd: ["node", ["scripts/verifier-consentement.mjs"]] },
   { nom: "Maquette de l experience", cmd: ["node", ["scripts/verifier-maquette.mjs"]] },
+  { nom: "Textes du moteur", cmd: ["node", ["--experimental-strip-types", "scripts/verifier-textes-moteur.mjs"]] },
 ];
 
 /**

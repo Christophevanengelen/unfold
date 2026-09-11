@@ -517,6 +517,45 @@ const MOTS: Record<string, Traduction> = {
                              pt:"A construir a tua linha do tempo…", nl:"Je tijdlijn wordt opgebouwd…", ja:"タイムラインを作成しています…", zh:"正在构建你的时间线…", ar:"جارٍ بناء مخططك الزمني…" },
   "accueil.pas_encore": { fr:"Tu ne marchais même pas encore.", en:"You weren't even crawling yet.", es:"Todavía ni gateabas.", de:"Du bist noch nicht einmal gekrabbelt.", it:"Non gattonavi nemmeno ancora.",
                           pt:"Ainda nem gatinhavas.", nl:"Je kroop nog niet eens.", ja:"まだハイハイもしていませんでした。", zh:"那时你还不会爬。", ar:"لم تكن قد بدأت الحبو بعد." },
+  // ── L ecran de match : les mots de la carte ─────────────────────────────
+  //
+  // Ils etaient tous en dur, en francais, dans ConnectionReport.tsx — dans une
+  // app qui tourne en dix langues. Quelqu un en japonais lisait « Passé »,
+  // « À venir », « Se comprendre » et « 12 j restants ».
+  //
+  // Les noms de mois, eux, ne sont pas ici : Intl.DateTimeFormat les connait
+  // dans les dix langues, une table de plus serait une table a maintenir.
+  "compat.passe":        { fr:"Passé", en:"Past", es:"Pasado", de:"Vorbei", it:"Passato",
+                           pt:"Passado", nl:"Voorbij", ja:"過去", zh:"已过", ar:"مضى" },
+  "compat.a_venir":      { fr:"À venir", en:"Ahead", es:"Por venir", de:"Kommt noch", it:"In arrivo",
+                           pt:"Por vir", nl:"Op komst", ja:"これから", zh:"即将", ar:"قادم" },
+  "compat.jours_restants":{ fr:"{n} j restants", en:"{n} days left", es:"quedan {n} d", de:"noch {n} T", it:"{n} g rimasti",
+                           pt:"faltam {n} d", nl:"nog {n} d", ja:"残り{n}日", zh:"还剩 {n} 天", ar:"بقي {n} يوم" },
+  "compat.dans_jours":   { fr:"dans {n} j", en:"in {n} days", es:"en {n} d", de:"in {n} T", it:"tra {n} g",
+                           pt:"daqui a {n} d", nl:"over {n} d", ja:"{n}日後", zh:"{n} 天后", ar:"خلال {n} يوم" },
+  "flou.titre_match":    { fr:"Ce que vous traversez en {d}", en:"What you’re both going through in {d}", es:"Lo que atravesáis en {d}", de:"Was ihr im {d} durchlebt", it:"Cosa state attraversando in {d}",
+                           pt:"O que atravessam em {d}", nl:"Wat jullie doormaken in {d}", ja:"{d}に二人が通っているもの", zh:"{d}你们正在经历的", ar:"ما تمرّان به في {d}" },
+  "compat.rien_marquant":{ fr:"Rien de marquant", en:"Nothing standing out", es:"Nada que destaque", de:"Nichts Auffälliges", it:"Niente di rilevante",
+                           pt:"Nada de marcante", nl:"Niets opvallends", ja:"目立つものはなし", zh:"没有突出的信号", ar:"لا شيء بارز" },
+  "compat.silence_corps":{ fr:"Pas de signal partagé assez solide ce mois-ci. On préfère se taire qu'inventer.", en:"No shared signal strong enough this month. We'd rather say nothing than make something up.", es:"Ninguna señal compartida lo bastante sólida este mes. Preferimos callar antes que inventar.", de:"Diesen Monat kein gemeinsames Signal, das stark genug wäre. Lieber nichts sagen als etwas erfinden.", it:"Nessun segnale condiviso abbastanza solido questo mese. Meglio tacere che inventare.",
+                           pt:"Nenhum sinal partilhado suficientemente sólido este mês. Preferimos calar-nos a inventar.", nl:"Deze maand geen gedeeld signaal dat sterk genoeg is. Liever niets zeggen dan iets verzinnen.", ja:"今月は二人に共通する確かなシグナルがありません。作り話をするより黙ります。", zh:"本月没有足够扎实的共同信号。我们宁可不说，也不编造。", ar:"لا توجد إشارة مشتركة قوية بما يكفي هذا الشهر. نفضّل الصمت على الاختلاق." },
+  "compat.se_comprendre":{ fr:"Se comprendre", en:"Understanding each other", es:"Entenderse", de:"Einander verstehen", it:"Capirsi",
+                           pt:"Compreenderem-se", nl:"Elkaar begrijpen", ja:"おたがいを知る", zh:"理解彼此", ar:"أن يفهم أحدكما الآخر" },
+  "compat.cette_annee":  { fr:"Cette année", en:"This year", es:"Este año", de:"Dieses Jahr", it:"Quest'anno",
+                           pt:"Este ano", nl:"Dit jaar", ja:"今年", zh:"今年", ar:"هذا العام" },
+  "compat.ce_mois":      { fr:"Ce mois", en:"This month", es:"Este mes", de:"Diesen Monat", it:"Questo mese",
+                           pt:"Este mês", nl:"Deze maand", ja:"今月", zh:"本月", ar:"هذا الشهر" },
+  "compat.chapitre":     { fr:"Chapitre", en:"Chapter", es:"Capítulo", de:"Kapitel", it:"Capitolo",
+                           pt:"Capítulo", nl:"Hoofdstuk", ja:"章", zh:"篇章", ar:"فصل" },
+  "compat.eclipse":      { fr:"Éclipse", en:"Eclipse", es:"Eclipse", de:"Finsternis", it:"Eclissi",
+                           pt:"Eclipse", nl:"Verduistering", ja:"食", zh:"食相", ar:"كسوف" },
+  "compat.eclipses":     { fr:"Éclipses", en:"Eclipses", es:"Eclipses", de:"Finsternisse", it:"Eclissi",
+                           pt:"Eclipses", nl:"Verduisteringen", ja:"食", zh:"食相", ar:"الكسوفات" },
+  "compat.pas_assez":    { fr:"Pas assez de données pour comparer vos rythmes.", en:"Not enough data to compare your rhythms.", es:"No hay datos suficientes para comparar vuestros ritmos.", de:"Zu wenig Daten, um eure Rhythmen zu vergleichen.", it:"Dati insufficienti per confrontare i vostri ritmi.",
+                           pt:"Dados insuficientes para comparar os vossos ritmos.", nl:"Te weinig gegevens om jullie ritmes te vergelijken.", ja:"リズムを比べるにはデータが足りません。", zh:"数据不足，无法比较你们的节奏。", ar:"لا توجد بيانات كافية لمقارنة إيقاعيكما." },
+  "compat.pas_partage":  { fr:"{n} n'a pas encore partagé ses données de naissance.", en:"{n} hasn't shared their birth details yet.", es:"{n} todavía no ha compartido sus datos de nacimiento.", de:"{n} hat die Geburtsdaten noch nicht geteilt.", it:"{n} non ha ancora condiviso i suoi dati di nascita.",
+                           pt:"{n} ainda não partilhou os dados de nascimento.", nl:"{n} heeft de geboortegegevens nog niet gedeeld.", ja:"{n}さんはまだ出生情報を共有していません。", zh:"{n} 还没有分享出生信息。", ar:"لم يشارك {n} بيانات ميلاده بعد." },
+
 };
 
 /**

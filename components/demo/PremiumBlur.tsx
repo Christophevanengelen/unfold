@@ -34,18 +34,29 @@ interface PremiumBlurProps {
   quand?: string;
   /** L identifiant de la periode, pour y revenir revelee apres l achat. */
   capsuleId?: string;
+  /**
+   * Un titre deja redige, quand l appelant sait mieux nommer ce qui est
+   * masque que « le {date} » ne le dit.
+   *
+   * Le match en a besoin : il cache une lecture de MOIS, pour DEUX personnes.
+   * « Ce qui t attend le Sep 2026 » y etait faux deux fois — la preposition et
+   * le nombre. La carte passe donc « Ce que vous traversez en Septembre 2026 ».
+   */
+  titre?: string;
 }
 
-export function PremiumBlur({ children, blurAmount = 8, quand, capsuleId }: PremiumBlurProps) {
+export function PremiumBlur({ children, blurAmount = 8, quand, capsuleId, titre }: PremiumBlurProps) {
   const isPrem = usePremiumStatus();
   const locale = useLocale();
 
   // On parle du RESULTAT, pas de la fonctionnalite ni de la technologie qui la
   // produit. Et de SA periode quand on la connait.
   const text = {
-    headline: quand
-      ? perso("flou.titre_date", locale).replace("{d}", quand)
-      : perso("flou.titre", locale),
+    headline: titre
+      ? titre
+      : quand
+        ? perso("flou.titre_date", locale).replace("{d}", quand)
+        : perso("flou.titre", locale),
     sub: perso("flou.sous", locale),
   };
 

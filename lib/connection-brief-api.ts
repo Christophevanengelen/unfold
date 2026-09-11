@@ -10,6 +10,9 @@ import type { BirthData } from "@/lib/birth-data";
 import type { RelationshipType, MatchingWindow } from "@/lib/matching-narratives";
 import type { PlanetKey } from "@/lib/domain-config";
 import { apiFetch } from "@/lib/api-client";
+import { detectLocale, type Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
+import { nettoyerTexteMoteur } from "@/lib/nettoyer-texte-moteur";
 
 // ─── API response types (exported for delineation pipeline) ──
 
@@ -178,40 +181,24 @@ const TIER_COLORS: Record<string, string> = {
   SUBTLE: "#8B7FC2",
 };
 
-const MONTH_FR = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-];
-const MONTH_SHORT = [
-  "Jan", "Fév", "Mar", "Avr", "Mai", "Jun",
-  "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc",
-];
-
 /**
- * Le moteur envoie encore « Zodiaque Déchaîné » dans `constructiveDirection`
- * (B0bis — traduction litterale de Zodiacal Releasing). Ce texte s affiche
- * tel quel des que l IA echoue ou que la personne n est pas payante. On le
- * neutralise cote app en attendant la correction moteur.
+ * Les noms de mois venaient de deux tables francaises, servies aux dix langues
+ * du produit : quelqu un en japonais lisait « Sep 2026 » et « Septembre ».
+ * Intl les connait partout, et il n y a plus de table a tenir a jour.
  */
-function nettoyerRepliMoteur(texte: string | undefined | null): string {
-  if (!texte) return "";
-  return texte
-    .replace(/\s*dans votre Zodiaque\s+D[ée]cha[îi]n[ée]\.?/gi, ".")
-    .replace(/Zodiaque\s+D[ée]cha[îi]n[ée]/gi, "chapitre de vie")
-    .replace(/lib[ée]ration\s+zodiacale/gi, "chapitre de vie")
-    .replace(/Lot de Fortune/gi, "circonstances")
-    .replace(/Lot d['']Esprit/gi, "direction")
-    .replace(/Lot d['']?[ÉE]ros/gi, "liens")
-    .replace(/\.\s*\./g, ".")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+function mois(monthDate: Date, locale: Locale, forme: "long" | "short"): string {
+  const m = new Intl.DateTimeFormat(locale, { month: forme, year: "numeric" })
+    .format(monthDate);
+  return m.charAt(0).toUpperCase() + m.slice(1);
 }
+
 
 // ─── Adapter: ActivePeriod[] → MatchingWindow[] ──────────
 
 function adaptPeriods(
   periods: ActivePeriod[],
   relationship: RelationshipType,
+  locale: Locale,
 ): MatchingWindow[] {
   const today = new Date();
 
@@ -231,29 +218,40 @@ function adaptPeriods(
       monthDate.getFullYear() === today.getFullYear();
     const isPast = monthDate < new Date(today.getFullYear(), today.getMonth(), 1);
     const status = isCurrentMonth ? "active" : isPast ? "past" : "upcoming";
-    // Les jours restants se comptent jusqu a la FIN du mois, pas jusqu a son
-    // debut. La formule precedente comparait a monthDate — le 1er du mois —
-    // donc a partir du 2, la fenetre en cours annonçait « 0 j restants »
-    // jusqu au 31. La moitie de chaque mois affichait une fenetre expiree.
+    // Deux comptes differents, parce que les deux phrases sont differentes.
+    //
+    // « 12 j restants » se compte jusqu a la FIN du mois. La formule d avant
+    // comparait au 1er : a partir du 2, la fenetre en cours annonçait « 0 j
+    // restants » jusqu au 31. La moitie de chaque mois affichait une fenetre
+    // expiree.
+    //
+    // « dans 12 j » se compte jusqu au DEBUT du mois — sinon octobre, lu le
+    // 11 septembre, annonçait « dans 50 j », c est-a-dire le jour ou il se
+    // termine. Les deux comptes tombaient dans la meme variable.
+    const debutDuMois = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
     const finDuMois = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+    const cible = status === "upcoming" ? debutDuMois : finDuMois;
     const daysLeft = Math.max(
       0,
-      Math.ceil((finDuMois.getTime() - today.getTime()) / 86_400_000),
+      Math.ceil((cible.getTime() - today.getTime()) / 86_400_000),
     );
 
     // Le repli valait la couleur de SUBTLE : un palier inconnu se peignait donc
     // exactement comme un « alignement subtil » — la couleur EST le palier dans
     // cette liste. Gris neutre : visiblement pas un palier.
     const tierColor = TIER_COLORS[p.tier] ?? "#8A8A8A";
-    const title = isCurrentMonth
-      ? "Alignement actif"
-      : p.tier === "PEAK"
-        ? `Fenêtre forte — ${MONTH_FR[month - 1]}`
-        : `Alignement ${MONTH_FR[month - 1]}`;
+    // Le titre disait « Alignement actif », « Alignement Septembre ». Or
+    // « alignement » est sur la liste des mots interdits du prompt — le repli
+    // de l app contredisait donc le texte que l app produit. Le mois, lui, est
+    // vrai dans les dix langues et n annonce rien.
+    //
+    // Le palier n est pas repete ici : la pastille de palier le dit deja, a
+    // trois centimetres de la.
+    const title = mois(monthDate, locale, "long");
 
     return [{
       title,
-      dateRange: `${MONTH_SHORT[month - 1]} ${year}`,
+      dateRange: mois(monthDate, locale, "short"),
       monthKey: p.monthKey,
       daysLeft,
       status,
@@ -261,18 +259,18 @@ function adaptPeriods(
       tierColor,
       relationship,
       you: {
-        description: nettoyerRepliMoteur(p.personAFocus.constructiveDirection),
+        description: nettoyerTexteMoteur(p.personAFocus.constructiveDirection),
         planet: toPlanetKey(p.personAFocus.primarySignal),
         category: p.personAFocus.primarySignal.category,
       },
       them: {
-        description: nettoyerRepliMoteur(p.personBFocus.constructiveDirection),
+        description: nettoyerTexteMoteur(p.personBFocus.constructiveDirection),
         planet: toPlanetKey(p.personBFocus.primarySignal),
         category: p.personBFocus.primarySignal.category,
       },
-      sharedTheme: p.sharedTheme,
-      insight: p.sharedInsight,
-      action: p.actionTogether,
+      sharedTheme: nettoyerTexteMoteur(p.sharedTheme),
+      insight: nettoyerTexteMoteur(p.sharedInsight),
+      action: nettoyerTexteMoteur(p.actionTogether),
     }];
   });
 }
@@ -336,7 +334,7 @@ export async function fetchConnectionBrief(
   }
 
   const periods = data.connectionBrief.activePeriods;
-  const allWindows = adaptPeriods(periods, relationship);
+  const allWindows = adaptPeriods(periods, relationship, detectLocale());
   const windows = sortWindows(allWindows);
 
   // Return raw periods in the same order as sorted windows
