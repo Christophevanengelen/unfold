@@ -1,69 +1,53 @@
 /**
- * La fiche de match entre deux personnes.
+ * La fiche de compatibilité entre deux personnes.
  *
- * ─── CE QUE LE MARCHE FAIT, ET POURQUOI ON NE LE FAIT PAS ───────────────────
+ * ─── CE QUE LE PRODUIT VEUT ─────────────────────────────────────────────────
  *
- * Veille du 11/09/2026 sur Co-Star, The Pattern, Sanctuary, CHANI, Cafe
- * Astrology, TimePassages, Astrotheme, Stellium, Nebula, Astrology Zone.
+ * Christophe, 11/09/2026 : « les gens, ce qu'ils veulent, c'est avoir un score
+ * de compatibilité en testant leur dating, donc une fiche de compatibilité
+ * générale plutôt que dans le temps. Tu peux laisser une indication temps si
+ * elle est extrêmement pertinente. »
  *
- * Aucun acteur credible n affiche un pourcentage unique de compatibilite. Les
- * serieux font l un de trois choix : un score PAR AXE sans total (Sanctuary,
- * TimePassages), un NOM de categorie sans chiffre (The Pattern, sept niveaux),
- * ou pas de score du tout (Astrology Zone, astro.com). Le pourcentage unique
- * est le marqueur des calculateurs clones et des entonnoirs de vente.
+ * Donc : un score global en tête, des axes, ce qui rassemble et ce qui
+ * complète. Le moment ne passe qu'en dernier, et seulement s'il se détache.
  *
- * Les astrologues eux-memes le disent. Cafe Astrology, qui publie pourtant une
- * grille de +4 a -4 : « I have always skipped past score sheets » et « it IS
- * desirable to have some challenging aspects in a relationship ». Astrotheme
- * precise que sa note dit « how smoothly your relationship is likely to
- * develop. It does not address its quality ».
+ * ─── CE QUE LE MOTEUR DONNE, MESURÉ LE 11/09/2026 ───────────────────────────
  *
- * Et la recherche est plus severe encore, sans parler d astrologie : Finkel et
- * al. 2012 (Psychological Science in the Public Interest) ne trouvent aucune
- * preuve qu un algorithme d appariement fonctionne, parce que ce qui predit un
- * couple — la maniere de traverser le stress ensemble — n existe pas dans des
- * donnees collectees avant la rencontre. Joel, Eastwick & Finkel 2017 : plus de
- * cent mesures par personne, et le modele ne predit presque rien de l attirance
- * d une personne precise pour une autre.
+ * Aucune route de synastrie n'existe côté AstroLearn : `synastry-chart`,
+ * `composite-chart`, `query/relationships` répondent tous 404. Il n'y a donc
+ * pas, aujourd'hui, de comparaison entre deux thèmes de naissance — ni aspects
+ * croisés, ni composite. C'est demandé à Marie-Ange.
  *
- * ─── CE QU ON FAIT A LA PLACE ───────────────────────────────────────────────
+ * Ce qui existe : `connection-brief` accepte DEUX NAISSANCES LIBRES (date,
+ * heure, lieu, fuseau), répond en 3 s, et rend jusqu'à SIX périodes — six, quel
+ * que soit le nombre de mois demandé, mesuré à 12 et à 24. Chaque période porte
+ * un objet `comparaison` calculé par le moteur : domaines communs, domaines
+ * propres à chacun, charge, tonalité, tempo, écart.
  *
- * Un chiffre, oui — Christophe le demande et il a raison, un chiffre se lit et
- * se partage. Mais un chiffre DATE, qui ne dit jamais si deux personnes se
- * conviennent :
+ * Le score de cette fiche agrège ces six périodes. Ce n'est donc pas une
+ * compatibilité de caractère au sens des sites d'astrologie — ça, le moteur ne
+ * le calcule pas. C'est la part de terrain que deux vies partagent sur tout ce
+ * qu'on peut voir d'elles. Le texte de l'écran le dit ainsi, sans jamais
+ * promettre autre chose.
  *
- *   « Ce mois-ci, vous etes sur le meme terrain a 72 % »
- *   et non « vous etes compatibles a 72 % ».
+ * ─── POURQUOI QUATRE AXES ET PAS UN SEUL CHIFFRE ────────────────────────────
  *
- * Le premier se verifie, change le mois suivant, et n exclut personne. Le
- * second est un verdict sur des gens. C est toute la difference, et c est le
- * terrain que The Pattern a nomme sans jamais l outiller : chacune de leurs
- * sept categories se termine par « sauf si le timing est mauvais entre vous ».
+ * Veille du 11/09 sur Co-Star, The Pattern, Sanctuary, CHANI, Cafe Astrology,
+ * TimePassages, Astrotheme, Stellium, Nebula, Astrology Zone : aucun acteur
+ * crédible n'affiche un pourcentage unique nu. Les sérieux donnent un score par
+ * axe, ou un nom de catégorie, ou rien. Cafe Astrology, qui publie pourtant un
+ * barème : « it IS desirable to have some challenging aspects in a
+ * relationship ». On garde donc le chiffre que Christophe demande — il se lit
+ * et se partage — mais on l'accompagne de quatre axes qui, eux, se lisent.
  *
- * Trois choses qu aucun concurrent ne fait, et qui viennent de nos donnees :
- *
- *  1. DEUX AXES SEPARES, jamais additionnes. L intensite (a quel point ce mois
- *     vous remue tous les deux) et l aisance (a quel point il est simple). Un
- *     lien fort et rugueux n est pas un lien rate — c est l observation de Cafe
- *     Astrology, que personne n a mise a l ecran.
- *  2. L ASYMETRIE. Ce que A vit avec B n est pas ce que B vit avec A. Aucun
- *     produit du marche n ecrit deux lectures differentes pour un meme lien.
- *  3. LA DATE. Le score porte un mois, il est vrai ce mois-la, et il bouge.
- *
- * ─── D OU VIENNENT LES CHIFFRES ─────────────────────────────────────────────
- *
- * De `Comparaison`, calcule par le moteur de Marie-Ange (couche 3, 02/09/2026)
- * et rendu par `connection-brief` sur chaque periode. On ne compare rien
- * nous-memes, on ne recalcule rien : on met en forme ce que le moteur dit.
- *
- * Aucun mot de technique n en sort : ni planete, ni aspect, ni maison — c est
- * une regle du produit, voir REPORTING-REGLES.md.
+ * Et deux règles qui ne bougent pas : aucun nom de technique n'en sort, et le
+ * mot « incompatible » n'existe pas ici. Un lien intense et rugueux n'est pas
+ * un lien raté.
  */
 
 import type { Comparaison } from "@/lib/connection-brief-api";
 
-/** Les douze domaines, dans les mots du produit. La clef est la maison, mais
- *  ce mot ne sort jamais d ici. */
+/** Les douze domaines, dans les mots du produit. Le mot « maison » ne sort jamais d ici. */
 export const DOMAINE: Record<number, string> = {
   1: "domaine.identite",
   2: "domaine.argent",
@@ -81,40 +65,36 @@ export const DOMAINE: Record<number, string> = {
 
 export type Niveau = "fort" | "moyen" | "faible";
 
-export interface AxeMatch {
-  /** 0 a 100. Jamais additionne a un autre axe. */
+export interface Axe {
+  /** 0 a 100. Les axes ne s additionnent jamais entre eux. */
   valeur: number;
   niveau: Niveau;
 }
 
-export interface LectureUne {
-  /** Ce que cette personne-ci porte ce mois : vide, leger, charge, pic. */
-  charge: Comparaison["charge"]["A"];
-  /** Soutien, mixte, friction, neutre. */
-  tonalite: Comparaison["tonalite"]["A"];
-  tempo: Comparaison["tempo"]["A"];
-  /** Les domaines qui lui sont propres ce mois — ce que l autre ne vit pas. */
-  domainesPropres: number[];
+export interface Moment {
+  /** Clef de mois, « 2026-11 ». */
+  mois: string;
+  /** Ce qui s y partage. */
+  domaines: number[];
 }
 
-export interface FicheMatch {
-  /** Le mois que cette fiche decrit. Un score sans sa date est un verdict. */
-  mois: string;
-  /** Terrain commun, en pourcentage des domaines ouverts chez l un ou l autre. */
-  terrainCommun: number;
-  /** Les domaines partages ce mois. */
-  communs: number[];
-  /** A quel point ce mois remue les deux. Ne se confond pas avec l aisance. */
-  intensite: AxeMatch;
-  /** A quel point il est simple. Un lien intense peu aise reste un lien fort. */
-  aisance: AxeMatch;
-  /** Synchrone, decale, asymetrique — le rythme, pas la qualite. */
-  ecart: Comparaison["ecart"];
-  /** La lecture de chacun, differente par construction. */
-  toi: LectureUne;
-  autre: LectureUne;
-  /** Vrai : le moteur n a rien de solide a dire. On se tait, on n invente pas. */
-  silence: boolean;
+export interface FicheCompatibilite {
+  /** Le chiffre de tete : la part de terrain partagee. */
+  score: number;
+  /** Les quatre axes, lus separement. */
+  terrain: Axe;
+  climat: Axe;
+  equilibre: Axe;
+  rythme: Axe;
+  /** Ce qui revient le plus souvent chez les deux — ce qui vous rassemble. */
+  rassemble: number[];
+  /** Ce que chacun porte sans l autre — la complementarite. */
+  toiSeul: number[];
+  autreSeul: number[];
+  /** Le meilleur mois, seulement s il se detache nettement. Sinon null. */
+  moment: Moment | null;
+  /** Nombre de periodes reellement mesurees. Sous 2, on n affiche pas de score. */
+  mesures: number;
 }
 
 const POIDS_CHARGE: Record<Comparaison["charge"]["A"], number> = {
@@ -124,13 +104,19 @@ const POIDS_CHARGE: Record<Comparaison["charge"]["A"], number> = {
   pic: 100,
 };
 
-/** Le confort de chacun. « mixte » n est pas la moitie d un bon mois : c est un
- *  mois qui tire dans deux sens, donc plus proche du milieu que du haut. */
+/** « mixte » n est pas la moitie d un bon climat : c est un climat qui tire dans
+ *  deux sens, donc plus proche du milieu que du haut. */
 const POIDS_TONALITE: Record<Comparaison["tonalite"]["A"], number> = {
   soutien: 100,
   neutre: 62,
   mixte: 45,
   friction: 22,
+};
+
+const POIDS_TEMPO: Record<Comparaison["tempo"]["A"], number> = {
+  lent: 0,
+  moyen: 50,
+  rapide: 100,
 };
 
 function niveauDe(v: number): Niveau {
@@ -139,76 +125,111 @@ function niveauDe(v: number): Niveau {
   return "faible";
 }
 
-function axe(valeur: number): AxeMatch {
+function axe(valeur: number): Axe {
   const v = Math.max(0, Math.min(100, Math.round(valeur)));
   return { valeur: v, niveau: niveauDe(v) };
 }
 
+function moyenne(xs: number[]): number {
+  return xs.length === 0 ? 0 : xs.reduce((a, b) => a + b, 0) / xs.length;
+}
+
+/** Les valeurs les plus frequentes d abord, jusqu a `max`. */
+function lesPlusFrequents(compte: Map<number, number>, max: number): number[] {
+  return [...compte.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, max)
+    .map(([d]) => d);
+}
+
 /**
- * Met en forme la comparaison du moteur. Rend `null` si la comparaison manque :
- * une fiche sans donnees serait une fiche inventee.
+ * Agrege les periodes rendues par le moteur en une fiche.
+ *
+ * Rend `null` sous deux periodes mesurees : un score tire d un seul mois serait
+ * un score de ce mois-la, presente comme une compatibilite. C est exactement ce
+ * qu on refuse de faire.
  */
-export function lireFiche(
-  comparaison: Comparaison | undefined,
-  mois: string,
-): FicheMatch | null {
-  if (!comparaison) return null;
+export function lireCompatibilite(
+  periodes: { monthKey: string; comparaison?: Comparaison }[],
+): FicheCompatibilite | null {
+  const utiles = periodes.filter(
+    (p): p is { monthKey: string; comparaison: Comparaison } =>
+      Boolean(p.comparaison) && !p.comparaison!.silence,
+  );
+  if (utiles.length < 2) return null;
 
-  const { memesDomaines, domainesA, domainesB, charge, tonalite, tempo, ecart, silence } =
-    comparaison;
+  const parts: number[] = [];
+  const climats: number[] = [];
+  const equilibres: number[] = [];
+  const rythmes: number[] = [];
+  const communs = new Map<number, number>();
+  const propresA = new Map<number, number>();
+  const propresB = new Map<number, number>();
 
-  // Le terrain commun se mesure sur l union de ce qui est ouvert chez l un ou
-  // chez l autre — pas sur douze domaines fixes, dont la plupart sont fermes
-  // chez tout le monde ce mois-ci. Un denominateur qui ne bouge jamais rendrait
-  // tous les scores faibles et tous les mois identiques.
-  const union = new Set([...domainesA, ...domainesB]);
-  const terrainCommun = union.size === 0 ? 0 : Math.round((memesDomaines.length / union.size) * 100);
+  for (const { comparaison: c } of utiles) {
+    const union = new Set([...c.domainesA, ...c.domainesB]);
+    parts.push(union.size === 0 ? 0 : (c.memesDomaines.length / union.size) * 100);
 
-  // L intensite est la charge des DEUX : un mois ou l un traverse tout et
-  // l autre rien n est un mois intense pour un seul, et la fiche doit le dire
-  // par l asymetrie, pas par une moyenne qui l efface.
-  const intensite = axe((POIDS_CHARGE[charge.A] + POIDS_CHARGE[charge.B]) / 2);
-  const aisance = axe((POIDS_TONALITE[tonalite.A] + POIDS_TONALITE[tonalite.B]) / 2);
+    climats.push((POIDS_TONALITE[c.tonalite.A] + POIDS_TONALITE[c.tonalite.B]) / 2);
 
-  const propres = (mien: number[], sien: number[]) => mien.filter((d) => !sien.includes(d));
+    // L equilibre : 100 quand les deux portent autant, 0 quand l un porte tout.
+    // C est la seule facon honnete de dire « l un traverse beaucoup, l autre
+    // rien » sans en faire un defaut de l un des deux.
+    equilibres.push(100 - Math.abs(POIDS_CHARGE[c.charge.A] - POIDS_CHARGE[c.charge.B]));
+
+    // Le rythme : meme tempo = 100. L ecart du moteur corrige a la marge, parce
+    // qu il voit des choses que le tempo seul ne dit pas.
+    const memeTempo = 100 - Math.abs(POIDS_TEMPO[c.tempo.A] - POIDS_TEMPO[c.tempo.B]);
+    const bonus = c.ecart === "synchrone" ? 12 : c.ecart === "asymetrique" ? -12 : 0;
+    rythmes.push(memeTempo + bonus);
+
+    for (const d of c.memesDomaines) communs.set(d, (communs.get(d) ?? 0) + 1);
+    for (const d of c.domainesA) if (!c.domainesB.includes(d)) propresA.set(d, (propresA.get(d) ?? 0) + 1);
+    for (const d of c.domainesB) if (!c.domainesA.includes(d)) propresB.set(d, (propresB.get(d) ?? 0) + 1);
+  }
+
+  // Le moment ne s affiche que s il se detache : au moins un tiers de terrain
+  // partage de plus que la moyenne, et pas le premier mois venu. Sinon, rien —
+  // une « meilleure periode » qui n en est pas une serait une invention.
+  const moyennePart = moyenne(parts);
+  let moment: Moment | null = null;
+  let meilleur = -1;
+  utiles.forEach(({ monthKey, comparaison: c }, i) => {
+    if (parts[i] > meilleur && parts[i] >= moyennePart * 1.33 && c.memesDomaines.length > 0) {
+      meilleur = parts[i];
+      moment = { mois: monthKey, domaines: [...c.memesDomaines] };
+    }
+  });
 
   return {
-    mois,
-    terrainCommun,
-    communs: [...memesDomaines],
-    intensite,
-    aisance,
-    ecart,
-    toi: {
-      charge: charge.A,
-      tonalite: tonalite.A,
-      tempo: tempo.A,
-      domainesPropres: propres(domainesA, domainesB),
-    },
-    autre: {
-      charge: charge.B,
-      tonalite: tonalite.B,
-      tempo: tempo.B,
-      domainesPropres: propres(domainesB, domainesA),
-    },
-    silence,
+    score: Math.round(moyennePart),
+    terrain: axe(moyennePart),
+    climat: axe(moyenne(climats)),
+    equilibre: axe(moyenne(equilibres)),
+    rythme: axe(moyenne(rythmes)),
+    rassemble: lesPlusFrequents(communs, 3),
+    toiSeul: lesPlusFrequents(propresA, 2),
+    autreSeul: lesPlusFrequents(propresB, 2),
+    moment,
+    mesures: utiles.length,
   };
 }
 
 /**
  * Une fiche d exemple, pour montrer la fonction a quelqu un qui n a encore
- * connecte personne. Elle est marquee comme exemple a l ecran : ce ne sont les
+ * connecte personne. Elle est marquee « exemple » a l ecran : ce ne sont les
  * donnees de personne, et le produit ne presente jamais un exemple comme une
  * lecture.
  */
-export const FICHE_EXEMPLE: FicheMatch = {
-  mois: "",
-  terrainCommun: 60,
-  communs: [3, 10],
-  intensite: axe(83),
-  aisance: axe(53),
-  ecart: "decale",
-  toi: { charge: "pic", tonalite: "mixte", tempo: "lent", domainesPropres: [2] },
-  autre: { charge: "charge", tonalite: "soutien", tempo: "rapide", domainesPropres: [4] },
-  silence: false,
+export const FICHE_EXEMPLE: FicheCompatibilite = {
+  score: 64,
+  terrain: axe(64),
+  climat: axe(71),
+  equilibre: axe(48),
+  rythme: axe(82),
+  rassemble: [3, 5, 10],
+  toiSeul: [2],
+  autreSeul: [4],
+  moment: null,
+  mesures: 6,
 };

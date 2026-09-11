@@ -1,31 +1,32 @@
 "use client";
 
 /**
- * La fiche de match : un chiffre, deux axes, et deux lectures.
+ * La fiche de compatibilité : un chiffre, quatre axes, deux colonnes.
  *
- * Le dessin suit la regle posee dans `lib/score-match.ts` : le chiffre porte un
- * mois, jamais un jugement sur deux personnes. Trois consequences visuelles.
+ * L ordre de lecture suit ce que Christophe a demandé : le score d abord, parce
+ * que c est ce qu on vient chercher et ce qu on partage ; les axes ensuite,
+ * parce qu un chiffre seul ne se comprend pas ; ce qui rassemble et ce qui
+ * complète ; et le moment tout en bas, seulement s il se détache — c est une
+ * indication, plus le sujet.
  *
- *  - Le pourcentage est grand, mais le mois est colle dessous, dans la meme
- *    respiration. On ne peut pas lire l un sans l autre, donc on ne peut pas le
- *    citer hors de son temps.
- *  - L intensite et l aisance sont deux barres SEPAREES, jamais empilees ni
- *    additionnees. Un lien intense et rugueux se voit alors pour ce qu il est :
- *    un lien fort, pas un lien rate. C est l observation de Cafe Astrology,
- *    qu aucun concurrent n a mise a l ecran.
- *  - Les deux colonnes du bas ne sont pas decoratives : ce que A vit n est pas
- *    ce que B vit, et aucun produit du marche n ecrit deux lectures pour un
- *    meme lien.
+ * Trois règles de dessin, chacune tirée de la veille du 11/09 :
  *
- * Les couleurs disent l intensite, pas le bien et le mal : on n a pas de vert
- * « compatible » ni de rouge « incompatible », parce que ce jugement n existe
- * pas ici.
+ *  - Les quatre axes ne s additionnent jamais et ne s empilent jamais dans une
+ *    même barre. Sanctuary additionne ses six axes en un total ; Cafe Astrology,
+ *    qui publie pourtant un barème, écrit qu il a toujours sauté les feuilles de
+ *    score. On montre les quatre, on n en fait pas une somme.
+ *  - Aucune couleur de jugement. Pas de vert « compatible », pas de rouge
+ *    « incompatible » : ce verdict n existe pas ici. L accent de l app porte
+ *    toutes les barres, quelle que soit leur valeur.
+ *  - Une phrase de garde en bas, toujours visible : un lien exigeant n est pas
+ *    un lien raté. C est ce que The Pattern met en première phrase de sa
+ *    catégorie la plus basse, et c est ce qui manque à tous les autres.
  */
 
 import { motion, useReducedMotion } from "motion/react";
 import { EyebrowLabel } from "@/components/demo/primitives";
 import { STRINGS_MATCH_DOMAINES, t, type Locale } from "@/lib/i18n-demo";
-import { DOMAINE, type AxeMatch, type FicheMatch as Fiche, type LectureUne } from "@/lib/score-match";
+import { DOMAINE, type Axe, type FicheCompatibilite } from "@/lib/score-match";
 
 function nomDomaine(d: number, locale: Locale): string {
   const cle = DOMAINE[d];
@@ -33,13 +34,25 @@ function nomDomaine(d: number, locale: Locale): string {
   return STRINGS_MATCH_DOMAINES(locale)[cle] ?? "";
 }
 
-function Barre({ axe, titre, aide, locale }: { axe: AxeMatch; titre: string; aide: string; locale: Locale }) {
+function LigneAxe({
+  axe,
+  titre,
+  aide,
+  locale,
+  delai,
+}: {
+  axe: Axe;
+  titre: string;
+  aide: string;
+  locale: Locale;
+  delai: number;
+}) {
   const sansMouvement = useReducedMotion();
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[12px] font-semibold text-text-heading">{titre}</span>
-        <span className="text-[11px] font-semibold tabular-nums text-text-body-subtle">
+        <span className="text-[13px] font-semibold text-text-heading">{titre}</span>
+        <span className="shrink-0 text-[11px] font-semibold text-text-body-subtle">
           {t(`match.${axe.niveau}`, locale)}
         </span>
       </div>
@@ -54,7 +67,11 @@ function Barre({ axe, titre, aide, locale }: { axe: AxeMatch; titre: string; aid
           style={{ background: "var(--accent-purple)" }}
           initial={{ width: sansMouvement ? `${axe.valeur}%` : 0 }}
           animate={{ width: `${axe.valeur}%` }}
-          transition={{ duration: sansMouvement ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
+          transition={{
+            duration: sansMouvement ? 0 : 0.8,
+            delay: sansMouvement ? 0 : delai,
+            ease: [0.16, 1, 0.3, 1],
+          }}
         />
       </div>
       <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">{aide}</p>
@@ -62,27 +79,15 @@ function Barre({ axe, titre, aide, locale }: { axe: AxeMatch; titre: string; aid
   );
 }
 
-function Colonne({
-  titre,
-  lecture,
-  locale,
-}: {
-  titre: string;
-  lecture: LectureUne;
-  locale: Locale;
-}) {
+function Colonne({ titre, domaines, locale }: { titre: string; domaines: number[]; locale: Locale }) {
   return (
     <div className="min-w-0 flex-1 rounded-xl px-3 py-2.5" style={{ background: "var(--bg-secondary)" }}>
       <EyebrowLabel color="var(--text-body-subtle)" className="mb-1">
         {titre}
       </EyebrowLabel>
-      {lecture.domainesPropres.length > 0 ? (
-        <p className="text-[12px] leading-snug text-text-body">
-          {lecture.domainesPropres.map((d) => nomDomaine(d, locale)).join(", ")}
-        </p>
-      ) : (
-        <p className="text-[12px] leading-snug text-text-body-subtle">—</p>
-      )}
+      <p className="text-[12px] leading-snug text-text-body">
+        {domaines.length > 0 ? domaines.map((d) => nomDomaine(d, locale)).join(", ") : "—"}
+      </p>
     </div>
   );
 }
@@ -93,16 +98,20 @@ export function FicheMatch({
   exemple,
   nomAutre,
 }: {
-  fiche: Fiche;
+  fiche: FicheCompatibilite;
   locale: Locale;
-  /** Un exemple se dit. Le produit ne presente jamais un exemple comme une lecture. */
+  /** Un exemple se dit. Le produit ne présente jamais un exemple comme une lecture. */
   exemple?: boolean;
   nomAutre?: string;
 }) {
-  const ecart = t(`match.ecart_${fiche.ecart}`, locale);
+  const sansMouvement = useReducedMotion();
 
   return (
-    <section className="rounded-2xl px-4 py-4" style={{ background: "var(--surface-light)" }} aria-label={t("match.titre", locale)}>
+    <section
+      className="rounded-2xl px-4 py-4"
+      style={{ background: "var(--surface-light)" }}
+      aria-label={t("match.score_titre", locale)}
+    >
       <div className="flex items-center justify-between gap-2">
         <EyebrowLabel color="var(--accent-purple)">{t("match.eyebrow", locale)}</EyebrowLabel>
         {exemple && (
@@ -115,73 +124,77 @@ export function FicheMatch({
         )}
       </div>
 
-      {/* Le chiffre et son mois, dans la meme respiration : on ne peut pas
-          retenir l un sans l autre. */}
+      {/* Le score. Il est gros parce que c est ce qu on vient chercher — et il
+          est suivi, dans la même respiration, de ce sur quoi il porte. */}
       <div className="mt-3 flex items-end gap-3">
-        <span
-          className="text-[44px] font-bold leading-none tabular-nums"
+        <motion.span
+          className="text-[52px] font-bold leading-none tabular-nums"
           style={{ color: "var(--accent-purple)" }}
+          initial={{ opacity: sansMouvement ? 1 : 0, y: sansMouvement ? 0 : 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: sansMouvement ? 0 : 0.45 }}
         >
-          {fiche.terrainCommun}
-          <span className="text-[22px]"> %</span>
-        </span>
-        <div className="min-w-0 flex-1 pb-1">
-          <p className="text-[13px] font-semibold leading-tight text-text-heading">
-            {t("match.terrain", locale)}
-          </p>
-          <p className="text-[11px] leading-snug text-text-body-subtle">
-            {fiche.mois || t("match.titre", locale)}
+          {fiche.score}
+          <span className="text-[24px]"> %</span>
+        </motion.span>
+        <div className="min-w-0 flex-1 pb-1.5">
+          <p className="text-[14px] font-semibold leading-tight text-text-heading">
+            {t("match.score_titre", locale)}
           </p>
         </div>
       </div>
       <p className="mt-1.5 text-[11px] leading-snug text-text-body-subtle">
-        {t("match.terrain_aide", locale)}
+        {t("match.score_aide", locale)}
       </p>
 
-      {fiche.communs.length > 0 && (
-        <div className="mt-3">
+      <div className="mt-4 space-y-3.5">
+        <LigneAxe axe={fiche.terrain} titre={t("match.terrain", locale)} aide={t("match.terrain_aide", locale)} locale={locale} delai={0.05} />
+        <LigneAxe axe={fiche.climat} titre={t("match.climat", locale)} aide={t("match.climat_aide", locale)} locale={locale} delai={0.12} />
+        <LigneAxe axe={fiche.equilibre} titre={t("match.equilibre", locale)} aide={t("match.equilibre_aide", locale)} locale={locale} delai={0.19} />
+        <LigneAxe axe={fiche.rythme} titre={t("match.rythme", locale)} aide={t("match.rythme_aide", locale)} locale={locale} delai={0.26} />
+      </div>
+
+      {fiche.rassemble.length > 0 && (
+        <div className="mt-4">
           <EyebrowLabel color="var(--text-body-subtle)" className="mb-1">
-            {t("match.communs", locale)}
+            {t("match.rassemble", locale)}
           </EyebrowLabel>
           <p className="text-[13px] leading-snug text-text-heading">
-            {fiche.communs.map((d) => nomDomaine(d, locale)).join(" · ")}
+            {fiche.rassemble.map((d) => nomDomaine(d, locale)).join(" · ")}
           </p>
         </div>
       )}
 
-      {/* Deux axes separes. Jamais additionnes : leur somme ne veut rien dire. */}
-      <div className="mt-4 space-y-3">
-        <Barre
-          axe={fiche.intensite}
-          titre={t("match.intensite", locale)}
-          aide={t("match.intensite_aide", locale)}
-          locale={locale}
-        />
-        <Barre
-          axe={fiche.aisance}
-          titre={t("match.aisance", locale)}
-          aide={t("match.aisance_aide", locale)}
-          locale={locale}
-        />
-      </div>
+      {/* La complémentarité : ce que chacun porte sans l autre. Deux colonnes,
+          parce que ce n est pas la même chose des deux côtés. */}
+      {(fiche.toiSeul.length > 0 || fiche.autreSeul.length > 0) && (
+        <div className="mt-3">
+          <EyebrowLabel color="var(--text-body-subtle)" className="mb-1.5">
+            {t("match.complete", locale)}
+          </EyebrowLabel>
+          <div className="flex gap-2">
+            <Colonne titre={t("match.toi_seul", locale)} domaines={fiche.toiSeul} locale={locale} />
+            <Colonne
+              titre={nomAutre ?? t("match.autre_seul", locale)}
+              domaines={fiche.autreSeul}
+              locale={locale}
+            />
+          </div>
+        </div>
+      )}
 
-      <div className="mt-4">
-        <EyebrowLabel color="var(--text-body-subtle)" className="mb-1">
-          {t("match.rythme", locale)}
-        </EyebrowLabel>
-        <p className="text-[13px] leading-snug text-text-heading">{ecart}</p>
-      </div>
-
-      {/* L asymetrie : deux lectures, parce que ce n est pas le meme mois pour
-          les deux. */}
-      <div className="mt-3 flex gap-2">
-        <Colonne titre={t("match.propres_toi", locale)} lecture={fiche.toi} locale={locale} />
-        <Colonne
-          titre={nomAutre ?? t("match.propres_autre", locale)}
-          lecture={fiche.autre}
-          locale={locale}
-        />
-      </div>
+      {/* Le moment, seulement s il se détache nettement. Sinon cette ligne
+          n existe pas : une « meilleure période » qui n en est pas une serait
+          une invention. */}
+      {fiche.moment && (
+        <p className="mt-3 text-[12px] leading-snug text-text-body">
+          <span className="font-semibold text-text-heading">{t("match.moment", locale)}</span>{" "}
+          {new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(
+            new Date(`${fiche.moment.mois}-01T00:00:00Z`),
+          )}
+          {fiche.moment.domaines.length > 0 && ` · ${nomDomaine(fiche.moment.domaines[0], locale)}`}
+        </p>
+      )}
 
       <p className="mt-3 text-[11px] leading-snug text-text-body-subtle">
         {t("match.pas_verdict", locale)}
