@@ -29,7 +29,7 @@ a{color:var(--accent);word-break:break-all}
 </style>
 <main>
 <h1>De la fiche de Brad au profil de n'importe qui</h1>
-<p class="sous">Briefing pour Marie-Ange · 4 septembre 2026 · ce qui a construit le prototype, ce qu'il faut pour le faire tourner sur une naissance libre, et le flux des connexions entre utilisateurs.</p>
+<p class="sous">Briefing pour Marie-Ange · 11 septembre 2026 · ce qui a construit le prototype, ce qu'il faut pour le faire tourner sur une naissance libre, et le flux des connexions entre utilisateurs.</p>
 
 <p>Marie-Ange,</p>
 <p>Le prototype que tu as vu tourne sur <b>Brad, ta fiche 5507</b>. Tout ce qu'il affiche vient de calculs réels, mais une partie n'est possible aujourd'hui que pour une fiche déjà dans ta base. Ce briefing dit exactement d'où vient chaque donnée, ce qu'il manque pour un utilisateur qui vient de s'inscrire avec sa date, son heure et son lieu, et comment on veut gérer les connexions entre utilisateurs. Prototype : <a href="https://claude.ai/code/artifact/d9fc1c02-4e97-40f2-aff1-568bd8e231cc">ouvrir</a>.</p>
@@ -38,7 +38,7 @@ a{color:var(--accent);word-break:break-all}
 <p>Deux sources de calcul, plus trois traitements faits chez nous.</p>
 <div class="tab"><table>
 <tr><th>Source</th><th>Entrée</th><th>Ce qu'on en a tiré</th><th>Naissance libre ?</th></tr>
-<tr><td><b>AstroLearn public</b><br><code>app.astrolearn.io/api/astrolearn/public/</code></td><td><code>personId</code> seulement</td><td><code>chart-data</code> (naissance complète), <code>events</code> (faits datés), et les routes techniques : <b>chapitres</b> (période courante, suivante, d'après, fond, et les <b>trois parties de vie</b>), <b>pivots</b> (années les plus chargées et leurs scores), firdaria, profections, numérologie, âges clés.</td><td><span class="tag no">non</span></td></tr>
+<tr><td><b>AstroLearn public</b><br><code>app.astrolearn.io/api/astrolearn/public/</code></td><td><code>personId</code> seulement</td><td><code>chart-data</code> (naissance complète), <code>events</code> (faits datés), et surtout <code>period-quality</code> : <b>les trois parties de vie</b> avec leur qualité notée et l'âge de bascule, le <b>fond</b> daté avec son grade, et <b>62 chapitres</b> avec leur qualité. Plus <code>planetary-periods</code>, <code>solar-return-timeline</code>, <code>eclipses</code>, <code>transit-cycles</code>.</td><td><span class="tag no">non</span></td></tr>
 <tr><td><b>Zebrapad</b><br><code>ai.zebrapad.io/full-suite-spiritual-api/</code></td><td>date + heure + lat/long + fuseau</td><td><code>toctoc-app-short</code> : ~1 800 signaux datés sur la vie (transits, périodes, éclipses, stations) avec maison natale et score. <code>toctoc-year</code> : scores mensuels, Lot de Fortune, périodes autour de l'année.</td><td><span class="tag ok">oui</span></td></tr>
 <tr><td><b>Chez nous · référentiel</b></td><td>signaux Zebrapad</td><td>Le paquet annuel sert à voter l'Ascendant de référence ; chaque signal reçoit sa maison. Sans référentiel, rien ne suit.</td><td><span class="tag warn">chez nous, à trancher</span></td></tr>
 <tr><td><b>Chez nous · signaux et moments forts</b></td><td>signaux + maisons</td><td>L'écran du jour parle dès qu'<b>un</b> signal est actif. Un <b>moment fort</b> est un croisement de plusieurs techniques sur la même maison au même moment (chez Brad : 3,5 % des jours). Les moments forts nourrissent les notifications par défaut et Comparer.</td><td><span class="tag warn">chez nous, à trancher</span></td></tr>
@@ -61,29 +61,28 @@ a{color:var(--accent);word-break:break-all}
 </table></div>
 
 <h2>2. Ce qu'on te demande, précisément</h2>
-<p>Le format d'entrée est le même partout, celui que Zebrapad accepte déjà :</p>
+<div class="enc"><b>Mesuré aujourd'hui, 11 septembre, avant d'écrire cette section.</b> Deux choses ont changé depuis ton document du 4 septembre, et elles réduisent la demande à une seule. <code>period-quality</code> <b>répond de nouveau</b> (elle était en 500, c'était ton point B3) : en 3,8 s, elle rend les trois parties de vie avec leur qualité, l'âge de bascule, le fond daté et 62 chapitres notés. Et ta sonde <code>sonder-connection-brief.mjs</code> donne aujourd'hui « blocs A et B identiques : 0/3 » : la comparaison entre deux personnes est calculée, ton point B1 est levé.</div>
+
+<h3>La demande n° 1 — la porte date, heure, lieu sur les routes riches</h3>
+<p>C'est la seule qui bloque, et c'est celle que tu as toi-même écrite en B4. <code>period-quality</code>, <code>planetary-periods</code>, <code>solar-return-timeline</code>, <code>eclipses</code>, <code>transit-cycles</code> ne répondent qu'à un <code>personId</code> : <code>{"error":"Invalid personId"}</code> sur tout autre paramètre, en GET comme en POST. Elles ne servent donc que les personnes déjà dans ta base.</p>
+<p>Le format d'entrée qu'on voudrait est celui que Zebrapad accepte déjà :</p>
 <pre><code>{ "birthDate": "1977-09-27", "birthTime": "00:00",
   "latitude": 50.8503, "longitude": 4.3517, "timezone": "Europe/Brussels" }</code></pre>
+<p>Avec cette porte, l'écran d'ouverture de l'ID astral — les trois parties de vie — existe pour n'importe quel inscrit. Sans elle, il n'existe que pour Brad et les autres fiches de ta base. C'est le seul écran manquant du prototype, et la seule raison pour laquelle la version calculée sur la naissance de Christophe n'a que cinq écrans au lieu de six.</p>
 
-<h3>Route A · les périodes et les trois parties de vie</h3>
-<p>Ce que <code>chapitres</code> donne pour une fiche, sur une naissance libre : la période courante, la suivante, celle d'après, le fond, et les trois parties de vie, chacune avec <b>signe, qualité, sujet, du, au</b>. C'est l'écran d'ouverture de l'ID astral et deux lignes de l'écran du jour. Sans elle, un nouvel inscrit n'a que cinq écrans sur six.</p>
+<h3>La demande n° 2 — la grille d'insight</h3>
+<p>C'est ton B6, et tu l'appelles toi-même le vrai livrable attendu. Sans elle, le prompt du Match reste une réorganisation : il dit mieux, il ne dit pas plus.</p>
 
-<h3>Route B · les années les plus chargées</h3>
-<p>Ce que <code>pivots</code> donne : les dix années au score le plus élevé, leur score, et la maison dominante de chacune. On sait reconstituer une approximation depuis les signaux, mais on préfère ta règle, la même que pour ta base.</p>
-
-<h3>Route C · la correspondance sur toute la base</h3>
-<p>Entrée : une naissance. Sortie : pour chaque vie de la base, le score sur les trois axes ; le classement ; la distribution des sujets dominants ; le rang de rareté ; et pour les N plus proches, leurs faits datés tombés dans un moment fort du même sujet. Aujourd'hui c'est fait par des scripts chez nous sur 39 fiches, ça ne peut pas tourner en production.</p>
-
-<h3>Route D · deux naissances</h3>
-<p>Entrée : deux naissances. Sortie : les moments forts de chacune, et les moments où les deux ont un signal sur la même maison, avec les dates. C'est ce qui fait vivre une connexion dans le temps (section 3). On peut le calculer chez nous à partir de deux appels, mais une route évite de recalculer à chaque notification.</p>
-
-<h3>À trancher ensemble</h3>
+<h3>Le reste, pour mémoire</h3>
 <ul>
-<li><b>Le référentiel et les moments forts</b> sont aujourd'hui des règles chez nous. Soit elles restent chez nous et on te les documente, soit elles passent chez toi. Une seule implémentation, pas deux.</li>
-<li><b>Neuf vies sur trente-neuf</b> n'ont pas de référentiel : le vote d'Ascendant n'aboutit pas sur leur paquet annuel. Qu'est-ce qui diffère chez elles ?</li>
-<li><b>Brad donne 55 moments forts</b> avec un paquet annuel et 68 avec un autre. Quelle année de référence veux-tu qu'on prenne ?</li>
-<li>Chez Christophe, <b>un trou d'un an</b> entre deux périodes L2 (octobre 2026 → octobre 2027). Normal ou pas ?</li>
+<li><b>B0bis, le vouvoiement.</b> Les gabarits du moteur vouvoient, toute l'app tutoie. Les phrases fautives (« Zodiaque Déchaîné », « Lot de Fortune », « alignement ») sont coupées côté app, au seul endroit par où le texte entre — mais une conversion automatique du vouvoiement casse une phrase sur trois, donc ça reste chez toi.</li>
+<li><b>Deux questions ouvertes.</b> Neuf vies sur trente-neuf n'ont pas de référentiel : le vote d'Ascendant n'aboutit pas sur leur paquet annuel, qu'est-ce qui diffère chez elles ? Et Brad donne 55 moments forts avec un paquet annuel, 68 avec un autre : quelle année de référence retenir ?</li>
+<li><b>Un trou d'un an</b> entre deux périodes L2 chez Christophe, d'octobre 2026 à octobre 2027. Normal ou pas ?</li>
+<li><b>Le temps de réponse.</b> <code>transit-cycles</code> met 12,7 s, <code>toctoc-app-short</code> 67 s. Tout enrichissement passera par un cache ou un pré-calcul, jamais par un appel direct pendant qu'un utilisateur attend.</li>
 </ul>
+
+<h3>Ce qu'on ne te demande plus</h3>
+<p>La route « correspondance » sur toute la base reste utile un jour, mais elle n'est pas bloquante : nos scripts la calculent hors ligne sur 39 fiches, et le résultat ne change pas d'un jour à l'autre. Et la route « deux naissances » n'a plus lieu d'être : <code>connection-brief</code> rend déjà l'objet <code>comparaison</code> par période, avec les domaines communs.</p>
 
 <h2>3. Les connexions entre utilisateurs</h2>
 <p>C'est la suite naturelle de Comparer : après avoir vu les personnalités de ta base, l'utilisateur invite quelqu'un de son cercle. Ce qu'on veut, et ce que ça demande.</p>
@@ -104,6 +103,7 @@ a{color:var(--accent);word-break:break-all}
 </table></div>
 
 <h2>4. Ce qu'on fait de notre côté</h2>
+<p><b>On part de ce qui existe, pas d'une page blanche.</b> Le Match tourne déjà dans l'app : liste des connexions, rapport à deux, délinéation par le modèle avec cache de sept jours, mur payant, cartes de silence, et la boucle d'invitation complète (partage, acceptation, connexion). La maquette ne remplace rien de tout ça — elle montre les deux écrans qui manquent autour, et la façon de les écrire.</p>
 <ul>
 <li>Un <b>contrat de données par écran</b> : ce que chaque écran consomme, d'où ça vient, et ce qu'il fait quand la donnée manque. Tu recevras ce document pour vérifier que tes routes rendent exactement ça.</li>
 <li>Les <b>gabarits de phrases</b> dans nos dix langues, à partir des textes du prototype.</li>
