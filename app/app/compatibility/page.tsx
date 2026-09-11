@@ -110,7 +110,12 @@ export default function ConnectionsPage() {
   };
 
   return (
-    <div>
+    // Le degagement du bas. Le conteneur du layout ne reserve que la zone sure
+    // de l appareil — la barre d accueil de l iPhone — pas la hauteur de la
+    // barre d onglets, qui fait 128 px et flotte par-dessus. Tant que cette
+    // page tenait dans un ecran, ca ne se voyait pas ; la fiche de match la
+    // rend longue, et la derniere phrase passait sous « Match ».
+    <div className="pb-36">
       {/* Header */}
       <div className="mb-1 text-center">
         <h1 className="font-display text-2xl font-bold text-text-heading">{t("connexions.titre", locale)}</h1>
