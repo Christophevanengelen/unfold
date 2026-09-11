@@ -74,21 +74,29 @@ export function ConnectionRow({ connection, summary, loading, onLongPress }: Con
         size={44}
       />
 
+      {/* Deux lignes, pas une.
+          Avant : le nom sur la premiere ligne, puis « RELATION · resume » sur
+          la seconde, dans un flex sans largeur minimale ni troncature. Des que
+          le resume depassait — et il depasse dans la plupart des langues — il
+          repassait a la ligne SOUS la relation, chevauchait, et poussait le
+          chevron. C est ce que Christophe a vu : des textes qui empietent.
+
+          Maintenant la relation tient a droite du nom, ou elle ne bouge plus
+          (shrink-0), et le resume occupe seul sa ligne, sur toute la largeur.
+          C est l information que cette liste existe pour montrer : elle merite
+          sa ligne. `min-w-0` sur les deux niveaux est ce qui autorise la
+          troncature a fonctionner dans un flex. */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-[14px] font-semibold text-text-heading">
+        <div className="flex items-baseline gap-2">
+          <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-text-heading">
             {connection.name}
           </span>
           {pulse && <TierPulse color={summary!.currentTierColor} size={6} />}
-        </div>
-        <div className="mt-0.5 flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-widest text-text-body-subtle">
+          <span className="shrink-0 text-[10px] uppercase tracking-widest text-text-body-subtle">
             {perso(rel.cleLabel, locale)}
           </span>
-          <span
-            className="inline-block h-0.5 w-0.5 rounded-full"
-            style={{ background: "var(--text-body-subtle)", opacity: 0.6 }}
-          />
+        </div>
+        <div className="mt-1 min-w-0">
           <WindowMicroPreview summary={summary} loading={loading} />
         </div>
       </div>

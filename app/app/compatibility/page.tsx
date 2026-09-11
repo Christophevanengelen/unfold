@@ -121,11 +121,23 @@ export default function ConnectionsPage() {
         </p>
       </div>
 
+      {/* Rhythm inbox */}
+      <ConnectionList
+        connections={connections}
+        myBirthData={myBirthData}
+        onDeleted={handleDeleted}
+      />
+
+      {/* Le conseil d appui long occupait la place la plus chere de l ecran :
+          juste sous le titre, avant les connexions. Quelqu un qui ouvre le
+          Match vient voir ses proches, pas apprendre un geste. Il passe donc
+          APRES la liste, la ou il repond a une question qu on se pose une fois
+          les connexions sous les yeux : comment j en modifie une ? */}
       {/* Long-press hint */}
       {showHint && connections.length > 0 && (
         <motion.button
           onClick={dismissHint}
-          className="mt-3 flex w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2 text-left text-[11px]"
+          className="mb-3 mt-1 flex w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2 text-left text-[11px]"
           style={{
             background: "color-mix(in srgb, var(--accent-purple) 8%, transparent)",
             color: "var(--text-body-subtle)",
@@ -139,13 +151,6 @@ export default function ConnectionsPage() {
           </span>
         </motion.button>
       )}
-
-      {/* Rhythm inbox */}
-      <ConnectionList
-        connections={connections}
-        myBirthData={myBirthData}
-        onDeleted={handleDeleted}
-      />
 
       {/* Divider */}
       <div className="my-5 h-px" style={{ background: "var(--surface-medium)" }} />

@@ -49,8 +49,12 @@ export function WindowMicroPreview({ summary, loading }: WindowMicroPreviewProps
   const weight = summary.status === "active" ? 600 : 500;
   return (
     <span
-      className="text-[11px] leading-snug"
+      // `block` + `truncate` : sur une seule ligne, avec une ellipse si la
+      // langue est longue. En `inline`, la troncature ne s applique pas et le
+      // texte repart a la ligne par-dessus le reste de la rangee.
+      className="block truncate text-[11px] leading-snug"
       style={{ color, fontWeight: weight as number }}
+      title={summary.headlineFR}
     >
       {summary.headlineFR}
     </span>

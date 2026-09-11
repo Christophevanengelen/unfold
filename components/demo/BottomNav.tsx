@@ -139,7 +139,12 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
                 {(item.badge ?? 0) > 0 && (
                   <span
                     className="absolute -right-1.5 -top-1 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[8px] font-bold"
-                    style={{ backgroundColor: "var(--bg-alerte)", color: "var(--text-on-alerte)" }}
+                    // Une pastille rouge dit « quelque chose ne va pas, viens
+                    // voir ». Ici elle ne comptait que des connexions : deux
+                    // proches, deux alertes. Le compte se dit dans la couleur
+                    // de l app, jamais dans celle du danger — qui reste
+                    // disponible le jour ou il y aura vraiment une alerte.
+                    style={{ backgroundColor: "var(--accent-purple)", color: "var(--brand-ink, #FFFFFF)" }}
                   >
                     {item.badge}
                   </span>
