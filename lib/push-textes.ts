@@ -34,6 +34,28 @@ type Textes = {
   moisCorpsUn: string;
   /** Une periode se termine. */
   sortieTitre: string;
+
+  // ── Ce qui se passe entre deux personnes ─────────────────────────────────
+  //
+  // Le nom de l autre n apparait NULLE PART, volontairement. Une notification
+  // se lit sur un ecran verrouille, posé sur une table, par n importe qui. Le
+  // prenom de quelqu un d autre n a rien a y faire — et il n est pas
+  // necessaire : la notification ouvre la fiche de cette connexion-la, donc
+  // l app dit qui des le premier coup d oeil.
+  //
+  // Le conseil non plus n est pas ici. « Ce qui se termine entre vous » tient
+  // sur l ecran verrouille ; « comment bien gerer cette transition » demande
+  // des phrases, et ces phrases se lisent dans l app. Une notification qui
+  // dirait tout se substituerait a l ecran qu elle ouvre.
+  /** Un moment commun s ouvre demain. */
+  communTitre: string;
+  communCorps: string;
+  /** Un moment commun se termine demain. */
+  finTitre: string;
+  finCorps: string;
+  /** Une bascule de leur cote. */
+  autreTitre: string;
+  autreCorps: string;
 };
 
 const T: Record<string, Textes> = {
@@ -46,6 +68,12 @@ const T: Record<string, Textes> = {
     moisTitre: "Ton mois",
     moisCorps: "{n} moments à regarder.",
     moisCorpsUn: "Un moment à regarder.",
+    communTitre: "Un moment commun demain",
+    communCorps: "Vous y êtes tous les deux.",
+    finTitre: "Un moment commun finit demain",
+    finCorps: "Une transition à préparer à deux.",
+    autreTitre: "Un changement de leur côté",
+    autreCorps: "Quelque chose bouge chez eux.",
   },
   en: {
     periodeTitre: "A period opens tomorrow",
@@ -56,6 +84,12 @@ const T: Record<string, Textes> = {
     moisTitre: "Your month",
     moisCorps: "{n} moments to look at.",
     moisCorpsUn: "One moment to look at.",
+    communTitre: "A shared moment tomorrow",
+    communCorps: "You're both in it.",
+    finTitre: "A shared moment ends tomorrow",
+    finCorps: "A transition to prepare together.",
+    autreTitre: "A shift on their side",
+    autreCorps: "Something is moving for them.",
   },
   es: {
     periodeTitre: "Mañana se abre un periodo",
@@ -66,6 +100,12 @@ const T: Record<string, Textes> = {
     moisTitre: "Tu mes",
     moisCorps: "{n} momentos que mirar.",
     moisCorpsUn: "Un momento que mirar.",
+    communTitre: "Mañana, un momento común",
+    communCorps: "Los dos estáis en ello.",
+    finTitre: "Un momento común acaba mañana",
+    finCorps: "Una transición que preparar juntos.",
+    autreTitre: "Un cambio de su lado",
+    autreCorps: "Algo se mueve en su vida.",
   },
   de: {
     periodeTitre: "Morgen beginnt eine Phase",
@@ -76,6 +116,12 @@ const T: Record<string, Textes> = {
     moisTitre: "Dein Monat",
     moisCorps: "{n} Momente zum Ansehen.",
     moisCorpsUn: "Ein Moment zum Ansehen.",
+    communTitre: "Morgen ein gemeinsamer Moment",
+    communCorps: "Ihr seid beide darin.",
+    finTitre: "Gemeinsamer Moment endet morgen",
+    finCorps: "Ein Übergang, gemeinsam vorzubereiten.",
+    autreTitre: "Eine Änderung auf ihrer Seite",
+    autreCorps: "Bei ihnen bewegt sich etwas.",
   },
   it: {
     periodeTitre: "Domani si apre un periodo",
@@ -86,6 +132,12 @@ const T: Record<string, Textes> = {
     moisTitre: "Il tuo mese",
     moisCorps: "{n} momenti da guardare.",
     moisCorpsUn: "Un momento da guardare.",
+    communTitre: "Domani, un momento comune",
+    communCorps: "Ci siete dentro entrambi.",
+    finTitre: "Domani finisce un momento comune",
+    finCorps: "Una transizione da preparare in due.",
+    autreTitre: "Un cambiamento dal loro lato",
+    autreCorps: "Qualcosa si muove da loro.",
   },
   pt: {
     periodeTitre: "Amanhã abre um período",
@@ -96,6 +148,12 @@ const T: Record<string, Textes> = {
     moisTitre: "O teu mês",
     moisCorps: "{n} momentos para ver.",
     moisCorpsUn: "Um momento para ver.",
+    communTitre: "Amanhã, um momento comum",
+    communCorps: "Estão os dois nele.",
+    finTitre: "Amanhã acaba um momento comum",
+    finCorps: "Uma transição a preparar a dois.",
+    autreTitre: "Uma mudança do lado deles",
+    autreCorps: "Algo se move do lado deles.",
   },
   nl: {
     periodeTitre: "Morgen begint een periode",
@@ -106,6 +164,12 @@ const T: Record<string, Textes> = {
     moisTitre: "Jouw maand",
     moisCorps: "{n} momenten om te bekijken.",
     moisCorpsUn: "Eén moment om te bekijken.",
+    communTitre: "Morgen een gedeeld moment",
+    communCorps: "Jullie zitten er allebei in.",
+    finTitre: "Gedeeld moment eindigt morgen",
+    finCorps: "Een overgang om samen voor te bereiden.",
+    autreTitre: "Een verschuiving bij hen",
+    autreCorps: "Bij hen beweegt er iets.",
   },
   ja: {
     periodeTitre: "明日、新しい期間が始まります",
@@ -116,6 +180,12 @@ const T: Record<string, Textes> = {
     moisTitre: "今月のあなた",
     moisCorps: "見どころが{n}つあります。",
     moisCorpsUn: "見どころが1つあります。",
+    communTitre: "明日、ふたりに共通の時期",
+    communCorps: "どちらもその中にいます。",
+    finTitre: "明日、共通の時期が終わります",
+    finCorps: "ふたりで備える切り替えです。",
+    autreTitre: "相手の側で変化があります",
+    autreCorps: "相手の側で何かが動いています。",
   },
   zh: {
     periodeTitre: "明天开启一个新阶段",
@@ -126,6 +196,12 @@ const T: Record<string, Textes> = {
     moisTitre: "你的这个月",
     moisCorps: "有 {n} 个值得一看的时刻。",
     moisCorpsUn: "有一个值得一看的时刻。",
+    communTitre: "明天有一个共同的时刻",
+    communCorps: "你们都身在其中。",
+    finTitre: "明天一个共同的时刻结束",
+    finCorps: "这是需要两人一起准备的转换。",
+    autreTitre: "对方那边有变化",
+    autreCorps: "对方那边有些东西在动。",
   },
   ar: {
     periodeTitre: "تبدأ فترة جديدة غدًا",
@@ -136,6 +212,12 @@ const T: Record<string, Textes> = {
     moisTitre: "شهرك",
     moisCorps: "{n} لحظات تستحق النظر.",
     moisCorpsUn: "لحظة واحدة تستحق النظر.",
+    communTitre: "غداً، لحظة مشتركة",
+    communCorps: "كلاكما فيها.",
+    finTitre: "غداً تنتهي لحظة مشتركة",
+    finCorps: "انتقال تُحضّرانه معاً.",
+    autreTitre: "تغيّر من جهتهم",
+    autreCorps: "شيء يتحرّك من جهتهم.",
   },
 };
 
@@ -219,6 +301,28 @@ export function ecrire(
     return {
       titre: t.moisTitre,
       corps: compte === 1 ? t.moisCorpsUn : t.moisCorps.replace("{n}", String(compte)),
+    };
+  }
+
+  // Ce qui se passe entre deux personnes. Meme forme que ecrireBascule : le
+  // domaine d abord, la mention ensuite, separes par un point median. Sur un
+  // ecran verrouille, « Couple · Une transition a preparer a deux. » se lit
+  // d un coup d oeil et permet de decider ; « Un moment commun » seul ne
+  // permet rien.
+  if (n.nature === "connexion") {
+    const paire =
+      n.importance === "commun_fin"
+        ? [t.finTitre, t.finCorps]
+        : n.importance === "bascule_autre"
+          ? [t.autreTitre, t.autreCorps]
+          : [t.communTitre, t.communCorps];
+
+    // Le domaine vient du moteur. Absent, on ne le remplace par rien : une
+    // maison devinee serait une donnee fabriquee.
+    const domaine = n.domaine ? nomMaison(n.domaine, locale) : null;
+    return {
+      titre: paire[0],
+      corps: domaine ? `${domaine} · ${paire[1]}` : paire[1],
     };
   }
 

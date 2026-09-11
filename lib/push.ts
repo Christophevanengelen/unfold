@@ -18,7 +18,8 @@
 import { isNative } from "@/lib/platform";
 import { getDeviceId } from "@/lib/device-id";
 import { getApiBase } from "@/lib/api-client";
-import type { Cadence } from "@/lib/push-planification";
+import type { Cadence, ReglageConnexion } from "@/lib/push-planification";
+import { REGLAGE_CONNEXION_DEFAUT } from "@/lib/push-planification";
 
 /**
  * Ce que le système répond, sans jamais rien demander.
@@ -223,5 +224,69 @@ export async function reglerCadence(cadence: Cadence): Promise<void> {
   } catch {
     // silence volontaire : le serveur garde le cran precedent, et l app
     // renverra le choix au prochain reglage.
+  }
+}
+
+/**
+ * Ce que chaque connexion a le droit d envoyer.
+ *
+ * Un seul cran pour tout le monde ne tient pas : on ne veut pas savoir la meme
+ * chose de sa compagne et d un collegue. Le reglage est donc par connexion, et
+ * il vit dans les parametres du compte, a cote de la cadence — pas sur la fiche
+ * de la personne, ou personne ne va chercher un reglage.
+ *
+ * Meme partage des roles que la cadence : le serveur fait autorite puisque
+ * c est lui qui envoie, la copie locale n existe que pour afficher le bon cran
+ * sans attendre le reseau a l ouverture du tiroir.
+ */
+const CLE_CONNEXIONS = "favorable_push_connexions";
+
+const CRANS_CONNEXION: ReglageConnexion[] = ["aucune", "communs", "avec_autre", "tout"];
+
+function lireTousLesReglages(): Record<string, ReglageConnexion> {
+  try {
+    const brut = localStorage.getItem(CLE_CONNEXIONS);
+    if (!brut) return {};
+    const lu: unknown = JSON.parse(brut);
+    if (typeof lu !== "object" || lu === null) return {};
+    const propre: Record<string, ReglageConnexion> = {};
+    for (const [ref, valeur] of Object.entries(lu as Record<string, unknown>)) {
+      // Liste fermee : une valeur abimee vaut le defaut, elle ne traverse pas.
+      if (CRANS_CONNEXION.includes(valeur as ReglageConnexion)) {
+        propre[ref] = valeur as ReglageConnexion;
+      }
+    }
+    return propre;
+  } catch {
+    // stockage refuse ou JSON abime : tout le monde au defaut.
+    return {};
+  }
+}
+
+/** Le cran de cette connexion. Le defaut est le plus discret des trois. */
+export function lireReglageConnexion(ref: string): ReglageConnexion {
+  return lireTousLesReglages()[ref] ?? REGLAGE_CONNEXION_DEFAUT;
+}
+
+export async function reglerConnexion(
+  ref: string,
+  reglage: ReglageConnexion,
+): Promise<void> {
+  try {
+    const tous = lireTousLesReglages();
+    tous[ref] = reglage;
+    localStorage.setItem(CLE_CONNEXIONS, JSON.stringify(tous));
+  } catch {
+    /* stockage refuse */
+  }
+  try {
+    await fetch(`${getApiBase()}/api/push/reglage-connexion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({ deviceId: getDeviceId(), connexion: ref, reglage }),
+    });
+  } catch {
+    // silence volontaire, meme raison que pour la cadence.
   }
 }

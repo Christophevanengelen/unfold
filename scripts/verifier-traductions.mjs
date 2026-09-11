@@ -98,13 +98,17 @@ const PLAFOND = 0;
  */
 const MODULES_DE_TEXTE = ["lib/connection-summary.ts", "lib/matching-narratives.ts"];
 /**
- * Cliquet propre a ces modules. `matching-narratives.ts` porte 145 phrases de
- * repli du Match — celles qui s affichent quand le modele echoue ou que la
- * personne n est pas abonnee, donc le cas le plus frequent. Les traduire d un
- * coup n est pas raisonnable ; les laisser sans controle, c est les voir
- * grossir. Le nombre ne peut que descendre.
+ * Cliquet propre a ces modules. Il valait 145 : c etait le nombre de phrases
+ * de repli du Match ecrites en dur dans `matching-narratives.ts` — celles qui
+ * s affichent quand le modele echoue ou que la personne n est pas abonnee,
+ * donc le cas le plus frequent.
+ *
+ * Le 11/09/2026 elles sont passees dans `lib/perso-i18n.ts` : 111 clefs, dix
+ * langues chacune, et le module ne choisit plus qu une clef. Ces deux modules
+ * ne rendent donc plus aucune phrase — le plafond descend a 0, et toute
+ * phrase qui reviendrait s y poser fait echouer le controle.
  */
-const PLAFOND_MODULES = 145;
+const PLAFOND_MODULES = 0;
 const PHRASE_FR = /["`]([A-ZÀ-Ü][a-zà-ÿ']+(?: [a-zà-ÿ'{}]+){2,})["`]/g;
 
 /** Ce qui n a pas a etre traduit. */

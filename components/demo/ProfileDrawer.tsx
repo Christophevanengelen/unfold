@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye, TrashBin, Bell } from "flowbite-react-icons/outline";
@@ -15,8 +15,10 @@ import { clearBirthData, getBirthDataSync, birthHash } from "@/lib/birth-data";
 import { AuthSheet } from "@/components/demo/AuthSheet";
 import { t, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES } from "@/lib/i18n-demo";
 import { getStreak } from "@/lib/streak";
-import { etatPermission, demanderPuisEnregistrer, lireCadence, reglerCadence, detailEchec, type EtatPermission } from "@/lib/push";
-import type { Cadence } from "@/lib/push-planification";
+import { etatPermission, demanderPuisEnregistrer, lireCadence, reglerCadence, lireReglageConnexion, reglerConnexion, detailEchec, type EtatPermission } from "@/lib/push";
+import type { Cadence, ReglageConnexion } from "@/lib/push-planification";
+import { REGLAGE_CONNEXION_DEFAUT } from "@/lib/push-planification";
+import { getConnections, type RealConnection } from "@/lib/connections-store";
 import { getDeviceId } from "@/lib/device-id";
 import { rejouerGuide } from "@/components/demo/FirstUseGuide";
 import { useBillingState } from "@/lib/premium-gate";
@@ -133,6 +135,28 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
   useEffect(() => {
     if (open) void etatPermission().then(setPermission);
   }, [open]);
+
+  // Les connexions gardees, et leur cran.
+  //
+  // Lues PENDANT le rendu, pas dans un effet. Un effet qui pose l etat fait
+  // ouvrir le tiroir sur « aucune connexion » avant de se corriger — le defaut
+  // corrige plus haut pour le profil et la serie, et que le lint refuse
+  // desormais. Les deux lectures touchent localStorage, qui rend [] sur le
+  // serveur : le premier rendu a `open` faux, donc aucune divergence
+  // d hydratation.
+  //
+  // La cle du useMemo est `open` : quelqu un peut avoir ajoute une connexion
+  // depuis la derniere ouverture, et ce composant reste monte toute la session.
+  const connexions = useMemo<RealConnection[]>(
+    () => (open ? getConnections() : []),
+    [open],
+  );
+  const reglagesStockes = useMemo<Record<string, ReglageConnexion>>(
+    () => Object.fromEntries(connexions.map((c) => [c.id, lireReglageConnexion(c.id)])),
+    [connexions],
+  );
+  // Ce que la personne vient de choisir, tant que le tiroir est ouvert.
+  const [reglages, setReglages] = useState<Record<string, ReglageConnexion>>({});
   const [authOpen, setAuthOpen] = useState(false);
   const hasProfile = useSyncExternalStore(abonnerProfil, lireProfilComplet, PAS_DE_PROFIL);
   const locale = useLocale();
@@ -410,6 +434,71 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               <p className="mt-2 text-[11px]" style={{ color: "var(--text-body-subtle)" }}>
                 {perso(`cadence.${cadence}`, locale)}
               </p>
+            </div>
+          )}
+
+          {/* Ce qui se passe ENTRE deux personnes, connexion par connexion.
+
+              La cadence ci-dessus gouverne la vie de la personne seule. Un cran
+              global de plus ne tiendrait pas : on ne veut pas savoir la meme
+              chose de sa compagne et d un collegue. Le reglage est donc par
+              connexion, et il vit ICI, dans les parametres du compte, et non sur
+              la fiche de chacun. Personne ne va chercher un reglage sur une
+              fiche.
+
+              Sans connexion gardee, la section reste visible et dit pourquoi :
+              une section qui apparait un jour sans prevenir se cherche ensuite. */}
+          {permission !== "indisponible" && (
+            <div className="px-3 pb-1 pt-3">
+              <p className="mb-2 text-xs font-medium text-text-body-subtle">
+                {perso("notif.connexions", locale)}
+              </p>
+              {connexions.length === 0 ? (
+                <p className="text-[11px]" style={{ color: "var(--text-body-subtle)" }}>
+                  {perso("notif.connexions_vide", locale)}
+                </p>
+              ) : (
+                connexions.map((c) => {
+                  const cran = reglages[c.id] ?? reglagesStockes[c.id] ?? REGLAGE_CONNEXION_DEFAUT;
+                  return (
+                    <div key={c.id} className="mb-3">
+                      <p className="mb-1.5 text-xs font-medium text-text-heading">{c.name}</p>
+                      <div className="flex gap-1.5 rounded-xl bg-bg-secondary p-1">
+                        {(["aucune", "communs", "avec_autre", "tout"] as const).map((r) => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => {
+                              setReglages((avant) => ({ ...avant, [c.id]: r }));
+                              void reglerConnexion(c.id, r);
+                            }}
+                            aria-pressed={cran === r}
+                            // 40 points de haut, comme la rangee de cadence
+                            // juste au-dessus : les agrandir a 44 desalignerait
+                            // les deux rangees. Le pseudo-element etend la zone
+                            // tactile a 48 sans rien deplacer, ce qui est la
+                            // correction prevue par scripts/verifier-cibles.mjs.
+                            className={`relative flex-1 rounded-lg px-2 text-xs font-medium transition-colors before:absolute before:-inset-y-1 before:inset-x-0 before:content-[''] ${
+                              cran === r
+                                ? "bg-bg-primary text-text-heading shadow-sm"
+                                : "text-text-body-subtle hover:text-text-heading"
+                            }`}
+                            style={{ minHeight: 40 }}
+                          >
+                            {perso(`notif.cx_${r}`, locale)}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Ce que le cran envoie REELLEMENT. « Communs », « Et
+                          eux » sont des etiquettes : sans cette ligne on ne
+                          choisit pas en connaissance de cause. */}
+                      <p className="mt-1.5 text-[11px]" style={{ color: "var(--text-body-subtle)" }}>
+                        {perso(`notif.cx_${cran}_desc`, locale)}
+                      </p>
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
 
