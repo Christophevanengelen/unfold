@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { t, type Locale } from "@/lib/i18n-demo";
 
 interface HeaderProps {
   locale: string;
@@ -17,7 +18,7 @@ export function Header({ locale }: HeaderProps) {
         href="#main"
         className="sr-only rounded-lg bg-accent-purple px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50"
       >
-        Skip to content
+        {t("interface_.passer_au_contenu", locale as Locale)}
       </a>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link href={`/${locale}`} className="flex items-center gap-3">

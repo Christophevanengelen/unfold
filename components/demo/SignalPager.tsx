@@ -8,6 +8,7 @@ import { CapsuleCard } from "./CapsuleCard";
 import { getHomeCapsules, type CapsuleData } from "@/lib/capsules";
 import { planetConfig } from "@/lib/domain-config";
 import { useMomentum } from "@/lib/momentum-store";
+import { t, detectLocale } from "@/lib/i18n-demo";
 
 /** Carousel configuration */
 const TOTAL_PAGES = 3;
@@ -22,6 +23,7 @@ const SHADOW_BLEED = 40;
  * and narrative. Same data as the timeline, different presentation.
  */
 export function SignalPager() {
+  const locale = detectLocale();
   const [activePage, setActivePage] = useState(1); // Start on Present
   const { phases } = useMomentum();
   const { past, current, future } = useMemo(() => getHomeCapsules(phases), [phases]);
@@ -196,7 +198,7 @@ export function SignalPager() {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-body-subtle">Next peak</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-body-subtle">{t("interface_.prochain_pic", locale)}</p>
             <p className="text-xs font-medium text-text-heading truncate">
               {future.phases[0]?.title ?? "Coming soon"}
             </p>
@@ -297,7 +299,7 @@ export function SignalPager() {
                     </p>
                     {selectedCapsule.phases[0].keyInsight && (
                       <div className="mt-4 rounded-xl px-3.5 py-3" style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}>
-                        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>Key Insight</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>{t("interface_.insight_cle", locale)}</p>
                         <p className="mt-1.5 text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>{selectedCapsule.phases[0].keyInsight}</p>
                       </div>
                     )}

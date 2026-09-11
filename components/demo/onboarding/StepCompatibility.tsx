@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
+import { t, detectLocale } from "@/lib/i18n-demo";
 
 interface StepCompatibilityProps {
   onNext: () => void;
@@ -94,6 +95,7 @@ export function StepCompatibility({
   onNext,
   onBack,
 }: StepCompatibilityProps) {
+  const locale = detectLocale();
   return (
     <motion.div
       className="flex h-full flex-col"
@@ -165,7 +167,7 @@ export function StepCompatibility({
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
-        Personal, useful, and worth sharing.
+        {t("interface_.personnel_utile", locale)}
       </motion.p>
 
       {/* CTA */}

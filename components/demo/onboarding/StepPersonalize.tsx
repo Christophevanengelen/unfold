@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
+import { t, detectLocale } from "@/lib/i18n-demo";
 
 interface StepPersonalizeProps {
   onNext: () => void;
@@ -50,6 +51,7 @@ function SignalIcon({ size = 40 }: { size?: number }) {
  * Visual: Original illustration (minimal signal icon).
  */
 export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
+  const locale = detectLocale();
   return (
     <motion.div
       className="flex h-full flex-col"
@@ -121,7 +123,7 @@ export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
           style={{ color: "var(--accent-purple)", opacity: 0.7 }}
           variants={fadeInUp}
         >
-          We need your birth details to prepare your personal rhythm.
+          {t("interface_.naissance_pourquoi", locale)}
         </motion.p>
 
         {/* Support */}
@@ -130,7 +132,7 @@ export function StepPersonalize({ onNext, onBack }: StepPersonalizeProps) {
           style={{ color: "var(--accent-purple)", opacity: 0.5 }}
           variants={fadeInUp}
         >
-          This only takes a moment.
+          {t("interface_.un_instant", locale)}
         </motion.p>
       </div>
 

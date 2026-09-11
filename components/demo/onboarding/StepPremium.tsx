@@ -6,7 +6,7 @@ import { fadeInUp, staggerContainer } from "@/lib/animations";
 import { CalendarMonth, Clock, ChartPie } from "flowbite-react-icons/outline";
 import { useMemo } from "react";
 import { useMomentum } from "@/lib/momentum-store";
-import { detectLocale } from "@/lib/i18n-demo";
+import { detectLocale, t } from "@/lib/i18n-demo";
 import { previsionSemaine } from "@/lib/prevision-semaine";
 
 interface StepPremiumProps {
@@ -140,6 +140,7 @@ function ForecastTimeline() {
  * Credibility first — shows the actual product component, not a prettier concept.
  */
 export function StepPremium({ onNext, onBack }: StepPremiumProps) {
+  const locale = detectLocale();
   return (
     <motion.div
       className="flex h-full flex-col"
@@ -221,7 +222,7 @@ export function StepPremium({ onNext, onBack }: StepPremiumProps) {
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
-        Not more noise. More timing clarity.
+        {t("interface_.moins_de_bruit", locale)}
       </motion.p>
 
       {/* Feature rows */}

@@ -185,6 +185,25 @@ type Strings = {
     connexion_en_cours: string;
     connecte_avec: string;
   };
+  interface_: {
+    passer_au_contenu: string;
+    prochain_pic: string;
+    insight_cle: string;
+    se_comprendre: string;
+    personnel_utile: string;
+    hier_aujourdhui_demain: string;
+    naissance_pourquoi: string;
+    un_instant: string;
+    moins_de_bruit: string;
+  };
+  coupon: {
+    bandeau: string;
+    debloque: string;
+    ouverture: string;
+    titre: string;
+    sous_titre: string;
+    bouton: string;
+  };
   boudin: {
     titre: string;
   };
@@ -323,6 +342,25 @@ const FR: Strings = {
     quelquun: "quelqu'un",
     connexion_en_cours: "Connexion en cours…",
     connecte_avec: "Connecté avec {name}",
+  },
+  interface_: {
+    passer_au_contenu: "Passer au contenu",
+    prochain_pic: "Prochain pic",
+    insight_cle: "À retenir",
+    se_comprendre: "Se comprendre",
+    personnel_utile: "Personnel, utile, et digne d'être partagé.",
+    hier_aujourdhui_demain: "Pensé pour hier, aujourd'hui et demain.",
+    naissance_pourquoi: "Nous avons besoin de ta naissance pour préparer ton rythme personnel.",
+    un_instant: "Ça ne prend qu'un instant.",
+    moins_de_bruit: "Pas plus de bruit. Plus de clarté sur le bon moment.",
+  },
+  coupon: {
+    bandeau: "Carte de vie · Premium",
+    debloque: "✦ Débloqué",
+    ouverture: "Ouverture de ta carte…",
+    titre: "Entre ton code d'accès",
+    sous_titre: "Saisis ton code ci-dessous pour débloquer la carte de vie.",
+    bouton: "Débloquer →",
   },
   boudin: {
     titre: "Timeline de vie",
@@ -463,6 +501,25 @@ const EN: Strings = {
     connexion_en_cours: "Connecting…",
     connecte_avec: "Connected with {name}",
   },
+  interface_: {
+    passer_au_contenu: "Skip to content",
+    prochain_pic: "Next peak",
+    insight_cle: "Key insight",
+    se_comprendre: "Understanding each other",
+    personnel_utile: "Personal, useful, and worth sharing.",
+    hier_aujourdhui_demain: "Built for yesterday, today, and tomorrow.",
+    naissance_pourquoi: "We need your birth details to prepare your personal rhythm.",
+    un_instant: "This only takes a moment.",
+    moins_de_bruit: "Not more noise. More timing clarity.",
+  },
+  coupon: {
+    bandeau: "Lifetime Chart · Premium",
+    debloque: "✦ Unlocked",
+    ouverture: "Opening your chart…",
+    titre: "Enter your access code",
+    sous_titre: "Type your coupon code below to unlock the Lifetime Chart.",
+    bouton: "Unlock →",
+  },
   boudin: {
     titre: "Lifetime timeline",
   },
@@ -601,6 +658,25 @@ const ES: Strings = {
     quelquun: "alguien",
     connexion_en_cours: "Conectando…",
     connecte_avec: "Conectado con {name}",
+  },
+  interface_: {
+    passer_au_contenu: "Saltar al contenido",
+    prochain_pic: "Próximo pico",
+    insight_cle: "Para recordar",
+    se_comprendre: "Entenderse",
+    personnel_utile: "Personal, útil y digno de compartir.",
+    hier_aujourdhui_demain: "Pensado para ayer, hoy y mañana.",
+    naissance_pourquoi: "Necesitamos tus datos de nacimiento para preparar tu ritmo personal.",
+    un_instant: "Solo lleva un momento.",
+    moins_de_bruit: "No más ruido. Más claridad sobre el momento justo.",
+  },
+  coupon: {
+    bandeau: "Carta de vida · Premium",
+    debloque: "✦ Desbloqueado",
+    ouverture: "Abriendo tu carta…",
+    titre: "Introduce tu código de acceso",
+    sous_titre: "Escribe tu código abajo para desbloquear la carta de vida.",
+    bouton: "Desbloquear →",
   },
   boudin: {
     titre: "Línea de tiempo de vida",
@@ -741,6 +817,25 @@ const DE: Strings = {
     connexion_en_cours: "Verbindung läuft…",
     connecte_avec: "Mit {name} verbunden",
   },
+  interface_: {
+    passer_au_contenu: "Zum Inhalt springen",
+    prochain_pic: "Nächster Höhepunkt",
+    insight_cle: "Zum Merken",
+    se_comprendre: "Einander verstehen",
+    personnel_utile: "Persönlich, nützlich und teilenswert.",
+    hier_aujourdhui_demain: "Gemacht für gestern, heute und morgen.",
+    naissance_pourquoi: "Wir brauchen deine Geburtsdaten, um deinen persönlichen Rhythmus zu erstellen.",
+    un_instant: "Das dauert nur einen Moment.",
+    moins_de_bruit: "Nicht mehr Lärm. Mehr Klarheit über den richtigen Zeitpunkt.",
+  },
+  coupon: {
+    bandeau: "Lebenskarte · Premium",
+    debloque: "✦ Freigeschaltet",
+    ouverture: "Deine Karte wird geöffnet…",
+    titre: "Gib deinen Zugangscode ein",
+    sous_titre: "Gib unten deinen Code ein, um die Lebenskarte freizuschalten.",
+    bouton: "Freischalten →",
+  },
   boudin: {
     titre: "Lebens-Zeitleiste",
   },
@@ -879,6 +974,25 @@ const IT: Strings = {
     quelquun: "qualcuno",
     connexion_en_cours: "Connessione in corso…",
     connecte_avec: "Connesso con {name}",
+  },
+  interface_: {
+    passer_au_contenu: "Vai al contenuto",
+    prochain_pic: "Prossimo picco",
+    insight_cle: "Da ricordare",
+    se_comprendre: "Capirsi",
+    personnel_utile: "Personale, utile e da condividere.",
+    hier_aujourdhui_demain: "Pensato per ieri, oggi e domani.",
+    naissance_pourquoi: "Ci servono i tuoi dati di nascita per preparare il tuo ritmo personale.",
+    un_instant: "Ci vuole solo un momento.",
+    moins_de_bruit: "Non più rumore. Più chiarezza sul momento giusto.",
+  },
+  coupon: {
+    bandeau: "Carta di vita · Premium",
+    debloque: "✦ Sbloccata",
+    ouverture: "Apertura della tua carta…",
+    titre: "Inserisci il tuo codice d'accesso",
+    sous_titre: "Scrivi qui sotto il tuo codice per sbloccare la carta di vita.",
+    bouton: "Sblocca →",
   },
   boudin: {
     titre: "Timeline di vita",
@@ -1019,6 +1133,25 @@ const PT: Strings = {
     connexion_en_cours: "A ligar…",
     connecte_avec: "Ligado com {name}",
   },
+  interface_: {
+    passer_au_contenu: "Ir para o conteúdo",
+    prochain_pic: "Próximo pico",
+    insight_cle: "A reter",
+    se_comprendre: "Compreender-se",
+    personnel_utile: "Pessoal, útil e digno de partilhar.",
+    hier_aujourdhui_demain: "Feito para ontem, hoje e amanhã.",
+    naissance_pourquoi: "Precisamos dos teus dados de nascimento para preparar o teu ritmo pessoal.",
+    un_instant: "Demora só um momento.",
+    moins_de_bruit: "Não mais ruído. Mais clareza sobre o momento certo.",
+  },
+  coupon: {
+    bandeau: "Carta de vida · Premium",
+    debloque: "✦ Desbloqueada",
+    ouverture: "A abrir a tua carta…",
+    titre: "Introduz o teu código de acesso",
+    sous_titre: "Escreve o teu código abaixo para desbloquear a carta de vida.",
+    bouton: "Desbloquear →",
+  },
   boudin: {
     titre: "Linha do tempo de vida",
   },
@@ -1157,6 +1290,25 @@ const NL: Strings = {
     quelquun: "iemand",
     connexion_en_cours: "Verbinden…",
     connecte_avec: "Verbonden met {name}",
+  },
+  interface_: {
+    passer_au_contenu: "Naar de inhoud",
+    prochain_pic: "Volgende piek",
+    insight_cle: "Om te onthouden",
+    se_comprendre: "Elkaar begrijpen",
+    personnel_utile: "Persoonlijk, nuttig en de moeite van het delen waard.",
+    hier_aujourdhui_demain: "Gemaakt voor gisteren, vandaag en morgen.",
+    naissance_pourquoi: "We hebben je geboortegegevens nodig om je persoonlijke ritme te maken.",
+    un_instant: "Dit duurt maar even.",
+    moins_de_bruit: "Niet meer ruis. Meer duidelijkheid over het juiste moment.",
+  },
+  coupon: {
+    bandeau: "Levenskaart · Premium",
+    debloque: "✦ Ontgrendeld",
+    ouverture: "Je kaart wordt geopend…",
+    titre: "Voer je toegangscode in",
+    sous_titre: "Typ hieronder je code om de levenskaart te ontgrendelen.",
+    bouton: "Ontgrendelen →",
   },
   boudin: {
     titre: "Levenstijdlijn",
@@ -1297,6 +1449,25 @@ const JA: Strings = {
     connexion_en_cours: "接続中…",
     connecte_avec: "{name} とつながりました",
   },
+  interface_: {
+    passer_au_contenu: "本文へスキップ",
+    prochain_pic: "次のピーク",
+    insight_cle: "覚えておきたいこと",
+    se_comprendre: "理解し合う",
+    personnel_utile: "個人的で、役に立ち、共有する価値がある。",
+    hier_aujourdhui_demain: "昨日、今日、そして明日のために。",
+    naissance_pourquoi: "あなたのリズムを用意するため、出生情報が必要です。",
+    un_instant: "ほんの少しで終わります。",
+    moins_de_bruit: "雑音を増やさない。タイミングをはっきりさせる。",
+  },
+  coupon: {
+    bandeau: "ライフチャート · プレミアム",
+    debloque: "✦ 解除しました",
+    ouverture: "チャートを開いています…",
+    titre: "アクセスコードを入力",
+    sous_titre: "下にコードを入力してライフチャートを解除してください。",
+    bouton: "解除する →",
+  },
   boudin: {
     titre: "生涯タイムライン",
   },
@@ -1436,6 +1607,25 @@ const ZH: Strings = {
     connexion_en_cours: "正在连接…",
     connecte_avec: "已与 {name} 连接",
   },
+  interface_: {
+    passer_au_contenu: "跳到正文",
+    prochain_pic: "下一个高峰",
+    insight_cle: "值得记住",
+    se_comprendre: "彼此理解",
+    personnel_utile: "私人、有用，值得分享。",
+    hier_aujourdhui_demain: "为昨天、今天和明天而做。",
+    naissance_pourquoi: "我们需要你的出生信息来准备你的个人节奏。",
+    un_instant: "只需片刻。",
+    moins_de_bruit: "不是更多噪音，而是更清晰的时机。",
+  },
+  coupon: {
+    bandeau: "生命图 · 高级版",
+    debloque: "✦ 已解锁",
+    ouverture: "正在打开你的图…",
+    titre: "输入你的访问码",
+    sous_titre: "在下方输入你的代码以解锁生命图。",
+    bouton: "解锁 →",
+  },
   boudin: {
     titre: "一生时间线",
   },
@@ -1574,6 +1764,25 @@ const AR: Strings = {
     quelquun: "شخص ما",
     connexion_en_cours: "جارٍ الاتصال…",
     connecte_avec: "متصل مع {name}",
+  },
+  interface_: {
+    passer_au_contenu: "تخطَّ إلى المحتوى",
+    prochain_pic: "الذروة القادمة",
+    insight_cle: "ما يجدر تذكّره",
+    se_comprendre: "أن يفهم كلٌّ منكما الآخر",
+    personnel_utile: "شخصي ومفيد ويستحق المشاركة.",
+    hier_aujourdhui_demain: "صُمّم للأمس واليوم والغد.",
+    naissance_pourquoi: "نحتاج بيانات ميلادك لتهيئة إيقاعك الشخصي.",
+    un_instant: "لن يستغرق الأمر سوى لحظة.",
+    moins_de_bruit: "ليس ضجيجًا أكثر، بل وضوحًا أكبر في التوقيت.",
+  },
+  coupon: {
+    bandeau: "خارطة الحياة · بريميوم",
+    debloque: "✦ تم الفتح",
+    ouverture: "يجري فتح خارطتك…",
+    titre: "أدخل رمز الدخول",
+    sous_titre: "اكتب رمزك أدناه لفتح خارطة الحياة.",
+    bouton: "فتح →",
   },
   boudin: {
     titre: "الجدول الزمني للحياة",

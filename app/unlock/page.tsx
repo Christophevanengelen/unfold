@@ -24,9 +24,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { verifierCode, CLE_ACCES } from "@/lib/coupons";
 import { isNative } from "@/lib/platform";
+import { t, detectLocale } from "@/lib/i18n-demo";
 
 
 export default function UnlockPage() {
+  const locale = detectLocale();
   const router = useRouter();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -78,21 +80,21 @@ export default function UnlockPage() {
         textAlign: "center",
       }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", color: "var(--text-premium)", textTransform: "uppercase", marginBottom: 16 }}>
-          Lifetime Chart · Premium
+          {t("coupon.bandeau", locale)}
         </p>
 
         {success ? (
           <>
-            <p style={{ fontSize: 22, fontWeight: 700, color: "var(--text-heading)", marginBottom: 8 }}>✦ Unlocked</p>
-            <p style={{ fontSize: 13, color: "var(--text-body-subtle)" }}>Opening your chart…</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: "var(--text-heading)", marginBottom: 8 }}>{t("coupon.debloque", locale)}</p>
+            <p style={{ fontSize: 13, color: "var(--text-body-subtle)" }}>{t("coupon.ouverture", locale)}</p>
           </>
         ) : (
           <>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-heading)", marginBottom: 8, lineHeight: 1.2 }}>
-              Enter your access code
+              {t("coupon.titre", locale)}
             </h1>
             <p style={{ fontSize: 13, color: "var(--text-body-subtle)", marginBottom: 28 }}>
-              Type your coupon code below to unlock the Lifetime Chart.
+              {t("coupon.sous_titre", locale)}
             </p>
 
             <input
@@ -150,7 +152,7 @@ export default function UnlockPage() {
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
-              Unlock →
+              {t("coupon.bouton", locale)}
             </button>
           </>
         )}

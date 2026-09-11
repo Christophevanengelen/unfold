@@ -19,7 +19,7 @@ import type { RealConnection } from "@/lib/connections-store";
 import type { BirthData } from "@/lib/birth-data";
 import { relationshipConfig } from "./relationshipConfig";
 import { texteLisible } from "@/lib/contraste";
-import { detectLocale } from "@/lib/i18n-demo";
+import { detectLocale, t } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 
 interface ConnectionReportProps {
@@ -299,7 +299,7 @@ function WindowCard({
         {lecture?.ensemble.empathie && (
           <div className="mt-2 rounded-xl px-3.5 py-2.5" style={{ background: "var(--surface-light)" }}>
             <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-text-body-subtle">
-              Se comprendre
+              {t("interface_.se_comprendre", locale)}
             </p>
             <p className="text-xs text-text-body leading-relaxed">{lecture.ensemble.empathie}</p>
           </div>

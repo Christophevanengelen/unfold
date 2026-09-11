@@ -10,6 +10,7 @@ import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useMemo } from "react";
 import { useMomentum } from "@/lib/momentum-store";
 import { previsionSemaine, scoresDuJour, phaseDominante } from "@/lib/prevision-semaine";
+import { t, detectLocale } from "@/lib/i18n-demo";
 
 interface StepHabitProps {
   onNext: () => void;
@@ -22,6 +23,7 @@ interface StepHabitProps {
  * same design, same animations, no container wrapping.
  */
 export function StepHabit({ onNext, onBack }: StepHabitProps) {
+  const locale = detectLocale();
   const { phases } = useMomentum();
   const { scoreDuJour, ecartVeille, aujourdhui, ecarts, dominante } = useMemo(() => {
     const hier = new Date();
@@ -189,7 +191,7 @@ export function StepHabit({ onNext, onBack }: StepHabitProps) {
         style={{ color: "var(--accent-purple)", opacity: 0.5 }}
         variants={fadeInUp}
       >
-        Built for Yesterday, Today, and Tomorrow.
+        {t("interface_.hier_aujourdhui_demain", locale)}
       </motion.p>
 
       {/* CTA */}

@@ -81,12 +81,19 @@ function verifierClesPerso() {
   return { connues: connues.size, fautives };
 }
 
-const PLAFOND = 14;
+const PLAFOND = 0;
 
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [
   { motif: /^app\/(api|admin)\//, raison: "serveur et back-office" },
   { motif: /^app\/app\/astro\//, raison: "outil interne AstroLearn" },
+  {
+    motif: /^app\/app\/compatibility\/test\//,
+    raison:
+      "banc d essai du Match : deux naissances ecrites en dur, ouvert depuis " +
+      "l adresse directe pour lire la sortie du prompt. Aucun utilisateur n y " +
+      "arrive par le produit, et son texte n a pas a vivre en dix langues.",
+  },
   { motif: /^components\/(landing|seo|legal)\//, raison: "le site a son propre systeme (lib/landing-copy.ts)" },
   { motif: /^app\/\[locale\]\//, raison: "pages du site, deja localisees" },
   { motif: /^components\/admin\//, raison: "back-office interne" },
