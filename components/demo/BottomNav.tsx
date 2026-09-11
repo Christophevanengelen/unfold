@@ -144,7 +144,7 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
                     // proches, deux alertes. Le compte se dit dans la couleur
                     // de l app, jamais dans celle du danger — qui reste
                     // disponible le jour ou il y aura vraiment une alerte.
-                    style={{ backgroundColor: "var(--accent-purple)", color: "var(--brand-ink, #FFFFFF)" }}
+                    style={{ backgroundColor: "var(--bg-brand)", color: "var(--text-on-brand)" }}
                   >
                     {item.badge}
                   </span>
