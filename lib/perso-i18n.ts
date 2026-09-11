@@ -539,8 +539,6 @@ const MOTS: Record<string, Traduction> = {
                            pt:"Nada de marcante", nl:"Niets opvallends", ja:"目立つものはなし", zh:"没有突出的信号", ar:"لا شيء بارز" },
   "compat.silence_corps":{ fr:"Pas de signal partagé assez solide ce mois-ci. On préfère se taire qu'inventer.", en:"No shared signal strong enough this month. We'd rather say nothing than make something up.", es:"Ninguna señal compartida lo bastante sólida este mes. Preferimos callar antes que inventar.", de:"Diesen Monat kein gemeinsames Signal, das stark genug wäre. Lieber nichts sagen als etwas erfinden.", it:"Nessun segnale condiviso abbastanza solido questo mese. Meglio tacere che inventare.",
                            pt:"Nenhum sinal partilhado suficientemente sólido este mês. Preferimos calar-nos a inventar.", nl:"Deze maand geen gedeeld signaal dat sterk genoeg is. Liever niets zeggen dan iets verzinnen.", ja:"今月は二人に共通する確かなシグナルがありません。作り話をするより黙ります。", zh:"本月没有足够扎实的共同信号。我们宁可不说，也不编造。", ar:"لا توجد إشارة مشتركة قوية بما يكفي هذا الشهر. نفضّل الصمت على الاختلاق." },
-  "compat.se_comprendre":{ fr:"Se comprendre", en:"Understanding each other", es:"Entenderse", de:"Einander verstehen", it:"Capirsi",
-                           pt:"Compreenderem-se", nl:"Elkaar begrijpen", ja:"おたがいを知る", zh:"理解彼此", ar:"أن يفهم أحدكما الآخر" },
   "compat.cette_annee":  { fr:"Cette année", en:"This year", es:"Este año", de:"Dieses Jahr", it:"Quest'anno",
                            pt:"Este ano", nl:"Dit jaar", ja:"今年", zh:"今年", ar:"هذا العام" },
   "compat.ce_mois":      { fr:"Ce mois", en:"This month", es:"Este mes", de:"Diesen Monat", it:"Questo mese",

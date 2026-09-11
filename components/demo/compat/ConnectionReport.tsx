@@ -22,7 +22,7 @@ import { relationshipConfig } from "./relationshipConfig";
 import { texteLisible } from "@/lib/contraste";
 import { perso } from "@/lib/perso-i18n";
 import { useLocale } from "@/lib/use-locale";
-import type { Locale } from "@/lib/i18n-demo";
+import { t, type Locale } from "@/lib/i18n-demo";
 
 interface ConnectionReportProps {
   connection: RealConnection;
@@ -343,7 +343,7 @@ function WindowCard({
                 className="mb-1 text-[10px] font-bold uppercase tracking-wider"
                 style={{ color: "var(--accent-purple)" }}
               >
-                {perso("compat.se_comprendre", locale)}
+                {t("interface_.se_comprendre", locale)}
               </p>
               <p className="text-[13px] leading-relaxed text-text-body">
                 {lecture.ensemble.empathie}
