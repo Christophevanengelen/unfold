@@ -80,13 +80,22 @@ export const TOLERANCE_JOURS: Readonly<Record<string, number>> = {
 };
 
 /** Le zodiaque, pour l inversion topic → maison. Bijection verifiee 12/12. */
-export const TOPIC_DE_MAISON: Readonly<Record<number, string>> = {
+export const TOPIC_DE_MAISON = {
   1: "identity", 2: "money", 3: "communication", 4: "home", 5: "creativity",
   6: "health", 7: "relationships", 8: "transformation", 9: "philosophy",
   10: "career", 11: "community", 12: "solitude",
-};
+} as const satisfies Readonly<Record<number, string>>;
 
-const MAISON_DE_TOPIC: Readonly<Record<string, number>> = Object.fromEntries(
+/** Les douze valeurs de TOPIC_DE_MAISON, comme type litteral — a reutiliser
+ * partout ou un domaine de vie est classe (ex. lib/astrologue-comprehension.ts),
+ * pour que la classification et la resolution de maison ne puissent jamais
+ * diverger. */
+export type TopicMaison = (typeof TOPIC_DE_MAISON)[keyof typeof TOPIC_DE_MAISON];
+
+// Exporte : lib/astrologue-routeur.ts en a besoin pour classer les fenetres de
+// convergence par correspondance avec le domaine devine par l Appel A, sans
+// reconstruire une seconde fois cette meme bijection.
+export const MAISON_DE_TOPIC: Readonly<Record<string, number>> = Object.fromEntries(
   Object.entries(TOPIC_DE_MAISON).map(([h, t]) => [t, Number(h)]),
 );
 
@@ -496,7 +505,7 @@ export function techniquesDAccord(
   const conv = "convergence" in entree ? entree.convergence : null;
   const maison = "maison" in entree ? entree.maison : null;
   if (!conv || !Array.isArray(conv.events) || maison == null) return 0;
-  const topicVise = TOPIC_DE_MAISON[maison];
+  const topicVise = (TOPIC_DE_MAISON as Record<number, TopicMaison>)[maison];
   if (!topicVise) return 0;
   const familles = new Set<Famille>();
   for (const e of conv.events) {

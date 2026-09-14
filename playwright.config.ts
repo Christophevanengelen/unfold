@@ -96,7 +96,11 @@ export default defineConfig({
     },
     {
       name: "moteur",
-      testMatch: /moteur-reel\.spec\.ts$/,
+      // Motif, pas un nom fixe : tout fichier "*-reel.spec.ts" appelle un
+      // service tiers reel et rejoint cette suite lente/instable plutot que
+      // la suite rapide. astrologue-reel.spec.ts (12/09/2026) est le premier
+      // a rejoindre moteur-reel.spec.ts sous ce motif.
+      testMatch: /-reel\.spec\.ts$/,
       // Le moteur met 30 a 120 secondes a repondre pour un theme qu il n a
       // jamais vu. Un delai plus court ferait echouer un test parfaitement
       // correct, ce qui est la meilleure facon de faire desactiver une suite.

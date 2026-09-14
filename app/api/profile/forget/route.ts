@@ -271,6 +271,21 @@ async function handlePost(req: NextRequest) {
         // La migration 010 n est peut-etre pas encore passee : on n echoue pas
         // l effacement pour autant, le reste a bien ete supprime.
       }
+
+      // Les conversations de "Parle avec un astrologue" (016_astrologue.sql)
+      // portent ce que la personne a ecrit sur ce qu elle vit — plus sensible
+      // que le cache ou les jetons purges ci-dessus. Le mode authentifie les
+      // emporte deja par cascade (astrologue_sessions.device_id REFERENCES
+      // profiles(device_id) ON DELETE CASCADE), mais ce bloc-ci s execute aussi
+      // pour un appelant NON authentifie qui ne supprime pas sa ligne
+      // `profiles` : sans ce DELETE explicite, ses conversations survivraient
+      // a un "oubli-moi" cote appareil. `astrologue_messages` et
+      // `astrologue_engine_jobs` suivent par leur propre CASCADE.
+      const { count: astroCount } = await admin
+        .from("astrologue_sessions")
+        .delete({ count: "exact" })
+        .eq("device_id", body.deviceId);
+      if (typeof astroCount === "number") result.astrologue_sessions = astroCount;
     }
 
     return NextResponse.json({ ok: true, deleted: result });
