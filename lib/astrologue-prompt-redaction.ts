@@ -51,7 +51,12 @@ export function construirePromptRedaction(
   switch (verdict.type) {
     case "parle": {
       const f = verdict.fenetre;
-      const systemPrompt = `Tu écris la réponse de "Parle avec un astrologue" sur Favorable. Une personne t'a raconté ce qu'elle vit ; tu réponds en français courant, tutoiement, avec ces FAITS déjà calculés :
+      // Structure alignee sur messages/vela-astrologue.html (ecran 4, le
+      // deroule reel valide apres le brief initial) : quatre blocs, mais le
+      // 4e est "La prochaine date" — une information concrete et utile —
+      // plutot que "quelles techniques l'ont dit", qui ne pouvait produire
+      // qu une phrase de remplissage sans jamais nommer les techniques.
+      const systemPrompt = `Tu écris la réponse de "Parle avec un astrologue" sur Favorable (le personnage s'appelle Vela). Une personne t'a raconté ce qu'elle vit ; tu réponds en français courant, tutoiement, avec ces FAITS déjà calculés :
 
 - domaine de vie concerné (maison numéro ${f.maisonNum}, à traduire — jamais à écrire tel quel)
 - force de convergence : ${f.force} techniques indépendantes d'accord sur la même période
@@ -64,8 +69,8 @@ Réponds STRICTEMENT en JSON, ces quatre champs, toujours dans cet ordre :
 {
   "cePasse": "ce qui se passe, en langage courant, ancré au domaine de vie concerné",
   "dOuCaVient": "décrit qu'il y a DEUX façons différentes de compter/lire qui pointent la même chose, SANS jamais les nommer",
-  "quiLaDit": "confirme que ce sont deux techniques différentes qui concordent — jamais leurs noms",
-  "ceQuiChange": "descriptif, jamais prédictif ; donne la fenêtre (dates) telle que fournie, ne l'invente jamais"
+  "ceQuiChange": "descriptif, jamais prédictif ; ce que ça change concrètement pour la personne",
+  "prochaineDate": "1 phrase courte donnant UNIQUEMENT la date de fin de la fenêtre courte (${f.declencheur.fin}), jamais une autre date inventée — ex: 'Ça se dénoue autour du [date].'"
 }
 
 ${SOCLE_MECANIQUE_VERS_DOMAINE}
@@ -76,6 +81,9 @@ VOIX : tutoiement partout, français courant, sobre, direct, premium. Maximum ${
     }
 
     case "signal-direct": {
+      // Trois champs ici, pas quatre : aucune fenetre propre a isoler dans un
+      // texte libre (llmPayload) pour remplir un "prochaineDate" honnete —
+      // en inventer une contredirait "on n'invente jamais un signal".
       const systemPrompt = `Tu écris la réponse de "Parle avec un astrologue" sur Favorable. La personne pose une question sur MAINTENANT, sans période précise. Voici les signaux actifs aujourd'hui, déjà priorisés par le moteur (le plus important en premier) :
 
 ${verdict.llmPayloads.map((s, i) => `--- Signal ${i + 1} ---\n${s}`).join("\n\n")}
@@ -84,8 +92,7 @@ Réponds STRICTEMENT en JSON :
 {
   "cePasse": "ce qui se passe maintenant, en langage courant, ancré au domaine de vie concerné par le signal le plus fort",
   "dOuCaVient": "décrit la nature du mouvement (ça se tend, ça s'ouvre...) sans jamais nommer la technique",
-  "quiLaDit": "une phrase confirmant que c'est un signal réel du moment, jamais une généralité",
-  "ceQuiChange": "descriptif, jamais prédictif ; donne la durée si les signaux la fournissent"
+  "ceQuiChange": "descriptif, jamais prédictif ; donne la durée SEULEMENT si les signaux la fournissent explicitement, sinon ne l'invente pas"
 }
 
 ${SOCLE_MECANIQUE_VERS_DOMAINE}
@@ -188,10 +195,15 @@ Dis simplement que tu ne peux pas accéder aux données nécessaires maintenant,
 
 /** Les champs a valider pour un verdict donne, dans l ordre d affichage. */
 export function champsAValider(verdict: VerdictAstrologue, sortie: Record<string, unknown>): Record<string, string> | null {
+  // "parle" porte "prochaineDate" (une vraie date calculee) ; "signal-direct"
+  // ne le peut pas honnetement (pas de fenetre isolable dans un texte libre)
+  // et s'arrete a trois champs — voir les commentaires sur chaque prompt.
   const champsAttendus =
-    verdict.type === "parle" || verdict.type === "signal-direct"
-      ? (["cePasse", "dOuCaVient", "quiLaDit", "ceQuiChange"] as const)
-      : (["reponse"] as const);
+    verdict.type === "parle"
+      ? (["cePasse", "dOuCaVient", "ceQuiChange", "prochaineDate"] as const)
+      : verdict.type === "signal-direct"
+        ? (["cePasse", "dOuCaVient", "ceQuiChange"] as const)
+        : (["reponse"] as const);
   const champs: Record<string, string> = {};
   for (const c of champsAttendus) {
     const v = sortie[c];

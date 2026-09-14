@@ -75,8 +75,8 @@ function promptParle(f) {
 - fenêtre longue (fond) : du ${f.fond.debut} au ${f.fond.fin}
 - fenêtre approximative : ${f.approximee ? "oui, arrondie par le moteur" : "non, dates exactes"}
 
-Réponds STRICTEMENT en JSON, ces quatre champs, toujours dans cet ordre :
-{ "cePasse": "...", "dOuCaVient": "...", "quiLaDit": "...", "ceQuiChange": "..." }
+Réponds STRICTEMENT en JSON, ces quatre champs, toujours dans cet ordre (structure Vela, messages/vela-astrologue.html) :
+{ "cePasse": "...", "dOuCaVient": "...", "ceQuiChange": "...", "prochaineDate": "1 phrase donnant uniquement ${f.declencheur.fin}" }
 
 ${SOCLE}
 

@@ -257,10 +257,15 @@ async function handlePost(request: NextRequest) {
     }
 
     const o = sortieB as Record<string, string>;
+    // Structure Vela (messages/vela-astrologue.html, ecran 4) : "parle" porte
+    // une 4e partie "prochaine date" ; "signal-direct" s'arrete a trois
+    // parties, sans date a annoncer honnetement (voir garde-jargon.champsAValider).
     const texteAffiche =
-      routage.verdict.type === "parle" || routage.verdict.type === "signal-direct"
-        ? [o.cePasse, o.dOuCaVient, o.quiLaDit, o.ceQuiChange].join(" ")
-        : o.reponse;
+      routage.verdict.type === "parle"
+        ? [o.cePasse, o.dOuCaVient, o.ceQuiChange, o.prochaineDate].join(" ")
+        : routage.verdict.type === "signal-direct"
+          ? [o.cePasse, o.dOuCaVient, o.ceQuiChange].join(" ")
+          : o.reponse;
 
     await ajouterMessage({
       sessionId, turn: tour, role: "assistant",

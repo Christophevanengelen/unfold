@@ -1,9 +1,15 @@
-# "Parle avec un astrologue" — comment ça marche, et comment le tester
+# "Parle avec un astrologue" (Vela) — comment ça marche, et comment le tester
 
 Christophe, ceci répond à ton briefing (`messages/briefing-astrologue-marie-ange.html`).
 J'ai construit le côté "nous" — la conversation, la répartition, l'écriture —
 tel que tu l'as proposé. Ce document explique ce qui existe, avec des exemples
 concrets, sans code.
+
+Entre-temps tu as posé `messages/vela-astrologue.html` — le nom (Vela),
+l'avatar, et surtout le déroulé écran par écran. Bonne nouvelle : les deux
+côtés se recoupent presque exactement. J'ai déjà réaligné la réponse en 4
+temps sur ton écran 4 (voir plus bas) ; le reste de ce document tient compte
+de ta version, pas seulement du briefing initial.
 
 ## En une phrase
 
@@ -41,10 +47,27 @@ Repris de ton propre dialogue (§1 du briefing) :
 > **L'app :** *(ici, le code va chercher les vraies dates dans ton moteur,
 > fait voter la règle de silence, et une IA rédige à partir de faits réels —
 > jamais inventés)*
+>
+> **Ce que rédige la seconde IA, en 4 temps** — réaligné sur ton écran 4
+> (`vela-astrologue.html`) : *ce qui se passe* / *d'où ça vient* (sans jamais
+> nommer une technique) / *ce que ça change* / *la prochaine date* — cette
+> dernière étant une vraie date calculée par ton moteur, jamais inventée,
+> avec la même promesse que ton mock ("je te préviendrai avant" — voir plus
+> bas, ce morceau-là n'est pas encore construit).
 
 Si rien de fort ne converge sur le sujet, l'app le dit clairement et le
 présente comme une bonne nouvelle — jamais comme une panne. C'est ta règle
 "le silence est une réponse" (§4), maintenant du vrai code.
+
+## Ce que ton écran 5 (l'historique) demande, et qui n'est pas encore fait
+
+Ton mock montre chaque conversation avec un titre ("Rester ou partir"), une
+date d'ouverture, et sa prochaine échéance — et Vela qui "revient d'elle-même
+le 3 février". Ce chantier-ci pose la table qui stocke les conversations,
+mais ne fait pas encore : un titre court par conversation, une liste de
+toutes les conversations d'un appareil, ni le rappel automatique le jour de
+l'échéance (ça, c'est une notification programmée — le terrain de
+`favorable-notifs`, un autre chantier). À prévoir pour la suite, pas oublié.
 
 ## Ce qui décline poliment, plutôt que de mal répondre
 
