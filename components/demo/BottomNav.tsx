@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Heart, Clock, User } from "flowbite-react-icons/outline";
+import { Heart, Clock, User, MessageDots } from "flowbite-react-icons/outline";
 import { t } from "@/lib/i18n-demo";
 import { useLocale } from "@/lib/use-locale";
 import { useConnexions } from "@/components/demo/use-connexions";
@@ -98,6 +98,15 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
       icon: Heart,
       label: t("nav.match", locale),
       badge: connectionCount,
+    },
+    // Vela rejoint la barre plutot que de se cacher dans un menu : une
+    // conversation ne se trouve pas, elle s ouvre. Le libelle est le nom, pas
+    // « astrologue » — c est ainsi qu on en parlera.
+    {
+      key: "vela" as const,
+      href: "/app/astrologue",
+      icon: MessageDots,
+      label: t("vela.titre", locale),
     },
   ];
 

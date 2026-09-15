@@ -17,6 +17,7 @@
  *
  * SUCCES — HTTP 200
  *   { ok: true, sessionId, turn, message: { role: "assistant", content },
+ *     parties?: { cePasse, dOuCaVient, ceQuiChange, prochaineDate? },
  *     needsClarification: boolean, awaitingDetail?: boolean }
  *
  * ECHEC — HTTP 400, 404, 409, 429, 500, 502 ou 503
@@ -290,6 +291,23 @@ async function handlePost(request: NextRequest) {
         sessionId,
         turn: tour,
         message: { role: "assistant", content: texteAffiche },
+        // Les memes mots, decoupes. `content` reste la source unique — c est
+        // lui qu on stocke et qu on relit —, mais l ecran 4 de Vela montre
+        // quatre temps titres, pas un bloc. Les rendre separement evite a
+        // l interface de recouper le texte a coups d expressions
+        // regulieres, ce qui reviendrait a reecrire par-dessus la redaction.
+        // Absent quand le verdict n a pas cette forme (silence, question).
+        parties:
+          routage.verdict.type === "parle"
+            ? {
+                cePasse: o.cePasse,
+                dOuCaVient: o.dOuCaVient,
+                ceQuiChange: o.ceQuiChange,
+                prochaineDate: o.prochaineDate,
+              }
+            : routage.verdict.type === "signal-direct"
+              ? { cePasse: o.cePasse, dOuCaVient: o.dOuCaVient, ceQuiChange: o.ceQuiChange }
+              : undefined,
         needsClarification: false,
         awaitingDetail: !!routage.arrierePlan,
       }),
