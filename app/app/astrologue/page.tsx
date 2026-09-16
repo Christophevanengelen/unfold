@@ -364,12 +364,30 @@ export default function AstrologuePage() {
                     .map(([cle, texte]) => (
                       <div key={cle}>
                         <span
-                          className="mb-0.5 block text-[9.5px] font-bold uppercase tracking-widest"
+                          className="mb-1 block text-[9.5px] font-bold uppercase tracking-widest"
                           style={{ color: "var(--text-brand)" }}
                         >
                           {t(`vela.${cle}`, locale)}
                         </span>
-                        <p>{texte}</p>
+                        {/* Le premier temps porte la reponse : il prend la
+                            police d affichage de la marque, comme le score du
+                            rapport. Les trois autres restent en texte courant —
+                            une hierarchie ne se voit que si elle est rare. */}
+                        {cle === "t_passe" ? (
+                          <p
+                            className="text-[17px] leading-snug"
+                            style={{
+                              fontFamily: "var(--font-titre)",
+                              fontWeight: 400,
+                              letterSpacing: "-0.01em",
+                              color: "var(--text-heading)",
+                            }}
+                          >
+                            {texte}
+                          </p>
+                        ) : (
+                          <p>{texte}</p>
+                        )}
                       </div>
                     ))}
                 </div>

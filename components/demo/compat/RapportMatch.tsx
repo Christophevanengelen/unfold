@@ -67,7 +67,11 @@ import { fetchMatch, matchEnCache, type RaisonMatch } from "@/lib/match-api";
 import { lireMatch, type Dimension, type LectureMatch } from "@/lib/match-lecture";
 import type { BirthData } from "@/lib/birth-data";
 import { choisir, franchir, reussi, toucher } from "@/lib/haptique";
-import { Anneau, Arc, Paire, Piste, Section } from "./rapport/visuels";
+import { Anneau, Paire, Piste, Section } from "./rapport/visuels";
+import { Heros } from "./rapport/Heros";
+import { Empreinte } from "./rapport/Empreinte";
+import { construireEmpreinte, construireGraine, type ParametresEmpreinte } from "@/lib/empreinte";
+import { CASCADE } from "@/lib/ressorts";
 
 /** Les liens dont on a deja joue la devinette. Un jeu ne se rejoue pas. */
 const CLE_DEVINE = "unfold_match_devine";
@@ -192,6 +196,8 @@ export function RapportMatch({ moi, autre, nomAutre, embedded }: RapportMatchPro
       <Corps
         lecture={lecture}
         locale={locale}
+        moi={moi}
+        autre={autre}
         nomAutre={nomAutre}
         nomMoi={moi.nickname || "—"}
         estimation={devine !== null && devine >= 0 ? devine : null}
@@ -270,15 +276,27 @@ function Devinette({
   return (
     <div className="flex flex-col items-center gap-6 px-6 py-16 text-center">
       <EyebrowLabel color="var(--text-body-subtle)">{t("rapport.eyebrow", locale)}</EyebrowLabel>
-      <h2 className="text-[22px] font-semibold text-text-heading">{t("rapport.devine_titre", locale)}</h2>
+      <h2
+        className="text-[30px] leading-tight text-text-heading"
+        style={{ fontFamily: "var(--font-titre)", fontWeight: 300, letterSpacing: "-0.02em" }}
+      >
+        {t("rapport.devine_titre", locale)}
+      </h2>
       <p className="max-w-[26ch] text-[14px] leading-snug text-text-body">
         {t("rapport.devine_aide", locale)}
       </p>
 
       <div className="w-full max-w-[280px]">
         <div
-          className="text-[44px] font-semibold tabular-nums leading-none"
-          style={{ color: "var(--accent-purple)" }}
+          className="leading-none"
+          style={{
+            fontFamily: "var(--font-titre)",
+            fontWeight: 300,
+            fontSize: 76,
+            letterSpacing: "-0.04em",
+            fontVariantNumeric: "tabular-nums",
+            color: "var(--accent-purple)",
+          }}
         >
           {v}
         </div>
@@ -328,22 +346,56 @@ function Devinette({
 function Corps({
   lecture,
   locale,
+  moi,
+  autre,
   nomAutre,
   nomMoi,
   estimation,
 }: {
   lecture: LectureMatch;
   locale: Locale;
+  moi: BirthData;
+  autre: BirthData;
   nomAutre: string;
   nomMoi: string;
   estimation: number | null;
 }) {
   const ecart = estimation === null ? null : lecture.score - estimation;
+  const attraction = lecture.nuances.find((d) => d.versLui !== undefined);
+
+  /**
+   * Les parametres de l empreinte. Chaque nombre du dessin vient d une mesure
+   * du moteur — rien n est decoratif, et c est ce qui fait qu une empreinte
+   * appartient a UN couple. La graine y ajoute ce qui distingue deux couples
+   * aux chiffres voisins.
+   */
+  const empreinte: ParametresEmpreinte = {
+    score: lecture.score,
+    ressemblance: lecture.socle[1]?.valeur ?? 50,
+    equilibre: lecture.socle[2]?.valeur ?? 50,
+    attractionVersLui: attraction?.versLui ?? 50,
+    attractionVersElle: attraction?.versElle ?? 50,
+    porteurs: lecture.porteurs.length,
+    graine: construireGraine(`${moi.birthDate}T${moi.birthTime}`, `${autre.birthDate}T${autre.birthTime}`),
+  };
 
   return (
-    <div className="mx-auto w-full max-w-[420px] px-5 pb-28 pt-4">
-      <TeteScore lecture={lecture} locale={locale} ecart={ecart} nomAutre={nomAutre} nomMoi={nomMoi} />
+    <div className="w-full pb-28">
+      {/* Plein cadre, hors de la colonne de texte. Un rapport juge « sage »
+          l est presque toujours parce que son chiffre est petit dans une carte
+          sur un fond neutre — c est la lecon des ecrans primes en 2026. Ici il
+          occupe l ecran, et le fond prend la couleur du score. */}
+      <Heros
+        parametres={empreinte}
+        eyebrow={t("rapport.eyebrow", locale)}
+        palier={t(`rapport.palier_${lecture.palier}`, locale)}
+        aide={t("rapport.score_aide", locale)}
+        nomMoi={nomMoi}
+        nomAutre={nomAutre}
+        enfantBas={ecart !== null ? <Ecart ecart={ecart} locale={locale} /> : null}
+      />
 
+      <div className="mx-auto w-full max-w-[420px] px-5 pt-10">
       <Grille
         titre={t("rapport.socle_titre", locale)}
         aide={t("rapport.socle_aide", locale)}
@@ -363,62 +415,10 @@ function Corps({
       <Asymetrie lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Apports lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Tempo lecture={lecture} locale={locale} nomAutre={nomAutre} />
-      <Commun lecture={lecture} locale={locale} nomAutre={nomAutre} nomMoi={nomMoi} />
+      <Commun lecture={lecture} locale={locale} nomAutre={nomAutre} nomMoi={nomMoi} empreinte={empreinte} />
       <Methode locale={locale} />
-    </div>
-  );
-}
-
-function TeteScore({
-  lecture,
-  locale,
-  ecart,
-  nomAutre,
-  nomMoi,
-}: {
-  lecture: LectureMatch;
-  locale: Locale;
-  ecart: number | null;
-  nomAutre: string;
-  nomMoi: string;
-}) {
-  return (
-    <Section className="flex flex-col items-center pb-8 pt-2 text-center">
-      <div className="flex items-center gap-2">
-        <Anneau lettre={nomMoi} taille={34} />
-        <Anneau lettre={nomAutre} taille={34} doux />
       </div>
-      <EyebrowLabel color="var(--text-body-subtle)" className="mt-4">
-        {t("rapport.score_titre", locale)}
-      </EyebrowLabel>
-
-      <Arc
-        valeur={lecture.score}
-        delai={0.15}
-        enfant={
-          <>
-            <span
-              className="text-[52px] font-semibold leading-none tabular-nums"
-              style={{ color: "var(--accent-purple)" }}
-            >
-              {lecture.score}
-            </span>
-            <span className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-text-body-subtle">
-              / 100
-            </span>
-          </>
-        }
-      />
-
-      <p className="mt-3 max-w-[30ch] text-[15px] font-semibold leading-snug text-text-heading">
-        {t(`rapport.palier_${lecture.palier}`, locale)}
-      </p>
-      <p className="mt-1.5 max-w-[32ch] text-[12px] leading-snug text-text-body-subtle">
-        {t("rapport.score_aide", locale)}
-      </p>
-
-      {ecart !== null ? <Ecart ecart={ecart} locale={locale} /> : null}
-    </Section>
+    </div>
   );
 }
 
@@ -464,7 +464,12 @@ function Grille({
   if (dimensions.length === 0) return null;
   return (
     <Section className="pb-8" delai={delai}>
-      <h3 className="text-[16px] font-semibold text-text-heading">{titre}</h3>
+      <h3
+        className="text-[21px] leading-tight text-text-heading"
+        style={{ fontFamily: "var(--font-titre)", fontWeight: 300, letterSpacing: "-0.015em" }}
+      >
+        {titre}
+      </h3>
       <p className="mt-0.5 text-[12px] leading-snug text-text-body-subtle">{aide}</p>
       <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5">
         {dimensions.map((d, i) => (
@@ -474,7 +479,7 @@ function Grille({
             aide={t(`${d.clef}_aide`, locale)}
             valeur={d.valeur}
             niveau={t(`match.${d.palier}`, locale)}
-            delai={0.08 * i}
+            delai={CASCADE * i}
           />
         ))}
       </div>
@@ -501,7 +506,10 @@ function Asymetrie({
   return (
     <Section className="pb-8" delai={0.05}>
       <div className="rounded-2xl p-4" style={{ background: "var(--bg-secondary)" }}>
-        <h3 className="text-[16px] font-semibold leading-snug text-text-heading">
+        <h3
+          className="text-[19px] leading-tight text-text-heading"
+          style={{ fontFamily: "var(--font-titre)", fontWeight: 300, letterSpacing: "-0.015em" }}
+        >
           {t("rapport.asym_titre", locale)}
         </h3>
         <div className="mt-4 space-y-4">
@@ -551,7 +559,10 @@ function Apports({
         });
   return (
     <Section className="pb-8" delai={0.05}>
-      <h3 className="text-[16px] font-semibold text-text-heading">
+      <h3
+        className="text-[21px] leading-tight text-text-heading"
+        style={{ fontFamily: "var(--font-titre)", fontWeight: 300, letterSpacing: "-0.015em" }}
+      >
         {t("rapport.apports_titre", locale)}
       </h3>
       <p className="mt-0.5 text-[12px] leading-snug text-text-body-subtle">
@@ -571,7 +582,7 @@ function Apports({
             aide={t(`${p.clef}_aide`, locale)}
             gauche={p.lui}
             droite={p.elle}
-            delai={0.07 * i}
+            delai={CASCADE * i}
             etiquetteGauche={t("rapport.apports_toi", locale)}
             etiquetteDroite={nomAutre}
           />
@@ -612,27 +623,51 @@ function Tempo({
 }
 
 /**
- * Ce qu on garde. Le partage ne porte pas la note : la recherche sur la
- * presentation de soi dit qu on partage ce qui nous met en valeur, donc un
- * produit qui ne se partage que quand il flatte devient un produit qui flatte.
- * On partage le terrain le plus fort que les deux ont en commun — vrai quel que
- * soit le score, et lisible par un tiers en deux secondes.
+ * Ce qu on garde, et qu on peut envoyer.
+ *
+ * ─── CE QUI EST ECRIT DESSUS ────────────────────────────────────────────────
+ *
+ * Pas la note. La recherche sur la presentation de soi est nette : on partage
+ * ce qui nous met en valeur — donc un produit dont l objet partageable est un
+ * score devient un produit qui flatte, et un score bas devient structurellement
+ * impartageable. On met donc le TERRAIN que les deux ont en commun : vrai quel
+ * que soit le chiffre, et lisible par un tiers en deux secondes.
+ *
+ * On le classe sur le plus FAIBLE des deux, pas sur la somme : une somme elevee
+ * peut ne venir que d une seule personne, et ce ne serait alors pas un terrain
+ * commun.
+ *
+ * ─── POURQUOI ELLE RESSEMBLE A CA ───────────────────────────────────────────
+ *
+ * Un cadre constant, un contenu unique. C est le principe de toutes les
+ * identites generatives qui ont tenu : le format, le rapport, la place du nom
+ * ne bougent jamais ; seule l image change. C est ce qui rend une serie
+ * reconnaissable dans un fil, tout en laissant chaque exemplaire singulier.
+ *
+ * Format portrait, parce que c est celui des recits partages. L empreinte du
+ * couple au centre, en grand et sans voile : ici elle EST le sujet, elle n est
+ * plus un fond. Les deux initiales, parce qu une signature de couple n a de
+ * valeur sociale que si on peut la nommer.
+ *
+ * Le lisere clair en haut et sombre en bas remplace le verre depoli : Apple a
+ * fait ce chemin en deux ans, du flou trouble au bord et au reflet. Deux ombres
+ * internes, cout de rendu nul, et rien qui saccade au defilement.
  */
 function Commun({
   lecture,
   locale,
   nomAutre,
   nomMoi,
+  empreinte,
 }: {
   lecture: LectureMatch;
   locale: Locale;
   nomAutre: string;
   nomMoi: string;
+  empreinte: ParametresEmpreinte;
 }) {
   const [partage, setPartage] = useState(false);
 
-  // Le terrain ou les DEUX pesent : on classe sur le plus faible des deux, pas
-  // sur la somme. Une somme elevee peut ne venir que d une seule personne.
   const commun = useMemo(
     () => [...lecture.porteurs].sort((a, b) => Math.min(b.lui, b.elle) - Math.min(a.lui, a.elle))[0],
     [lecture.porteurs],
@@ -645,12 +680,9 @@ function Commun({
     try {
       if (navigator.share) {
         await navigator.share({ title: "Favorable", text: texte });
-        reussi();
-        setPartage(true);
-        setTimeout(() => setPartage(false), 2000);
-        return;
+      } else {
+        await navigator.clipboard.writeText(texte);
       }
-      await navigator.clipboard.writeText(texte);
       reussi();
       setPartage(true);
       setTimeout(() => setPartage(false), 2000);
@@ -660,29 +692,74 @@ function Commun({
   }, [commun, locale, nomAutre, nomMoi]);
 
   if (!commun) return null;
+  const teinte = construireEmpreinte(empreinte).teinte;
 
   return (
-    <Section className="pb-8" delai={0.05}>
+    <Section className="pb-9" delai={0.05}>
       <div
-        className="rounded-2xl p-5 text-center"
-        style={{ background: "var(--bg-premium)", color: "var(--text-on-premium)" }}
+        className="grain lisere relative flex flex-col items-center overflow-hidden rounded-[26px] px-6 pb-7 pt-8 text-center"
+        style={{
+          aspectRatio: "4 / 5",
+          background: `
+            radial-gradient(76% 52% at 50% 26% in oklch, oklch(44% 0.13 ${teinte} / 0.8) 0%, transparent 62%),
+            radial-gradient(90% 60% at 20% 88% in oklch, oklch(34% 0.09 ${teinte + 26} / 0.7) 0%, transparent 60%),
+            oklch(21% 0.045 ${teinte})
+          `,
+        }}
       >
-        <EyebrowLabel color="var(--text-on-premium)">{t("rapport.partage_titre", locale)}</EyebrowLabel>
-        <p className="mt-2 text-[20px] font-semibold leading-tight">{t(commun.clef, locale)}</p>
-        <p className="mt-1.5 text-[12px] leading-snug opacity-80">{t(`${commun.clef}_aide`, locale)}</p>
-        <div className="mt-4 flex items-center justify-center gap-2">
-          <Anneau lettre={nomMoi} taille={28} />
-          <Anneau lettre={nomAutre} taille={28} doux />
+        <Empreinte
+          parametres={empreinte}
+          taille={300}
+          opacite={0.5}
+          aura
+          className="pointer-events-none absolute left-1/2 top-[46%] -translate-x-1/2 -translate-y-1/2"
+        />
+
+        <div className="relative flex h-full w-full flex-col items-center justify-between">
+          <EyebrowLabel color="var(--text-on-brand)">
+            {t("rapport.partage_titre", locale)}
+          </EyebrowLabel>
+
+          <div className="flex flex-col items-center">
+            <p
+              className="max-w-[14ch] text-[34px] leading-[1.05]"
+              style={{
+                fontFamily: "var(--font-titre)",
+                fontWeight: 300,
+                letterSpacing: "-0.025em",
+                color: "var(--text-on-brand)",
+                textWrap: "balance",
+              }}
+            >
+              {t(commun.clef, locale)}
+            </p>
+            <p
+              className="mt-2.5 max-w-[24ch] text-[12px] leading-snug"
+              style={{ color: "var(--text-on-brand)", opacity: 0.66 }}
+            >
+              {t(`${commun.clef}_aide`, locale)}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Anneau lettre={nomMoi} taille={30} />
+            <Anneau lettre={nomAutre} taille={30} doux />
+          </div>
         </div>
+      </div>
+
+      {/* Le bouton vit SOUS la carte, jamais dessus : ce qu on envoie doit etre
+          l image, pas l image plus son bouton. */}
+      <div className="mt-3.5 flex flex-col items-center gap-1.5">
         <button
           type="button"
           onClick={surPartage}
-          className="mt-4 rounded-full px-5 py-2.5 text-[14px] font-semibold"
+          className="rounded-full px-6 py-2.5 text-[14px] font-semibold"
           style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
         >
           {partage ? t("rapport.partage_en_cours", locale) : t("rapport.partage_bouton", locale)}
         </button>
-        <p className="mt-2.5 text-[11px] leading-snug opacity-75">
+        <p className="max-w-[30ch] text-center text-[11px] leading-snug text-text-body-subtle">
           {t("rapport.partage_aide", locale)}
         </p>
       </div>

@@ -167,9 +167,52 @@ button, a, [role="button"], [role="link"],
                                13:   High contrast
    ============================================== */
 
+/* ── Le grain ─────────────────────────────────────────────────────────────
+   Un aplat numerique est parfaitement uniforme : l oeil le lit comme une
+   absence. Une variance haute frequence, meme imperceptible, le fait basculer
+   de « couleur affichee » a « matiere eclairee ». Elle casse aussi le banding
+   des grands degrades.
+
+   DEUX REGIMES, ET UN SEUL EST UTILISABLE. Un `feTurbulence` applique en direct
+   a un element est calcule PAR PIXEL et n est pas accelere materiellement ;
+   animer sa `baseFrequency` ne fonctionne meme pas sur Safari iPhone. En
+   data-URI, au contraire, le filtre est rasterise UNE fois au chargement et
+   n est plus qu une image repetee. Le grain ne bouge donc jamais : si on veut
+   qu il vive, on anime l opacite du calque, pas le filtre.
+
+   Les quatre parametres qui comptent : `fractalNoise` et non `turbulence`,
+   `baseFrequency` pour la finesse, `numOctaves` (chaque octave coute), et
+   `stitchTiles="stitch"` sans lequel la repetition laisse des coutures.       */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.1;
+  background-size: 182px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.68' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* ── Le liseré ────────────────────────────────────────────────────────────
+   Ce qui donne l impression de matiere sur une surface, ce n est pas le flou :
+   c est le bord. Apple lui-meme a fait ce chemin en deux ans, du verre trouble
+   d iOS 26 au bord assombri + reflet speculaire d iOS 27. Deux ombres internes,
+   cout de rendu nul, et aucun `backdrop-filter` — le premier suspect quand une
+   animation saccade dans la WebView de l app native.                          */
+.lisere {
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.14),
+    inset 0 -1px 0 oklch(0% 0 0 / 0.22);
+}
+
 @theme inline {
   /* Font families */
   --font-display: var(--font-uniform-rounded);
+  /* Goodly, la police d affichage de la marque. Un jeton separe plutot qu un
+     remplacement de --font-display : changer --font-display retypographierait
+     l app entiere d un coup, et le langage visuel appartient a Christophe. On
+     l applique ecran par ecran, en commencant par le rapport de compatibilite. */
+  --font-titre: var(--font-goodly);
   --font-body: var(--font-uniform-rounded);
   --font-sans: var(--font-uniform-rounded);
   --font-mono: var(--font-uniform-rounded);

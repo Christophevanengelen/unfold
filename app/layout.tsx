@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { uniformRounded } from "@/lib/fonts";
+import { goodly, uniformRounded } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { MouvementProvider } from "@/components/MouvementProvider";
 import "./globals.css";
@@ -78,7 +78,7 @@ export default async function RootLayout({
           />
         </head>
       )}
-      <body className={`${uniformRounded.variable} ${uniformRounded.className} antialiased`} suppressHydrationWarning>
+      <body className={`${uniformRounded.variable} ${goodly.variable} ${uniformRounded.className} antialiased`} suppressHydrationWarning>
         <ThemeProvider>
           <MouvementProvider>{children}</MouvementProvider>
         </ThemeProvider>

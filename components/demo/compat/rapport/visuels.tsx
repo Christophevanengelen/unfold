@@ -7,8 +7,8 @@
  *
  * Le studio Manual a dessine le Year in Sport de Strava avec un vocabulaire
  * reduit — des panneaux, des lignes, des points, des cercles — decline partout.
- * C est le parti pris ici : un arc, une piste, une paire, un anneau. Rien
- * d autre n entre dans le rapport.
+ * C est le parti pris ici : une piste, une paire, un anneau, et l empreinte du
+ * couple (`Empreinte.tsx`). Rien d autre n entre dans le rapport.
  *
  * On n installe aucune bibliotheque de graphiques pour cela. `recharts` pese
  * 148 ko compresses, `@observablehq/plot` 125 ko, pour des axes, des legendes
@@ -36,68 +36,7 @@
  */
 
 import { motion, useReducedMotion } from "motion/react";
-
-/** Le mouvement de l app : un demarrage franc, une fin qui se pose. */
-const COURBE = [0.16, 1, 0.3, 1] as const;
-
-/* ─── L ARC ────────────────────────────────────────────────────────────────
- * Le chiffre de tete. Un arc ouvert plutot qu un anneau ferme : un anneau
- * complet se lit comme une part de camembert — « il manque 27 % » — alors
- * qu une jauge ouverte se lit comme un niveau.
- */
-export function Arc({
-  valeur,
-  taille = 208,
-  enfant,
-  delai = 0,
-}: {
-  /** 0 a 100. */
-  valeur: number;
-  taille?: number;
-  /** Ce qui vit au centre : le chiffre, un mot. */
-  enfant?: React.ReactNode;
-  delai?: number;
-}) {
-  const fige = useReducedMotion();
-  const r = 84;
-  const c = 110;
-  // Un arc de 270°, ouvert en bas : de -225° a +45°.
-  const debut = polaire(c, c, r, 135);
-  const fin = polaire(c, c, r, 45);
-  const piste = `M ${debut.x} ${debut.y} A ${r} ${r} 0 1 1 ${fin.x} ${fin.y}`;
-  const part = Math.max(0, Math.min(100, valeur)) / 100;
-
-  return (
-    <div className="relative" style={{ width: taille, height: taille }}>
-      <svg viewBox="0 0 220 220" width={taille} height={taille} aria-hidden="true">
-        <path
-          d={piste}
-          fill="none"
-          stroke="var(--surface-medium)"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        <motion.path
-          d={piste}
-          fill="none"
-          stroke="var(--accent-purple)"
-          strokeWidth="10"
-          strokeLinecap="round"
-          initial={{ pathLength: fige ? part : 0 }}
-          whileInView={{ pathLength: part }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: fige ? 0 : 1.5, delay: fige ? 0 : delai, ease: COURBE }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">{enfant}</div>
-    </div>
-  );
-}
-
-function polaire(cx: number, cy: number, r: number, degres: number) {
-  const a = ((degres - 90) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
-}
+import { BARRE, ENTREE } from "@/lib/ressorts";
 
 /* ─── LA PISTE ─────────────────────────────────────────────────────────────
  * Une mesure posee sur une ligne de 0 a 100. Repetee a l identique, elle
@@ -150,7 +89,7 @@ export function Piste({
           initial={{ width: fige ? `${v}%` : 0 }}
           whileInView={{ width: `${v}%` }}
           viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: fige ? 0 : 0.8, delay: fige ? 0 : delai, ease: COURBE }}
+          transition={fige ? { duration: 0 } : { ...BARRE, delay: delai }}
         />
       </div>
       {aide ? <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">{aide}</p> : null}
@@ -206,7 +145,7 @@ export function Paire({
             initial={{ width: fige ? `${g}%` : 0 }}
             whileInView={{ width: `${g}%` }}
             viewport={{ once: true, amount: 0.6 }}
-            transition={{ duration: fige ? 0 : 0.7, delay: fige ? 0 : delai, ease: COURBE }}
+            transition={fige ? { duration: 0 } : { ...BARRE, delay: delai }}
           />
         </div>
         <span className="h-3 w-px shrink-0" style={{ background: "var(--border-base)" }} />
@@ -220,7 +159,7 @@ export function Paire({
             initial={{ width: fige ? `${d}%` : 0 }}
             whileInView={{ width: `${d}%` }}
             viewport={{ once: true, amount: 0.6 }}
-            transition={{ duration: fige ? 0 : 0.7, delay: fige ? 0 : delai, ease: COURBE }}
+            transition={fige ? { duration: 0 } : { ...BARRE, delay: delai }}
           />
         </div>
       </div>
@@ -282,7 +221,7 @@ export function Section({
       initial={fige ? false : { opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: fige ? 0 : 0.55, delay: fige ? 0 : delai, ease: COURBE }}
+      transition={fige ? { duration: 0 } : { ...ENTREE, delay: delai }}
     >
       {children}
     </motion.section>
