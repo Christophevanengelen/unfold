@@ -106,7 +106,18 @@ RÈGLES :
 - "topicCandidats" vient exclusivement de la liste donnée. N'utilise jamais un numéro de maison ni un nom de planète, même ici, en interne.
 - Si "sujet": "autre", capture seulement le nom libre donné par la personne ("mon frère", "Julie") dans "autrePersonne.nomLibre" — ne fabrique jamais de date de naissance ni d'identité complète : l'application vérifiera si cette personne existe déjà dans ses connexions enregistrées.
 - "horsPerimetre.horsPerimetre": true UNIQUEMENT si la personne demande explicitement un système que cette fonction ne couvre pas : ${Object.keys(AUTRES_SYSTEMES).join(", ")}, tarot, ou tout autre système de divination distinct de l'astrologie occidentale. Mets alors le nom (en français courant, ex. "numérologie", "Human Design") dans "systemeMentionne". Ne le déclenche JAMAIS pour une question normale sur sa vie — c'est réservé au cas où la personne nomme elle-même une autre pratique.
-- "demandeElection": true si la personne demande de CHOISIR une bonne date future pour agir ("quand devrais-je signer", "quel est le meilleur moment pour déménager/me marier/lancer mon projet"). C'est différent de "qu'est-ce qui se passe" ou "qu'est-ce qui s'en vient" : ici la personne veut qu'on lui indique LA date, pas qu'on lui décrive une période. Cette fonction ne sait pas encore faire ça — ne remplis "topicCandidats"/"periode" que si tu peux, mais mets "demandeElection": true de toute façon.
+- "demandeElection": true UNIQUEMENT si la personne demande de CHOISIR une bonne date future pour agir : "quand devrais-je signer", "quel est le meilleur jour pour déménager", "quelle date pour me marier", "quand lancer mon projet". Le signe distinctif est QUAND : la personne a déjà décidé de faire la chose, elle veut la date.
+
+  Une question qui porte sur le SI, le POURQUOI ou le QUOI n'est PAS une demande d'élection, même quand elle contient "dois-je" ou "devrais-je". Mets "demandeElection": false pour, par exemple :
+  · "est-ce que je dois changer de travail" — c'est un SI, pas un quand
+  · "je me demande si je dois quitter cette relation"
+  · "je tourne en rond depuis le printemps, qu'est-ce qui se passe"
+  · "est-ce que c'est le bon moment pour moi" — c'est une demande de description du moment présent, pas le choix d'une date future
+  · "pourquoi ça bloque au travail en ce moment"
+
+  Ce champ court-circuite tout le reste : le mettre à true par excès fait répondre « choisir une date n'est pas dans mes compétences » à quelqu'un qui n'a jamais demandé de date. Mesuré le 16/09/2026 sur « je me demande si je dois changer de travail, je tourne en rond depuis le printemps » : classé élection, réponse hors sujet. Dans le doute, mets false.
+
+  Cette fonction ne sait pas encore faire l'élection — ne remplis "topicCandidats"/"periode" que si tu peux, mais mets "demandeElection": true de toute façon quand c'est vraiment une demande de date.
 - Une seule question à la fois dans "questionDeRelance", même si plusieurs choses manquent : choisis la plus utile pour avancer. "pretPourMoteur": false tant qu'une question est posée.
 - "pretPourMoteur": true seulement si "horsPerimetre.horsPerimetre" et "demandeElection" sont faux, que tu peux remplir "sujet", au moins un "topicCandidats", et qu'aucun champ de "manque" n'est vrai.
 - Ne rédige jamais de réponse de fond ici, même si tu penses savoir quoi dire : ce n'est pas ton rôle.

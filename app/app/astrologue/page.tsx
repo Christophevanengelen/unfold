@@ -45,6 +45,7 @@ import {
   toucherConversation,
   type ConversationLocale,
 } from "@/lib/astrologue-local";
+import { RapportVela, estVisuelVela, type VisuelVela } from "@/components/demo/vela/RapportVela";
 
 interface Parties {
   cePasse: string;
@@ -58,6 +59,9 @@ interface Bulle {
   content: string;
   /** Les quatre temps de l'ecran 4, quand la route les rend. */
   parties?: Parties;
+  /** Ce qui a ete mesure, quand il y a de quoi le dessiner. Additif : une
+   *  reponse sans ce champ s'affiche exactement comme avant. */
+  visuel?: VisuelVela;
 }
 
 type Etat = "vide" | "ecoute" | "cherche" | "erreur";
@@ -160,7 +164,12 @@ export default function AstrologuePage() {
 
         setBulles((b) => [
           ...b,
-          { role: "assistant", content: data.message.content, parties: data.parties },
+          {
+            role: "assistant",
+            content: data.message.content,
+            parties: data.parties,
+            visuel: estVisuelVela(data.visuel) ? data.visuel : undefined,
+          },
         ]);
         setEtat("ecoute");
         toucher();
@@ -332,6 +341,15 @@ export default function AstrologuePage() {
               {/* Quatre temps titres quand la route les rend, un bloc sinon.
                   On n essaie jamais de recouper le texte nous-memes : ce serait
                   reecrire par-dessus la redaction. */}
+              {/* Ce qui a ete mesure passe AVANT les mots : on montre d abord
+                  le fait — quel domaine, quelle fenetre, combien de techniques
+                  concordent —, la redaction l explique ensuite. L inverse
+                  ferait du dessin une illustration decorative. */}
+              {b.visuel ? (
+                <div className="mb-3">
+                  <RapportVela visuel={b.visuel} locale={locale} />
+                </div>
+              ) : null}
               {b.parties ? (
                 <div className="space-y-2.5">
                   {(

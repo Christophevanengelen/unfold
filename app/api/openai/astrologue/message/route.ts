@@ -18,6 +18,8 @@
  * SUCCES — HTTP 200
  *   { ok: true, sessionId, turn, message: { role: "assistant", content },
  *     parties?: { cePasse, dOuCaVient, ceQuiChange, prochaineDate? },
+ *     visuel?: { forme: "fenetre", maison, force, debut, fin, approximee }
+ *            | { forme: "signaux", priorites: number[] },
  *     needsClarification: boolean, awaitingDetail?: boolean }
  *
  * ECHEC — HTTP 400, 404, 409, 429, 500, 502 ou 503
@@ -220,43 +222,86 @@ async function handlePost(request: NextRequest) {
     if (routage.jobConsommeId) await consommerJob(routage.jobConsommeId);
 
     // ── Appel B ──
-    const { systemPrompt, userMessage } = construirePromptRedaction(routage.verdict, { locale });
-    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt + instructionLangue(locale) },
-          { role: "user", content: userMessage },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.6,
-        max_tokens: 400,
-      }),
+    const { systemPrompt, userMessage } = construirePromptRedaction(routage.verdict, {
+      locale,
+      // La redaction ne voyait pas la question. Elle repondait donc sur le
+      // domaine du signal le plus fort, meme quand ce n etait pas celui qu on
+      // lui demandait — et sans le dire. Voir la REGLE DE PERTINENCE du prompt.
+      questionPosee: message,
     });
-
-    if (!openaiRes.ok) {
-      console.error("[astrologue/message] OpenAI error (redaction):", openaiRes.status);
-      return echec("modele_indisponible", 502, guard);
+    /**
+     * DEUX TENTATIVES, PAS UNE.
+     *
+     * Le garde-fou (lib/garde-jargon.ts) refuse un texte qui laisse passer un
+     * nom de technique ou qui depasse la longueur. Il a raison de refuser.
+     * Mais jusqu au 16/09/2026 un refus rendait un 502, et l ecran affichait
+     * « Je n ai pas pu repondre cette fois » — mesure du jour : question sur le
+     * travail, reponse correcte redigee par le modele, rejetee pour jargon,
+     * et la personne se retrouvait devant rien. Le garde-fou transformait une
+     * faute de style en panne complete, de facon repetable.
+     *
+     * On redemande donc UNE fois, en nommant precisement ce qui a fait echouer
+     * la premiere. Un modele a qui l on dit « tu as ecrit une conjonction, ne
+     * nomme aucune technique » corrige presque toujours. Une seule reprise :
+     * au-dela, on paierait une boucle pour un texte qui ne veut pas sortir, et
+     * l echec honnete redevient la bonne reponse.
+     */
+    async function redigerUneFois(correction: string | null) {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages: [
+            { role: "system", content: systemPrompt + instructionLangue(locale) },
+            { role: "user", content: correction ? `${userMessage}\n\n${correction}` : userMessage },
+          ],
+          response_format: { type: "json_object" },
+          // On resserre a la reprise : la premiere version etait juste sur le
+          // fond, c est la forme qu il faut corriger, pas reinventer le texte.
+          temperature: correction ? 0.3 : 0.6,
+          max_tokens: 400,
+        }),
+      });
+      if (!res.ok) {
+        console.error("[astrologue/message] OpenAI error (redaction):", res.status);
+        return { panne: "modele_indisponible" as const };
+      }
+      const data = await res.json();
+      const contenu = data.choices?.[0]?.message?.content;
+      if (!contenu) return { panne: "modele_indisponible" as const };
+      let sortie: unknown;
+      try {
+        sortie = JSON.parse(contenu);
+      } catch {
+        return { panne: "reponse_illisible" as const };
+      }
+      const v = validerSortieRedaction(routage.verdict, sortie);
+      return v.valide
+        ? { sortie }
+        : { rejet: { raison: v.raison, detail: v.detail } };
     }
-    const dataB = await openaiRes.json();
-    const contentB = dataB.choices?.[0]?.message?.content;
-    if (!contentB) return echec("modele_indisponible", 502, guard);
 
-    let sortieB: unknown;
-    try {
-      sortieB = JSON.parse(contentB);
-    } catch {
-      return echec("reponse_illisible", 502, guard);
+    let essai = await redigerUneFois(null);
+    if ("rejet" in essai && essai.rejet) {
+      const { raison, detail } = essai.rejet;
+      console.warn(`[astrologue/message] reprise apres ${raison}: ${detail}`);
+      const consigne =
+        raison === "reponse_trop_longue"
+          ? `Ta reponse precedente etait trop longue (${detail}). Recris-la, meme contenu, nettement plus court.`
+          : `Ta reponse precedente a ete refusee : ${detail}. Recris-la sans aucun nom de technique, d aspect, de maison numerotee ni d astre repete. Meme contenu, meme structure, dit en francais courant.`;
+      essai = await redigerUneFois(consigne);
     }
 
-    const validation = validerSortieRedaction(routage.verdict, sortieB);
-    if (!validation.valide) {
-      console.error(`[astrologue/message] rejet ${validation.raison}: ${validation.detail}`);
-      return echec(validation.raison, 502, guard);
+    if ("panne" in essai && essai.panne) {
+      return echec(essai.panne, essai.panne === "modele_indisponible" ? 502 : 502, guard);
+    }
+    if ("rejet" in essai && essai.rejet) {
+      console.error(`[astrologue/message] rejet ${essai.rejet.raison}: ${essai.rejet.detail}`);
+      return echec(essai.rejet.raison, 502, guard);
     }
 
+    const sortieB = (essai as { sortie: unknown }).sortie;
     const o = sortieB as Record<string, string>;
     // Structure Vela (messages/vela-astrologue.html, ecran 4) : "parle" porte
     // une 4e partie "prochaine date" ; "signal-direct" s'arrete a trois
@@ -307,6 +352,47 @@ async function handlePost(request: NextRequest) {
               }
             : routage.verdict.type === "signal-direct"
               ? { cePasse: o.cePasse, dOuCaVient: o.dOuCaVient, ceQuiChange: o.ceQuiChange }
+              : undefined,
+        /**
+         * De quoi dessiner, et rien de plus.
+         *
+         * Christophe, le 16/09 : « une fois la problematique saisie et les
+         * donnees recuperees, je veux un rapport de qualite, graphique ». Ce
+         * champ porte les SEULES valeurs mesurees que le routeur a en main —
+         * le domaine touche, le nombre de techniques qui concordent, et la
+         * fenetre de dates. Pas un chiffre de plus.
+         *
+         * Ce qu on n envoie volontairement pas : un pourcentage. `force` est
+         * un NOMBRE DE TECHNIQUES qui se rejoignent (lib/silence.ts :
+         * `force: participants.length`), pas un score sur cent. Le rendre en
+         * pourcentage fabriquerait une precision qui n existe pas — c est
+         * exactement le reproche fait aux rapports generes du marche.
+         *
+         * `approximee` dit que la fenetre est approchee. Il remonte jusqu a
+         * l ecran : une date approchee s affiche comme approchee.
+         *
+         * Additif : une interface qui l ignore continue de marcher.
+         */
+        visuel:
+          routage.verdict.type === "parle"
+            ? {
+                forme: "fenetre" as const,
+                maison: routage.verdict.fenetre.maisonNum,
+                force: routage.verdict.fenetre.force,
+                debut: routage.verdict.fenetre.declencheur.debut,
+                fin: routage.verdict.fenetre.declencheur.fin,
+                approximee: routage.verdict.fenetre.approximee,
+              }
+            // Une question au present n a pas de fenetre a montrer : le moteur
+            // rend une hierarchie de signaux actifs, pas une periode. On dessine
+            // donc ce qu il y a — combien de choses sont actives, et comment
+            // elles se classent — au lieu de forcer une frise sur des donnees
+            // qui n en ont pas.
+            : routage.verdict.type === "signal-direct" && routage.verdict.signaux.length > 0
+              ? {
+                  forme: "signaux" as const,
+                  priorites: routage.verdict.signaux.map((s) => s.priorite),
+                }
               : undefined,
         needsClarification: false,
         awaitingDetail: !!routage.arrierePlan,

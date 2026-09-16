@@ -76,7 +76,21 @@ export type VerdictAstrologue =
   // fournie par daily-briefing-context (<1s), qui ne peut pas nourrir la
   // regle de silence (forme incompatible, voir lib/silence.ts) — c est un
   // signal du moteur deja priorise, pas une convergence recalculee ici.
-  | { type: "signal-direct"; llmPayloads: string[] }
+  | {
+      type: "signal-direct";
+      llmPayloads: string[];
+      /**
+       * Ce que daily-briefing-context mesure et qu on jetait : la priorite que
+       * le moteur donne a chaque signal retenu. On la garde pour que l ecran
+       * puisse DESSINER ce qui a ete regarde — trois signaux classes, pas un
+       * paragraphe qui tombe du ciel.
+       *
+       * On ne remonte pas l orbe : c est une notion de metier, et le produit
+       * interdit tout nom de technique a l ecran. La priorite, elle, est un
+       * simple rang.
+       */
+      signaux: { priorite: number }[];
+    }
   | { type: "silence"; chapitreDeFond: ChapitreResume | null; prochaineFenetre: { debut: string } | null }
   | {
       type: "autre";
@@ -132,27 +146,35 @@ async function appellerToctocYear(birthData: BirthDataPayload): Promise<unknown[
   }
 }
 
-async function appellerDailyBriefingContext(birthData: BirthDataPayload): Promise<string[]> {
+async function appellerDailyBriefingContext(
+  birthData: BirthDataPayload,
+): Promise<{ payloads: string[]; signaux: { priorite: number }[] }> {
+  const vide = { payloads: [], signaux: [] };
   try {
     const res = await fetch(`${TOCTOC_BASE}/daily-briefing-context.php`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(birthData),
     });
-    if (!res.ok) return [];
+    if (!res.ok) return vide;
     const json = await res.json();
     const ctx = json?.data ?? json;
     const all = [...(ctx?.activeEclipses ?? []), ...(ctx?.activeTransits ?? [])] as Array<{
       priority?: number; orb?: number; llmPayload?: string;
     }>;
-    return all
+    const retenus = all
       .filter((s) => s.llmPayload && !s.llmPayload.includes("NaN"))
       .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0) || (a.orb ?? 99) - (b.orb ?? 99))
-      .slice(0, 3)
-      .map((s) => s.llmPayload as string);
+      .slice(0, 3);
+    return {
+      payloads: retenus.map((s) => s.llmPayload as string),
+      // Le meme tri, la meme coupe : ce que l ecran dessine est exactement ce
+      // qui a ete envoye au modele, jamais un sous-ensemble different.
+      signaux: retenus.map((s) => ({ priorite: typeof s.priority === "number" ? s.priority : 0 })),
+    };
   } catch (err) {
     console.error("[astrologue-routeur] daily-briefing-context error:", err);
-    return [];
+    return vide;
   }
 }
 
@@ -317,11 +339,15 @@ export async function resoudreConversation(
 
   // ── Sujet: soi, periode non resolue (question au present) ──
   if (!comprehension.periode.resolue || !comprehension.periode.dateDebut) {
-    const llmPayloads = await appellerDailyBriefingContext(birthData);
-    if (llmPayloads.length === 0) {
+    const contexte = await appellerDailyBriefingContext(birthData);
+    if (contexte.payloads.length === 0) {
       return { verdict: { type: "indisponible", raison: "signaux_indisponibles" }, arrierePlan: null, jobConsommeId: null };
     }
-    return { verdict: { type: "signal-direct", llmPayloads }, arrierePlan: null, jobConsommeId: null };
+    return {
+      verdict: { type: "signal-direct", llmPayloads: contexte.payloads, signaux: contexte.signaux },
+      arrierePlan: null,
+      jobConsommeId: null,
+    };
   }
 
   // ── Sujet: soi, fenetre demandee ──

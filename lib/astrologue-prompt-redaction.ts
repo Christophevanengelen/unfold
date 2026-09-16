@@ -43,9 +43,10 @@ function blocLangue(locale?: string | null): string {
 
 export function construirePromptRedaction(
   verdict: VerdictAstrologue,
-  options: { locale?: string | null } = {},
+  options: { locale?: string | null; questionPosee?: string | null } = {},
 ): { systemPrompt: string; userMessage: string } {
   const langue = blocLangue(options.locale);
+  const question = (options.questionPosee ?? "").trim();
   const carnet = `\n\nCARNET DE LECTURE INTERNE (jamais montré, jamais cité) :\n${CARNET_DE_LECTURE}`;
 
   switch (verdict.type) {
@@ -88,9 +89,18 @@ VOIX : tutoiement partout, français courant, sobre, direct, premium. Maximum ${
 
 ${verdict.llmPayloads.map((s, i) => `--- Signal ${i + 1} ---\n${s}`).join("\n\n")}
 
+${question ? `\nCE QU'ELLE T'A DEMANDÉ, mot pour mot :\n"${question}"\n` : ""}
+RÈGLE DE PERTINENCE — la plus importante de ce bloc.
+
+Les signaux ci-dessus sont ceux qui sont actifs aujourd'hui. Ils ne sont PAS filtrés sur le domaine de vie de la question : le moteur rend ce qui bouge, pas ce qu'on lui demande. Il arrive donc qu'on t'interroge sur le travail et qu'aucun signal ne parle du travail.
+
+Dans ce cas, tu NE fais PAS comme si la question portait sur le domaine du signal. Tu le dis, en une phrase simple et sans excuse, au tout début de "cePasse" — par exemple : « Sur le travail précisément, rien de net ne ressort en ce moment. Ce qui bouge chez toi, c'est ailleurs : … » — puis tu décris honnêtement ce qui est réellement actif.
+
+Répondre sur la famille à quelqu'un qui demande son travail, sans le signaler, c'est la faute la plus grave de cette fonction. Mesurée le 16/09/2026 : question sur le travail, réponse sur la fratrie, sans un mot d'avertissement.
+
 Réponds STRICTEMENT en JSON :
 {
-  "cePasse": "ce qui se passe maintenant, en langage courant, ancré au domaine de vie concerné par le signal le plus fort",
+  "cePasse": "ce qui se passe maintenant, en langage courant, ancré au domaine de vie concerné par le signal le plus fort — précédé de la phrase de pertinence ci-dessus si le domaine demandé n'est pas couvert",
   "dOuCaVient": "décrit la nature du mouvement (ça se tend, ça s'ouvre...) sans jamais nommer la technique",
   "ceQuiChange": "descriptif, jamais prédictif ; donne la durée SEULEMENT si les signaux la fournissent explicitement, sinon ne l'invente pas"
 }

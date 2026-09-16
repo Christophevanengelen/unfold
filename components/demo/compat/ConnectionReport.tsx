@@ -23,12 +23,31 @@ import { texteLisible } from "@/lib/contraste";
 import { perso } from "@/lib/perso-i18n";
 import { useLocale } from "@/lib/use-locale";
 import { t, type Locale } from "@/lib/i18n-demo";
+import { RapportMatch } from "@/components/demo/compat/RapportMatch";
 
 interface ConnectionReportProps {
   connection: RealConnection;
   myBirthData: BirthData | null;
   /** When true, suppress the scroll container wrapper so a parent pager can manage scroll. */
   embedded?: boolean;
+  /**
+   * Les fenetres de timing sous la fiche de compatibilite. Fermees par defaut
+   * depuis le 16/09, pour deux raisons mesurees ce jour-la sur iPhone 13 :
+   *
+   *  - Christophe a abandonne l approche du timing pour le match : « les gens
+   *    veulent un score de compatibilite en testant leur dating, donc une fiche
+   *    de compatibilite generale plutot que dans le temps ».
+   *  - Le texte rendu par le moteur laissait passer du jargon en clair a
+   *    l ecran — « Noeud Sud en conjonction avec Saturne natal », « un LB
+   *    (loosening of the bond) sur le Lot de Spirit ». Le produit interdit tout
+   *    nom de technique a l ecran ; c est un defaut de pertinence a remonter a
+   *    Marie-Ange, pas quelque chose a masquer discretement.
+   *
+   * Rien n est supprime : le code des fenetres est intact et se rallume en
+   * passant `montrerTiming`. La decision de les remettre appartient a
+   * Christophe, pas a cette mise en page.
+   */
+  montrerTiming?: boolean;
 }
 
 /**
@@ -36,7 +55,7 @@ interface ConnectionReportProps {
  * Extracted from app/demo/compatibility/[connectionId]/page.tsx so it can be
  * rendered standalone OR inside ConnectionCarousel for swipeable detail.
  */
-export function ConnectionReport({ connection, myBirthData, embedded }: ConnectionReportProps) {
+export function ConnectionReport({ connection, myBirthData, embedded, montrerTiming = false }: ConnectionReportProps) {
   const locale = useLocale();
   const [windows, setWindows] = useState<MatchingWindow[]>([]);
   const [periods, setPeriods] = useState<ActivePeriod[]>([]);
@@ -47,7 +66,7 @@ export function ConnectionReport({ connection, myBirthData, embedded }: Connecti
     let cancelled = false;
     async function load() {
       setLoading(true);
-      if (myBirthData && connection.birthData) {
+      if (montrerTiming && myBirthData && connection.birthData) {
         try {
           const result = await fetchConnectionBrief(
             myBirthData,
@@ -75,7 +94,7 @@ export function ConnectionReport({ connection, myBirthData, embedded }: Connecti
     }
     load();
     return () => { cancelled = true; };
-  }, [connection.id, connection.birthData, connection.name, connection.relationship, myBirthData]);
+  }, [connection.id, connection.birthData, connection.name, connection.relationship, myBirthData, montrerTiming]);
 
   const rel = relationshipConfig[connection.relationship];
 
@@ -128,8 +147,45 @@ export function ConnectionReport({ connection, myBirthData, embedded }: Connecti
     );
   })();
 
-  if (embedded) return body;
-  return <div className="flex min-h-0 flex-col">{body}</div>;
+  /**
+   * L ordre de l ecran a change le 16/09.
+   *
+   * Christophe : « on a abandonne l approche du timing parce qu elle est trop
+   * compliquee — les gens veulent un score de compatibilite en testant leur
+   * dating, donc une fiche de compatibilite generale plutot que dans le temps.
+   * Tu peux laisser une indication temps si elle est extremement pertinente. »
+   *
+   * La fiche generale ouvre donc l ecran, et les fenetres de timing passent
+   * dessous, sans titre tapageur et seulement quand il y en a. Elles ne sont
+   * pas supprimees : elles restent le seul endroit ou le moteur dit QUAND, et
+   * les retirer serait une decision de produit, pas une decision de mise en
+   * page — elle appartient a Christophe.
+   */
+  const corps = (
+    <div className="flex min-h-0 flex-col">
+      {myBirthData && connection.birthData ? (
+        <RapportMatch
+          moi={myBirthData}
+          autre={connection.birthData}
+          nomAutre={connection.name}
+          embedded
+        />
+      ) : null}
+      {montrerTiming && hasData && !loading ? (
+        <div className="px-1">
+          <div className="mx-auto w-full max-w-[420px] px-4 pb-2">
+            <EyebrowLabel color="var(--text-body-subtle)">
+              {t("match.moment", locale).replace(/\s*:\s*$/, "")}
+            </EyebrowLabel>
+          </div>
+          {body}
+        </div>
+      ) : null}
+    </div>
+  );
+
+  if (embedded) return corps;
+  return corps;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

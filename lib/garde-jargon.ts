@@ -38,8 +38,36 @@ export interface MotifJargon {
 export const MOTIFS_JARGON: MotifJargon[] = [
   { nom: "numero de maison", motif: /\b\d{1,2}\s*(?:e|è|ème|eme|er|re|ère|ere)?\s*[-–]?\s*(?:\d{1,2}\s*(?:e|è|ème|eme)?\s*)?maisons?\b/i },
   { nom: "maison numerotee", motif: /\bmaisons?\s+(?:n°\s*)?\d{1,2}\b/i },
-  { nom: "nom d'aspect", motif: /\b(?:carr[ée]e?s?|oppositions?|conjonctions?|trigones?|sextiles?|quinconces?)\b/i },
+  // Meme piege d accent que « mecanique celeste » ci-dessous, et il etait la
+  // depuis l origine : ce motif finissait par `\b` apres `carr[ée]`, donc
+  // « carre » etait detecte mais « carré » ne l a jamais ete — le `\b` qui suit
+  // un « é » n existe pas quand le caractere suivant est une espace. Releve le
+  // 16/09/2026 par scripts/verifier-garde-jargon.mjs.
+  {
+    nom: "nom d'aspect",
+    motif: /(?<![A-Za-zÀ-ÿ])(?:carr[ée]e?s?|oppositions?|conjonctions?|trigones?|sextiles?|quinconces?)(?![A-Za-zÀ-ÿ])/i,
+  },
   { nom: "reference au natal", motif: /\bnatal(?:e|es|aux)?\b/i },
+  // Ajoute le 16/09/2026. Mesure du jour : « Une eclipse lunaire partielle cree
+  // une periode rare d ouverture… » est passe tel quel a l ecran. Une eclipse
+  // est un mecanisme celeste, exactement ce que le socle demande de traduire en
+  // domaine de vie — le nom du mecanisme n apprend rien a qui ne le connait pas,
+  // et impressionne qui le connait un peu. Meme raisonnement pour les trois
+  // autres.
+  //
+  // « Ascendant » est volontairement absent : « prendre l ascendant » est du
+  // francais courant, et le motif rejetterait du texte juste.
+  // `\b` ne sert a rien devant un caractere accentue : pour JavaScript, « é »
+  // n est pas un caractere de mot, donc /\bé/ exige une lettre AVANT le é et ne
+  // matche jamais un mot qui commence par é. Mesure du 16/09 : le motif ecrit
+  // avec \b laissait passer « Une eclipse lunaire partielle » en entier. On
+  // borne donc avec des anti-regards sur une classe de lettres accentuees.
+  {
+    nom: "mecanique celeste",
+    motif: /(?<![A-Za-zÀ-ÿ])(?:[ée]clipses?|r[ée]trogradations?|r[ée]trogrades?|lunaisons?)(?![A-Za-zÀ-ÿ])/i,
+  },
+  { nom: "phase de lune", motif: /\b(?:pleine|nouvelle)\s+lune\b/i },
+  { nom: "nom de transit", motif: /\btransits?\b/i },
 ];
 
 export function detecterJargon(...textes: string[]): string | null {
