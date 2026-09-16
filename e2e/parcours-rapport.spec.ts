@@ -273,6 +273,39 @@ test.describe("rapport de compatibilite", () => {
   });
 });
 
+/**
+ * La vitrine — la PREMIERE chose qu on voit dans l onglet Match quand on n a
+ * encore invite personne.
+ *
+ * Le 17/09, apres trois livraisons sur TestFlight, Christophe : « je vois rien
+ * qui bouge ». Il avait raison. Le rapport avait ete entierement refait, mais
+ * cette vitrine montrait encore l ancienne fiche — et quelqu un sans connexion
+ * n a aucun autre chemin vers le nouveau produit.
+ *
+ * La lecon tient en une phrase : quand on refait un ecran, il faut chercher
+ * TOUS les endroits qui le representent. Ce test est la pour que l ecart entre
+ * la vitrine et le produit se voie tout de suite.
+ */
+test.describe("la vitrine montre le produit d aujourd hui", () => {
+  test("sans connexion, l empreinte et le chiffre sont la", async ({ page }) => {
+    await brancherReseau(page);
+    await semer(page); // aucune connexion : c est tout l objet du test
+    await aller(page, "/app/compatibility");
+
+    // Le chiffre de l exemple, dans la typographie du rapport.
+    await expect(page.getByText("/100")).toBeVisible({ timeout: 15000 });
+
+    // L empreinte : sans elle, la vitrine est retombee sur l ancienne fiche.
+    const traces = await page.evaluate(
+      () =>
+        [...document.querySelectorAll("svg path")].filter(
+          (p) => (p.getAttribute("d") ?? "").length > 400,
+        ).length,
+    );
+    expect(traces, "aucune empreinte dans la vitrine : elle montre l ancien ecran").toBeGreaterThan(0);
+  });
+});
+
 test.describe("rapport de compatibilite — theme clair", () => {
   test.use({ colorScheme: "light" });
 

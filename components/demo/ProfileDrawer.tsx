@@ -25,6 +25,7 @@ import { useBillingState } from "@/lib/premium-gate";
 import { isNative, getPlatform } from "@/lib/platform";
 import { apiFetch } from "@/lib/api-client";
 import { mesurer } from "@/lib/mesure";
+import { VersionApp } from "@/components/demo/VersionApp";
 import { EditionNaissance } from "@/components/demo/EditionNaissance";
 import { disponible, preparer, restaurer } from "@/lib/achats";
 import { useLocale } from "@/lib/use-locale";
@@ -713,6 +714,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               </div>
             </div>
           )}
+
+          {/* Le numero de build. Il repond a une seule question, mais elle
+              revient : « est-ce que la mise a jour est bien installee ? » */}
+          <VersionApp />
         </div>
       </BottomSheet>
 
