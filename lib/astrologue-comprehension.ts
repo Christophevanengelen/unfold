@@ -241,7 +241,34 @@ function validerComprehension(
     : null;
 
   const questionRequise = !courtCircuite && (manque.dateOuPeriode || manque.sujetOuDomaine || manque.identitePersonne);
-  const pretPourMoteur = !courtCircuite && o.pretPourMoteur === true && !questionRequise && questionDeRelance === null;
+
+  // `pretPourMoteur` est DEDUIT, il n est plus cru sur parole.
+  //
+  // Le 16/09/2026, le chat tournait en boucle : a chaque message, la meme
+  // relance « Peux-tu preciser ce que tu veux dire ? », quoi qu on reponde.
+  // Mesure sur « Depuis juin je traverse une periode difficile au travail, on
+  // ne reconnait pas ce que je vaux » — une phrase qui porte une date ET un
+  // domaine : `manque` entierement a false, `questionDeRelance` a null,
+  // aucun court-circuit... et `pretPourMoteur: false` quand meme.
+  //
+  // L etat « rien ne manque, aucune question a poser, mais pas pret » n a pas
+  // de suite dans la route : elle retombe sur la relance generique, et le tour
+  // d apres recommence a l identique. Une conversation qui ne peut pas avancer.
+  //
+  // Le champ etait une AUTO-DECLARATION du modele ; il est maintenant derive
+  // du seul fait qui compte : manque-t-il quelque chose pour interroger le
+  // moteur ?
+  //
+  // La question de relance ne bloque plus. C etait le noeud : le modele en
+  // propose souvent une, de confort — ici « Qu'est-ce qui te preoccupe le plus
+  // dans cette situation au travail ? » — alors que rien ne manque. Le retour
+  // plus bas l ECARTE deja quand `questionRequise` est faux... mais elle avait
+  // suffi, avant, a rendre `pretPourMoteur` faux. La conversation se retrouvait
+  // sans question a poser ET sans droit d avancer : la route retombait sur sa
+  // relance generique, tour apres tour, quoi qu on reponde.
+  //
+  // Une question qui n est pas posee ne doit rien empecher.
+  const pretPourMoteur = !courtCircuite && !questionRequise;
 
   const resumeInterne = typeof o.resumeInterne === "string" ? o.resumeInterne : "";
 

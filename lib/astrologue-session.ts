@@ -35,6 +35,42 @@ export interface AstrologueMessageRow {
   created_at: string;
 }
 
+/**
+ * Le profil de l appareil doit exister avant la premiere conversation.
+ *
+ * `astrologue_sessions.device_id` reference `profiles(device_id)`
+ * (016_astrologue.sql:17). En usage normal le profil est cree au chargement
+ * des signaux et a l enregistrement de la naissance — mais rien ne le
+ * GARANTIT : un appel reseau perdu, un ancien appareil jamais synchronise, ou
+ * quelqu un qui ouvre Vela avant tout le reste, et l insertion echoue sur la
+ * cle etrangere. Cote ecran, ca sortait en « erreur_interne » : un mur, pour
+ * une cause triviale et reparable ici.
+ *
+ * On a la naissance dans la requete : on ecrit donc le profil au passage, avec
+ * les memes colonnes que /api/profile/upsert. `onConflict` le laisse intact
+ * s il existe deja — on ne remplace jamais ce que la personne a renseigne.
+ */
+async function garantirProfil(
+  supabase: ReturnType<typeof getAdminClient>,
+  deviceId: string,
+  birthData: BirthDataPayload,
+): Promise<void> {
+  const { error } = await supabase.from("profiles").upsert(
+    {
+      device_id: deviceId,
+      birth_date: birthData.birthDate,
+      birth_time: birthData.birthTime ?? null,
+      latitude: typeof birthData.latitude === "number" ? birthData.latitude : null,
+      longitude: typeof birthData.longitude === "number" ? birthData.longitude : null,
+      timezone: birthData.timezone ?? null,
+    },
+    { onConflict: "device_id", ignoreDuplicates: true },
+  );
+  // Un echec ici n est pas fatal : si le profil existait deja, la session
+  // passera. On laisse l insertion suivante dire la verite.
+  if (error) console.warn("[astrologue] garantirProfil:", error.message);
+}
+
 export async function creerSession(params: {
   deviceId: string;
   birthData: BirthDataPayload;
@@ -43,6 +79,7 @@ export async function creerSession(params: {
   subjectConnectionId?: string | null;
 }): Promise<AstrologueSession> {
   const supabase = getAdminClient();
+  await garantirProfil(supabase, params.deviceId, params.birthData);
   const { data, error } = await supabase
     .from("astrologue_sessions")
     .insert({
