@@ -189,6 +189,83 @@ test.describe("rapport de compatibilite", () => {
     await expect(page.getByText(/pas une prédiction|not a prediction/i)).toBeVisible();
   });
 
+  test("le partage envoie une IMAGE, pas une phrase", async ({ page }) => {
+    await ouvrirRapport(page);
+
+    // Jusqu au 16/09, `navigator.share` recevait une ligne de texte : la carte
+    // ne voyageait jamais. Elle est maintenant peinte au Canvas 2D et partagee
+    // en fichier.
+    //
+    // On intercepte `navigator.share` pour attraper ce qui part reellement.
+    // C est le seul moyen de verifier le contenu d un partage : le geste natif
+    // est hors de portee du test.
+    const envoi = await page.evaluate(
+      () =>
+        new Promise<{
+          type: string; octets: number; largeur: number; hauteur: number; encre: number;
+        } | null>(
+          (resoudre) => {
+            // On remplace volontairement l API du navigateur : le geste natif de
+            // partage est hors de portee d un test, seul son CONTENU est verifiable.
+            navigator.share = async (d: { files?: File[] }) => {
+              const f = d.files?.[0];
+              if (!f) return resoudre(null);
+              const url = URL.createObjectURL(f);
+              const img = new Image();
+              img.onload = () => {
+                // On COMPTE L ENCRE plutot que de peser le fichier. Un PNG de
+                // fond degrade pese deja plusieurs centaines de kilo-octets :
+                // une carte sans le moindre trait passerait une pesee. On
+                // examine donc une bande qui ne contient QUE la figure — ni
+                // titre, ni initiales — et on compte les pixels nettement plus
+                // clairs que le fond autour d eux.
+                const c = document.createElement("canvas");
+                c.width = img.width;
+                c.height = img.height;
+                const x = c.getContext("2d");
+                if (!x) return resoudre(null);
+                x.drawImage(img, 0, 0);
+                const h0 = Math.round(img.height * 0.58);
+                const h1 = Math.round(img.height * 0.78);
+                const px = x.getImageData(0, h0, img.width, h1 - h0).data;
+                let clairs = 0;
+                for (let i = 0; i < px.length; i += 4) {
+                  // Le fond de cette bande tourne autour de 40 de luminance.
+                  if (px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11 > 85) clairs += 1;
+                }
+                resoudre({
+                  type: f.type,
+                  octets: f.size,
+                  largeur: img.width,
+                  hauteur: img.height,
+                  encre: clairs,
+                });
+              };
+              img.onerror = () => resoudre(null);
+              img.src = url;
+            };
+            navigator.canShare = () => true;
+            [...document.querySelectorAll("button")]
+              .find((x) => /share|partager/i.test(x.textContent ?? ""))
+              ?.click();
+            setTimeout(() => resoudre(null), 20000);
+          },
+        ),
+    );
+
+    expect(envoi, "aucun fichier n a ete partage").not.toBeNull();
+    expect(envoi!.type).toBe("image/png");
+    // Le portrait 4:5 des recits partages. Un cadre constant, un contenu unique.
+    expect(envoi!.largeur).toBe(1080);
+    expect(envoi!.hauteur).toBe(1350);
+    // L encre : le nombre de pixels de trace dans la bande centrale. Deux
+    // courbes de neuf cents points en laissent des dizaines de milliers. Zero
+    // veut dire que la carte est partie vide — le symptome exact du « premier
+    // rendu vide » qu on a evite en ne capturant aucun DOM.
+    expect(envoi!.encre, `${envoi!.encre} pixels de trace : la carte est vide`)
+      .toBeGreaterThan(20_000);
+  });
+
   test("la devinette ne se joue qu une fois", async ({ page }) => {
     await ouvrirRapport(page);
     // Elle a ete marquee comme jouee par la graine : on ne doit pas la revoir.

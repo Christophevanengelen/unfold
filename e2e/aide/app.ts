@@ -133,6 +133,40 @@ export async function brancherReseau(page: Page): Promise<Journal> {
       });
     }
 
+    if (chemin.endsWith("/api/openai/astrologue/message")) {
+      // Une reponse de Vela, dans la forme exacte que rend la route : les temps
+      // titres, et le champ `visuel` qui porte ce qui a ete MESURE.
+      //
+      // La premiere phrase est la regle de pertinence : le moteur n a rien sur
+      // le domaine demande, et Vela le DIT au lieu de repondre a cote. C est le
+      // defaut le plus grave de cette fonction, corrige le 16/09, et un test
+      // doit empecher qu il revienne.
+      return json({
+        ok: true,
+        sessionId: "e2e-session",
+        turn: 1,
+        message: {
+          role: "assistant",
+          content:
+            "Sur le travail precisement, rien de net ne ressort en ce moment. Ce qui bouge chez toi, c est ta facon de dire les choses.",
+        },
+        parties: {
+          cePasse:
+            "Sur le travail precisement, rien de net ne ressort en ce moment. Ce qui bouge chez toi, c est ta facon de dire les choses.",
+          dOuCaVient: "Ca s ouvre, et ca demande d y mettre des mots.",
+          ceQuiChange: "Ca dure encore quelques semaines, sans a-coup.",
+        },
+        visuel: { forme: "signaux", priorites: [4, 3, 3] },
+        needsClarification: false,
+        awaitingDetail: false,
+      });
+    }
+
+    if (chemin.includes("/api/astrologue/")) {
+      // La liste et la relecture d une conversation : aucune archive.
+      return json({ ok: true, messages: [] });
+    }
+
     if (chemin.includes("/api/openai/")) {
       // Aucun briefing. Les tests du centre de messages posent eux-memes les
       // messages qu ils veulent : un briefing venu du reseau rendrait le

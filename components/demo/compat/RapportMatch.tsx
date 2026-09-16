@@ -70,6 +70,7 @@ import { choisir, franchir, reussi, toucher } from "@/lib/haptique";
 import { Anneau, Paire, Piste, Section } from "./rapport/visuels";
 import { Heros } from "./rapport/Heros";
 import { Empreinte } from "./rapport/Empreinte";
+import { dessinerCarte } from "@/lib/carte-partage";
 import { construireEmpreinte, construireGraine, type ParametresEmpreinte } from "@/lib/empreinte";
 import { CASCADE } from "@/lib/ressorts";
 
@@ -667,17 +668,60 @@ function Commun({
   empreinte: ParametresEmpreinte;
 }) {
   const [partage, setPartage] = useState(false);
+  // Le dessin prend quelques dizaines de millisecondes, l attente des polices
+  // parfois davantage. Un bouton qui ne dit rien pendant ce temps se fait
+  // taper deux fois.
+  const [preparation, setPreparation] = useState(false);
 
   const commun = useMemo(
     () => [...lecture.porteurs].sort((a, b) => Math.min(b.lui, b.elle) - Math.min(a.lui, a.elle))[0],
     [lecture.porteurs],
   );
 
+  /**
+   * On envoie l IMAGE, pas une phrase.
+   *
+   * Jusqu au 16/09 le partage envoyait une ligne de texte : la carte, elle, ne
+   * voyageait jamais. Elle est maintenant peinte au Canvas 2D
+   * (`lib/carte-partage.ts`) et partagee en fichier.
+   *
+   * TROIS NIVEAUX DE REPLI, dans cet ordre :
+   *
+   *  1. `navigator.share` avec le fichier — ce que fait l app native.
+   *  2. `navigator.share` avec le texte, si le partage de fichier est refuse.
+   *     Tous les navigateurs ne l acceptent pas, et `canShare` le dit avant
+   *     d essayer.
+   *  3. Le presse-papiers.
+   *
+   * Un partage qui echoue ne doit jamais casser l ecran d ou il part : chaque
+   * niveau tombe sur le suivant, et l annulation par la personne ne dit rien.
+   */
   const surPartage = useCallback(async () => {
     if (!commun) return;
     toucher();
     const texte = `${nomMoi} + ${nomAutre} — ${t(commun.clef, locale)}`;
+    setPreparation(true);
     try {
+      const image = await dessinerCarte({
+        parametres: empreinte,
+        titre: t(commun.clef, locale),
+        aide: t(`${commun.clef}_aide`, locale),
+        eyebrow: t("rapport.partage_titre", locale),
+        initialeMoi: nomMoi,
+        initialeAutre: nomAutre,
+      });
+
+      if (image && navigator.share) {
+        const fichier = new File([image], "favorable.png", { type: "image/png" });
+        if (!navigator.canShare || navigator.canShare({ files: [fichier] })) {
+          await navigator.share({ files: [fichier], text: texte });
+          reussi();
+          setPartage(true);
+          setTimeout(() => setPartage(false), 2000);
+          return;
+        }
+      }
+
       if (navigator.share) {
         await navigator.share({ title: "Favorable", text: texte });
       } else {
@@ -688,8 +732,10 @@ function Commun({
       setTimeout(() => setPartage(false), 2000);
     } catch {
       /* annule par la personne : rien a dire, l ecran n a pas bouge */
+    } finally {
+      setPreparation(false);
     }
-  }, [commun, locale, nomAutre, nomMoi]);
+  }, [commun, empreinte, locale, nomAutre, nomMoi]);
 
   if (!commun) return null;
   const teinte = construireEmpreinte(empreinte).teinte;
@@ -754,10 +800,11 @@ function Commun({
         <button
           type="button"
           onClick={surPartage}
-          className="rounded-full px-6 py-2.5 text-[14px] font-semibold"
+          disabled={preparation}
+          className="rounded-full px-6 py-2.5 text-[14px] font-semibold disabled:opacity-60"
           style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
         >
-          {partage ? t("rapport.partage_en_cours", locale) : t("rapport.partage_bouton", locale)}
+          {partage || preparation ? t("rapport.partage_en_cours", locale) : t("rapport.partage_bouton", locale)}
         </button>
         <p className="max-w-[30ch] text-center text-[11px] leading-snug text-text-body-subtle">
           {t("rapport.partage_aide", locale)}
