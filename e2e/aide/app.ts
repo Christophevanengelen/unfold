@@ -94,6 +94,45 @@ export async function brancherReseau(page: Page): Promise<Journal> {
 
     if (chemin.endsWith("/api/billing/me")) return json({ plan: "free" });
 
+    if (chemin.endsWith("/api/match")) {
+      // La reponse REELLE du moteur de compatibilite, relevee le 16/09/2026 sur
+      // deux naissances libres — y compris son enveloppe `data`, que le relais
+      // deballe. On ne la simplifie pas : une fixture plus propre que la
+      // realite ferait passer un test que la production echouerait.
+      //
+      // Les sept axes a zero sur dix sont vrais eux aussi. C est ce qui a
+      // decide de ne pas dessiner de radar a dix branches, et un test doit
+      // pouvoir montrer ce cas.
+      return json({
+        ok: true,
+        match: {
+          compatibility: { score: 73, label: "Good" },
+          resemblance: { score: 82 },
+          balance: { score: 82 },
+          attraction: { aToB: 53, bToA: 56 },
+          boss: { who: "person2", confidence: 63 },
+          exclusive: { score: 59 },
+          generalUnderstanding: { score: 48 },
+          gift: { score: 57 },
+          hugs: { score: 50 },
+          compatibilityRadar: [
+            { planet: "Sun", pointsperc: 0, pointsperc2: 0 },
+            { planet: "Moon", pointsperc: 44, pointsperc2: 27 },
+            { planet: "Mercury", pointsperc: 0, pointsperc2: 0 },
+            { planet: "Venus", pointsperc: 0, pointsperc2: 82 },
+            { planet: "Mars", pointsperc: 0, pointsperc2: 0 },
+            { planet: "Jupiter", pointsperc: 0, pointsperc2: 0 },
+            { planet: "Saturn", pointsperc: 61, pointsperc2: 58 },
+            { planet: "Uranus", pointsperc: 0, pointsperc2: 0 },
+            { planet: "Neptune", pointsperc: 0, pointsperc2: 0 },
+            { planet: "Pluto", pointsperc: 0, pointsperc2: 0 },
+          ],
+          person1: { dominantPlanet: { planet: "Moon" } },
+          person2: { dominantPlanet: { planet: "Venus" } },
+        },
+      });
+    }
+
     if (chemin.includes("/api/openai/")) {
       // Aucun briefing. Les tests du centre de messages posent eux-memes les
       // messages qu ils veulent : un briefing venu du reseau rendrait le
@@ -148,6 +187,17 @@ export interface Graines {
   messages?: { id: string; type: string; corps: string; lu: boolean }[];
   /** Rejouer l accueil et le guide de premiere utilisation. Defaut : non. */
   premiereFois?: boolean;
+  /** Les connexions posees dans l appareil. Defaut : aucune. */
+  connexions?: {
+    id: string; name: string; initial: string; relationship: string;
+    birthData: Naissance; connectedSince: string; inviteCode: string;
+  }[];
+  /**
+   * Rejouer la devinette d ouverture du rapport de compatibilite. Defaut :
+   * non — elle ne se joue qu une fois par lien, et un test qui la subit
+   * mesurerait l ecran de la devinette au lieu du rapport.
+   */
+  rejouerDevinette?: boolean;
 }
 
 /**
@@ -183,6 +233,19 @@ export async function semer(page: Page, graines: Graines = {}): Promise<void> {
       // native, et recouvre ce que les tests vont cliquer.
       localStorage.setItem("favorable_push_propose_le", new Date().toISOString());
 
+      if (g.connexions.length > 0) {
+        localStorage.setItem("unfold_connections", JSON.stringify(g.connexions));
+      }
+
+      // Les liens dont la devinette est deja jouee. La clef suit celle de
+      // components/demo/compat/RapportMatch.tsx : date et heure de naissance.
+      if (!g.rejouerDevinette && g.connexions.length > 0) {
+        localStorage.setItem(
+          "unfold_match_devine",
+          JSON.stringify(g.connexions.map((c) => `${c.birthData.birthDate}|${c.birthData.birthTime}`)),
+        );
+      }
+
       if (g.messages.length > 0) {
         const maintenant = new Date().toISOString();
         localStorage.setItem(
@@ -198,6 +261,8 @@ export async function semer(page: Page, graines: Graines = {}): Promise<void> {
     vue: graines.vue ?? "overview",
     messages: graines.messages ?? [],
     premiereFois: graines.premiereFois ?? false,
+    connexions: graines.connexions ?? [],
+    rejouerDevinette: graines.rejouerDevinette ?? false,
   });
 }
 

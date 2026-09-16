@@ -127,8 +127,13 @@ export function Paire({
   const d = Math.max(0, Math.min(100, droite));
   return (
     <div className="min-w-0">
+      {/* Pas de troncature ici non plus. Trouve par e2e/parcours-rapport.spec.ts
+          le 16/09 : « Pleasing », « Holding » et « Reassuring » etaient reglees
+          pour se couper. La piste avait ete corrigee, la paire avait ete
+          oubliee — c est exactement le motif « corriger un cas sans chercher ou
+          il se repete ». */}
       <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-[13px] font-semibold text-text-heading">{titre}</span>
+        <span className="text-[13px] font-semibold leading-tight text-text-heading">{titre}</span>
       </div>
       <div
         className="mt-1.5 flex items-center gap-1"
