@@ -90,6 +90,26 @@ export default defineConfig({
   },
   projects: [
     {
+      /**
+       * WEBKIT — le moteur reel de l app.
+       *
+       * Tous les parcours tournaient sur Chromium, alors que l app vit dans une
+       * WKWebView, c est-a-dire WebKit. Les deux moteurs ne rendent pas
+       * pareil : le 16/09, un defaut de couleur n apparaissait qu en theme
+       * clair et a fallu le chasser a la loupe. Un defaut PROPRE a WebKit ne se
+       * serait, lui, jamais montre.
+       *
+       * Cette suite rejoue les memes parcours sur le bon moteur. Elle n est pas
+       * dans la suite rapide — deux moteurs doublent le temps — mais elle doit
+       * passer avant une livraison :
+       *
+       *   npx playwright test --project=webkit
+       */
+      name: "webkit",
+      testMatch: /parcours-.*\.spec\.ts$/,
+      use: { ...TELEPHONE, browserName: "webkit" as const, baseURL: SERVEUR_LOCAL },
+    },
+    {
       name: "parcours",
       testMatch: /parcours-.*\.spec\.ts$/,
       use: { ...TELEPHONE, baseURL: SERVEUR_LOCAL },

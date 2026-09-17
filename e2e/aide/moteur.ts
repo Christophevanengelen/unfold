@@ -286,7 +286,18 @@ function cleMois(d: Date): string {
  *    qu il teste. Les trois groupes ci-dessous sont donc explicitement dates :
  *    un passe, UN SEUL courant, un a venir.
  */
-export function reponseAnnee(naissance: { birthDate: string }): unknown {
+/**
+ * `sansPeriodeCourante` sert au test « boite vide ».
+ *
+ * Depuis le 17/09, l app depose chaque jour UN resume tire des periodes
+ * ouvertes. Une boite vide n existe donc que s il n y a rien d ouvert — ce qui
+ * est un vrai etat du produit, celui ou il se tait. Sans ce reglage, le test
+ * ne pouvait plus creer la situation qu il verifie.
+ */
+export function reponseAnnee(
+  naissance: { birthDate: string },
+  sansPeriodeCourante = false,
+): unknown {
   const auj = aujourdHui();
   const mois: unknown[] = [];
 
@@ -327,7 +338,8 @@ export function reponseAnnee(naissance: { birthDate: string }): unknown {
       zrScore: 90,
       transitScore: 40,
       totalScore: 130,
-      topEvents: [i < 0 ? passe : i === 0 ? courant : aVenir],
+      topEvents:
+        i === 0 && sansPeriodeCourante ? [] : [i < 0 ? passe : i === 0 ? courant : aVenir],
     });
   }
 

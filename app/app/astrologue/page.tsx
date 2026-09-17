@@ -46,6 +46,7 @@ import {
   type ConversationLocale,
 } from "@/lib/astrologue-local";
 import { RapportVela, estVisuelVela, type VisuelVela } from "@/components/demo/vela/RapportVela";
+import { amenerAuDessusDuClavier, useClavier } from "@/lib/use-clavier";
 
 interface Parties {
   cePasse: string;
@@ -68,6 +69,7 @@ type Etat = "vide" | "ecoute" | "cherche" | "erreur";
 
 export default function AstrologuePage() {
   const locale = detectLocale();
+  const clavier = useClavier();
   const router = useRouter();
   const sansMouvement = useReducedMotion();
 
@@ -224,7 +226,26 @@ export default function AstrologuePage() {
   }
 
   return (
-    <div className="flex h-full flex-col pb-36">
+    <div
+      className="flex h-full flex-col pb-36"
+      style={{
+        /**
+         * LE CLAVIER NE RECOUVRE PLUS LE COMPOSEUR.
+         *
+         * Cet ecran n est pas dans une feuille : il ne beneficie pas du
+         * decalage pose dans `BottomSheet`. Et comme la WebView ne se
+         * redimensionne pas (`KeyboardResize.None`), le champ ou l on ecrit se
+         * retrouvait SOUS le clavier — sur l ecran dont toute la raison d etre
+         * est d ecrire.
+         *
+         * On retire le degagement de la barre d onglets quand le clavier est
+         * la : elle est de toute facon recouverte, et la garder ferait remonter
+         * de 144 px de trop.
+         */
+        paddingBottom: clavier > 0 ? clavier : undefined,
+        transition: "padding-bottom 250ms cubic-bezier(0.23, 1, 0.32, 1)",
+      }}
+    >
       {/* En-tête : l'avatar dit l'état, le texte le nomme. */}
       <div className="flex items-center gap-3 pb-3">
         <VelaAvatar taille={38} occupee={etat === "cherche"} />
@@ -438,6 +459,8 @@ export default function AstrologuePage() {
             }
           }}
           rows={1}
+          onFocus={(e) => amenerAuDessusDuClavier(e.currentTarget)}
+          enterKeyHint="send"
           placeholder={t("vela.champ", locale)}
           aria-label={t("vela.champ", locale)}
           className="max-h-28 flex-1 resize-none bg-transparent py-2 text-[13px] text-text-heading outline-none placeholder:text-text-body-subtle"

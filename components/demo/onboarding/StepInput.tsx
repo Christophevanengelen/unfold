@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { amenerAuDessusDuClavier } from "@/lib/use-clavier";
 import { motion, AnimatePresence } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { DateInput } from "@/components/ui/DateInput";
@@ -37,18 +38,34 @@ interface StepInputProps {
  * Marie-Ange, qui a ecrit le moteur, l a dit : sans l heure et le lieu exacts,
  * le calcul ne tourne pas correctement. L aide le dit maintenant aussi.
  */
+/**
+ * Les quatre champs, et ce que chacun annonce au systeme.
+ *
+ * `autoComplete`, `enterKeyHint` et `inputMode` ne sont pas de la decoration :
+ * ils decident du clavier qu iOS affiche et du mot ecrit sur sa touche
+ * d envoi. Sans eux, on obtient partout le meme clavier alphabetique avec un
+ * « retour » qui ne fait rien — c est-a-dire un formulaire qui ne guide pas.
+ *
+ * `enterKeyHint: "next"` sur les trois premiers, `"done"` sur le dernier : la
+ * touche dit ou l on va, et c est la difference la plus visible entre un
+ * formulaire natif et un formulaire web.
+ */
 const champs = (locale: Locale) => [
   {
     key: "nickname" as const,
     label: t("onboarding.p6_nom", locale),
     type: "text",
     placeholder: t("onboarding.p6_nom_ex", locale),
+    autoComplete: "given-name",
+    enterKeyHint: "next" as const,
   },
   {
     key: "dob" as const,
     label: t("onboarding.p6_date", locale),
     type: "date" as const,
     placeholder: "",
+    autoComplete: "bday",
+    enterKeyHint: "next" as const,
   },
   {
     key: "timeOfBirth" as const,
@@ -56,6 +73,7 @@ const champs = (locale: Locale) => [
     type: "time",
     placeholder: "HH:MM",
     helper: t("onboarding.p6_heure_aide", locale),
+    enterKeyHint: "next" as const,
   },
   {
     key: "placeOfBirth" as const,
@@ -63,6 +81,9 @@ const champs = (locale: Locale) => [
     type: "text",
     placeholder: t("onboarding.p6_lieu_ex", locale),
     helper: t("onboarding.p6_lieu_aide", locale),
+    // « search » et non « done » : ce champ cherche une ville, et la touche
+    // doit dire ce qu elle fait.
+    enterKeyHint: "search" as const,
   },
 ];
 
@@ -383,7 +404,13 @@ export function StepInput({
                     type={field.type}
                     value={formData[field.key] as string}
                     onChange={(e) => handleChange(field.key, e.target.value)}
-                    onFocus={() => {
+                    onFocus={(e) => {
+                      // Le clavier se pose PAR-DESSUS la page (voir
+                      // lib/use-clavier.ts). On ramene donc le champ au centre
+                      // une fois son animation finie — sinon il reste dessous,
+                      // et pour le lieu de naissance la liste des villes s ouvre
+                      // entierement hors de vue.
+                      amenerAuDessusDuClavier(e.currentTarget);
                       if (isPlaceField) {
                         choisirSens();
                         if (suggestions.length > 0) setShowSuggestions(true);
@@ -413,7 +440,8 @@ export function StepInput({
                     }
                     placeholder={field.placeholder}
                     aria-required
-                    autoComplete={isPlaceField ? "off" : undefined}
+                    enterKeyHint={field.enterKeyHint}
+                    autoComplete={isPlaceField ? "off" : field.autoComplete}
                     // La correction automatique d iOS mutile les noms de villes
                     // etrangeres.
                     autoCorrect={isPlaceField ? "off" : undefined}

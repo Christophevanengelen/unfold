@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { useClavier } from "@/lib/use-clavier";
 import { motion, AnimatePresence } from "motion/react";
 
 interface BottomSheetProps {
@@ -166,6 +167,7 @@ let retoursProgrammes = 0;
  */
 export function BottomSheet({ open, onClose, children, maxHeight = "85%", empilable = false }: BottomSheetProps) {
   const id = useId();
+  const clavier = useClavier();
   const panneauRef = useRef<HTMLDivElement | null>(null);
   const zoneRef = useRef<HTMLDivElement | null>(null);
   const foyerAvantRef = useRef<HTMLElement | null>(null);
@@ -318,7 +320,22 @@ export function BottomSheet({ open, onClose, children, maxHeight = "85%", empila
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             style={{
-              maxHeight,
+              /**
+               * LE CLAVIER NE RECOUVRE PLUS LA FEUILLE.
+               *
+               * `capacitor.config.ts` fixe `KeyboardResize.None` : la WebView
+               * ne bouge pas quand le clavier s ouvre, il se pose par-dessus.
+               * Le reglage est volontaire — le changer casserait tous les
+               * ecrans en `100dvh` — donc c est ici qu on remonte.
+               *
+               * La hauteur maximale se reduit d autant : sans ca, une feuille
+               * a 85 % de l ecran remontee de 300 px depasserait par le haut.
+               */
+              transform: clavier > 0 ? `translateY(-${clavier}px)` : undefined,
+              maxHeight: clavier > 0 ? `calc(${maxHeight} - ${clavier}px)` : maxHeight,
+              // Le ressort de la feuille est plus lent que le clavier : on
+              // suit celui du clavier, sinon la feuille arrive apres lui.
+              transition: "transform 250ms cubic-bezier(0.23, 1, 0.32, 1), max-height 250ms cubic-bezier(0.23, 1, 0.32, 1)",
               boxShadow: "0 -4px 24px rgba(0,0,0,0.12)",
               // Le panneau recoit le foyer a l ouverture : pas de cerne dessus.
               // Ce n est pas un changement d apparence, c est ce qui garantit

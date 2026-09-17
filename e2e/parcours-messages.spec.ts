@@ -178,6 +178,12 @@ test("boite vide : on le dit, on n allume pas la pastille", async ({ page }) => 
   // Un message qui dit que ca n a pas marche vaut moins que pas de message :
   // il allume la pastille pour rien. lib/messages.ts et DailyBriefing.tsx s en
   // gardent explicitement, et les routes /api/openai sont ici en echec.
+  //
+  // Depuis le 17/09, l app depose aussi un resume des periodes ouvertes. Une
+  // boite vide suppose donc qu il n y en ait AUCUNE — c est un vrai etat du
+  // produit, celui ou il se tait, et c est exactement celui que ce test doit
+  // couvrir.
+  await brancherReseau(page, { sansPeriodeCourante: true });
   await semer(page, { messages: [] });
   await aller(page, "/app/timeline");
 
@@ -190,24 +196,17 @@ test("boite vide : on le dit, on n allume pas la pastille", async ({ page }) => 
   await expect(page.getByText("Your daily signal will land here.")).toBeVisible();
 });
 
-test("un briefing recu deux fois ne rallume pas la pastille", async ({ page }) => {
-  // Le briefing du jour est redepose a CHAQUE montage de l ecran. Sans la
+test("un resume recu deux fois ne rallume pas la pastille", async ({ page }) => {
+  // Le resume du jour est redepose a CHAQUE montage de l ecran. Sans la
   // conservation de l etat `lu` dans deposer(), le point se rallumerait a
   // chaque ouverture de l app pour un message deja lu — et on retomberait
   // exactement sur ce qui a fait dire « punition pour user » : une corvee qui
   // revient toute seule.
-  const CORPS_RESEAU = "Trois jours d ouverture sur le travail, a partir de jeudi.";
-
-  // Route posee APRES brancherReseau : chez Playwright, la derniere
-  // enregistree l emporte.
-  await page.route(/\/api\/openai\/daily-brief$/, (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ summary: CORPS_RESEAU, action: "Bloque une matinee." }),
-    }),
-  );
-
+  //
+  // Le test visait `/api/openai/daily-brief`, que l app n appelle plus depuis
+  // le 17/09. Il visait donc un chemin mort : la regle tenait toujours, mais
+  // plus rien ne la verifiait. Il porte maintenant sur le resume, qui est ce
+  // qui se redepose reellement.
   await semer(page, { messages: [] });
   await aller(page, "/app/timeline");
 
@@ -218,7 +217,12 @@ test("un briefing recu deux fois ne rallume pas la pastille", async ({ page }) =
   await expect(pointNonLu(page)).toHaveCount(1, { timeout: 20_000 });
 
   await pastille.click();
-  await expect(page.getByText(CORPS_RESEAU)).toBeVisible();
+  // Le resume se reconnait a sa RARETE, pas a un texte : sa phrase ecrite vient
+  // d un modele qui n est pas appele dans les tests, et son dessin, lui, est
+  // toujours la.
+  await expect(page.getByText(/once in your whole life|whole lifetime/i)).toBeVisible({
+    timeout: 20_000,
+  });
   await expect(pointNonLu(page)).toHaveCount(0);
   await page.keyboard.press("Escape");
 
@@ -230,13 +234,13 @@ test("un briefing recu deux fois ne rallume pas la pastille", async ({ page }) =
   await expect
     .poll(
       () =>
-        page.evaluate((corps) => {
+        page.evaluate(() => {
           const brut = localStorage.getItem("favorable_messages") ?? "[]";
-          const liste = JSON.parse(brut) as { corps: string; lu: boolean }[];
-          const m = liste.find((x) => x.corps === corps);
+          const liste = JSON.parse(brut) as { type: string; lu: boolean }[];
+          const m = liste.find((x) => x.type === "resume_jour");
           return m ? (m.lu ? "lu" : "non-lu") : "absent";
-        }, CORPS_RESEAU),
-      { timeout: 20_000, message: "apres rechargement, le briefing deja lu est repasse en non-lu" },
+        }),
+      { timeout: 20_000, message: "apres rechargement, le resume deja lu est repasse en non-lu" },
     )
     .toBe("lu");
 

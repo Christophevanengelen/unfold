@@ -43,7 +43,14 @@ export interface Journal {
  * prefixe tout par https://favorable.day. Sans ce filtre large, les tests de
  * notification taperaient la production.
  */
-export async function brancherReseau(page: Page): Promise<Journal> {
+export async function brancherReseau(
+  page: Page,
+  options: {
+    /** Aucune periode ouverte aujourd hui : le produit se tait, la boite reste
+     *  vide. C est un etat reel, pas une panne — voir parcours-messages. */
+    sansPeriodeCourante?: boolean;
+  } = {},
+): Promise<Journal> {
   const journal: Journal = { moteur: [], cadence: [], evenements: [] };
 
   const servirMoteur = (endpoint: string, corps: Record<string, unknown>) => {
@@ -53,7 +60,9 @@ export async function brancherReseau(page: Page): Promise<Journal> {
       latitude: Number(corps.latitude ?? 0),
     };
     journal.moteur.push({ endpoint, ...naissance });
-    return endpoint === "toctoc-year" ? reponseAnnee(naissance) : reponseVie(naissance);
+    return endpoint === "toctoc-year"
+      ? reponseAnnee(naissance, options.sansPeriodeCourante)
+      : reponseVie(naissance);
   };
 
   /** Le corps de la requete, ou un objet vide. Ne leve jamais : certaines
