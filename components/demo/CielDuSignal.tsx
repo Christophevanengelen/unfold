@@ -242,16 +242,32 @@ export function CielDuSignal({
                 />
 
                 {/* L anneau qui bat, une fois posee. Le meme que l onboarding
-                    donne a ses planetes allumees. */}
+                    donne a ses planetes allumees.
+
+                    IL EST CENTRE PAR ARITHMETIQUE, PAS PAR `transform`.
+
+                    Premiere version : `left: 50%; top: 50%` plus un
+                    `translate(-50%, -50%)` dans le style. C est le reflexe
+                    habituel, et il est FAUX ici : `motion` compose sa propre
+                    transformation quand il anime `scale`, et ecrase celle du
+                    style. L anneau se retrouvait avec son coin en haut a gauche
+                    sur le point, donc decale vers le bas a droite de la moitie
+                    de sa taille.
+
+                    Christophe l a vu tout de suite : « les planetes ne sont pas
+                    au centre des cercles ». Le decalage etait systematique, donc
+                    lisible comme une faute de dessin.
+
+                    En posant `left` et `top` en points, il n y a plus de
+                    transformation a ecraser. */}
                 {!fige && (
                   <motion.div
                     className="absolute rounded-full"
                     style={{
                       width: (a.taille + 5) * 2,
                       height: (a.taille + 5) * 2,
-                      left: "50%",
-                      top: "50%",
-                      transform: "translate(-50%, -50%)",
+                      left: a.taille / 2 - (a.taille + 5),
+                      top: a.taille / 2 - (a.taille + 5),
                       border: `1px solid ${a.meta.color}`,
                     }}
                     initial={{ opacity: 0, scale: 0.8 }}

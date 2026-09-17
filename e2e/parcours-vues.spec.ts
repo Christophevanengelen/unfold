@@ -319,6 +319,49 @@ test.describe("bascule timeline / liste", () => {
     }
   });
 
+  test("les anneaux du ciel sont centres sur leur planete", async ({ page }) => {
+    /**
+     * Christophe, le 17/09 : « les planetes ne sont pas au centre des cercles ».
+     *
+     * Elles ne l etaient pas, et la cause vaut d etre retenue : l anneau etait
+     * pose en `left: 50%; top: 50%` plus un `translate(-50%, -50%)` dans le
+     * style. C est le reflexe habituel, et il est FAUX des que `motion` anime
+     * une transformation sur le meme element — il compose la sienne et ECRASE
+     * celle du style. L anneau se retrouvait avec son coin sur le point.
+     *
+     * Rien ne le signale : ni les types, ni le linter. Le CSS est correct, il
+     * est simplement remplace a l execution.
+     *
+     * Ce test MESURE la distance entre les deux centres. Verifier que l anneau
+     * existe n aurait rien prouve : il existait, et il etait a cote.
+     */
+    await ouvrirTimeline(page);
+    await page.waitForTimeout(1600);
+    await page.locator("[data-guide-courant='1']").first().click();
+    await page.waitForTimeout(3600);
+
+    const ecarts = await page.evaluate(() =>
+      [...document.querySelectorAll("[data-planete]")]
+        .map((point) => {
+          const parent = point.parentElement;
+          if (!parent) return null;
+          const anneau = [...parent.children].find((c) => c !== point) as HTMLElement | undefined;
+          if (!anneau) return null;
+          const a = point.getBoundingClientRect();
+          const b = anneau.getBoundingClientRect();
+          return Math.round(
+            Math.hypot(a.x + a.width / 2 - (b.x + b.width / 2), a.y + a.height / 2 - (b.y + b.height / 2)),
+          );
+        })
+        .filter((x): x is number => x !== null),
+    );
+
+    expect(ecarts.length, "aucune planete dessinee dans le ciel").toBeGreaterThan(0);
+    for (const e of ecarts) {
+      expect(e, `un anneau est decale de ${e} px de sa planete`).toBeLessThanOrEqual(2);
+    }
+  });
+
   test("la periode en cours se distingue par la NETTETE, pas par la lueur", async ({ page }) => {
     /**
      * Christophe, le 17/09 : « le halo lumineux des cercles actifs, on les
