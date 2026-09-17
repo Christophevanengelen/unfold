@@ -17,7 +17,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { PageHeader } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { useLocale } from "@/lib/use-locale";
 import { t } from "@/lib/i18n-demo";
@@ -151,9 +150,12 @@ export default function ViePage() {
 
   return (
     <div className="min-h-screen pb-32">
-      <PageHeader backHref="/app/timeline" title={t("resume.vie_eyebrow", locale)} />
-
-      <div className="mx-auto w-full max-w-[440px] px-5 pt-3">
+      {/* Aucun bouton retour : on arrive ici par l onglet « Ma vie » de la barre
+          du bas, et une destination principale n a pas de retour — la barre EST
+          la navigation. Christophe, le 17/09 : « pas besoin de bouton retour
+          puisqu on a clique sur le menu, profite de tout l espace ».
+          La carte porte deja son titre, l en-tete etait un doublon. */}
+      <div className="mx-auto w-full max-w-[560px] px-3 pt-4">
         {resume && !resume.vide && naissance ? (
           <>
             <ResumeVie resume={resume} naissance={naissance} locale={locale} maintenant={maintenant} chapitresDeVie={chapitresDeVie ?? undefined} />

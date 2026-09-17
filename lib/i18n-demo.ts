@@ -294,6 +294,8 @@ type Strings = {
     vie_depuis_age: string; vie_ans: string; vie_legende: string;
     vie_plus_charge: string; vie_bascules_un: string; vie_bascules_n: string;
     vie_affiche: string; vie_affiche_en_cours: string; vie_affiche_aide: string;
+    branche_aide: string; branche_legende: string; branche_tache: string;
+    branche_fleur: string; branche_grappe: string; branche_relie: string;
   };
   boudin: {
     titre: string;
@@ -671,6 +673,12 @@ const FR: Strings = {
     vie_affiche: "Partager mon affiche",
     vie_affiche_en_cours: "On prépare l'affiche",
     vie_affiche_aide: "Une image de ta vie entière, à garder ou à envoyer.",
+    branche_aide: "Touche une tache ou une fleur.",
+    branche_legende: "La branche monte avec les années. Une tache : un chapitre s'ouvre. Une fleur : une bascule marquée par le moteur.",
+    branche_tache: "Un chapitre s'ouvre",
+    branche_fleur: "Une bascule",
+    branche_grappe: "{a} ans : {n} périodes ouvertes",
+    branche_relie: "Chapitre ouvert à {a} ans, bascule {n} ans plus tard",
   },
   boudin: {
     titre: "Timeline de vie",
@@ -1048,6 +1056,12 @@ const EN: Strings = {
     vie_affiche: "Share my poster",
     vie_affiche_en_cours: "Preparing the poster",
     vie_affiche_aide: "One image of your whole life, to keep or to send.",
+    branche_aide: "Tap a mark or a flower.",
+    branche_legende: "The branch climbs with the years. A mark: a chapter opens. A flower: a turning point flagged by the engine.",
+    branche_tache: "A chapter opens",
+    branche_fleur: "A turning point",
+    branche_grappe: "Age {a}: {n} periods open",
+    branche_relie: "Chapter opened at {a}, turning point {n} years later",
   },
   boudin: {
     titre: "Lifetime timeline",
@@ -1425,6 +1439,12 @@ const ES: Strings = {
     vie_affiche: "Compartir mi póster",
     vie_affiche_en_cours: "Preparando el póster",
     vie_affiche_aide: "Una imagen de toda tu vida, para guardar o enviar.",
+    branche_aide: "Toca una marca o una flor.",
+    branche_legende: "La rama sube con los años. Una marca: se abre un capítulo. Una flor: un cambio señalado por el motor.",
+    branche_tache: "Se abre un capítulo",
+    branche_fleur: "Un cambio",
+    branche_grappe: "{a} años: {n} periodos abiertos",
+    branche_relie: "Capítulo abierto a los {a}, cambio {n} años después",
   },
   boudin: {
     titre: "Línea de tiempo de vida",
@@ -1802,6 +1822,12 @@ const DE: Strings = {
     vie_affiche: "Mein Poster teilen",
     vie_affiche_en_cours: "Poster wird erstellt",
     vie_affiche_aide: "Ein Bild deines ganzen Lebens, zum Behalten oder Senden.",
+    branche_aide: "Tippe auf einen Fleck oder eine Blüte.",
+    branche_legende: "Der Zweig wächst mit den Jahren. Ein Fleck: ein Kapitel beginnt. Eine Blüte: ein Wendepunkt, den die Engine markiert.",
+    branche_tache: "Ein Kapitel beginnt",
+    branche_fleur: "Ein Wendepunkt",
+    branche_grappe: "{a} Jahre: {n} offene Perioden",
+    branche_relie: "Kapitel mit {a} begonnen, Wendepunkt {n} Jahre später",
   },
   boudin: {
     titre: "Lebens-Zeitleiste",
@@ -2179,6 +2205,12 @@ const IT: Strings = {
     vie_affiche: "Condividi il mio poster",
     vie_affiche_en_cours: "Sto preparando il poster",
     vie_affiche_aide: "Un'immagine di tutta la tua vita, da tenere o da inviare.",
+    branche_aide: "Tocca una macchia o un fiore.",
+    branche_legende: "Il ramo sale con gli anni. Una macchia: si apre un capitolo. Un fiore: una svolta segnalata dal motore.",
+    branche_tache: "Si apre un capitolo",
+    branche_fleur: "Una svolta",
+    branche_grappe: "{a} anni: {n} periodi aperti",
+    branche_relie: "Capitolo aperto a {a} anni, svolta {n} anni dopo",
   },
   boudin: {
     titre: "Timeline di vita",
@@ -2556,6 +2588,12 @@ const PT: Strings = {
     vie_affiche: "Compartilhar meu pôster",
     vie_affiche_en_cours: "Preparando o pôster",
     vie_affiche_aide: "Uma imagem da sua vida inteira, para guardar ou enviar.",
+    branche_aide: "Toca numa marca ou numa flor.",
+    branche_legende: "O ramo sobe com os anos. Uma marca: abre-se um capítulo. Uma flor: uma virada marcada pelo motor.",
+    branche_tache: "Abre-se um capítulo",
+    branche_fleur: "Uma virada",
+    branche_grappe: "{a} anos: {n} períodos abertos",
+    branche_relie: "Capítulo aberto aos {a}, virada {n} anos depois",
   },
   boudin: {
     titre: "Linha do tempo de vida",
@@ -2933,6 +2971,12 @@ const NL: Strings = {
     vie_affiche: "Mijn poster delen",
     vie_affiche_en_cours: "Poster wordt gemaakt",
     vie_affiche_aide: "Eén beeld van je hele leven, om te bewaren of te sturen.",
+    branche_aide: "Tik op een vlek of een bloem.",
+    branche_legende: "De tak stijgt met de jaren. Een vlek: een hoofdstuk opent. Een bloem: een omslag die de engine markeert.",
+    branche_tache: "Een hoofdstuk opent",
+    branche_fleur: "Een omslag",
+    branche_grappe: "{a} jaar: {n} open periodes",
+    branche_relie: "Hoofdstuk geopend op {a}, omslag {n} jaar later",
   },
   boudin: {
     titre: "Levenstijdlijn",
@@ -3310,6 +3354,12 @@ const JA: Strings = {
     vie_affiche: "ポスターを共有",
     vie_affiche_en_cours: "ポスターを準備しています",
     vie_affiche_aide: "あなたの人生すべてを一枚の絵に。保存も共有もできます。",
+    branche_aide: "にじみか花に触れてください。",
+    branche_legende: "枝は年とともに伸びます。にじみは章の始まり、花はエンジンが示した転換点です。",
+    branche_tache: "章が始まる",
+    branche_fleur: "転換点",
+    branche_grappe: "{a}歳：開いた期間 {n} 件",
+    branche_relie: "{a}歳に始まった章、{n}年後の転換点",
   },
   boudin: {
     titre: "生涯タイムライン",
@@ -3687,6 +3737,12 @@ const ZH: Strings = {
     vie_affiche: "分享我的海报",
     vie_affiche_en_cours: "正在准备海报",
     vie_affiche_aide: "把你的一生化为一张图，可以保存，也可以分享。",
+    branche_aide: "轻触墨点或花朵。",
+    branche_legende: "枝随年岁上升。墨点是一章的开始，花是引擎标记的转折。",
+    branche_tache: "一章开始",
+    branche_fleur: "一个转折",
+    branche_grappe: "{a} 岁：{n} 个开启的周期",
+    branche_relie: "{a} 岁开启的章节，{n} 年后的转折",
   },
   boudin: {
     titre: "一生时间线",
@@ -4064,6 +4120,12 @@ const AR: Strings = {
     vie_affiche: "مشاركة ملصقي",
     vie_affiche_en_cours: "جارٍ تحضير الملصق",
     vie_affiche_aide: "صورة واحدة لحياتك كلها، لتحتفظ بها أو ترسلها.",
+    branche_aide: "المس لطخة أو زهرة.",
+    branche_legende: "يعلو الغصن مع السنين. اللطخة بداية فصل، والزهرة نقطة تحول يحددها المحرك.",
+    branche_tache: "يبدأ فصل",
+    branche_fleur: "نقطة تحول",
+    branche_grappe: "{a} سنة: {n} فترة مفتوحة",
+    branche_relie: "فصل بدأ في {a}، نقطة تحول بعد {n} سنة",
   },
   boudin: {
     titre: "الجدول الزمني للحياة",

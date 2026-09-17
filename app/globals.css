@@ -727,6 +727,14 @@ button, a, [role="button"], [role="link"],
   --bg-secondary: #ECE7F5;
   --bg-tertiary: #E2DCEE;
 
+  /* ── L encre de « Ta vie entiere » ─────────────────────────────────────
+     La branche est peinte au pinceau sur la carte : il lui faut une encre,
+     et une encre diluee pour l echo pose dessous. Deux jetons, pas des
+     valeurs semees dans le composant — le canvas les LIT au moment de
+     peindre, et repeint quand le theme change. */
+  --encre-trait: #2B2140;
+  --encre-diluee: #B3A9CC;
+
   /* ── La rampe de la bande du jour ──────────────────────────────────────
      Cinq aplats, du plein jour a la nuit, pour components/demo/BandeDuJour.
 
@@ -914,6 +922,10 @@ button, a, [role="button"], [role="link"],
   --bg-primary: #1B1535;
   --bg-secondary: #221C3F;
   --bg-tertiary: #2A244B;
+
+  /* La meme encre, de nuit : le trait s eclaircit, l echo s assombrit. */
+  --encre-trait: #E4DEF5;
+  --encre-diluee: #4A4270;
 
   /* La meme rampe, en sombre : la nuit est la plus SOMBRE, le jour le plus
      clair. Voir le bloc clair pour la raison d etre de ces jetons. */
