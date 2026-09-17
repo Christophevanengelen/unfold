@@ -17,6 +17,21 @@ interface ConnectionListProps {
   connections: RealConnection[];
   myBirthData: BirthData | null;
   onDeleted?: (id: string) => void;
+  /**
+   * Ouvre le formulaire de saisie de code, tenu par la page.
+   *
+   * BUG DU 17/09 AU SOIR : le bouton « J'ai recu un code » de la vitrine
+   * pointait vers `/app/invite/join`, une page qui n attend QUE des
+   * parametres d URL (`?name=X&code=X&...`) et qui redirige silencieusement
+   * vers cette meme page des qu ils manquent. Sans lien profond, cliquer
+   * dessus ne faisait donc RIEN de visible — exactement ce que Christophe a
+   * signale : « je ne peux pas encoder le code ».
+   *
+   * Le vrai formulaire de saisie existe deja plus bas sur cette page — champ,
+   * validation, message d erreur — mais il n apparaissait qu APRES avoir deja
+   * une connexion. Premier utilisateur, cercle vicieux garanti.
+   */
+  onCodeRecu?: () => void;
 }
 
 /**
@@ -26,7 +41,7 @@ interface ConnectionListProps {
  * Empty state & share CTAs are rendered by the parent page — this component
  * only owns the list itself.
  */
-export function ConnectionList({ connections, myBirthData, onDeleted }: ConnectionListProps) {
+export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu }: ConnectionListProps) {
   const locale = detectLocale();
   const [sheetConn, setSheetConn] = useState<RealConnection | null>(null);
 
@@ -132,7 +147,7 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
           « Partagez votre code ou entrez celui d un proche » — c est-a-dire
           exactement ce que disent les deux boutons places juste dessous. Il
           occupait la moitie de l ecran pour repeter la page. */}
-      {connections.length === 0 && <VitrineBase locale={locale} naissance={myBirthData} />}
+      {connections.length === 0 && <VitrineBase locale={locale} naissance={myBirthData} onCodeRecu={onCodeRecu} />}
     </>
   );
 }

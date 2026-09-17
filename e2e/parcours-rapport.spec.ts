@@ -475,4 +475,44 @@ test.describe("l ecran sans aucune connexion", () => {
     expect(traces.length, "il faut deux rendus de la courbe").toBe(2);
     expect(traces[0], "les deux rendus ne dessinent pas la meme courbe").toBe(traces[1]);
   });
+
+  test("« J ai recu un code » ouvre vraiment le formulaire de saisie", async ({ page }) => {
+    /**
+     * Christophe, le 17/09 au soir : « je ne peux pas encoder le code ». Il
+     * cliquait sur « J ai recu un code » et rien ne se passait.
+     *
+     * La cause etait double, et aucune des deux ne se voit en lisant un seul
+     * fichier :
+     *
+     *  1. Ce lien pointait vers `/app/invite/join`, une page qui n attend QUE
+     *     des parametres d URL (`?name=X&code=X&...`) et qui redirige vers
+     *     cette meme page des qu ils manquent. Sans lien profond, la page ne
+     *     montre jamais de formulaire — elle n en porte pas.
+     *
+     *  2. Le VRAI formulaire de saisie existait deja, plus bas sur cette page
+     *     — mais entierement a l interieur du bloc reserve a « il y a deja des
+     *     connexions ». Premier utilisateur, zero connexion, cercle vicieux :
+     *     le seul geste qui aurait pu en creer une etait cache par l absence
+     *     de la premiere.
+     *
+     * Ce test clique le bouton et exige que le CHAMP DE SAISIE apparaisse.
+     * Verifier que le bouton existe n aurait rien prouve : il existait, et il
+     * ne faisait rien.
+     */
+    await aller(page, "/app/compatibility");
+    await expect(page.locator("[data-vitrine-vide]")).toBeVisible({ timeout: 20_000 });
+
+    // On cible le bouton par son role et sa position — juste sous le bouton
+    // principal « Inviter » — plutot que par un texte fige dans une langue :
+    // le libelle change selon la locale du navigateur.
+    const boutons = page.locator("[data-vitrine-vide] button, [data-vitrine-vide] a");
+    const bouton = boutons.last();
+    await bouton.click();
+
+    const champ = page.getByPlaceholder("FAV-XXXX");
+    await expect(champ, "le formulaire de saisie ne s ouvre pas").toBeVisible({ timeout: 5000 });
+
+    await champ.fill("FAV-TEST");
+    await expect(champ).toHaveValue("FAV-TEST");
+  });
 });

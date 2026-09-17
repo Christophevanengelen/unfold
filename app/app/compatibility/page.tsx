@@ -134,6 +134,7 @@ export default function ConnectionsPage() {
         connections={connections}
         myBirthData={myBirthData}
         onDeleted={handleDeleted}
+        onCodeRecu={() => setShowCodeInput(true)}
       />
 
       {/* Le conseil d appui long occupait la place la plus chere de l ecran :
@@ -160,15 +161,20 @@ export default function ConnectionsPage() {
         </motion.button>
       )}
 
-      {/* Le separateur et les deux actions n apparaissent QUE s il y a deja des
-          connexions.
-          
-          Sans connexion, la vitrine porte l appel a l action, et un seul : un
-          bouton plein pour inviter, un lien discret pour « j ai recu un code ».
-          Les garder ici en plus faisait deux fois les memes gestes sur le meme
-          ecran, avec deux hierarchies differentes — et cela remettait le code
-          FAV-XXXX en clair a l ecran, alors que c est de la plomberie qui a sa
-          place dans la feuille de partage. */}
+      {/* Le separateur et la carte « partager mon code » n apparaissent QUE
+          s il y a deja des connexions : sans connexion, la vitrine porte deja
+          l appel a inviter, et repeter le meme geste ici en plus remettrait le
+          code FAV-XXXX en clair a l ecran, alors que c est de la plomberie qui
+          a sa place dans la feuille de partage.
+
+          LE FORMULAIRE DE SAISIE, LUI, N EST PLUS SOUMIS A CETTE CONDITION.
+          Corrige le 17/09 au soir : « J ai recu un code », dans la vitrine
+          affichee sans connexion, ouvrait `showCodeInput` — mais le formulaire
+          qui repond a cet etat vivait entierement DANS le bloc reserve aux
+          connexions existantes. Le bouton changeait un etat que rien
+          n ecoutait tant qu on etait a zero connexion : au clic, rien ne se
+          passait. C est exactement ce que Christophe a signale : « je ne
+          peux pas encoder le code ». */}
       {connections.length > 0 ? (
       <>
       <div className="my-5 h-px" style={{ background: "var(--surface-medium)" }} />
@@ -199,7 +205,7 @@ export default function ConnectionsPage() {
           </span>
         </Link>
 
-        {!showCodeInput ? (
+        {!showCodeInput && (
           <button
             onClick={() => setShowCodeInput(true)}
             className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-transform active:scale-[0.98]"
@@ -210,7 +216,13 @@ export default function ConnectionsPage() {
           >
             {perso("compat.entrer_code", locale)}
           </button>
-        ) : (
+        )}
+      </div>
+      </>
+      ) : null}
+
+      {/* Le formulaire de saisie, accessible AVEC ou SANS connexion. */}
+      {showCodeInput && (
           <motion.div
             className="rounded-2xl p-4"
             style={{ background: "var(--surface-light)", border: "1px solid var(--border-tint-light)" }}
@@ -264,10 +276,7 @@ export default function ConnectionsPage() {
               </p>
             )}
           </motion.div>
-        )}
-      </div>
-      </>
-      ) : null}
+      )}
     </div>
   );
 }
