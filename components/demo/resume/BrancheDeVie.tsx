@@ -22,7 +22,7 @@
  *    (`annees[].periodes`), un COMPTE, jamais une note ;
  *  — une grappe de petites fleurs se pose aux annees les plus chargees. Sa
  *    densite est ce meme compte ;
- *  — une TACHE d encre marque l ouverture d un chapitre (`chapitres[]`) ;
+ *  — une TACHE d encre marque l ouverture d une periode majeure ;
  *  — une FLEUR marque une bascule, et seulement celles que le moteur marque
  *    lui-meme (`bascules[]`). On n en fabrique aucune ;
  *  — le fil qui relie une tache a une fleur relie un chapitre a une bascule
@@ -50,10 +50,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { STRINGS_MATCH_DOMAINES, t, type Locale } from "@/lib/i18n-demo";
+import { perso } from "@/lib/perso-i18n";
+import { toucher } from "@/lib/haptique";
 import { DOMAINE } from "@/lib/score-match";
 import { houseToDomain } from "@/lib/event-labels";
 import type { ResumeDeVie } from "@/lib/resume-vie";
-import type { ChapitreDeVie } from "@/lib/chapitres-vie";
 import type { MomentumPhase } from "@/types/momentum";
 
 /* ── Un hasard REPRODUCTIBLE ────────────────────────────────────────────────
@@ -264,6 +265,28 @@ function duree(jours: number, locale: string): string {
   return dit(j, "day");
 }
 
+/** Les pastilles de navigation : le meme verre que la frise (MomentumTimelineV2). */
+const VERRE: React.CSSProperties = {
+  background: "var(--glass-pill-strong)",
+  color: "var(--text-brand)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+};
+
+/** Le conteneur qui defile vraiment : l app fait defiler une div, pas la fenetre. */
+function conteneurDefilant(el: HTMLElement | null): HTMLElement | null {
+  let p = el?.parentElement ?? null;
+  while (p) {
+    const oy = getComputedStyle(p).overflowY;
+    if ((oy === "auto" || oy === "scroll") && p.scrollHeight > p.clientHeight + 4) return p;
+    p = p.parentElement;
+  }
+  return null;
+}
+
+/** Le chemin entier : cent ans de papier, vecus ou non. */
+const ANS_DE_VIE = 100;
+
 const L = 340;
 const PAD_T = 60;
 const PAD_B = 90;
@@ -356,7 +379,7 @@ function coupDePinceau(g: Ctx, pts: Point[], largeur: (u: number) => number, col
         const ww = w * (0.5 + 0.5 * encre);
         const x = sx + nx * p.off * ww + 0.4 * bruit(Math.round((s + d) / 5) + p.phase * 3);
         const y = sy + ny * p.off * ww;
-        g.globalAlpha = Math.min(0.6, 0.5 * encre * (0.8 + 0.4 * grain));
+        g.globalAlpha = Math.min(0.6, (sec ? 0.4 : 0.5) * encre * (0.8 + 0.4 * grain));
         g.beginPath();
         g.arc(x, y, rayon * (0.65 + 0.45 * encre), 0, 6.2832);
         g.fill();
@@ -499,6 +522,10 @@ type PairePosee = Paire & {
   gx: number; gy: number; rG: number;
   fx: number; fy: number; D: number;
   vx: number; vy: number; // vers l exterieur, pour orienter la fleur
+  // Au bout de la brindille, ce n est jamais une fleur seule : c est un
+  // BOUQUET, comme sur une vraie branche de prunier — une principale et
+  // plusieurs autres, tassees, de tailles inegales.
+  bouquet: { x: number; y: number; D: number; graine: number; retard: number }[];
 };
 type Grappe = { pos: number; compte: number; famille: Famille | null; quand: string; graine: number };
 type GrappePosee = Grappe & { x: number; y: number; R: number; brindille: Point[]; boutons: { x: number; y: number; D: number; graine: number }[] };
@@ -507,7 +534,6 @@ export function BrancheDeVie({
   resume,
   locale,
   maintenant,
-  chapitres,
   phasesAnnee,
   phasesVie,
 }: {
@@ -515,8 +541,6 @@ export function BrancheDeVie({
   locale: Locale;
   /** L instant de lecture, fige par l appelant — jamais `Date.now()` ici. */
   maintenant: number;
-  /** Les grands mouvements : ils donnent la portee de l echelle « Vie ». */
-  chapitres?: ChapitreDeVie[];
   /** Les periodes de l annee, datees : les echelles « Annee » et « Mois ». */
   phasesAnnee?: MomentumPhase[];
   /** Les periodes de toute la vie, datees : l echelle « Vie ». */
@@ -530,6 +554,8 @@ export function BrancheDeVie({
   const [eteintes, setEteintes] = useState<Set<Famille>>(() => new Set());
   const [choix, setChoix] = useState<number | null>(null); // index de la paire
   const [cle, setCle] = useState(0);
+  /** Ou le regard se trouve dans le papier, 0..1. Pour la pastille et les sauts. */
+  const [ou, setOu] = useState(0);
   const signature = useRef("");
   const noms = useMemo(() => STRINGS_MATCH_DOMAINES(locale), [locale]);
 
@@ -548,13 +574,14 @@ export function BrancheDeVie({
     const posDe = (t: number) => Math.min(1, Math.max(0, (t - t0) / (t1 - t0)));
     if (echelle === "vie") {
       const nais = resume.annees.length && resume.age > 0 ? maintenant - resume.age * 365.2425 * 86400000 : maintenant - 86400000 * 365;
-      // La ou quelque chose est documente : pas de zero par defaut.
-      const premier = Math.max(0, Math.min(resume.premiereDocumentee ?? resume.age, ...(chapitres?.map((c) => c.ageDebut) ?? [resume.age])));
-      t0 = nais + premier * 365.2425 * 86400000;
-      t1 = maintenant;
-      unites = Math.max(2, resume.age - premier);
-      const pas = unites > 60 ? 10 : unites > 30 ? 5 : unites > 12 ? 2 : 1;
-      for (let age = Math.ceil(premier / pas) * pas; age <= resume.age; age += pas) {
+      // DE ZERO A CENT ANS. Christophe, le 17/09 : « ca doit pousser de 0 a
+      // 100 ans, le debut c est la naissance, plus on descend plus on avance
+      // dans l age ». Le chemin entier est donc la, y compris ce qui n est pas
+      // vecu : la branche s arrete a aujourd hui, le reste est du papier.
+      t0 = nais;
+      t1 = nais + ANS_DE_VIE * 365.2425 * 86400000;
+      unites = ANS_DE_VIE;
+      for (let age = 0; age <= ANS_DE_VIE; age += 10) {
         reperes.push({ pos: posDe(nais + age * 365.2425 * 86400000), libelle: String(age) });
       }
       const fl = new Intl.DateTimeFormat(locale, { month: "short", year: "numeric" });
@@ -586,7 +613,7 @@ export function BrancheDeVie({
       ecartDe = (a, b) => duree(((b - a) * (t1 - t0)) / 86400000, locale);
     }
     return { t0, t1, unites, reperes, libelleDe, ecartDe, posDe, posMaintenant: posDe(maintenant) };
-  }, [echelle, resume, chapitres, maintenant, locale]);
+  }, [echelle, resume, maintenant, locale]);
 
   /* ── Les periodes majeures -> les paires ; toutes les periodes -> la densite ── */
   const donnees = useMemo(() => {
@@ -659,7 +686,9 @@ export function BrancheDeVie({
      Hauteur du dessin selon le nombre d unites : on parcourt, on n entasse pas.
      Axe du tronc au tiers (0,34 ou 0,66 de la largeur), diagonale tenue,
      trois tournants nets, courbure aux noeuds seulement. */
-  const H = Math.max(1400, Math.min(2800, Math.round(fen.unites * (echelle === "vie" ? 42 : echelle === "annee" ? 190 : 72))));
+  // Cent ans ne tiennent pas sur deux ecrans : on parcourt, on n entasse pas.
+  // Le plafond reste sous la limite d aire d un canvas iOS (dpr plafonne a 2).
+  const H = Math.max(1400, Math.min(echelle === "vie" ? 4400 : 2800, Math.round(fen.unites * (echelle === "vie" ? 42 : echelle === "annee" ? 190 : 72))));
 
   const plan = useMemo(() => {
     const n = donnees.comptes.length;
@@ -675,7 +704,7 @@ export function BrancheDeVie({
     let cap = (22 * Math.PI) / 180 * (cote < 0.5 ? 1 : -1); // la diagonale dominante
     let capAvant = cap;
     let u = 0;
-    let larg = 26; // ordre 0
+    let larg = 21; // ordre 0 — 6 % de la largeur, le calibre du kakemono
     noeuds.push({ u: 0, x, y: yDe(0, H) });
     for (let i = 0; i < entre.length; i++) {
       const u0 = u;
@@ -762,14 +791,36 @@ export function BrancheDeVie({
         brindille.push({ x: v * v * bp.x + 2 * v * s * mx + s * s * exC, y: v * v * bp.y + 2 * v * s * my + s * s * ey, u: s });
       }
       const pal = [1, 0.82, 0.62][i % 3 === 0 ? 0 : i % 3 === 1 ? 1 : 2];
-      const D = 30 * pal * (p.score >= 4 ? 1.1 : 1);
+      const D = 38 * pal * (p.score >= 4 ? 1.08 : 1); // ~4 % de la largeur, comme sur l image
       const vx = exC - bp.x;
       const vy = ey - bp.y;
       const lv = Math.hypot(vx, vy) || 1;
       // la tache est posee la ou la brindille quitte le bois : sur son depart
       const gx = bp.x + (vx / lv) * (bp.w * 0.5 + 4);
       const gy = bp.y + (vy / lv) * (bp.w * 0.5 + 4);
-      return { ...p, brindille, gx, gy, rG: 7.5, fx: exC, fy: ey, D, vx, vy };
+
+      // Le bouquet : la fleur principale au centre, 4 a 8 autres autour,
+      // qui ne se chevauchent pas. Christophe, le 17/09 (image de reference) :
+      // « au bout de la branche il faut un bouquet de fleurs ». Les tailles
+      // suivent la meme gamme 1 / 0,82 / 0,62 que le reste de l oeuvre.
+      const nBouquet = 6 + Math.round(Math.abs(bruit(p.graine + 41)) * 5); // 6 a 11 : une vraie masse
+      const bouquetPal = [1, 0.85, 0.7, 0.58];
+      const bouquet: PairePosee["bouquet"] = [{ x: exC, y: ey, D, graine: p.graine, retard: 0 }];
+      for (let k = 0; k < nBouquet; k++) {
+        let ok = false;
+        for (let essai = 0; essai < 14 && !ok; essai++) {
+          const a = bruit(p.graine + k * 7 + essai * 3 + 51) * 6.28;
+          const dd = (0.3 + 0.85 * Math.abs(bruit(p.graine + k * 5 + essai * 7 + 61))) * D * 0.85;
+          const bx = exC + Math.cos(a) * dd;
+          const by = ey + Math.sin(a) * dd * 0.8 - D * 0.15; // le bouquet monte un peu plus qu il ne descend
+          const bD = D * bouquetPal[Math.min(3, 1 + (k % 3))];
+          if (bouquet.every((b) => Math.hypot(b.x - bx, b.y - by) >= 0.68 * (b.D + bD) / 2)) {
+            bouquet.push({ x: bx, y: by, D: bD, graine: p.graine + k * 97 + 13, retard: 0.06 + 0.1 * Math.abs(bruit(p.graine + k * 11 + 71)) });
+            ok = true;
+          }
+        }
+      }
+      return { ...p, brindille, gx, gy, rG: 7.5, fx: exC, fy: ey, D, vx, vy, bouquet };
     });
 
     // les grappes : une par 550-750 unites, aux cases les plus chargees, intervalles inegaux
@@ -801,7 +852,7 @@ export function BrancheDeVie({
         const my = bp.y + chute * 0.3;
         brindille.push({ x: v * v * bp.x + 2 * v * t * mx + t * t * cx, y: v * v * bp.y + 2 * v * t * my + t * t * cy, u: t });
       }
-      const nb = 3 + Math.round((pk.c / haut) * 4); // 3 a 7, par trois et par cinq
+      const nb = 4 + Math.round((pk.c / haut) * 5); // 4 a 9, par trois et par cinq
       const boutons: GrappePosee["boutons"] = [];
       const pal = [1, 0.82, 0.62];
       for (let k = 0; k < nb; k++) {
@@ -811,7 +862,7 @@ export function BrancheDeVie({
           const dd = Math.pow(Math.abs(bruit(gr + k * 3 + essai * 5)), 0.6) * R;
           const bx2 = cx + Math.cos(a) * dd;
           const by2 = cy + Math.sin(a) * dd * 0.85;
-          const D = 16 * pal[k % 3 === 0 ? 2 : k % 3 === 1 ? 1 : 0];
+          const D = 21 * pal[k % 3 === 0 ? 2 : k % 3 === 1 ? 1 : 0];
           if (boutons.every((b) => Math.hypot(b.x - bx2, b.y - by2) >= 1.15 * (b.D + D) / 2)) {
             boutons.push({ x: bx2, y: by2, D, graine: gr + k * 29 });
             ok = true;
@@ -840,7 +891,7 @@ export function BrancheDeVie({
     return {
       encre: lit("--encre-trait", "currentColor"),
       diluee: lit("--encre-diluee", "currentColor"),
-      papier: lit("--bg-secondary", "transparent"),
+      papier: lit("--bg-primary", "transparent"),
       texte: lit("--text-body-subtle", "currentColor"),
       police: st?.fontFamily || "sans-serif",
       familles,
@@ -855,7 +906,9 @@ export function BrancheDeVie({
      rendu. */
   const etat = useRef({
     revele: 0,        // jusqu ou la branche est peinte (0..1)
-    cible: 0,         // jusqu ou le doigt est descendu
+    cible: 0,         // jusqu ou l encre a le droit d aller (jamais apres aujourd hui)
+    brut: 0,          // jusqu ou le doigt est descendu, lui, sans plafond
+    dernierOu: -1,    // le dernier cran de pastille annonce a React
     tamponnes: new Set<string>(), // ce qui est deja sur l encre
     troncPose: 1, // jusqu ou le tronc est pose (index de point)
     naissances: new Map<string, number>(), // ce qui est en train de naitre : t0
@@ -916,16 +969,28 @@ export function BrancheDeVie({
     const colDe = (f: Famille | null) => (f ? pal.familles[f] : pal.encre);
     const couleurTexte = pal.texte;
     const largeurTige = (p: PairePosee) => (u: number) => {
-      // ordre 3 -> 4 : de 6 a 2, le decrochement a la base compris
-      const w0 = Math.min(6, plan.largeurTronc(p.posGraine) * 0.62 * 0.5);
-      return Math.max(1.2, w0 + (2 - w0) * u) * (1 + 0.1 * ondule(u * 5, p.graine));
+      // Le decrochement du kakemono : la brindille fait 40 a 45 % du bois qui
+      // la porte, et sa pointe garde encore la moitie de sa base. Une tige
+      // trop fine casse l unite de l ensemble — c est du fil, plus de l encre.
+      const w0 = Math.max(6.5, Math.min(10, plan.largeurTronc(p.posGraine) * 0.42));
+      return Math.max(3, w0 * (1 - 0.5 * u)) * (1 + 0.08 * ondule(u * 5, p.graine));
     };
 
     /* Ce que la personne voit de la branche : ce qu elle a fait descendre. */
     const mesurerCible = () => {
-      const r = hoteEl.getBoundingClientRect();
+      const r = vifEl.getBoundingClientRect();
       const basVisible = window.innerHeight - r.top - 110;
-      E.cible = Math.max(0, Math.min(1, basVisible / hauteurCss));
+      E.brut = Math.max(0, Math.min(1, basVisible / hauteurCss));
+      // La pousse s arrete a AUJOURD HUI. On peut descendre dans les annees
+      // qui restent : il n y pousse rien, et c est exact.
+      E.cible = Math.min(E.brut, fen.posMaintenant);
+      // Ou le regard se trouve : le milieu de l ecran, ramene dans le papier.
+      const centre = Math.max(0, Math.min(1, (window.innerHeight / 2 - r.top) / hauteurCss));
+      const cran = Math.round(centre * ANS_DE_VIE) / ANS_DE_VIE;
+      if (cran !== E.dernierOu) {
+        E.dernierOu = cran;
+        setOu(cran);
+      }
     };
     mesurerCible();
 
@@ -969,9 +1034,13 @@ export function BrancheDeVie({
         coupDePinceau(g, p.brindille, largeurTige(p), pal.encre, p.graine, n, false);
       }
       if (partFleur > 0) {
-        // encore ouverte : un bouton, ferme mais bien visible — il attend
-        const D = p.aVenir ? p.D * 0.8 : p.D;
-        fleurDePrunier(g, p.fx, p.fy, D, col, pal.encre, p.graine + (p.aVenir ? 1000 : 0), p.aVenir ? Math.min(partFleur, 0.5) : partFleur, p.vx, p.vy, !p.aVenir);
+        // encore ouverte : des boutons, fermes mais bien visibles — ils attendent
+        p.bouquet.forEach((b) => {
+          const partLocale = Math.max(0, Math.min(1, (partFleur - b.retard) / (1 - b.retard)));
+          if (partLocale <= 0) return;
+          const D = p.aVenir ? b.D * 0.8 : b.D;
+          fleurDePrunier(g, b.x, b.y, D, col, pal.encre, b.graine + (p.aVenir ? 1000 : 0), p.aVenir ? Math.min(partLocale, 0.5) : partLocale, p.vx + (b.x - p.fx), p.vy + (b.y - p.fy), !p.aVenir);
+        });
       }
     };
 
@@ -1004,8 +1073,8 @@ export function BrancheDeVie({
         });
       }
       // la pointe d aujourd hui, encore humide
-      if (rv >= 0.995) {
-        const pt = plan.surLeTronc(1);
+      if (rv >= fen.posMaintenant - 0.004) {
+        const pt = plan.surLeTronc(fen.posMaintenant);
         const k = 0.5 + 0.5 * Math.sin(now / 900);
         gV.save();
         gV.globalAlpha = 0.16 + 0.1 * k;
@@ -1019,7 +1088,7 @@ export function BrancheDeVie({
       /* 2. les reperes du temps */
       fen.reperes.forEach((rp, i) => {
         const id = `r${i}`;
-        if (E.tamponnes.has(id) || rv < rp.pos) return;
+        if (E.tamponnes.has(id) || E.brut < rp.pos) return;
         peindreRepere(rp);
         E.tamponnes.add(id);
       });
@@ -1049,7 +1118,7 @@ export function BrancheDeVie({
         const col = gr.famille && !eteintes.has(gr.famille) ? colDe(gr.famille) : pal.diluee;
         naissance(`gb${gr.graine}`, 800, now, (part, g) => {
           const n = Math.max(2, Math.round(gr.brindille.length * part));
-          coupDePinceau(g, gr.brindille, (u) => Math.max(1.2, 5 - 3.2 * u), pal.encre, gr.graine, n, false);
+          coupDePinceau(g, gr.brindille, (u) => Math.max(3, 8 - 3.6 * u), pal.encre, gr.graine, n, false);
         });
         gr.boutons.forEach((b, k) => {
           const id = `g${gr.graine}-${k}`;
@@ -1090,13 +1159,14 @@ export function BrancheDeVie({
         }
         E.rafale *= 0.985;
         E.souffle = 0.35 + E.rafale * 1.2 + 0.2 * Math.sin(now / 2100);
-        const cadence = 900 - E.rafale * 650;
-        if (ecloses.length && now - E.dernierPetale > cadence && E.petales.length < 22) {
+        const cadence = 650 - E.rafale * 480;
+        if (ecloses.length && now - E.dernierPetale > cadence && E.petales.length < 30) {
           E.dernierPetale = now;
           const p = ecloses[Math.floor(Math.random() * ecloses.length)];
+          const b = p.bouquet[Math.floor(Math.random() * p.bouquet.length)];
           E.petales.push({
-            x: p.fx + (Math.random() - 0.5) * p.D * 0.6,
-            y: p.fy + (Math.random() - 0.5) * p.D * 0.4,
+            x: b.x + (Math.random() - 0.5) * b.D * 0.7,
+            y: b.y + (Math.random() - 0.5) * b.D * 0.5,
             vx: 0.15 + Math.random() * 0.3,
             vy: 0.35 + Math.random() * 0.35,
             ang: Math.random() * 6.28,
@@ -1104,7 +1174,7 @@ export function BrancheDeVie({
             vie: 5200 + Math.random() * 3000,
             t: now,
             col: colDe(p.famille),
-            len: p.D * 0.42 * (0.7 + Math.random() * 0.4),
+            len: b.D * 0.42 * (0.7 + Math.random() * 0.4),
             vrille: Math.random() * 6.28,
           });
         }
@@ -1166,57 +1236,118 @@ export function BrancheDeVie({
     });
   };
 
+  /* ── Se deplacer dans sa vie ────────────────────────────────────────────
+     Christophe, le 17/09 : « redonne-lui les memes boutons de navigation
+     qu il a dans sa timeline : d une graine a une autre, un bouton maintenant,
+     et la barre pour lui dire quel age il a ». Meme langage que la frise :
+     une pastille de verre, la meme place sous le pouce. */
+  const allerA = useCallback((pos: number) => {
+    const el = vifRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const sc = conteneurDefilant(el);
+    const vue = sc?.clientHeight ?? window.innerHeight;
+    const decal = pos * r.height - vue * 0.42;
+    if (sc) {
+      const haut = r.top - sc.getBoundingClientRect().top + sc.scrollTop;
+      sc.scrollTo({ top: Math.max(0, haut + decal), behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: Math.max(0, r.top + window.scrollY + decal), behavior: "smooth" });
+    }
+  }, []);
+
+  const versGraine = useCallback((sens: 1 | -1) => {
+    const rang = [...visibles].sort((a, b) => a.posGraine - b.posGraine);
+    if (!rang.length) return;
+    const suivante = sens > 0
+      ? rang.find((x) => x.posGraine > ou + 0.006)
+      : [...rang].reverse().find((x) => x.posGraine < ou - 0.006);
+    const cible = suivante ?? (sens > 0 ? rang[rang.length - 1] : rang[0]);
+    toucher();
+    setChoix(visibles.indexOf(cible));
+    allerA(cible.posGraine);
+  }, [visibles, ou, allerA]);
+
   const choisie = choix !== null ? visibles[choix] : null;
-  const NIVEAUX: { id: typeof echelle; clef: string; sous: string }[] = [
-    { id: "vie", clef: "resume.branche_ech_vie", sous: "resume.branche_niv_vie_sous" },
-    { id: "annee", clef: "resume.branche_ech_annee", sous: "resume.branche_niv_annee_sous" },
-    { id: "mois", clef: "resume.branche_ech_mois", sous: "resume.branche_niv_mois_sous" },
+  // La pastille dit ou on se trouve : l age a l echelle d une vie, la date
+  // aux deux autres. Elle ne bouge que quand le chiffre change.
+  const libelleOu = echelle === "vie"
+    ? t("resume.vie_ans", locale).replace("{n}", String(Math.round(ou * ANS_DE_VIE)))
+    : fen.libelleDe(ou);
+  const loinDAujourdhui = Math.abs(ou - fen.posMaintenant) > 0.04;
+  const NIVEAUX: { id: typeof echelle; clef: string }[] = [
+    { id: "vie", clef: "resume.branche_ech_vie" },
+    { id: "annee", clef: "resume.branche_ech_annee" },
+    { id: "mois", clef: "resume.branche_ech_mois" },
   ];
 
   return (
-    <div ref={hote} className="relative w-full select-none" style={{ background: "var(--bg-secondary)" }}>
-      {/* ── Les trois echelles et les trois familles, colles en haut ── */}
-      <div className="sticky top-0 z-20 px-4 pt-2 pb-2" style={{ background: "linear-gradient(var(--bg-secondary) 70%, transparent)" }}>
-        <div role="tablist" aria-label={t("resume.branche_ech_vie", locale)} className="flex gap-1">
-          {NIVEAUX.map((n) => (
-            <button
-              key={n.id}
-              role="tab"
-              type="button"
-              aria-selected={echelle === n.id}
-              onClick={() => { setChoix(null); setEchelle(n.id); }}
-              className="flex-1 rounded-full px-2 py-1.5 text-center leading-tight transition-colors"
-              style={{
-                background: echelle === n.id ? "var(--bg-brand)" : "var(--bg-tertiary)",
-                color: echelle === n.id ? "var(--text-on-brand)" : "var(--text-body-subtle)",
-              }}
-            >
-              <span className="block text-[12px] font-semibold">{t(n.clef, locale)}</span>
-              <span className="block text-[9.5px] opacity-80">{t(n.sous, locale)}</span>
-            </button>
-          ))}
+    <div ref={hote} className="relative w-full select-none">
+      {/* ═══ 1. D ABORD, ON EXPLIQUE ═══════════════════════════════════════
+          Christophe, le 17/09 : « on demarre par les explications, ensuite on
+          arrive sur le sol et son arbre qui pousse ; on ne donne pas les infos
+          a la fin ». Personne ne comprend une tache et une fleur si on ne les
+          a pas montrees avant de les faire chercher. */}
+      <section className="px-5 pt-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_comment", locale)}</p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <Demo genre="tache" titre={t("resume.branche_tache_titre", locale)} texte={t("resume.branche_tache_expl", locale)} palette={palette} />
+          <Demo genre="fleur" titre={t("resume.branche_fleur_titre", locale)} texte={t("resume.branche_fleur_expl", locale)} palette={palette} />
         </div>
-        <div className="mt-1.5 flex gap-1.5">
+        <p className="mt-3 max-w-[46ch] text-[12.5px] leading-snug text-text-body-subtle">{t("resume.branche_legende", locale)}</p>
+      </section>
+
+      {/* Ce qui est ouvert en ce moment, par famille. */}
+      <section className="px-5 pt-7">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_aujourdhui", locale)}</p>
+        <p className="mt-1 text-[12px] text-text-body-subtle">{t("resume.branche_aujourdhui_aide", locale)}</p>
+        <div className="mt-3 flex flex-col gap-2">
           {FAMILLES.map((f) => {
-            const eteinte = eteintes.has(f);
+            const n = donnees.ouvertes[f];
+            const max = Math.max(1, ...FAMILLES.map((x) => donnees.ouvertes[x]));
             return (
-              <button
-                key={f}
-                type="button"
-                aria-pressed={!eteinte}
-                onClick={() => basculer(f)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-medium transition-opacity"
-                style={{ background: "var(--bg-tertiary)", color: "var(--text-heading)", opacity: eteinte ? 0.4 : 1 }}
-              >
-                <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[f]})` }} />
-                {t(CLEF_FAMILLE[f], locale)}
-              </button>
+              <div key={f} className="flex items-center gap-3">
+                <span className="w-16 text-[12px]" style={{ color: "var(--text-heading)" }}>{t(CLEF_FAMILLE[f], locale)}</span>
+                <span className="h-1.5 flex-1 rounded-full" style={{ background: "var(--bg-tertiary)" }}>
+                  <span className="block h-full rounded-full transition-[width] duration-700" style={{ width: `${(n / max) * 100}%`, background: `var(${JETON_FAMILLE[f]})` }} />
+                </span>
+                <span className="w-6 text-right text-[12px] tabular-nums" style={{ color: "var(--text-heading)" }}>{n}</span>
+              </div>
             );
           })}
         </div>
+      </section>
+
+      {/* Les floraisons qui viennent : datees, jamais promises. */}
+      <section className="px-5 pt-7">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_prochaines", locale)}</p>
+        <p className="mt-1 text-[12px] text-text-body-subtle">{t("resume.branche_prochaines_aide", locale)}</p>
+        {donnees.aVenir.length ? (
+          <ul className="mt-3 flex flex-col gap-2">
+            {donnees.aVenir.map((v, i) => (
+              <li key={i} className="flex items-center gap-2.5 text-[13px]" style={{ color: "var(--text-heading)" }}>
+                <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: v.famille ? `var(${JETON_FAMILLE[v.famille]})` : "var(--bg-tertiary)" }} />
+                <span className="tabular-nums">{v.quand}</span>
+                <span className="text-text-body-subtle">{v.famille ? t(CLEF_FAMILLE[v.famille], locale) : ""}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-[13px] text-text-body-subtle">{t("resume.branche_prochaines_rien", locale)}</p>
+        )}
+      </section>
+
+      {/* ═══ 2. LE SOL ═════════════════════════════════════════════════════
+          On arrive au niveau du sol : en dessous, cent ans de papier. */}
+      <div className="mt-10 px-5">
+        <div className="flex items-baseline gap-3">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_naissance", locale)}</span>
+          <span aria-hidden className="h-px flex-1" style={{ background: "var(--encre-diluee)", opacity: 0.45 }} />
+          <span className="text-[11px] tabular-nums text-text-body-subtle">0</span>
+        </div>
       </div>
 
-      {/* ── L oeuvre ── */}
+      {/* ═══ 3. L ARBRE, DE ZERO A CENT ANS ════════════════════════════════ */}
       <div className="relative w-full" style={{ aspectRatio: `${L} / ${H}` }}>
         <canvas ref={encreRef} aria-hidden className="encre-multiplie absolute left-0 top-0" />
         <canvas
@@ -1238,84 +1369,115 @@ export function BrancheDeVie({
             onClick={() => setChoix(choix === i ? null : i)}
           />
         ))}
-        <p className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-[11px] text-text-body-subtle">
-          {t("resume.branche_ici", locale)}
+        {/* Aujourd hui n est plus au bas du papier : il est a sa date. */}
+        <div className="pointer-events-none absolute left-0 right-0 flex items-center gap-2 px-5" style={{ top: `${fen.posMaintenant * 100}%` }}>
+          <span aria-hidden className="h-px flex-1" style={{ background: "var(--encre-diluee)", opacity: 0.5 }} />
+          <span className="text-[11px] text-text-body-subtle">{t("resume.branche_ici", locale)}</span>
+        </div>
+        <p className="pointer-events-none absolute left-0 right-0 px-5 text-center text-[11.5px] leading-snug text-text-body-subtle" style={{ top: `calc(${fen.posMaintenant * 100}% + 34px)` }}>
+          {t("resume.branche_avenir", locale)}
         </p>
       </div>
 
-      {/* ── Ce qui apparait quand on a touche ── */}
-      <div className="sticky bottom-[calc(72px+env(safe-area-inset-bottom))] z-20 px-3 pointer-events-none" aria-live="polite">
-        {choisie ? (
-          <div className="pointer-events-auto rounded-2xl p-3.5 shadow-lg" style={{ background: "var(--bg-secondary)", border: "1px solid var(--bg-tertiary)" }}>
-            <div className="flex items-center gap-2">
-              <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[choisie.famille]})` }} />
-              <p className="text-[12px] font-semibold" style={{ color: "var(--text-heading)" }}>
-                {t(CLEF_FAMILLE[choisie.famille], locale)}
-              </p>
-              <button type="button" onClick={() => setChoix(null)} className="ml-auto text-[11px] text-text-body-subtle" aria-label={t("resume.branche_fermer", locale)}>
-                ✕
-              </button>
-            </div>
-            <p className="mt-1.5 text-[13px] leading-snug" style={{ color: "var(--text-heading)" }}>
-              {t("resume.branche_ouverte", locale).replace("{a}", choisie.quandGraine)}
-              {" · "}
-              {choisie.aVenir
-                ? t("resume.branche_encore", locale)
-                : t("resume.branche_fleurit", locale).replace("{b}", choisie.quandFleur).replace("{n}", choisie.ecart)}
-            </p>
-            <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">{t("resume.branche_tache_fleur", locale)}</p>
-          </div>
-        ) : null}
-      </div>
-
-      {/* ── Aujourd hui : ce qui est ouvert, par famille ── */}
-      <section className="px-5 pt-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_aujourdhui", locale)}</p>
-        <p className="mt-1 text-[12px] text-text-body-subtle">{t("resume.branche_aujourdhui_aide", locale)}</p>
-        <div className="mt-3 flex flex-col gap-2">
-          {FAMILLES.map((f) => {
-            const n = donnees.ouvertes[f];
-            const max = Math.max(1, ...FAMILLES.map((x) => donnees.ouvertes[x]));
-            return (
-              <div key={f} className="flex items-center gap-3">
-                <span className="w-16 text-[12px]" style={{ color: "var(--text-heading)" }}>{t(CLEF_FAMILLE[f], locale)}</span>
-                <span className="h-1.5 flex-1 rounded-full" style={{ background: "var(--bg-tertiary)" }}>
-                  <span className="block h-full rounded-full transition-[width] duration-700" style={{ width: `${(n / max) * 100}%`, background: `var(${JETON_FAMILLE[f]})` }} />
-                </span>
-                <span className="w-6 text-right text-[12px] tabular-nums" style={{ color: "var(--text-heading)" }}>{n}</span>
+      {/* ═══ 4. COLLE EN BAS : ce qu on touche, ou on est, et les vues ══════
+          Christophe, le 17/09 : « les options vie, annee, mois, avec les
+          filtres, doivent etre en sticky, en bas, collees a la bottom nav ». */}
+      <div
+        className="sticky z-20 px-3 pb-2 pt-6"
+        style={{
+          // Le conteneur qui defile reserve deja la ZONE DE SECURITE dans son
+          // padding bas (`var(--safe-bottom)`, app/app/layout.tsx) : l origine
+          // d un `bottom` collant est donc deja au-dessus d elle. Il ne reste
+          // que la hauteur de la barre d onglets a franchir — la compter deux
+          // fois decollait le bandeau, ne rien compter le passait dessous.
+          bottom: "var(--barre-onglets)",
+          background: "linear-gradient(transparent, var(--bg-primary) 38%)",
+        }}
+      >
+        <div aria-live="polite">
+          {choisie ? (
+            <div className="mb-2 rounded-2xl p-3.5 shadow-lg" style={{ background: "var(--bg-secondary)", border: "1px solid var(--bg-tertiary)" }}>
+              <div className="flex items-center gap-2">
+                <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[choisie.famille]})` }} />
+                <p className="text-[12px] font-semibold" style={{ color: "var(--text-heading)" }}>
+                  {t(CLEF_FAMILLE[choisie.famille], locale)}
+                </p>
+                <button type="button" onClick={() => setChoix(null)} className="ml-auto flex h-11 w-11 items-center justify-center text-[13px] text-text-body-subtle" aria-label={t("resume.branche_fermer", locale)}>
+                  ✕
+                </button>
               </div>
+              <p className="text-[13px] leading-snug" style={{ color: "var(--text-heading)" }}>
+                {t("resume.branche_ouverte", locale).replace("{a}", choisie.quandGraine)}
+                {" · "}
+                {choisie.aVenir
+                  ? t("resume.branche_encore", locale)
+                  : t("resume.branche_fleurit", locale).replace("{b}", choisie.quandFleur).replace("{n}", choisie.ecart)}
+              </p>
+              <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">{t("resume.branche_tache_fleur", locale)}</p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Ou on se trouve, et comment sauter d une graine a l autre. */}
+        <div className="mb-1.5 flex items-center gap-1.5">
+          {loinDAujourdhui ? (
+            <button
+              type="button"
+              onClick={() => { toucher(); allerA(fen.posMaintenant); }}
+              className="flex h-11 items-center rounded-full px-4 text-[10px] font-semibold uppercase tracking-wider"
+              style={VERRE}
+            >
+              {perso("timeline.maintenant", locale)}
+            </button>
+          ) : null}
+          <span className="ml-auto flex h-11 items-center rounded-full px-3.5 text-[12px] font-semibold tabular-nums" style={VERRE} aria-live="polite">
+            {libelleOu}
+          </span>
+          <button type="button" onClick={() => versGraine(-1)} className="flex h-11 w-11 items-center justify-center rounded-full" style={VERRE} aria-label={t("resume.branche_graine_avant", locale)}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+          <button type="button" onClick={() => versGraine(1)} className="flex h-11 w-11 items-center justify-center rounded-full" style={VERRE} aria-label={t("resume.branche_graine_apres", locale)}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        </div>
+
+        <div role="tablist" aria-label={t("resume.branche_ech_vie", locale)} className="flex gap-1">
+          {NIVEAUX.map((n) => (
+            <button
+              key={n.id}
+              role="tab"
+              type="button"
+              aria-selected={echelle === n.id}
+              onClick={() => { toucher(); setChoix(null); setEchelle(n.id); }}
+              className="flex-1 rounded-full px-2 py-2 text-center text-[13px] font-semibold transition-colors"
+              style={{
+                background: echelle === n.id ? "var(--bg-brand)" : "var(--bg-tertiary)",
+                color: echelle === n.id ? "var(--text-on-brand)" : "var(--text-body-subtle)",
+              }}
+            >
+              {t(n.clef, locale)}
+            </button>
+          ))}
+        </div>
+        <div className="mt-1.5 flex gap-1.5">
+          {FAMILLES.map((f) => {
+            const eteinte = eteintes.has(f);
+            return (
+              <button
+                key={f}
+                type="button"
+                aria-pressed={!eteinte}
+                onClick={() => basculer(f)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 text-[11px] font-medium transition-opacity"
+                style={{ background: "var(--bg-tertiary)", color: "var(--text-heading)", opacity: eteinte ? 0.4 : 1 }}
+              >
+                <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[f]})` }} />
+                {t(CLEF_FAMILLE[f], locale)}
+              </button>
             );
           })}
         </div>
-      </section>
-
-      {/* ── La tache et la fleur : ce que veulent dire les deux signes ── */}
-      <section className="px-5 pt-8">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_comment", locale)}</p>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <Demo genre="tache" titre={t("resume.branche_tache_titre", locale)} texte={t("resume.branche_tache_expl", locale)} palette={palette} />
-          <Demo genre="fleur" titre={t("resume.branche_fleur_titre", locale)} texte={t("resume.branche_fleur_expl", locale)} palette={palette} />
-        </div>
-      </section>
-
-      {/* ── Les floraisons qui viennent : datees, jamais promises ── */}
-      <section className="px-5 pt-8 pb-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_prochaines", locale)}</p>
-        <p className="mt-1 text-[12px] text-text-body-subtle">{t("resume.branche_prochaines_aide", locale)}</p>
-        {donnees.aVenir.length ? (
-          <ul className="mt-3 flex flex-col gap-2">
-            {donnees.aVenir.map((v, i) => (
-              <li key={i} className="flex items-center gap-2.5 text-[13px]" style={{ color: "var(--text-heading)" }}>
-                <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: v.famille ? `var(${JETON_FAMILLE[v.famille]})` : "var(--bg-tertiary)" }} />
-                <span className="tabular-nums">{v.quand}</span>
-                <span className="text-text-body-subtle">{v.famille ? t(CLEF_FAMILLE[v.famille], locale) : ""}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-[13px] text-text-body-subtle">{t("resume.branche_prochaines_rien", locale)}</p>
-        )}
-      </section>
+      </div>
     </div>
   );
 }
