@@ -146,10 +146,10 @@ export async function brancherReseau(
       // Une reponse de Vela, dans la forme exacte que rend la route : les temps
       // titres, et le champ `visuel` qui porte ce qui a ete MESURE.
       //
-      // La premiere phrase est la regle de pertinence : le moteur n a rien sur
-      // le domaine demande, et Vela le DIT au lieu de repondre a cote. C est le
-      // defaut le plus grave de cette fonction, corrige le 16/09, et un test
-      // doit empecher qu il revienne.
+      // Le 17/09/2026, Vela disait « rien de net sur le travail » alors que
+      // l annee, un transit long et un pic de chapitre parlaient tous du
+      // travail. Le mock fige la reponse CORRECTE : le domaine demande est
+      // nomme, et le visuel est une fenetre (plusieurs techniques, des dates).
       return json({
         ok: true,
         sessionId: "e2e-session",
@@ -157,15 +157,23 @@ export async function brancherReseau(
         message: {
           role: "assistant",
           content:
-            "Sur le travail precisement, rien de net ne ressort en ce moment. Ce qui bouge chez toi, c est ta facon de dire les choses.",
+            "This year, work is in the spotlight. A long movement has been pressing on your public standing since spring 2025, and a peak chapter has just opened. The next clear passage is around October 2026.",
         },
         parties: {
           cePasse:
-            "Sur le travail precisement, rien de net ne ressort en ce moment. Ce qui bouge chez toi, c est ta facon de dire les choses.",
-          dOuCaVient: "Ca s ouvre, et ca demande d y mettre des mots.",
-          ceQuiChange: "Ca dure encore quelques semaines, sans a-coup.",
+            "This year, work is in the spotlight. A long movement has been pressing on your public standing since spring 2025, and a peak chapter has just opened.",
+          dOuCaVient: "Several independent clocks point to the same stretch.",
+          ceQuiChange: "The intense chapter has just opened; the long movement lasts until October 2026.",
+          prochaineDate: "The next clear passage is around October 2026.",
         },
-        visuel: { forme: "signaux", priorites: [4, 3, 3] },
+        visuel: {
+          forme: "fenetre",
+          maison: 10,
+          force: 4,
+          debut: "2025-03-07",
+          fin: "2026-10-16",
+          approximee: false,
+        },
         needsClarification: false,
         awaitingDetail: false,
       });

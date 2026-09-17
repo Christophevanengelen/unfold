@@ -48,14 +48,14 @@ test.describe("tchat avec Vela", () => {
 
     // Le defaut historique : la route repond 200, l ecran affiche l echec.
     // On verifie donc les DEUX : la reponse est la, et l echec ne l est pas.
-    await expect(page.getByText(/rien de net ne ressort/i)).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/work is in the spotlight/i)).toBeVisible({ timeout: 20000 });
     await expect(page.getByText(/pas pu répondre|couldn't answer|could not answer/i)).toHaveCount(0);
   });
 
   test("la reponse arrive en temps titres, pas en bloc", async ({ page }) => {
     await ouvrirVela(page);
     await demander(page, "What is happening for me at work right now");
-    await expect(page.getByText(/rien de net ne ressort/i)).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/work is in the spotlight/i)).toBeVisible({ timeout: 20000 });
 
     // Les trois titres de l ecran 4 de Vela. S ils manquent, l interface est
     // retombee sur le bloc unique — ce qui veut dire que `parties` a ete perdu
@@ -77,35 +77,29 @@ test.describe("tchat avec Vela", () => {
   test("ce qui a ete mesure se voit", async ({ page }) => {
     await ouvrirVela(page);
     await demander(page, "What is happening for me at work right now");
-    await expect(page.getByText(/rien de net ne ressort/i)).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/work is in the spotlight/i)).toBeVisible({ timeout: 20000 });
 
-    // Le champ `visuel` porte trois signaux classes. Ils se dessinent en trois
-    // barres. Zero barre veut dire que le champ a ete ignore — c est ce qui
-    // etait vrai avant le 16/09, et c est tout l objet de « je veux un rapport
-    // graphique ».
-    const barres = await page.evaluate(() => {
+    // Le champ `visuel` porte une fenetre : un domaine, des dates, et un
+    // nombre de techniques. Zero frise veut dire que le champ a ete ignore.
+    const mesure = await page.evaluate(() => {
       const texte = document.body.innerText;
       return {
-        phrase: /3 things are active|3 choses sont actives/i.test(texte),
-        // Une barre = une pastille basse et large. On teste le rayon en
-        // NOMBRE, pas en chaine : Tailwind 4 calcule `rounded-full` en
-        // « 3.35544e+07px », pas en « 9999px ». Un detecteur qui cherche la
-        // chaine trouve zero barre sur un ecran qui en dessine six.
-        barres: [...document.querySelectorAll("div")].filter((e) => {
+        phrase: /4 techniques point|4 techniques pointent/i.test(texte),
+        frise: [...document.querySelectorAll("div")].filter((e) => {
           const s = getComputedStyle(e);
           const r = e.getBoundingClientRect();
           return parseFloat(s.borderRadius) > 100 && r.height > 3 && r.height < 12 && r.width > 40;
         }).length,
       };
     });
-    expect(barres.phrase, "la phrase qui compte les signaux actifs est absente").toBe(true);
-    expect(barres.barres, "aucune barre de signal dessinee").toBeGreaterThanOrEqual(3);
+    expect(mesure.phrase, "la phrase qui compte les techniques est absente").toBe(true);
+    expect(mesure.frise, "aucune frise de fenetre dessinee").toBeGreaterThanOrEqual(1);
   });
 
   test("le composeur reste atteignable sous la barre d onglets", async ({ page }) => {
     await ouvrirVela(page);
     await demander(page, "What is happening for me at work right now");
-    await expect(page.getByText(/rien de net ne ressort/i)).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/work is in the spotlight/i)).toBeVisible({ timeout: 20000 });
 
     // La barre d onglets flotte au-dessus du contenu. Si le composeur passe
     // dessous, on ne peut plus ecrire — et rien dans le code ne le dit.
@@ -122,7 +116,7 @@ test.describe("tchat avec Vela", () => {
   test("rien ne deborde de la largeur de l ecran", async ({ page }) => {
     await ouvrirVela(page);
     await demander(page, "What is happening for me at work right now");
-    await expect(page.getByText(/rien de net ne ressort/i)).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/work is in the spotlight/i)).toBeVisible({ timeout: 20000 });
     const deborde = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
@@ -132,7 +126,7 @@ test.describe("tchat avec Vela", () => {
   test("la conversation se garde dans l appareil", async ({ page }) => {
     await ouvrirVela(page);
     await demander(page, "What is happening for me at work right now");
-    await expect(page.getByText(/rien de net ne ressort/i)).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/work is in the spotlight/i)).toBeVisible({ timeout: 20000 });
 
     // Le titre est tire des premiers mots de la personne, jamais d un appel
     // modele. Sans cette ligne, l ecran d historique est vide alors que la

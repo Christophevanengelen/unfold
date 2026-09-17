@@ -15,11 +15,19 @@ faire, jamais une réponse qui a l'air juste sans l'être.
 
 | Catégorie (n° questions) | Chemin dans le routeur |
 |---|---|
-| Eclipses (8) | `toctoc-year` → famille `nodal` (`lib/silence.ts`) + `daily-briefing-context` |
-| Big Transits (12) | `toctoc-year` → convergence par maison (`fenetresDeConvergence`) |
+| Eclipses (8) | dossier-domaine : axe de la maison demandee (4/10 pour le travail) via daily-briefing-context |
+| Big Transits (12) | dossier-domaine : `/api/transit-cycles`, filtre sur les points natals de la maison |
+| Timing « maintenant / quand ça va bouger » | dossier-domaine : profection + ZR Esprit + periodes + numerologie, en parallele |
 | Health & Medical (8) | même chemin générique, maison `health` — pas de diagnostic, seulement la fenêtre |
 | Challenges / Difficultés (12) | même chemin générique — **la tonalité (difficile/facile) est volontairement jamais affirmée**, le moteur ne la donne pas (voir `lib/astrologue-carnet-de-lecture.ts`) ; c'est un choix de produit déjà pris, pas un trou |
 | Synastry & Compatibility (10) | branche `sujet: "autre"` → `connection-brief` — recadré : c'est une lecture solo à deux, pas un vrai calcul à deux (`synastryReelle: false`, `POUR-MARIE-ANGE-QUESTIONS.md` Q6) |
+
+Corrigé le 17/09/2026 : une question au présent sans période tombait sur
+`daily-briefing-context` sans filtre de maison. Mesure : « quand ça va bouger
+au travail », année de maison 10 + Lune natale en 10 sous Pluton + ZR L3 en
+pic → réponse « rien de net sur le travail, c'est la communication ». Le
+chemin `dossier-domaine` (`lib/astrologue-techniques.ts`) parcourt les mêmes
+endpoints que l'outil ouvert et ne garde que ce qui touche le domaine.
 
 ## Ce qui était un vrai trou, corrigé aujourd'hui
 

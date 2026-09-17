@@ -107,6 +107,33 @@ test("une conversation complete : vague, precisee, puis un sujet muet", async ({
   assertSansJargon(corpsMuet.message.content);
 });
 
+test("une question travail au present parcourt le domaine, pas le signal le plus fort", async ({ request }) => {
+  const res = await request.post("/api/openai/astrologue/message", {
+    data: {
+      deviceId: `${DEVICE_ID}-travail`,
+      birthData: NAISSANCE,
+      locale: "fr",
+      message: "J'ai envie de changer de travail, quand penses-tu que ça va bouger ?",
+    },
+    timeout: 90_000,
+  });
+  expect(res.status(), await res.text()).toBe(200);
+  const corps = await res.json() as {
+    ok: boolean;
+    message: { content: string };
+    visuel?: { forme: string; maison?: number; force?: number };
+  };
+  expect(corps.ok).toBe(true);
+  expect(corps.message.content.trim().length).toBeGreaterThan(0);
+  assertSansJargon(corps.message.content);
+  // La faute du 17/09 : repondre « rien de net sur le travail » alors que
+  // le dossier du domaine avait des faits. Si un visuel fenetre maison 10
+  // est la, cette phrase est interdite.
+  if (corps.visuel?.forme === "fenetre" && corps.visuel.maison === 10) {
+    expect(corps.message.content).not.toMatch(/rien de net/i);
+  }
+});
+
 test("une question hors périmètre décline sans appeler le moteur", async ({ request }) => {
   const session = await request.post("/api/astrologue/session", {
     data: { deviceId: `${DEVICE_ID}-numero`, birthData: NAISSANCE, locale: "fr" },

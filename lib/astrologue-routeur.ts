@@ -3,9 +3,12 @@
  *
  * "Decider quoi demander au moteur, et pour quelle periode" (brief §2, ligne
  * "nous") est un travail de code : la classification de l Appel A dit DE QUOI
- * on parle, ce module dit QUOI appeler et QUAND s arreter. La convergence
- * elle-meme (lib/silence.ts) est un calcul pur sur les donnees du moteur —
- * elle tourne ICI, jamais dans un prompt.
+ * on parle, ce module dit QUOI appeler et QUAND s arreter.
+ *
+ * Pour une question ancree a un domaine (travail, couple, foyer…), on parcourt
+ * les techniques de l outil ouvert — transits, profection, ZR, eclipses,
+ * periodes, numerologie — et on filtre sur la maison (lib/astrologue-techniques.ts).
+ * La convergence toctoc (lib/silence.ts) reste le chemin des questions datees.
  *
  * Une seule fonction publique, `resoudreConversation`, qui fait le tout :
  * resoudre le sujet, appeler le moteur, faire voter lib/silence.ts, et
@@ -29,6 +32,7 @@ import {
   type Vote,
 } from "@/lib/silence";
 import type { ComprehensionUtilisateur, TopicMaison } from "@/lib/astrologue-comprehension";
+import { constituerDossierDomaine, type DossierDomaine } from "@/lib/astrologue-techniques";
 
 const TOCTOC_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
 
@@ -90,6 +94,21 @@ export type VerdictAstrologue =
        * simple rang.
        */
       signaux: { priorite: number }[];
+    }
+  /**
+   * Question ancree a un domaine : on a parcouru les techniques de l outil
+   * (transits, profection, ZR, eclipses, periodes, numerologie) et filtre
+   * sur la maison demandee. C est le chemin qui remplace « signal-direct »
+   * des qu Appel A a un topic — sinon on repondait sur le signal le plus
+   * fort, meme s il n avait rien a voir (mesure 17/09/2026 : travail →
+   * communication).
+   */
+  | {
+      type: "dossier-domaine";
+      maisonDemandee: number;
+      domaine: TopicMaison;
+      faits: DossierDomaine["faits"];
+      fenetre: DossierDomaine["fenetre"];
     }
   | { type: "silence"; chapitreDeFond: ChapitreResume | null; prochaineFenetre: { debut: string } | null }
   | {
@@ -337,8 +356,33 @@ export async function resoudreConversation(
     };
   }
 
-  // ── Sujet: soi, periode non resolue (question au present) ──
+  // ── Sujet: soi, periode non resolue (question au present / « quand ca
+  //    va bouger ») ──
+  //
+  // Des qu un domaine est identifie, on parcourt les techniques de l outil
+  // ouvert (memes endpoints que Transits / Profections / ZR / Periods /
+  // Eclipses / Numerology) et on filtre sur la maison. daily-briefing-context
+  // seul rendait le signal le plus fort, sans ce filtre — d ou la reponse
+  // « rien sur le travail » alors que l annee est une annee 10.
   if (!comprehension.periode.resolue || !comprehension.periode.dateDebut) {
+    if (comprehension.topicCandidats.length > 0) {
+      const dossier = await constituerDossierDomaine(birthData, comprehension.topicCandidats);
+      const pertinents = dossier?.faits.filter((f) => f.pertinent) ?? [];
+      if (dossier && pertinents.length > 0) {
+        return {
+          verdict: {
+            type: "dossier-domaine",
+            maisonDemandee: dossier.maisonDemandee,
+            domaine: dossier.domaine,
+            faits: dossier.faits,
+            fenetre: dossier.fenetre,
+          },
+          arrierePlan: null,
+          jobConsommeId: null,
+        };
+      }
+    }
+
     const contexte = await appellerDailyBriefingContext(birthData);
     if (contexte.payloads.length === 0) {
       return { verdict: { type: "indisponible", raison: "signaux_indisponibles" }, arrierePlan: null, jobConsommeId: null };
