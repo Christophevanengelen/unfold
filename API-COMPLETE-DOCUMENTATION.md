@@ -327,7 +327,7 @@ curl -X POST "http://ai.zebrapad.io/full-suite-spiritual-api/happy-marriage-rank
 | `GET /api/daily-transits` | ✅ Working | Query: date (optional) |
 | `GET /api/mundane-daily` | ✅ Working | Query: daily, date, timezone |
 | `/api/synastry-chart` | ✅ Working | Returns HTML |
-| `/api/match` | ✅ Working (2026-09-15) | Compatibility/resemblance/radars = real legacy dominant-planet algorithm port; attraction/boss/exclusive/entente/gift/hugs = original heuristic (JSON) |
+| `/api/match` | ✅ Working (2026-09-17) | `compatibility`/`balance` = exact idx 9018 formula; `attraction` = full KS/CB sparkHits engine (natal profiles + flags); `bond`/`generalUnderstanding`/`mutualUnderstanding` = temperament compare + Mercury hits; `boss`/`exclusive`/`gift` = legacy ports; `hugs` = heuristic |
 | `/api/birth-chart-interactive` | ✅ Working | Returns JSON with chart data |
 | `/api/birth-chart-honey` | ✅ Working | Returns HTML |
 | `/api/horary` | ✅ Working | |
@@ -2158,16 +2158,17 @@ Output is written to `output/bazi_report_<username>.md` by default (Node) or as 
 
 ### POST /api/match
 
-**Description:** Percentage-based matching/compatibility scores between two people — the equivalent of the legacy app's `match` endpoint (see `knowledge/match.md`). Returns compatibility, resemblance, attraction (both directions), dominant-planet balance, boss/leadership, exclusivity, general understanding, gift, and hugs scores, plus two 10-planet radar arrays.
+**Description:** Percentage-based matching/compatibility scores between two people — the equivalent of the legacy app's `match` endpoint (see `knowledge/match.md`). Returns compatibility, resemblance, attraction (both directions), dominant-planet balance, boss/leadership, exclusivity, general understanding, mutual understanding, gift, and hugs scores, plus two 10-planet radar arrays.
 
 **Provenance:** `compatibility`, `resemblance`, `compatibilityRadar`, `similarityRadar` and `balance` are a **faithful-core port of the actual legacy algorithm**, reverse-engineered from the real source files:
 - `E:\soft\BUBBLE1.4\scripts\1.1.Natal_Dominantes_DB3.anatella` — the "points de dominance" method (classical French astrology): each of the 10 planets accumulates weighted points from ~20 criteria (conjunct an angle, aspecting the chart ruler or a luminary, angular house placement, dignity, mutual reception, stelliums, partile aspects); a planet's dominant % = its points ÷ sum of all 10 planets' points × 100.
 - Weights come from the workbook that job loads at runtime: `MyEvents (version 1).xlsb.xlsx`, sheet `points_perso`.
 - Every person gets **two** profiles, exactly as the legacy job computes them: `perso` (who they are — angles = Ascendant/MC/Descendant/IC) and `recherchees` ("searched-for" — built off the **Descendant** axis, using **gender-based significator planets**: `contains(GENDER,"F") ? Sun+Mars : Moon+Venus`, found verbatim in the source job).
-- `E:\soft\BUBBLE1.4\match_1_to_1.anatella` — the actual matching mechanic: person A's `recherchees` profile is compared per-planet against person B's `perso` profile (and vice versa), gap-scored and averaged both directions. That's `compatibility`. `resemblance` compares both people's `perso` profiles directly. `balance` buckets the mean gap between the two `perso` profiles using the legacy `equil` lookup table (same 5 bands: incredible/acceptable balance, acceptable/large/incredible imbalance).
+- `E:\soft\BUBBLE1.4\match_1_to_1.anatella` — the actual matching mechanic: person A's `recherchees` profile is compared per-planet against person B's `perso` profile (and vice versa), gap-scored and averaged both directions. That's `compatibility.aToB`/`bToA`. `resemblance` compares both people's `perso` profiles directly.
+- **`compatibility` and `balance` now use the exact idx 9018 formula** verified against `match_M.anatella`: `compatibility.score = (aToB + bToA) / 2` (order=2), `balance.asymmetry = |aToB - bToA|` (order=1), `subtitleKey` from the idx 9022 buckets. The legacy versions feed a population-relative KNN distance into this same formula (see Q1 below); we feed the portable `aToB`/`bToA` gap scores instead — same structure, different (pairwise) input. `balance`'s label still uses the legacy `equil` lookup table (5 bands) bucketed on `asymmetry`.
 - This is a **core** port, not byte-exact: it implements the ~15 (perso) / ~8 (recherchees) highest-weighted criteria with fixed orbs, skipping the legacy graph's per-orb multiplier curves and dead/zero-weight criteria. See `calculators/dominants_calculator.js` for the full criteria list and exact weights.
 
-`attraction`, `boss`, `exclusive`, `generalUnderstanding`, `gift` and `hugs` have **no known equivalent** in the legacy source — they remain an original synastry cross-aspect heuristic (unchanged from the first version of this endpoint).
+**`boss`, `exclusive`, `gift`, and `generalUnderstanding` are REAL legacy ports** (traced from `match_M.anatella` and `03.API_id_json_Insight_2.anatella` — see `knowledge/API-MATCHING.md` for citations), not heuristics. **`attraction`** was rebuilt this session into a full KS (Kelly Surtees) / CB (Chris Brennan) relationship-astrology engine per `knowledge/attraction.md` — natal 7th-house profiles, ranked `sparkHits[]`, and idealization/obsession/electric/longevity flags — since the real legacy attraction score is the same non-portable population KNN as compatibility. **`hugs`** and **`mutualUnderstanding`** remain approximations: `mutualUnderstanding` approximates the legacy `1to1_ententeIntel` report (mutual-understanding bullets), whose real logic lives in a `combi` lookup table baked into `match_M.anatella` and isn't reachable outside Anatella; `hugs`'s real source filters by water/air-sign placements then ranks by an unresolved `combi` key.
 
 `person1` / `person2` each accept **one of three** input modes, and the two people can mix modes independently:
 
@@ -2227,29 +2228,55 @@ Output is written to `output/bazi_report_<username>.md` by default (Node) or as 
     { "planet": "sun", "pointsperc": 1.7, "pointsperc2": 1.7 },
     "... one row per planet. pointsperc = person1's Perso %, pointsperc2 = person2's Perso % (both direct dominant-profile values, not a derived score)"
   ],
-  "balance": { "score": 88, "label": "Acceptable balance", "label_fr": "équilibre acceptable", "desc": "..." },
-  "attraction": { "aToB": 52, "bToA": 57, "desc": "..." },
-  "boss": { "who": "person1", "confidence": 63, "desc": "..." },
-  "exclusive": { "score": 56, "label": "Moderate", "desc": "..." },
-  "generalUnderstanding": { "score": 50, "label": "Moderate", "bulletPoints": ["..."] },
-  "gift": { "score": 42, "label": "Challenging", "desc": "..." },
+  "balance": { "score": 81, "asymmetry": 18.3, "label": "Acceptable imbalance", "label_fr": "déséquilibre acceptable", "desc": "..." },
+  "attraction": {
+    "hits": [{ "person1Planet": "Mars", "person2Planet": "Venus", "aspect": "Trine", "orb": 5.05 }], "count": 1, "desc": "...",
+    "natalProfileA": { "sect": "night", "seventhSign": "Aquarius", "seventhRuler": { "planet": "Saturn", "sign": "Libra", "house": 3, "dignity": "exaltation", "combust": false, "averseToSeventh": false }, "planetsInSeventh": [], "venus": { "sign": "Virgo", "house": 2, "dignity": "fall" }, "mars": { "sign": "Sagittarius", "house": 5 }, "moon": { "sign": "Aries", "house": 9 }, "angles": { "asc": 148.97, "dsc": 328.97, "mc": 48.65, "ic": 228.65 }, "sectBeneficInOrRulingSeventh": false },
+    "natalProfileB": { "...": "same shape as natalProfileA" },
+    "sparkHits": [{ "type": "venus_mars", "priority": 2, "direction": "b_to_a", "planetA": "Venus", "planetB": "Mars", "aspect": "Trine", "orb": 5.05, "house": null, "gloss": "Easier sexual/romantic chemistry." }],
+    "idealizationFlags": [], "obsessionFlags": [], "electricUnstableFlags": [], "longevityHits": [],
+    "qualityNotes": ["Marie ange LE's 7th ruler (Saturn in Libra) is exaltation — higher caliber or a smoother path to partners."]
+  },
+  "bond": {
+    "score": 75, "label": "Good", "headline": "attraction by a deep difference",
+    "element1": "Water", "element2": "Fire", "element1Pct": 62.4, "element2Pct": 37,
+    "sharedQualities": ["cold", "dry"], "wetBinding": "both_dry", "hasMinimumOverlap": true,
+    "temperamentCompare": { "person1": { "dominants": ["melancholic"], "qualities": { "cold": true, "dry": true } }, "person2": "...", "sharedQualities": ["cold", "dry"], "note": "..." },
+    "bulletPoints": ["...", "Comfort links: Moon sextile Sun (orb 3.3°)"], "desc": "..."
+  },
+  "boss": { "who": "person1", "confidence": 63, "person1Score": 25.6, "person2Score": 18.8, "desc": "..." },
+  "exclusive": { "who": "person2", "confidence": 58, "person1Score": 4.3, "person2Score": 12.1, "desc": "..." },
+  "generalUnderstanding": {
+    "score": 50, "label": "Moderate", "headline": "attraction by a deep difference",
+    "element1": "Water", "element2": "Fire", "element1Pct": 62.4, "element2Pct": 37,
+    "bulletPoints": ["..."], "temperamentCompare": { "...": "same object as bond.temperamentCompare" }
+  },
+  "mutualUnderstanding": {
+    "score": 59, "label": "Moderate", "headline": "similar attitudes, strong chances of getting along",
+    "hits": [{ "from": "Alice", "planetFrom": "Mercury", "planetTo": "Jupiter", "aspect": "Trine", "orb": 2.1, "harmony": 0.7, "gloss": "agreement and understanding; expansive conversation" }],
+    "bulletPoints": ["exchange of ideas, stimulation", "..."], "desc": "..."
+  },
+  "gift": { "person1GivesPerson2": { "house": 4, "domain": "family", "desc": "..." }, "person2GivesPerson1": { "house": 11, "domain": "friendship", "desc": "..." }, "desc": "..." },
   "hugs": { "score": 50, "label": "Moderate", "desc": "..." }
 }
 ```
 
 **Field notes:**
 - `person1.dominantPlanet` / `searchedForPlanet` — the single highest-scoring planet in that person's `perso` / `recherchees` profile.
-- `compatibility` — weighted average, both directions, of how closely person A's `recherchees` % profile matches person B's `perso` % profile (per-planet gap score = `100 - |a-b|`, weighted by A's `recherchees` % so planets A cares about most matter most), then the reverse, then averaged.
+- `compatibility` — `aToB`/`bToA`: weighted average, both directions, of how closely person A's `recherchees` % profile matches person B's `perso` % profile (per-planet gap score = `100 - |a-b|`, weighted by A's `recherchees` % so planets A cares about most matter most). `score = round((aToB+bToA)/2)` — the exact idx 9018 order=2 formula. `subtitleKey` is the idx 9022 bucket computed on `score` (buckets calibrated for the legacy's KNN-distance scale, so real pairs skew toward `high`/`very_high_compatibility` more than production likely does — documented limitation, not a bug). All percentage scores in this endpoint are clamped to **[30, 99]** — matching the legacy job's own philosophy of never showing a hopeless single-digit match or a suspicious 100% (see `knowledge/API-MATCHING.md`).
 - `compatibilityRadar` — raw profile values per planet, NOT a derived score: `pointsperc` = person1's `recherchees` %, `pointsperc2` = person2's `perso` %. Intentionally asymmetric (shows "what A looks for" vs "what B actually has").
-- `resemblance` — unweighted average gap score between both people's `perso` profiles directly (how similar their actual dominant-planet makeups are).
+- `resemblance` — unweighted average gap score between both people's `perso` profiles directly (how similar their actual dominant-planet makeups are — same `1.1.Natal_Dominantes_DB3.anatella` personality-dominants basis as `compatibility`/`boss`/`exclusive`). The raw gap score is mathematically floored well above zero for realistic (sparse, 2-4-dominant-planet) profiles — even maximally-opposite profiles land around 80, confirmed empirically on 10 random unrelated pairs (see `knowledge/matching-review.pdf`) — so it's rescaled from its practical [75,100] range onto the full [30,99] display range to keep real differences visible.
 - `similarityRadar` — raw values: `pointsperc` = person1's `perso` %, `pointsperc2` = person2's `perso` % for that planet.
-- `balance` — mean absolute gap between the two `perso` profiles, bucketed via the legacy `equil` table into a balance/imbalance label (`label_fr` is the original French wording).
-- `attraction.aToB` / `attraction.bToA` — directional pull, driven by Mars/Venus/Sun/Moon cross-aspects (opposition counts as magnetic here, not tense, unlike other categories). **Original heuristic, not from the legacy source.**
-- `boss.who` — `"person1"`, `"person2"`, or `"balanced"`, based on cardinal/angular emphasis (Sun/Mars/Saturn). **Original heuristic.**
-- `exclusive` — commitment signals: Saturn↔Venus/Moon cross-aspects + fixed-sign (Taurus/Leo/Scorpio/Aquarius) emphasis on Venus/Moon. **Original heuristic.**
-- `generalUnderstanding` — Mercury↔Mercury and Mercury↔Moon cross-aspects; `bulletPoints` lists the specific aspects found. **Original heuristic.**
-- `gift` — Jupiter's cross-aspects to the partner's Sun/Moon/Venus (generosity/benefic exchange), averaged both directions. **Original heuristic.**
-- `hugs` — Moon↔Moon and Moon↔Venus cross-aspects (emotional/physical warmth). **Original heuristic.**
+- **`balance` — exact idx 9018 order=1 formula:** `asymmetry = |aToB - bToA|` (same `aToB`/`bToA` as `compatibility`, lower = more balanced in the legacy sense). `score = 99 - asymmetry`, clamped [30,99] and **inverted for the UI gauge** (higher = more balanced). `label`/`label_fr` bucket on `asymmetry` via the legacy `equil` table (5 bands: incredible/acceptable balance, acceptable/large/incredible imbalance).
+- **`attraction` — NOT a percentage.** A full KS/CB relationship-astrology engine (`knowledge/attraction.md`): `natalProfileA`/`natalProfileB` (7th-house sign/ruler with traditional dignity, combustion, aversion; Venus/Mars/Moon condition; sect; whole-sign angles), a ranked `sparkHits[]` (priority 1-8: planet-to-angle, Venus-Mars, Pluto/Neptune/Uranus-to-personal, node contacts, 5th/7th overlays, ASC/DSC reversal — both directions always checked), `idealizationFlags`/`obsessionFlags`/`electricUnstableFlags` (direct filters of `sparkHits` by type), `longevityHits[]` (Saturn-to-personal and Sun-Moon links, deliberately excluded from spark), and `qualityNotes[]` (7th-ruler dignity/sect-benefic text). `hits`/`count`/`desc` remain as a flat Sun/Moon/Venus/Mars-only projection of `sparkHits` for legacy-shaped consumers, now widened to 6° and including squares/oppositions (KS: hard aspects between Venus/Mars are "still chemistry," not excluded). The real legacy score runs a k=400 nearest-neighbors model across the entire person population, which isn't reproducible pairwise — this engine is the practical substitute. Full field-by-field detail: `knowledge/API-MATCHING.md` §5.
+- **`boss` — REAL legacy port** (`match_M.anatella`, the "Who Leads Flag" screen): for each person, average their `perso` `pointsPerc` across only the planets placed in an angular house (1/4/7/10), a fire sign, or a cardinal sign (initiative/"strong Mars" energy) — `person1Score`/`person2Score` are those averages. This is a **comparison mechanism, not a standalone score**: `who` names whichever person scored higher (`"balanced"` if within 0.5 of each other), `confidence` reflects how decisive the gap is.
+- **`exclusive` — REAL legacy port** ("Loyalty / Exclusivity Flag" screen): same mechanism and same comparison-not-score shape as `boss`, but averaged over air-sign, cadent-house (3/6/9/12), or mutable-sign placements — `who` names the more loyal person.
+- **`bond` — NEW** ("Do you have a bond?"): KS/Greenbaum temperament comparison (hot/cold/wet/dry from ASC, ASC ruler, Moon, Moon phase, Sun season) + element-pair headline + Moon/Venus comfort links. `score` is an overlap UI gauge only — not a soulmate %. Same `temperamentCompare` as `generalUnderstanding`. Spec: `knowledge/match-attraction-spec.md` §3 / `knowledge/attraction.md` §2.5.
+- **`generalUnderstanding` — REAL legacy port + temperament** (→ `entente_generale`, Temperament card): dominant elements (`element1`/`element2` + pcts), `headline`, richer `bulletPoints`, plus full `temperamentCompare`.
+- **`mutualUnderstanding` — augmented** (→ `1to1_ententeIntel`, "How do you get along?"): each Mercury to the other's Mercury/Sun/Moon/Mars/Jupiter/Saturn/Uranus/Neptune/Pluto; structured `hits[]` with glosses, `headline`, `bulletPoints`. Basis of `synastrieAspectMercury`; wording is ours.
+- **`gift` — REAL legacy port** (built in `03.API_id_json_Insight_2.anatella`, not `match_M.anatella`): whichever house one person's Sun falls into on the other's chart, both directions — `person1GivesPerson2`/`person2GivesPerson1` each give the house number, a domain tag (career/love/family/etc.), and a short description. No numeric score, matching the legacy behavior. English text is our own translation of the source's French, not the app's actual localized strings.
+- `hugs` — Moon↔Moon and Moon↔Venus cross-aspects (emotional/physical warmth). **Original heuristic** — the real legacy source filters by water/air-sign placements then ranks by an unresolved `combi` key.
+- `person1.temperament` / `person2.temperament` — per-person hot/cold/wet/dry tallies + dominants (same objects as inside `bond.temperamentCompare`).
 
 ---
 
@@ -5355,6 +5382,7 @@ Result wrapped in `{ success, data, timestamp }`. All ages in tropical years (36
     },
 
     "handingOverHistory": [
+      /* every bound handover 0–100, ascending by age — same horizon as timeline/participatingTimeLords */
       { "fromLord": "Mercury", "toLord": "Venus", "ageOfTransition": 10.4,
         "transition": "neutral→benefic", "isContinuation": false }
     ],
@@ -5389,6 +5417,7 @@ Result wrapped in `{ success, data, timestamp }`. All ages in tropical years (36
 | `periodQuality.mitigatingFactors` | Which mitigation checks passed (e.g. `participating_protected`, `benefic_bonification_present`, `favorable_lord_of_year`) — presence should soften the reading even under a `crisis` classification |
 | `periodQuality.lordOfYear` | This year's profected Lord of the Year and its `/api/planetary-condition` category (from `/api/profection`), for the annual relief/intensity cross-check within a multi-year window; `null` if profection data was unavailable |
 | `periodQuality.primary` / `.participating` | `{ planet, functional, category }` mirrored verbatim from `/api/planetary-condition` — never re-derived. `.participating` is `null` when there's no active participating lord, or when the active participant is a node (outside the benefic/malefic matrix) |
+| `handingOverHistory` | Every bound handover across the full lifespan (0–100), ascending by age — same horizon as `timeline`/`participatingTimeLords`, not capped at the native's current age |
 | `handingOverHistory.isContinuation` | True when same ruler continues across a sign boundary |
 | `timeline` | Both clocks merged, ascending by age, from age 0 to 100 |
 
@@ -5428,6 +5457,7 @@ Birth 1980-10-24, ASC Leo 29°39′, latitude 50.85°N. At age 45.79 (targetDate
 - Active participating: **Jupiter conjunction** (age 41.88) ✅
 - Next participating: **Saturn conjunction** (age 48.39) ✅
 - `periodQuality`: Saturn malefic/`mixed`, Jupiter benefic/`not_as_bad_as_it_could_be` → `classification: "mixed"`, `mitigatingFactors: ["participating_protected"]` — confirmed against the live endpoint 2026-09-11 ✅
+- `handingOverHistory` spans the full 0–100 horizon (not capped at `nativeAge`): 11 handovers from age 0.48 to 85.17, plus a 12th (Mars→Venus) at age 95.11 — matches the `kind: "bound"` rows in `timeline` one-for-one, confirmed 2026-09-17 ✅
 
 ### Test
 
