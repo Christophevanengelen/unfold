@@ -22,7 +22,7 @@
  *   2. Le chiffre, et ce qu il vaut
  *   3. Les trois mesures de fond    (petites vignettes)
  *   4. Ce qui circule entre vous    (petites vignettes)
- *   5. L asymetrie, quand elle existe
+ *   5. Le lien, le tempérament, l entente et l etincelle mesurés (17/09)
  *   6. Ce que chacun met dans le lien (paires)
  *   7. Qui donne le tempo, si c est net
  *   8. La methode, visible
@@ -64,7 +64,7 @@ import { EyebrowLabel } from "@/components/demo/primitives";
 import { t, type Locale } from "@/lib/i18n-demo";
 import { useLocale } from "@/lib/use-locale";
 import { fetchMatch, matchEnCache, type RaisonMatch } from "@/lib/match-api";
-import { lireMatch, type Dimension, type LectureMatch } from "@/lib/match-lecture";
+import { lireMatch, type Dimension, type ElementAxe, type LectureMatch } from "@/lib/match-lecture";
 import type { BirthData } from "@/lib/birth-data";
 import { choisir, franchir, reussi, toucher } from "@/lib/haptique";
 import { Anneau, Paire, Piste, Section } from "./rapport/visuels";
@@ -101,6 +101,14 @@ function marquerDevine(clef: string): void {
 function remplir(modele: string, valeurs: Record<string, string | number>): string {
   return modele.replace(/\{(\w+)\}/g, (_, c: string) => String(valeurs[c] ?? `{${c}}`));
 }
+
+/** L element du moteur (anglais) → la clef d affichage. */
+const ELEM_CLEF: Record<ElementAxe, string> = {
+  feu: "rapport.elem_fire",
+  terre: "rapport.elem_earth",
+  air: "rapport.elem_air",
+  eau: "rapport.elem_water",
+};
 
 interface RapportMatchProps {
   moi: BirthData;
@@ -362,20 +370,25 @@ function Corps({
   estimation: number | null;
 }) {
   const ecart = estimation === null ? null : lecture.score - estimation;
-  const attraction = lecture.nuances.find((d) => d.versLui !== undefined);
 
   /**
    * Les parametres de l empreinte. Chaque nombre du dessin vient d une mesure
    * du moteur — rien n est decoratif, et c est ce qui fait qu une empreinte
    * appartient a UN couple. La graine y ajoute ce qui distingue deux couples
    * aux chiffres voisins.
+   *
+   * `attractionVersLui`/`attractionVersElle` : depuis le 17/09, `attraction`
+   * n est plus un pourcentage par personne (voir `lib/match-lecture.ts`). On y
+   * met desormais l element dominant de chacun, mesure par `bond`
+   * (`lien.element1Pct`/`element2Pct`) — deux vrais chiffres par personne,
+   * pas une paire recalculee.
    */
   const empreinte: ParametresEmpreinte = {
     score: lecture.score,
     ressemblance: lecture.socle[1]?.valeur ?? 50,
     equilibre: lecture.socle[2]?.valeur ?? 50,
-    attractionVersLui: attraction?.versLui ?? 50,
-    attractionVersElle: attraction?.versElle ?? 50,
+    attractionVersLui: lecture.lien?.element1Pct ?? 50,
+    attractionVersElle: lecture.lien?.element2Pct ?? 50,
     porteurs: lecture.porteurs.length,
     graine: construireGraine(`${moi.birthDate}T${moi.birthTime}`, `${autre.birthDate}T${autre.birthTime}`),
   };
@@ -413,7 +426,10 @@ function Corps({
         delai={0.05}
       />
 
-      <Asymetrie lecture={lecture} locale={locale} nomAutre={nomAutre} />
+      <Lien lecture={lecture} locale={locale} />
+      <Temperament lecture={lecture} locale={locale} />
+      <Entente lecture={lecture} locale={locale} />
+      <Etincelle lecture={lecture} locale={locale} />
       <Apports lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Tempo lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Cadeaux lecture={lecture} locale={locale} nomAutre={nomAutre} />
@@ -490,47 +506,107 @@ function Grille({
 }
 
 /**
- * L asymetrie. C est la carte que personne d autre n ecrit : tous les produits
- * du marche rendent un chiffre unique pour un lien a deux. Le moteur, lui,
- * mesure les deux sens — on ne moyenne pas une information qui existe.
+ * « Avez-vous un lien ? » — bond, nouveau le 17/09.
+ *
+ * Le tempo au jour le jour, pas l etincelle : le moteur le derive de la
+ * comparaison de temperament (chaud/froid/sec/humide, methode KS/Greenbaum),
+ * pas d aspects Venus-Mars. `clef` vient du palier de la paire d elements
+ * (meme element / compatibles / opposes) ; `null` quand le moteur rend une
+ * phrase qu on ne reconnait pas — le score reste, la phrase se tait.
  */
-function Asymetrie({
-  lecture,
-  locale,
-  nomAutre,
-}: {
-  lecture: LectureMatch;
-  locale: Locale;
-  nomAutre: string;
-}) {
-  const a = lecture.nuances.find((d) => d.asymetrique);
-  if (!a || a.versLui === undefined || a.versElle === undefined) return null;
+function Lien({ lecture, locale }: { lecture: LectureMatch; locale: Locale }) {
+  if (!lecture.lien) return null;
+  const { score, palier, clef } = lecture.lien;
   return (
     <Section className="pb-8" delai={0.05}>
-      <div className="rounded-2xl p-4" style={{ background: "var(--bg-secondary)" }}>
-        <h3
-          className="text-[19px] leading-tight text-text-heading"
-          style={{ fontFamily: "var(--font-titre)", fontWeight: 300, letterSpacing: "-0.015em" }}
-        >
-          {t("rapport.asym_titre", locale)}
-        </h3>
-        <div className="mt-4 space-y-4">
-          <Piste
-            titre={remplir(t("rapport.asym_toi", locale), { nom: nomAutre })}
-            valeur={a.versElle}
-            niveau={t("match.moyen", locale)}
-          />
-          <Piste
-            titre={remplir(t("rapport.asym_autre", locale), { nom: nomAutre })}
-            valeur={a.versLui}
-            niveau={t("match.moyen", locale)}
-            delai={0.1}
-          />
-        </div>
-        <p className="mt-3 text-[11px] leading-snug text-text-body-subtle">
-          {t("rapport.asym_aide", locale)}
-        </p>
+      <EyebrowLabel color="var(--text-body-subtle)">{t("rapport.lien_titre", locale)}</EyebrowLabel>
+      <p className="mt-1.5 text-[13px] leading-snug text-text-body">{t("rapport.lien_aide", locale)}</p>
+      <div className="mt-3">
+        <Piste
+          titre={clef ? t(clef, locale) : t("rapport.lien_titre", locale)}
+          valeur={score}
+          niveau={t(`match.${palier}`, locale)}
+        />
       </div>
+    </Section>
+  );
+}
+
+/**
+ * Le tempérament — generalUnderstanding, enrichi le 17/09. Meme moteur de
+ * comparaison que `bond`, mais la carte montre ici l element dominant de
+ * chacun (jauges Feu/Terre/Air/Eau) plutot qu un seul score de tempo.
+ */
+function Temperament({ lecture, locale }: { lecture: LectureMatch; locale: Locale }) {
+  const temp = lecture.temperament;
+  if (!temp || !temp.element1 || !temp.element2) return null;
+  return (
+    <Section className="pb-8" delai={0.05}>
+      <EyebrowLabel color="var(--text-body-subtle)">{t("rapport.temperament_titre", locale)}</EyebrowLabel>
+      <p className="mt-1.5 text-[13px] leading-snug text-text-body">{t("rapport.temperament_aide", locale)}</p>
+      <div className="mt-3 flex items-center justify-between text-[11px] font-semibold text-text-body-subtle">
+        <span>{t(ELEM_CLEF[temp.element1], locale)}</span>
+        <span>{t(ELEM_CLEF[temp.element2], locale)}</span>
+      </div>
+      <div className="mt-1.5">
+        <Paire
+          titre={temp.clef ? t(temp.clef, locale) : t("rapport.temperament_titre", locale)}
+          gauche={temp.element1Pct}
+          droite={temp.element2Pct}
+          etiquetteGauche={t(ELEM_CLEF[temp.element1], locale)}
+          etiquetteDroite={t(ELEM_CLEF[temp.element2], locale)}
+        />
+      </div>
+    </Section>
+  );
+}
+
+/**
+ * « Comment vous entendez-vous ? » — mutualUnderstanding, nouveau le 17/09.
+ *
+ * Le moteur croise le Mercure de chacun avec les planetes de l autre
+ * (aspects ptolemeens) puis rend un `headline` parmi quatre formulations
+ * fixes, dont une par defaut documentee. `clefEntente` (`match-lecture.ts`)
+ * ne rend donc jamais `null` — contrairement a `bond`/`generalUnderstanding`.
+ */
+function Entente({ lecture, locale }: { lecture: LectureMatch; locale: Locale }) {
+  if (!lecture.entente) return null;
+  const { score, palier, clef } = lecture.entente;
+  return (
+    <Section className="pb-8" delai={0.05}>
+      <EyebrowLabel color="var(--text-body-subtle)">{t("rapport.entente_titre", locale)}</EyebrowLabel>
+      <p className="mt-1.5 text-[13px] leading-snug text-text-body">{t("rapport.entente_aide", locale)}</p>
+      <div className="mt-3">
+        <Piste titre={t(clef, locale)} valeur={score} niveau={t(`match.${palier}`, locale)} />
+      </div>
+    </Section>
+  );
+}
+
+/**
+ * L etincelle — attraction, changee de forme le 17/09.
+ *
+ * Ce n est plus un pourcentage dans les deux sens : une liste d aspects
+ * tendus (<= 3°, Soleil/Lune/Venus/Mars) mesures entre les deux themes. On dit
+ * combien ont ete mesures ; les noms de planete vivent dans `hits` et ne
+ * passent jamais a l ecran (regle n° 1 de `match-lecture.ts`).
+ */
+function Etincelle({ lecture, locale }: { lecture: LectureMatch; locale: Locale }) {
+  if (!lecture.etincelle) return null;
+  const { compte } = lecture.etincelle;
+  const texte =
+    compte === 0
+      ? t("rapport.etincelle_aucune", locale)
+      : compte === 1
+        ? t("rapport.etincelle_une", locale)
+        : remplir(t("rapport.etincelle_n", locale), { n: compte });
+  return (
+    <Section className="pb-8" delai={0.05}>
+      <EyebrowLabel color="var(--text-body-subtle)">{t("rapport.etincelle_titre", locale)}</EyebrowLabel>
+      <p className="mt-1.5 text-[15px] leading-[1.45] text-text-heading">{texte}</p>
+      <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">
+        {t("rapport.etincelle_aide", locale)}
+      </p>
     </Section>
   );
 }

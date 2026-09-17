@@ -104,24 +104,58 @@ export async function brancherReseau(
     if (chemin.endsWith("/api/billing/me")) return json({ plan: "free" });
 
     if (chemin.endsWith("/api/match")) {
-      // La reponse REELLE du moteur de compatibilite, relevee le 16/09/2026 sur
-      // deux naissances libres — y compris son enveloppe `data`, que le relais
-      // deballe. On ne la simplifie pas : une fixture plus propre que la
+      // La reponse REELLE du moteur de compatibilite, relevee le 17/09/2026 sur
+      // le couple de test que Christophe a donne pour verifier la mise a jour
+      // de Marie-Ange : Christophe (1977-09-27 00:00) / Patricia
+      // (1980-10-24 01:41), Bruxelles — y compris son enveloppe `data`, que le
+      // relais deballe. On ne la simplifie pas : une fixture plus propre que la
       // realite ferait passer un test que la production echouerait.
       //
-      // Les sept axes a zero sur dix sont vrais eux aussi. C est ce qui a
-      // decide de ne pas dessiner de radar a dix branches, et un test doit
-      // pouvoir montrer ce cas.
+      // Trois champs sont NOUVEAUX ce soir-la : `bond`, `mutualUnderstanding`,
+      // et `generalUnderstanding` enrichi (element + temperamentCompare).
+      // `attraction` a change de forme : plus un pourcentage dans les deux
+      // sens (`aToB`/`bToA`), une liste d aspects mesures (`hits`, `count`).
+      // Sur ce couple elle est vide : c est une vraie mesure, pas un trou dans
+      // la fixture — voir « rapport.etincelle_aucune ».
       return json({
         ok: true,
         match: {
-          compatibility: { score: 73, label: "Good" },
-          resemblance: { score: 82 },
-          balance: { score: 82 },
-          attraction: { aToB: 53, bToA: 56 },
-          boss: { who: "person2", confidence: 63 },
-          exclusive: { score: 59 },
-          generalUnderstanding: { score: 48 },
+          compatibility: { score: 77, label: "Good" },
+          resemblance: { score: 72 },
+          balance: { score: 72 },
+          attraction: {
+            hits: [],
+            count: 0,
+            desc: "No tight (≤3°) harmonious Sun/Moon/Venus/Mars aspects between these two charts.",
+          },
+          boss: { who: "balanced", confidence: 50 },
+          exclusive: { who: "person1", confidence: 70 },
+          bond: {
+            score: 65,
+            label: "Good",
+            headline: "familiar elemental bond",
+            element1: "Water",
+            element2: "Water",
+            element1Pct: 55.5,
+            element2Pct: 62.4,
+          },
+          generalUnderstanding: {
+            score: 75,
+            label: "Good",
+            headline: "familiar elemental bond",
+            element1: "Water",
+            element2: "Water",
+            element1Pct: 55.5,
+            element2Pct: 62.4,
+          },
+          mutualUnderstanding: {
+            score: 55,
+            label: "Moderate",
+            headline: "mix of stimulation and friction in how you talk",
+            hits: [
+              { from: "Christophe", planetFrom: "Mercury", planetTo: "Mercury", aspect: "Sextile", orb: 2.29 },
+            ],
+          },
           // `gift` N A PLUS DE SCORE depuis la mise a jour du moteur du 17/09 :
           // il rend deux directions nommees. Recopie de la reponse reelle,
           // mesuree ce soir-la. Garder l ancienne forme aurait rendu le defaut
@@ -139,21 +173,21 @@ export async function brancherReseau(
               desc: "stability, a sense of family, and real-estate advice",
             },
           },
-          hugs: { score: 50 },
+          hugs: { score: 57 },
           compatibilityRadar: [
-            { planet: "Sun", pointsperc: 0, pointsperc2: 0 },
-            { planet: "Moon", pointsperc: 44, pointsperc2: 27 },
-            { planet: "Mercury", pointsperc: 0, pointsperc2: 0 },
-            { planet: "Venus", pointsperc: 0, pointsperc2: 82 },
-            { planet: "Mars", pointsperc: 0, pointsperc2: 0 },
-            { planet: "Jupiter", pointsperc: 0, pointsperc2: 0 },
-            { planet: "Saturn", pointsperc: 61, pointsperc2: 58 },
-            { planet: "Uranus", pointsperc: 0, pointsperc2: 0 },
-            { planet: "Neptune", pointsperc: 0, pointsperc2: 0 },
+            { planet: "Sun", pointsperc: 46.7, pointsperc2: 0 },
+            { planet: "Moon", pointsperc: 0, pointsperc2: 28.6 },
+            { planet: "Mercury", pointsperc: 40, pointsperc2: 35.5 },
+            { planet: "Venus", pointsperc: 0, pointsperc2: 0.5 },
+            { planet: "Mars", pointsperc: 0, pointsperc2: 2.8 },
+            { planet: "Jupiter", pointsperc: 0, pointsperc2: 0.5 },
+            { planet: "Saturn", pointsperc: 13.3, pointsperc2: 2.4 },
+            { planet: "Uranus", pointsperc: 0, pointsperc2: 27 },
+            { planet: "Neptune", pointsperc: 0, pointsperc2: 2.8 },
             { planet: "Pluto", pointsperc: 0, pointsperc2: 0 },
           ],
-          person1: { dominantPlanet: { planet: "Moon" } },
-          person2: { dominantPlanet: { planet: "Venus" } },
+          person1: { dominantPlanet: { planet: "Moon", pct: 27.5 } },
+          person2: { dominantPlanet: { planet: "Mercury", pct: 35.5 } },
         },
       });
     }

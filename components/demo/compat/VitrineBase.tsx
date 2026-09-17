@@ -104,10 +104,13 @@ const REFRACTION = "translate(3px, -2px) scale(1.04)";
 export function VitrineBase({
   locale,
   naissance,
+  onCodeRecu,
 }: {
   locale: Locale;
   /** La naissance de la personne. Sans elle, pas d empreinte a montrer. */
   naissance: BirthData | null;
+  /** Ouvre le vrai formulaire de saisie de code, tenu par la page. */
+  onCodeRecu?: () => void;
 }) {
   const fige = useReducedMotion();
 
@@ -217,13 +220,21 @@ export function VitrineBase({
         {t("vitrine.inviter", locale)}
       </Link>
 
-      <Link
-        href="/app/invite/join"
+      {/* CORRIGE LE 17/09 AU SOIR. Ce lien pointait vers `/app/invite/join`,
+          qui n attend que des parametres d URL et redirige silencieusement
+          des qu ils manquent — donc rien ne se passait au clic. C est le
+          signalement de Christophe : « je ne peux pas encoder le code ».
+
+          Un bouton qui ouvre le formulaire existant, plutot qu un lien vers
+          une page qui n en porte pas. */}
+      <button
+        type="button"
+        onClick={onCodeRecu}
         className="mt-4 text-[15px] font-medium underline underline-offset-4"
         style={{ color: "var(--text-body-subtle)", textDecorationColor: "var(--border-base)" }}
       >
         {t("vitrine.recu", locale)}
-      </Link>
+      </button>
     </motion.section>
   );
 }
