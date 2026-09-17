@@ -782,7 +782,8 @@ export function BrancheDeVie({
       const chute = Math.max(22, Math.min(150, (yDe(p.posFleur, H) - bp.y) * 0.8));
       const ey = bp.y + chute;
       const lateral = Math.max(26, Math.min(96, chute * (0.7 + 0.25 * Math.abs(bruit(p.graine + 5))) + 18));
-      const exC = Math.max(24, Math.min(L - 24, bp.x + dir * lateral));
+      const marge = 34; // la place qu il faut au bouquet pour tenir entier
+      const exC = Math.max(marge, Math.min(L - marge, bp.x + dir * lateral));
       const mx = bp.x + (exC - bp.x) * 0.55 + dir * 6;
       const my = bp.y + chute * 0.3 + bruit(p.graine + 11) * 4;
       const brindille: Point[] = [];
@@ -813,9 +814,10 @@ export function BrancheDeVie({
         for (let essai = 0; essai < 14 && !ok; essai++) {
           const a = bruit(p.graine + k * 7 + essai * 3 + 51) * 6.28;
           const dd = (0.3 + 0.85 * Math.abs(bruit(p.graine + k * 5 + essai * 7 + 61))) * D * 0.85;
-          const bx = exC + Math.cos(a) * dd;
+          const bD0 = D * bouquetPal[Math.min(3, 1 + (k % 3))];
+          const bx = Math.max(bD0 * 0.8, Math.min(L - bD0 * 0.8, exC + Math.cos(a) * dd));
           const by = ey + Math.sin(a) * dd * 0.8 - D * 0.15; // le bouquet monte un peu plus qu il ne descend
-          const bD = D * bouquetPal[Math.min(3, 1 + (k % 3))];
+          const bD = bD0;
           if (bouquet.every((b) => Math.hypot(b.x - bx, b.y - by) >= 0.68 * (b.D + bD) / 2)) {
             bouquet.push({ x: bx, y: by, D: bD, graine: p.graine + k * 97 + 13, retard: 0.06 + 0.1 * Math.abs(bruit(p.graine + k * 11 + 71)) });
             ok = true;
@@ -844,7 +846,7 @@ export function BrancheDeVie({
       const dir = bruit(gr) > 0 ? 1 : -1;
       const R = 30 + (pk.c / haut) * 22;
       const chute = 46 + (pk.c / haut) * 40;
-      const cx = Math.max(30, Math.min(L - 30, bp.x + dir * (bp.w / 2 + chute * 0.9)));
+      const cx = Math.max(44, Math.min(L - 44, bp.x + dir * (bp.w / 2 + chute * 0.9)));
       const cy = bp.y + chute;
       const brindille: Point[] = [];
       for (let k = 0; k <= 30; k++) {
@@ -862,9 +864,11 @@ export function BrancheDeVie({
         for (let essai = 0; essai < 12 && !ok; essai++) {
           const a = bruit(gr + k * 7 + essai) * 6.28;
           const dd = Math.pow(Math.abs(bruit(gr + k * 3 + essai * 5)), 0.6) * R;
-          const bx2 = cx + Math.cos(a) * dd;
-          const by2 = cy + Math.sin(a) * dd * 0.85;
           const D = 21 * pal[k % 3 === 0 ? 2 : k % 3 === 1 ? 1 : 0];
+          // dans le papier, toujours : une fleur coupee par le bord n est pas
+          // une composition
+          const bx2 = Math.max(D, Math.min(L - D, cx + Math.cos(a) * dd));
+          const by2 = cy + Math.sin(a) * dd * 0.85;
           if (boutons.every((b) => Math.hypot(b.x - bx2, b.y - by2) >= 1.15 * (b.D + D) / 2)) {
             boutons.push({ x: bx2, y: by2, D, graine: gr + k * 29 });
             ok = true;
@@ -1385,11 +1389,12 @@ export function BrancheDeVie({
         </span>
 
         {/* Aujourd hui n est plus au bas du papier : il est a sa date. */}
-        <div className="pointer-events-none absolute left-0 right-0 flex items-center gap-2 px-5" style={{ top: `${fen.posMaintenant * 100}%` }}>
+        <div className="pointer-events-none absolute left-0 right-0 flex items-center gap-3 px-5" style={{ top: `${fen.posMaintenant * 100}%` }}>
           <span aria-hidden className="h-px flex-1" style={{ background: "var(--encre-diluee)", opacity: 0.5 }} />
           <span className="text-[11px] text-text-body-subtle">{t("resume.branche_ici", locale)}</span>
+          <span aria-hidden className="h-px flex-1" style={{ background: "var(--encre-diluee)", opacity: 0.5 }} />
         </div>
-        <p className="pointer-events-none absolute left-0 right-0 px-5 text-center text-[11.5px] leading-snug text-text-body-subtle" style={{ top: `calc(${fen.posMaintenant * 100}% + 34px)` }}>
+        <p className="pointer-events-none absolute left-0 right-0 px-12 text-center text-[11.5px] leading-snug text-text-body-subtle" style={{ top: `calc(${fen.posMaintenant * 100}% + 44px)` }}>
           {t("resume.branche_avenir", locale)}
         </p>
       </div>
