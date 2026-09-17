@@ -44,8 +44,12 @@ test.describe("le resume du jour", () => {
   test("une seule communication, et elle est dessinee", async ({ page }) => {
     await ouvrirLaBoite(page);
 
-    // La carte : un titre en grand, et au moins une barre de periode.
-    await expect(page.getByText(/period open|periods open/i)).toBeVisible({ timeout: 20_000 });
+    // On attend la phrase de rarete, pas le compte : depuis le 17/09 le compte
+    // ne s affiche qu au pluriel, et l ancrer dessus rendrait ce test
+    // dependant du nombre de periodes ouvertes ce jour-la.
+    await expect(page.getByText(/once in your whole life|whole lifetime/i)).toBeVisible({
+      timeout: 20_000,
+    });
 
     // UNE communication, pas deux.
     //
@@ -55,6 +59,38 @@ test.describe("le resume du jour", () => {
     // rebranchant exactement ce qu il devait interdire.
     const cartes = await page.evaluate(() => document.querySelectorAll("article").length);
     expect(cartes, `${cartes} communications dans la boite au lieu d une`).toBe(1);
+  });
+
+  test("la rarete dans une vie est le sujet de la carte", async ({ page }) => {
+    await ouvrirLaBoite(page);
+
+    // LE FAIT QUI FAIT L ECRAN.
+    //
+    // La premiere version affichait « 1 periode ouverte, 1 domaine touche » —
+    // de la metadonnee. Christophe, le 17/09 : « je me mets a la place du user,
+    // je trouve pas ca super ». Il avait raison.
+    //
+    // Le moteur envoie, sur 70 boudins sur 77, `lifetimeNumber` et
+    // `lifetimeTotal` : la N-ieme fois sur M dans TOUTE une vie. Quand M vaut
+    // 1, la chose ne reviendra pas. C est un fait de calendrier, verifiable,
+    // et c est ce qu une personne a envie de lire.
+    //
+    // La donnee etait jetee a l entree par `yearDataToPhases` — declaree nulle
+    // part, donc lue nulle part, alors qu elle arrivait a chaque appel.
+    await expect(
+      page.getByText(/once in your whole life|of \d+ times in a whole lifetime/i),
+    ).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("le compte des periodes ne prend pas la place du fait", async ({ page }) => {
+    await ouvrirLaBoite(page);
+    await expect(page.getByText(/once in your whole life/i)).toBeVisible({ timeout: 20_000 });
+
+    // « 1 periode ouverte » n apprend rien a personne et occupait la ligne du
+    // seul fait qui compte. Le compte ne s affiche qu au pluriel.
+    const texte = await page.evaluate(() => document.body.innerText);
+    expect(texte, "le compte au singulier est revenu").not.toMatch(/\b1 period open\b/i);
+    expect(texte, "le compte de domaines au singulier est revenu").not.toMatch(/\b1 area touched\b/i);
   });
 
   test("le dessin tient meme si la synthese ecrite echoue", async ({ page }) => {
@@ -69,12 +105,16 @@ test.describe("le resume du jour", () => {
       }),
     );
     await ouvrirLaBoite(page);
-    await expect(page.getByText(/period open|periods open/i)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/once in your whole life|whole lifetime/i)).toBeVisible({
+      timeout: 20_000,
+    });
   });
 
   test("le repere d aujourd hui est sur la barre", async ({ page }) => {
     await ouvrirLaBoite(page);
-    await expect(page.getByText(/period open|periods open/i)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/once in your whole life|whole lifetime/i)).toBeVisible({
+      timeout: 20_000,
+    });
 
     // Un trait vertical fin, pose quelque part sur une barre. Sans lui, la
     // barre dit la duree mais pas ou l on en est — ce qui est tout le sujet.

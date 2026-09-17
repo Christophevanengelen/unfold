@@ -37,9 +37,17 @@ import type { PeriodeOuverte, ResumeDuJour } from "@/lib/resume-jour";
 import type { MomentumPhase } from "@/types/momentum";
 import { Signature } from "./Signature";
 
+/** Le moteur ecrit ses domaines en minuscules : on releve la premiere lettre. */
+function capitale(t: string): string {
+  return t.charAt(0).toLocaleUpperCase() + t.slice(1);
+}
+
 function domaine(phase: MomentumPhase, locale: Locale): string | null {
   // La verite est dans la maison, pas dans `domain` (trois valeurs, un
   // rangement). Le mot du moteur d abord, notre traduction ensuite.
+  // Les mots du moteur d abord — ils sont plus precis que notre rangement en
+  // douze domaines — et notre traduction seulement s il n en donne pas.
+  if (phase.houseTopic) return phase.houseTopic;
   const clef = phase.house ? DOMAINE[phase.house] : undefined;
   return clef ? (STRINGS_MATCH_DOMAINES(locale)[clef] ?? null) : null;
 }
@@ -186,13 +194,38 @@ export function ResumeJour({
                 textWrap: "balance",
               }}
             >
-              {domaine(principale.phase, locale) ?? principale.phase.title}
+              {capitale(domaine(principale.phase, locale) ?? principale.phase.title)}
             </p>
+            {/* LA PHRASE DE RARETE, et c est le sujet de la carte.
+                « Ca n arrivera qu une fois dans ta vie » est un fait de
+                calendrier, verifiable, et c est ce qu une personne a envie de
+                lire. Le compte des periodes ouvertes, lui, est de la
+                metadonnee : il est descendu tout en bas. */}
+            {principale.rarete ? (
+              <p
+                className="mt-2.5 text-[15px] font-semibold leading-snug"
+                style={{ color: principale.rarete.unique ? "var(--text-heading)" : "var(--text-body)" }}
+              >
+                {principale.rarete.unique
+                  ? t("resume.jour_unique", locale)
+                  : remplir(t("resume.jour_nieme", locale), {
+                      n: principale.rarete.numero,
+                      t: principale.rarete.total,
+                    })}
+              </p>
+            ) : null}
+
             <p className="mt-1.5 text-[12px] leading-snug text-text-body-subtle">
               {remplir(
                 t(principale.depuis <= 1 ? "resume.jour_depuis_un" : "resume.jour_depuis_n", locale),
                 { n: principale.depuis },
               )}
+              {principale.rarete?.ageDerniereFois !== null &&
+              principale.rarete?.ageDerniereFois !== undefined
+                ? ` ${remplir(t("resume.jour_derniere_fois", locale), {
+                    a: principale.rarete.ageDerniereFois,
+                  })}`
+                : ""}
             </p>
 
             <div className="mt-4">
@@ -214,18 +247,17 @@ export function ResumeJour({
           className="mt-5 flex flex-wrap gap-x-4 gap-y-1 border-t pt-3.5 text-[11px] leading-snug text-text-body-subtle"
           style={{ borderColor: "var(--border-base)" }}
         >
-          <span>
-            {remplir(
-              t(resume.ouvertes.length <= 1 ? "resume.jour_ouvertes_une" : "resume.jour_ouvertes_n", locale),
-              { n: resume.ouvertes.length },
-            )}
-          </span>
-          {resume.domaines > 0 ? (
+          {/* Le compte ne s affiche que s il y a PLUSIEURS periodes : « 1
+              periode ouverte » n apprend rien a personne et occupait la place
+              du seul fait qui compte. */}
+          {resume.ouvertes.length > 1 ? (
             <span>
-              {remplir(
-                t(resume.domaines <= 1 ? "resume.jour_domaines_un" : "resume.jour_domaines_n", locale),
-                { n: resume.domaines },
-              )}
+              {remplir(t("resume.jour_ouvertes_n", locale), { n: resume.ouvertes.length })}
+            </span>
+          ) : null}
+          {resume.domaines > 1 ? (
+            <span>
+              {remplir(t("resume.jour_domaines_n", locale), { n: resume.domaines })}
             </span>
           ) : null}
           {resume.bientot.length > 0 ? (

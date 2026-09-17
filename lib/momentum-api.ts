@@ -138,6 +138,17 @@ export interface TocTocYearResponse {
       exactDates?: string[] | null;
       /** Transit « VIP » selon le moteur (8/53). */
       isVipTransit?: boolean | null;
+      /**
+       * La rarete dans une vie entiere. MESUREE le 17/09/2026 sur le vrai
+       * moteur : presente sur 70 boudins sur 77, avec des totaux de 1 a 5.
+       *
+       * Elle n etait pas declaree, donc pas lue, donc jetee — alors qu elle
+       * arrivait a chaque appel. Un champ absent d un type ne leve aucune
+       * erreur : c est la facon la plus silencieuse de perdre une donnee.
+       */
+      lifetimeNumber?: number | null;
+      lifetimeTotal?: number | null;
+      allPeriods?: { date: string; endDate?: string; lifetimeNumber: number }[] | null;
     }>;
     computeTimeSeconds?: number;
   };

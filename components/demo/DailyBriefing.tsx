@@ -180,7 +180,7 @@ export function DailyBriefing() {
         await collecter(birthData, source);
       }
 
-      const jour = lireLeJour(phases, Date.now());
+      const jour = lireLeJour(phases, Date.now(), birthData.birthDate);
       // Rien d ouvert : on ne depose rien. Le silence est une reponse, mais une
       // reponse qui n a pas besoin d allumer une pastille.
       if (jour.aucune || annule) return;

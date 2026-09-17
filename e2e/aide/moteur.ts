@@ -99,6 +99,18 @@ interface Boudin {
   lotType?: string[];
   markers?: string[];
   gid?: string;
+  /**
+   * La rarete dans une vie entiere, telle que le vrai moteur l envoie sur 70
+   * boudins sur 77 (releve du 17/09/2026).
+   *
+   * Elle est dans la fixture parce que c est devenu le SUJET de la carte du
+   * jour : « ca n arrivera qu une fois dans ta vie ». Sans elle ici, aucun test
+   * ne pourrait voir cette phrase — et un test qui ne peut pas voir la
+   * fonctionnalite ne prouve rien.
+   */
+  ltNum?: number;
+  ltTot?: number;
+  allP?: { date: string; lifetimeNumber: number }[];
 }
 
 function transit(
@@ -128,6 +140,11 @@ function transit(
     tc: ["#A697FF"],
     th: [6],
     nh: 6,
+    // La rarete, comme sur le vrai moteur. Celui de la periode EN COURS porte
+    // un total de 1 : « ca n arrivera qu une fois dans ta vie », la phrase qui
+    // fait tout l interet de la carte du jour.
+    ltNum: 1,
+    ltTot: id === "courant" ? 1 : 2,
   };
 }
 
@@ -154,6 +171,12 @@ function zr(
     pSign: signe,
     lotType: ["fortune"],
     markers: marqueurs,
+    ltNum: 3,
+    ltTot: 4,
+    allP: [
+      { date: "1997-06-01", lifetimeNumber: 1 },
+      { date: "2012-06-01", lifetimeNumber: 2 },
+    ],
   };
 }
 
@@ -268,6 +291,7 @@ export function reponseAnnee(naissance: { birthDate: string }): unknown {
   const mois: unknown[] = [];
 
   const passe = {
+    id: "an_passe",
     label: "ZR L2 — Virgo (fortune) · Forecasting period · toc toc toc",
     score: 35,
     category: "zr",
@@ -275,6 +299,7 @@ export function reponseAnnee(naissance: { birthDate: string }): unknown {
     periodEnd: jour(plusJours(auj, -60)),
   };
   const courant = {
+    id: "an_courant",
     label: `${planeteCourante(naissance.birthDate).planete} conjunct natal Sun`,
     score: 78,
     category: "transit",
@@ -282,6 +307,7 @@ export function reponseAnnee(naissance: { birthDate: string }): unknown {
     exactDate: jour(auj),
   };
   const aVenir = {
+    id: "an_avenir",
     label: "ZR L2 — Leo (spirit) · Forecasting period · toc toc",
     score: 26,
     category: "zr",
@@ -310,6 +336,37 @@ export function reponseAnnee(naissance: { birthDate: string }): unknown {
     data: {
       success: true,
       person: { name: "Test", birthDate: naissance.birthDate },
+      /**
+       * LE TABLEAU `boudins`, que cette fixture n avait pas.
+       *
+       * Le vrai `toctoc-year` en envoie 77, et c est la que vivent la maison,
+       * la qualite de periode et la RARETE DANS UNE VIE. Sans lui, la fixture
+       * etait structurellement plus pauvre que la realite : l adaptateur ne
+       * trouvait aucun boudin a apparier, donc aucun test ne pouvait voir la
+       * phrase « ca n arrivera qu une fois dans ta vie » — ni le defaut qui la
+       * faisait disparaitre.
+       *
+       * Une fixture plus propre que le moteur cache les bugs du moteur.
+       */
+      boudins: [
+        {
+          id: "an_passe", category: "zr", periodQuality: "MODERATE_POSITIVE",
+          periodHousePlacement: { house: 6, signification: "Travail quotidien" },
+          lifetimeNumber: 2, lifetimeTotal: 3,
+          allPeriods: [{ date: "2011-03-01", lifetimeNumber: 1 }],
+        },
+        {
+          id: "an_courant", category: "transit", periodQuality: "MOST_POSITIVE",
+          periodHousePlacement: { house: 10, signification: "Metier" },
+          // Total de 1 : la phrase la plus forte de la carte du jour.
+          lifetimeNumber: 1, lifetimeTotal: 1,
+        },
+        {
+          id: "an_avenir", category: "zr", periodQuality: "NEUTRAL",
+          periodHousePlacement: { house: 7, signification: "Couple" },
+          lifetimeNumber: 1, lifetimeTotal: 4,
+        },
+      ],
       window: { startDate: jour(plusAnnees(auj, -1)), endDate: jour(plusAnnees(auj, 1)) },
       fortuneInfo: { sign: "Virgo", isDayChart: true, angularSigns: [], natalSigns: {} },
       currentMonth: {

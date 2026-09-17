@@ -29,6 +29,62 @@
 
 import type { MomentumPhase } from "@/types/momentum";
 
+const AN = 365.2425 * 86400000;
+
+/**
+ * Lit la rarete d une periode, et l age qu on avait la fois d avant.
+ *
+ * `allPeriods` porte toutes les occurrences d une vie avec leur rang : la
+ * precedente donne une date, et la naissance donne un age. « La derniere fois,
+ * tu avais 27 ans » est un fait, pas une interpretation.
+ */
+function lireRarete(phase: MomentumPhase, naissance: number | null): Rarete | null {
+  const numero = phase.lifetimeNumber;
+  const total = phase.lifetimeTotal;
+  if (typeof numero !== "number" || typeof total !== "number" || total < 1) return null;
+
+  let ageDerniereFois: number | null = null;
+  if (naissance !== null && numero > 1 && Array.isArray(phase.allPeriods)) {
+    const avant = phase.allPeriods.find((p) => p.lifetimeNumber === numero - 1);
+    const quand = avant ? new Date(avant.date).getTime() : NaN;
+    if (!Number.isNaN(quand) && quand > naissance) {
+      ageDerniereFois = Math.floor((quand - naissance) / AN);
+    }
+  }
+
+  return { numero, total, unique: total === 1, ageDerniereFois };
+}
+
+/**
+ * La raretE d une periode dans une vie entiere.
+ *
+ * ─── POURQUOI C EST LE FAIT LE PLUS IMPORTANT DE CET ECRAN ──────────────────
+ *
+ * Christophe, le 17/09, devant la premiere version : « je me mets a la place du
+ * user, je trouve pas ca super ». Il avait raison, et la cause etait nette :
+ * la carte affichait « 1 periode ouverte, 1 domaine touche ». C est de la
+ * METADONNEE. Personne ne veut lire le compte de ses propres periodes.
+ *
+ * Or le moteur envoie, sur 70 boudins sur 77, de quoi dire tout autre chose :
+ * `lifetimeNumber` et `lifetimeTotal` — la N-ieme fois sur M dans TOUTE une
+ * vie. Quand M vaut 1, la chose n arrive qu une fois et ne reviendra pas.
+ *
+ * « Ca n arrivera qu une fois dans ta vie » n est ni une prediction ni une
+ * flatterie : c est un fait de calendrier, verifiable, et c est exactement ce
+ * qu une personne a envie de lire. On avait la donnee depuis le debut, on la
+ * transportait jusqu a l ecran, et on affichait un compte a la place.
+ */
+export interface Rarete {
+  /** La N-ieme fois. */
+  numero: number;
+  /** Sur combien de fois dans une vie entiere. */
+  total: number;
+  /** Vrai quand ca n arrive qu une fois. Le fait le plus fort de l ecran. */
+  unique: boolean;
+  /** L age qu on avait la fois precedente, quand le moteur le permet. */
+  ageDerniereFois: number | null;
+}
+
 /** Une periode ouverte aujourd hui, avec ou en est. */
 export interface PeriodeOuverte {
   phase: MomentumPhase;
@@ -40,6 +96,8 @@ export interface PeriodeOuverte {
   restants: number | null;
   /** Le moteur n a pas donne de bornes nettes : on affichera le mois. */
   approximee: boolean;
+  /** Sa rarete dans une vie, quand le moteur la donne. */
+  rarete: Rarete | null;
 }
 
 export interface ResumeDuJour {
@@ -48,10 +106,12 @@ export interface ResumeDuJour {
   /** Les periodes ouvertes, de la plus avancee a la plus recente. */
   ouvertes: PeriodeOuverte[];
   /**
-   * Celle qui porte la journee. Choisie sur un critere unique et defendable :
-   * l intensite que le moteur lui donne. A intensite egale, la plus courte —
-   * une periode courte qui se superpose a une longue est ce qui distingue
-   * aujourd hui d hier.
+   * Celle qui porte la journee.
+   *
+   * LE CRITERE A CHANGE le 17/09. C etait l intensite ; c est maintenant la
+   * RARETE d abord, l intensite ensuite. Une periode intense qui revient cinq
+   * fois dans une vie est moins digne d etre racontee qu une periode moyenne
+   * qui n arrive qu une fois — parce que la seconde, on ne la reverra pas.
    */
   principale: PeriodeOuverte | null;
   /** Ce qui s ouvre dans les trente jours. */
@@ -82,7 +142,14 @@ function date(iso: string | undefined): number | null {
  * `maintenant` est un parametre et non `Date.now()` : une fonction pure se
  * teste, et un resume qui change d une milliseconde a l autre ne se teste pas.
  */
-export function lireLeJour(phases: MomentumPhase[], maintenant: number): ResumeDuJour {
+export function lireLeJour(
+  phases: MomentumPhase[],
+  maintenant: number,
+  /** La naissance, pour dire l age qu on avait la fois precedente. */
+  naissanceIso?: string | null,
+): ResumeDuJour {
+  const naissance = naissanceIso ? new Date(naissanceIso).getTime() : NaN;
+  const ne = Number.isNaN(naissance) ? null : naissance;
   const ouvertes: PeriodeOuverte[] = [];
   const bientot: { phase: MomentumPhase; dans: number }[] = [];
 
@@ -102,6 +169,7 @@ export function lireLeJour(phases: MomentumPhase[], maintenant: number): ResumeD
         // Une periode d un seul jour n a pas d avancement : elle EST.
         avancement: total && total > 0 ? Math.max(0, Math.min(100, (depuis / total) * 100)) : null,
         approximee: phase.datesApproximees === true,
+        rarete: lireRarete(phase, ne),
       });
       continue;
     }
@@ -119,10 +187,14 @@ export function lireLeJour(phases: MomentumPhase[], maintenant: number): ResumeD
 
   const principale =
     [...ouvertes].sort((a, b) => {
+      // 1. La rarete d abord. Un total de 1 passe devant tout le reste.
+      const rareteA = a.rarete?.total ?? 99;
+      const rareteB = b.rarete?.total ?? 99;
+      if (rareteA !== rareteB) return rareteA - rareteB;
+      // 2. Puis l intensite que le moteur donne.
       const parIntensite = (b.phase.intensity ?? 0) - (a.phase.intensity ?? 0);
       if (parIntensite !== 0) return parIntensite;
-      // A intensite egale, la plus courte : c est elle qui fait la difference
-      // entre aujourd hui et le mois dernier.
+      // 3. Enfin la plus courte : c est elle qui distingue aujourd hui d hier.
       return (a.restants ?? Infinity) - (b.restants ?? Infinity);
     })[0] ?? null;
 

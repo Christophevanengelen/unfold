@@ -218,6 +218,25 @@ export function yearDataToPhases(
         ? { house: boudin.periodHousePlacement.house, houseTopic: boudin.periodHousePlacement.signification }
         : {}),
       ...(boudin?.periodQuality ? { periodQuality: boudin.periodQuality } : {}),
+      /**
+       * LA RARETE DANS UNE VIE — elle etait jetee a l entree.
+       *
+       * `toctoc-year` envoie `lifetimeNumber` et `lifetimeTotal` sur 70 de ses
+       * 77 boudins (mesure du 17/09/2026). Le jumeau `appDataToPhases` les
+       * transportait depuis toujours ; celui-ci, non. La donnee arrivait donc
+       * dans l app pour la vue « vie entiere » et disparaissait pour la vue
+       * « annee » — sans que rien ne le signale, puisqu un champ optionnel
+       * absent ne leve aucune erreur.
+       *
+       * C est la cinquieme classe de bug du depot : le type tait ce que le
+       * moteur envoie. Et ici elle coutait cher — « ca n arrivera qu une fois
+       * dans ta vie » est devenu le sujet de la carte du jour.
+       */
+      ...(typeof boudin?.lifetimeNumber === "number" ? { lifetimeNumber: boudin.lifetimeNumber } : {}),
+      ...(typeof boudin?.lifetimeTotal === "number" ? { lifetimeTotal: boudin.lifetimeTotal } : {}),
+      ...(Array.isArray(boudin?.allPeriods) && boudin.allPeriods.length
+        ? { allPeriods: boudin.allPeriods }
+        : {}),
       // Les champs que CapsuleDetailSheet lit depuis toujours sans qu aucun
       // ecrivain n existe (windowStart/End, parileDate, exactDates,
       // isVipTransit). Ils viennent du jumeau ; mesure : 16, 13, 12 et 8 sur

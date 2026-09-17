@@ -219,8 +219,8 @@ export function FeuilleMessages({ ouvert, onFermer }: { ouvert: boolean; onFerme
   // fraicheur.
   const [maintenant] = useState(() => Date.now());
   const resumeDuJour = useMemo(
-    () => (phases.length > 0 ? lireLeJour(phases, maintenant) : null),
-    [phases, maintenant],
+    () => (phases.length > 0 ? lireLeJour(phases, maintenant, birthData?.birthDate) : null),
+    [phases, maintenant, birthData?.birthDate],
   );
   const naissance = birthData?.birthDate
     ? `${birthData.birthDate}T${birthData.birthTime || "00:00"}`
