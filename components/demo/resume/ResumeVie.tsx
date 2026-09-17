@@ -29,6 +29,7 @@ import { STRINGS_MATCH_DOMAINES, t, type Locale } from "@/lib/i18n-demo";
 import { DOMAINE } from "@/lib/score-match";
 import { CASCADE, ENTREE } from "@/lib/ressorts";
 import type { ResumeDeVie } from "@/lib/resume-vie";
+import { avanceeDuChapitre, chapitreCourant, type ChapitreDeVie } from "@/lib/chapitres-vie";
 import type { MomentumPhase } from "@/types/momentum";
 import { Signature } from "./Signature";
 
@@ -99,14 +100,153 @@ function Frise({ resume, locale }: { resume: ResumeDeVie; locale: Locale }) {
   );
 }
 
+/**
+ * L arc : une vie entiere en quelques mouvements, a l echelle.
+ *
+ * La frise au-dessus compte les periodes annee par annee — c est une mesure.
+ * L arc dit autre chose : de quoi une vie est FAITE, en trois ou quatre
+ * blocs de vingt ou trente ans. Le moteur les calcule depuis toujours ; ils
+ * n etaient jamais arrives jusqu ici parce que le point d entree qui les
+ * porte pese quatre megaoctets (voir app/api/chapitres).
+ *
+ * Chaque bloc est large comme sa duree, donc la barre entiere est une vie a
+ * l echelle : un chapitre de trente ans occupe deux fois la place d un
+ * chapitre de quinze. Le repere vertical marque ou on en est aujourd hui.
+ *
+ * Le dernier bloc s arrete souvent a l horizon de calcul du moteur et non a sa
+ * vraie fin. Dans ce cas on ecrit « a partir de tel age » : on ne ferme pas un
+ * chapitre sur une date qu on sait fausse.
+ */
+function ArcDeVie({
+  chapitres,
+  locale,
+  maintenant,
+}: {
+  chapitres: ChapitreDeVie[];
+  locale: Locale;
+  maintenant: number;
+}) {
+  const fige = useReducedMotion();
+  const total = chapitres.reduce((somme, c) => somme + c.annees, 0);
+  if (total <= 0) return null;
+
+  const courant = chapitreCourant(chapitres);
+  const avancee = avanceeDuChapitre(courant, maintenant);
+
+  // Position du repere sur la barre entiere : les chapitres deja clos, plus la
+  // part parcourue de celui en cours.
+  let reperePct: number | null = null;
+  if (courant && avancee !== null) {
+    const avant = chapitres.slice(0, chapitres.indexOf(courant)).reduce((s, c) => s + c.annees, 0);
+    reperePct = ((avant + avancee * courant.annees) / total) * 100;
+  }
+
+  return (
+    <div className="mt-5">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-text-body-subtle">
+        {t("resume.vie_arc", locale)}
+      </p>
+
+      {/* La barre. Chaque segment large comme sa duree. */}
+      <div
+        className="relative mt-2.5 flex h-2 w-full overflow-hidden rounded-full"
+        style={{ background: "var(--border-base)" }}
+        data-arc-total={total}
+      >
+        {chapitres.map((c, i) => (
+          <motion.div
+            key={`${c.debut}-${c.maison}`}
+            className="h-full"
+            style={{
+              width: `${(c.annees / total) * 100}%`,
+              background: c.encours ? "var(--text-heading)" : "var(--text-body-subtle)",
+              opacity: c.encours ? 1 : 0.34,
+              borderRight: i < chapitres.length - 1 ? "1.5px solid var(--bg-secondary)" : undefined,
+              // Le segment pousse depuis sa gauche. Sans cette origine, `scaleX`
+              // le fait grandir depuis son centre et toute la barre se construit
+              // en s ecartant du milieu, ce qui ne raconte pas le temps.
+              transformOrigin: "left",
+            }}
+            data-arc-segment={c.maison}
+            initial={fige ? false : { scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true, amount: 0.6 }}
+            transition={{ ...ENTREE, delay: CASCADE * i }}
+          />
+        ))}
+
+        {reperePct !== null ? (
+          <div
+            className="absolute top-0 h-full"
+            style={{
+              left: `${reperePct}%`,
+              width: 2,
+              background: "var(--bg-secondary)",
+              boxShadow: "0 0 0 1px var(--text-heading)",
+            }}
+            data-arc-repere={Math.round(reperePct)}
+          />
+        ) : null}
+      </div>
+
+      {/* Le detail, un mouvement par ligne. */}
+      <div className="mt-3 space-y-2">
+        {chapitres.map((c, i) => (
+          <motion.div
+            key={`t-${c.debut}-${c.maison}`}
+            className="flex items-baseline justify-between gap-3"
+            initial={fige ? false : { opacity: 0, x: -6 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.6 }}
+            transition={{ ...ENTREE, delay: CASCADE * i }}
+            data-arc-ligne={c.maison}
+          >
+            <span
+              className={`min-w-0 truncate text-[13px] ${c.encours ? "font-semibold text-text-heading" : "text-text-body"}`}
+            >
+              {c.domaine}
+              {c.encours ? (
+                <span className="ml-2 text-[11px] font-normal text-text-body-subtle">
+                  {t("resume.vie_arc_encours", locale)}
+                </span>
+              ) : null}
+            </span>
+            <span className="shrink-0 text-[11px] tabular-nums text-text-body-subtle">
+              {c.finALHorizon
+                ? remplir(t("resume.vie_arc_depuis", locale), { a: c.ageDebut })
+                : remplir(t("resume.vie_arc_ages", locale), { a: c.ageDebut, b: c.ageFin })}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ResumeVie({
   resume,
   naissance,
   locale,
+  chapitresDeVie,
+  maintenant,
 }: {
   resume: ResumeDeVie;
   naissance: string;
   locale: Locale;
+  /**
+   * Les grands mouvements, quand la route allegee a repondu. Absents, l ecran
+   * garde exactement ce qu il montrait avant : l arc est un supplement, pas
+   * une dependance.
+   */
+  chapitresDeVie?: ChapitreDeVie[];
+  /**
+   * L instant de lecture, fige par l appelant.
+   *
+   * Requis, et pas `Date.now()` en valeur par defaut : lire l horloge pendant
+   * le rendu rend le composant impur — deux rendus du meme etat donneraient
+   * deux images differentes. La page le fige une fois dans un `useState`.
+   */
+  maintenant: number;
 }) {
   const fige = useReducedMotion();
   if (resume.vide) return null;
@@ -148,6 +288,10 @@ export function ResumeVie({
         <div className="mt-5">
           <Frise resume={resume} locale={locale} />
         </div>
+
+        {chapitresDeVie && chapitresDeVie.length > 0 ? (
+          <ArcDeVie chapitres={chapitresDeVie} locale={locale} maintenant={maintenant} />
+        ) : null}
 
         {/* Les chapitres : les tres longues periodes, avec l age de leur debut. */}
         {chapitres.length > 0 ? (

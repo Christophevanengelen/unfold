@@ -176,6 +176,32 @@ export async function brancherReseau(
       return json({ ok: true, messages: [] });
     }
 
+    if (chemin.endsWith("/api/chapitres")) {
+      /**
+       * Les quatre mouvements, recopies du VRAI paquet du 17/09/2026 apres
+       * allegement (thème du 27/09/1977, Bruxelles).
+       *
+       * Le quatrieme est conserve tel quel, avec son ecart voulu : il annonce
+       * quinze ans de duree et une date de fin quinze MOIS plus tard, parce
+       * que cette date est l horizon de calcul du moteur. C est exactement le
+       * cas que `finALHorizon` doit attraper ; une fixture « propre » rendrait
+       * le test incapable d echouer.
+       */
+      return json({
+        success: true,
+        periodes: [
+          { level: 1, startDate: "1977-09-26T23:00:00.000Z", endDate: "2004-05-07T22:00:00.000Z",
+            duration: 27, durationUnit: "years", housePlacement: { house: 7 } },
+          { level: 1, startDate: "2004-05-07T22:00:00.000Z", endDate: "2033-12-01T23:00:00.000Z",
+            duration: 30, durationUnit: "years", housePlacement: { house: 8 } },
+          { level: 1, startDate: "2033-12-01T23:00:00.000Z", endDate: "2045-09-29T22:00:00.000Z",
+            duration: 12, durationUnit: "years", housePlacement: { house: 9 } },
+          { level: 1, startDate: "2045-09-29T22:00:00.000Z", endDate: "2046-12-31T22:59:59.000Z",
+            duration: 15, durationUnit: "years", housePlacement: { house: 10 } },
+        ],
+      });
+    }
+
     if (chemin.endsWith("/api/openai/daily-brief")) {
       // L ANCIEN briefing, servi valide.
       //

@@ -159,6 +159,74 @@ test.describe("le resume d une vie", () => {
     ).toBeGreaterThan(0.25);
   });
 
+  test("l arc dessine les mouvements a l echelle de leur duree", async ({ page }) => {
+    await aller(page, "/app/vie");
+
+    // L arc arrive apres le reste : il attend le moteur.
+    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
+
+    const arc = await page.evaluate(() => {
+      const barre = document.querySelector("[data-arc-total]") as HTMLElement | null;
+      if (!barre) return null;
+      // `offsetWidth` et non `getBoundingClientRect()` : les segments entrent
+      // en `scaleX`, et le rectangle client rend la boite APRES transformation.
+      // Mesure prise pendant l animation : 0,1 % au lieu de 32 %. La largeur de
+      // mise en page, elle, porte le fait qu on teste et ignore la transition.
+      const large = barre.offsetWidth;
+      const segments = [...barre.querySelectorAll("[data-arc-segment]")].map((e) => ({
+        maison: Number(e.getAttribute("data-arc-segment")),
+        part: (e as HTMLElement).offsetWidth / large,
+      }));
+      return { total: Number(barre.getAttribute("data-arc-total")), segments };
+    });
+
+    expect(arc, "l arc ne s est pas dessine").not.toBeNull();
+    // 27 + 30 + 12 + 15 dans la fixture : la DUREE annoncee, pas la
+    // soustraction des dates, qui donnerait 27 + 30 + 12 + 1.
+    expect(arc!.total, "la duree totale ne vient pas de duration").toBe(84);
+    expect(arc!.segments.map((s) => s.maison)).toEqual([7, 8, 9, 10]);
+
+    // Chaque segment large comme sa duree : c est ce qui fait que la barre est
+    // une vie a l echelle et pas quatre cases egales. Une tolerance d un point
+    // absorbe les bordures d un pixel et demi entre les blocs.
+    const attendu = [27 / 84, 30 / 84, 12 / 84, 15 / 84];
+    arc!.segments.forEach((seg, i) => {
+      expect(
+        Math.abs(seg.part - attendu[i]),
+        `segment ${i} : ${(seg.part * 100).toFixed(1)} % au lieu de ${(attendu[i] * 100).toFixed(1)} %`,
+      ).toBeLessThan(0.02);
+    });
+  });
+
+  test("le dernier mouvement ne se ferme pas sur l horizon du moteur", async ({ page }) => {
+    await aller(page, "/app/vie");
+    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
+
+    // La quatrieme ligne porte la maison 10. Sa date de fin dans le paquet est
+    // l horizon de calcul, pas la fin du chapitre : l ecran doit ecrire « a
+    // partir de », jamais une fourchette fermee qui serait fausse de 14 ans.
+    const ligne = page.locator("[data-arc-ligne='10']");
+    await expect(ligne).toBeVisible();
+    await expect(ligne).toContainText(/from \d+ onwards/i);
+
+    // Les trois autres sont fermes pour de bon.
+    for (const maison of [7, 8, 9]) {
+      await expect(page.locator(`[data-arc-ligne='${maison}']`)).toContainText(/\d+ to \d+/);
+    }
+  });
+
+  test("aucun nom de technique dans les mouvements", async ({ page }) => {
+    await aller(page, "/app/vie");
+    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
+
+    // La regle de silence du produit. Le paquet du moteur porte tous ces mots ;
+    // la route les jette avant qu ils partent, et ce test le prouve a l ecran.
+    const texte = await page.evaluate(() => document.body.innerText);
+    for (const jargon of [/zodiacal/i, /releasing/i, /\blot of\b/i, /fortune/i, /capricorn/i, /aquarius/i, /\bruler\b/i]) {
+      expect(texte, `nom de technique a l ecran : ${jargon}`).not.toMatch(jargon);
+    }
+  });
+
   test("aucun jugement sur une vie", async ({ page }) => {
     await aller(page, "/app/vie");
     await expect(page.getByText(/periods, across|period, across/i)).toBeVisible({ timeout: 20_000 });

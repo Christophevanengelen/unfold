@@ -58,6 +58,7 @@ const CONTROLES = [
   { nom: "Empreinte generative", cmd: ["node", ["--experimental-strip-types", "scripts/verifier-empreinte.mjs"]] },
   { nom: "Resumes jour et vie", cmd: ["node", ["--experimental-strip-types", "scripts/verifier-resumes.mjs"]] },
   { nom: "Couleur du texte saisi", cmd: ["node", ["scripts/verifier-couleur-texte.mjs"]] },
+  { nom: "Chapitres de vie", cmd: ["node", ["scripts/verifier-chapitres.mjs"]] },
 ];
 
 /**

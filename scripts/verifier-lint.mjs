@@ -25,6 +25,28 @@
 
 import { execFileSync } from "node:child_process";
 
+/**
+ * On ne linte QUE ce que git suit.
+ *
+ * Elargir le controle a tout le depot le 17/09 a d abord fait lire ios/ et
+ * android/, ou Capacitor recopie l export compile. Ecartes dans
+ * eslint.config.mjs, ils ont ete suivis le meme jour par e2e/.rapport/, le
+ * rapport HTML que Playwright venait d ecrire — 259 erreurs d un coup, dont
+ * 186 dans le code minifie de son propre visualiseur.
+ *
+ * Ecarter les dossiers un par un est une course perdue : chaque outil ajoute
+ * le sien, et le controle ne tombe qu APRES avoir tourne. La question n est
+ * pas « quels dossiers exclure » mais « qu est-ce qui est a nous » — et git le
+ * sait deja. Tout ce qui est engendre est dans un .gitignore, y compris celui
+ * de e2e/ qu une liste centrale aurait oublie.
+ */
+function fichiersSuivis() {
+  const sortie = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  return sortie
+    .split("\0")
+    .filter((f) => /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(f));
+}
+
 const PLAFOND = 0;
 
 /**
@@ -45,7 +67,7 @@ const PLAFOND_REGLE = 13;
 
 let sortie = "[]";
 try {
-  sortie = execFileSync("npx", ["eslint", ".", "-f", "json"], {
+  sortie = execFileSync("npx", ["eslint", "--no-warn-ignored", "-f", "json", ...fichiersSuivis()], {
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
   });
