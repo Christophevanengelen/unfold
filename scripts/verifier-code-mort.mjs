@@ -33,7 +33,21 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 
-const PLAFOND = 7;
+const PLAFOND = 1;
+
+/**
+ * Descendu de 7 a 1 le 17/09/2026. Mille neuf cents lignes retirees en deux
+ * passes : supprimer SignalPager a rendu orphelins six composants qu il etait
+ * seul a importer, puis AnimatedNumber — le compteur qui montait de 0 au score,
+ * retire du rapport parce qu aucune des deux polices de la marque n a de
+ * chiffres tabulaires et que le nombre sautait lateralement.
+ *
+ * LE UN QUI RESTE EST VOULU : components/legal/CookieConsent.tsx.
+ * verifier-consentement.mjs s appuie sur ce chemin. La banniere doit exister
+ * AVANT qu un traceur soit branche, sinon la promesse ecrite dans
+ * lib/legal-content.ts devient fausse en silence. Ne pas la supprimer pour
+ * faire tomber le compte a zero.
+ */
 
 const fichiers = execFileSync("git", ["ls-files", "components", "app", "lib"], {
   encoding: "utf8",

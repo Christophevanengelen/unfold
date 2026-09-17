@@ -40,6 +40,17 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: android-actions/setup-android@v3
+        with:
+          # `packages: ''` desactive l installation par defaut de l action.
+          #
+          # Sa liste par defaut commence par `tools`, un paquet RETIRE du SDK
+          # Android : sdkmanager repond « Failed to find package 'tools' » et
+          # sort en erreur avant meme que le depot soit construit. C est la
+          # cause des trois derniers APK rouges — rien a voir avec le code.
+          #
+          # Gradle telecharge de lui-meme la plateforme et les build-tools que
+          # le projet declare. Il n y a rien a pre-installer.
+          packages: ''
       - run: npm ci
       - run: bash scripts/build-native.sh
         env:
