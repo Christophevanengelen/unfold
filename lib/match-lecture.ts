@@ -232,7 +232,26 @@ export function lireMatch(brut: unknown): LectureMatch | null {
   const nuances: Dimension[] = [
     attraction,
     dimensionSiChiffre("rapport.d_comprehension", m.generalUnderstanding?.score),
-    dimensionSiChiffre("rapport.d_engagement", m.exclusive?.score),
+    /**
+     * `exclusive` EST RETIRE DE L AFFICHAGE, le 17/09/2026.
+     *
+     * Mesure sur quatorze couples tires au hasard entre 1950 et 2005 :
+     * `exclusive.score` vaut 30 QUATORZE FOIS SUR QUATORZE, avec le libelle
+     * « Challenging » a chaque fois — pendant que `person1Score` et
+     * `person2Score`, eux, varient de 0,9 a 12,8.
+     *
+     * Le calcul sous-jacent fonctionne donc ; c est l agregat qui est fige.
+     *
+     * Une dimension qui rend la meme valeur pour tout le monde ne porte AUCUNE
+     * information, et celle-ci dit « faible » a chaque lecteur. C est le pire
+     * des deux mondes : ca n apprend rien et ca juge.
+     *
+     * On ne la montre pas tant qu elle ne varie pas. Le champ reste lu — le
+     * jour ou il bouge, il suffit de retirer ce commentaire.
+     *
+     * Signale a Marie-Ange dans le rapport du 17/09.
+     */
+    // dimensionSiChiffre("rapport.d_engagement", m.exclusive?.score),
     // `gift` n a plus de score depuis le 17/09 : il se lit dans les deux sens,
     // et se trouve desormais dans `cadeaux`.
     dimensionSiChiffre("rapport.d_generosite", m.gift?.score),
