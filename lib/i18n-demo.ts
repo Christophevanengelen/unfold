@@ -315,6 +315,7 @@ type Strings = {
     branche_prochaines_aide: string;
     branche_prochaines_rien: string;
     branche_ici: string; branche_fermer: string; branche_ouverte: string; branche_fleurit: string; branche_encore: string; branche_tache_fleur: string;
+    branche_naissance: string; branche_avenir: string; branche_graine_avant: string; branche_graine_apres: string; branche_filtres: string;
   };
   boudin: {
     titre: string;
@@ -724,6 +725,11 @@ const FR: Strings = {
     branche_fleurit: "fleurit {b}, {n} plus tard",
     branche_encore: "encore ouverte — la brindille s'allonge d'un jour par jour",
     branche_tache_fleur: "La tache est l'ouverture, la fleur l'aboutissement ; la brindille entre les deux, c'est la durée.",
+    branche_naissance: "La naissance",
+    branche_avenir: "Les années devant toi. Le papier reste nu.",
+    branche_graine_avant: "Graine précédente",
+    branche_graine_apres: "Graine suivante",
+    branche_filtres: "Les domaines montrés",
   },
   boudin: {
     titre: "Timeline de vie",
@@ -1133,6 +1139,11 @@ const EN: Strings = {
     branche_fleurit: "blooms {b}, {n} later",
     branche_encore: "still open — the twig grows one day at a time",
     branche_tache_fleur: "The stain is the opening, the flower the outcome; the twig between them is the duration.",
+    branche_naissance: "Birth",
+    branche_avenir: "The years ahead of you. The paper stays bare.",
+    branche_graine_avant: "Previous seed",
+    branche_graine_apres: "Next seed",
+    branche_filtres: "Which domains are shown",
   },
   boudin: {
     titre: "Lifetime timeline",
@@ -1542,6 +1553,11 @@ const ES: Strings = {
     branche_fleurit: "florece {b}, {n} después",
     branche_encore: "aún abierta — la ramita crece un día cada día",
     branche_tache_fleur: "La mancha es la apertura, la flor el desenlace; la ramita entre ambas es la duración.",
+    branche_naissance: "El nacimiento",
+    branche_avenir: "Los años que tienes delante. El papel queda desnudo.",
+    branche_graine_avant: "Semilla anterior",
+    branche_graine_apres: "Semilla siguiente",
+    branche_filtres: "Los dominios mostrados",
   },
   boudin: {
     titre: "Línea de tiempo de vida",
@@ -1951,6 +1967,11 @@ const DE: Strings = {
     branche_fleurit: "blüht {b}, {n} später",
     branche_encore: "noch offen — der Zweig wächst Tag für Tag",
     branche_tache_fleur: "Der Fleck ist der Beginn, die Blüte das Ergebnis; der Zweig dazwischen ist die Dauer.",
+    branche_naissance: "Die Geburt",
+    branche_avenir: "Die Jahre vor dir. Das Papier bleibt leer.",
+    branche_graine_avant: "Vorheriges Saatkorn",
+    branche_graine_apres: "Nächstes Saatkorn",
+    branche_filtres: "Angezeigte Bereiche",
   },
   boudin: {
     titre: "Lebens-Zeitleiste",
@@ -2360,6 +2381,11 @@ const IT: Strings = {
     branche_fleurit: "fiorisce {b}, {n} dopo",
     branche_encore: "ancora aperta — il rametto cresce un giorno alla volta",
     branche_tache_fleur: "La macchia è l'apertura, il fiore l'esito; il rametto tra i due è la durata.",
+    branche_naissance: "La nascita",
+    branche_avenir: "Gli anni davanti a te. La carta resta nuda.",
+    branche_graine_avant: "Seme precedente",
+    branche_graine_apres: "Seme successivo",
+    branche_filtres: "I domini mostrati",
   },
   boudin: {
     titre: "Timeline di vita",
@@ -2769,6 +2795,11 @@ const PT: Strings = {
     branche_fleurit: "floresce {b}, {n} depois",
     branche_encore: "ainda aberta — o raminho cresce um dia de cada vez",
     branche_tache_fleur: "A mancha é a abertura, a flor o desfecho; o raminho entre as duas é a duração.",
+    branche_naissance: "O nascimento",
+    branche_avenir: "Os anos à tua frente. O papel fica nu.",
+    branche_graine_avant: "Semente anterior",
+    branche_graine_apres: "Semente seguinte",
+    branche_filtres: "Os domínios mostrados",
   },
   boudin: {
     titre: "Linha do tempo de vida",
@@ -3178,6 +3209,11 @@ const NL: Strings = {
     branche_fleurit: "bloeit {b}, {n} later",
     branche_encore: "nog open — het twijgje groeit dag na dag",
     branche_tache_fleur: "De vlek is de opening, de bloem de uitkomst; het twijgje ertussen is de duur.",
+    branche_naissance: "De geboorte",
+    branche_avenir: "De jaren die voor je liggen. Het papier blijft leeg.",
+    branche_graine_avant: "Vorig zaadje",
+    branche_graine_apres: "Volgend zaadje",
+    branche_filtres: "Welke domeinen te zien zijn",
   },
   boudin: {
     titre: "Levenstijdlijn",
@@ -3587,6 +3623,11 @@ const JA: Strings = {
     branche_fleurit: "{b}に咲く、{n}後",
     branche_encore: "まだ開いている — 小枝は一日ずつ伸びる",
     branche_tache_fleur: "染みは始まり、花は実り。その間の小枝が、期間です。",
+    branche_naissance: "誕生",
+    branche_avenir: "これからの歳月。紙はまだ白いまま。",
+    branche_graine_avant: "前の種",
+    branche_graine_apres: "次の種",
+    branche_filtres: "表示する領域",
   },
   boudin: {
     titre: "生涯タイムライン",
@@ -3996,6 +4037,11 @@ const ZH: Strings = {
     branche_fleurit: "{b}绽放，{n}之后",
     branche_encore: "仍在进行 — 小枝一天一天生长",
     branche_tache_fleur: "墨点是开端，花是结果；两者之间的小枝，就是这段时间。",
+    branche_naissance: "出生",
+    branche_avenir: "你前方的岁月。纸仍是空白。",
+    branche_graine_avant: "上一颗种子",
+    branche_graine_apres: "下一颗种子",
+    branche_filtres: "显示哪些领域",
   },
   boudin: {
     titre: "一生时间线",
@@ -4405,6 +4451,11 @@ const AR: Strings = {
     branche_fleurit: "تزهر {b}، بعد {n}",
     branche_encore: "ما زالت مفتوحة — الغصين ينمو يومًا بعد يوم",
     branche_tache_fleur: "البقعة هي البداية، والزهرة هي الثمرة؛ والغصين بينهما هو المدة.",
+    branche_naissance: "الميلاد",
+    branche_avenir: "السنوات التي أمامك. تبقى الورقة خالية.",
+    branche_graine_avant: "البذرة السابقة",
+    branche_graine_apres: "البذرة التالية",
+    branche_filtres: "المجالات المعروضة",
   },
   boudin: {
     titre: "الجدول الزمني للحياة",

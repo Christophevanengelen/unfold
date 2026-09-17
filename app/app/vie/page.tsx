@@ -179,7 +179,6 @@ export default function ViePage() {
               resume={resume}
               locale={locale}
               maintenant={maintenant}
-              chapitres={chapitresDeVie ?? undefined}
               phasesAnnee={phases}
               phasesVie={timelinePhases}
             />
