@@ -119,6 +119,7 @@ type Strings = {
   };
   nav: {
     timeline: string;
+    vie: string;
     match: string;
     profile: string;
   };
@@ -366,6 +367,7 @@ const FR: Strings = {
   },
   nav: {
     timeline: "Timeline",
+    vie: "Ma vie",
     match: "Match",
     profile: "Profil",
   },
@@ -732,6 +734,7 @@ const EN: Strings = {
   },
   nav: {
     timeline: "Timeline",
+    vie: "My life",
     match: "Match",
     profile: "Profile",
   },
@@ -1098,6 +1101,7 @@ const ES: Strings = {
   },
   nav: {
     timeline: "Línea de tiempo",
+    vie: "Mi vida",
     match: "Match",
     profile: "Perfil",
   },
@@ -1464,6 +1468,7 @@ const DE: Strings = {
   },
   nav: {
     timeline: "Zeitleiste",
+    vie: "Mein Leben",
     match: "Match",
     profile: "Profil",
   },
@@ -1830,6 +1835,7 @@ const IT: Strings = {
   },
   nav: {
     timeline: "Timeline",
+    vie: "La mia vita",
     match: "Match",
     profile: "Profilo",
   },
@@ -2196,6 +2202,7 @@ const PT: Strings = {
   },
   nav: {
     timeline: "Linha do tempo",
+    vie: "A minha vida",
     match: "Match",
     profile: "Perfil",
   },
@@ -2562,6 +2569,7 @@ const NL: Strings = {
   },
   nav: {
     timeline: "Tijdlijn",
+    vie: "Mijn leven",
     match: "Match",
     profile: "Profiel",
   },
@@ -2928,6 +2936,7 @@ const JA: Strings = {
   },
   nav: {
     timeline: "タイムライン",
+    vie: "人生",
     match: "マッチ",
     profile: "プロフィール",
   },
@@ -3294,6 +3303,7 @@ const ZH: Strings = {
   },
   nav: {
     timeline: "时间线",
+    vie: "人生",
     match: "匹配",
     profile: "个人资料",
   },
@@ -3660,6 +3670,7 @@ const AR: Strings = {
   },
   nav: {
     timeline: "الجدول الزمني",
+    vie: "حياتي",
     match: "مطابقة",
     profile: "الملف الشخصي",
   },

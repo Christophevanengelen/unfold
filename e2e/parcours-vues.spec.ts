@@ -80,6 +80,57 @@ test.describe("bascule timeline / liste", () => {
     await expect(page.locator('[data-guide="capsule"]').first()).toBeHidden();
   });
 
+  test("la periode en cours se distingue par la NETTETE, pas par la lueur", async ({ page }) => {
+    /**
+     * Christophe, le 17/09 : « le halo lumineux des cercles actifs, on les
+     * confond avec ceux du futur ».
+     *
+     * Il avait raison, et la cause etait mesurable : la periode en cours
+     * portait `0 0 16px` a 20 % — une lueur diffuse — pendant que les periodes
+     * a venir portent `blur(2px)`. DEUX TRAITEMENTS FLOUS. L oeil ne separe
+     * pas deux flous ; il separe le net du flou.
+     *
+     * Ce test verrouille l inversion : la periode en cours n a AUCUN flou et
+     * porte un lisere franc ; les periodes a venir gardent le leur. Reposer une
+     * lueur sur la capsule en cours le fera echouer.
+     */
+    await ouvrirTimeline(page);
+    await page.waitForTimeout(1500);
+
+    const mesures = await page.evaluate(() => {
+      const courant = document.querySelector("[data-guide-courant='1']") as HTMLElement | null;
+      const toutes = [...document.querySelectorAll("[data-guide='capsule']")] as HTMLElement[];
+      const futures = toutes.filter((e) => e !== courant && getComputedStyle(e).filter !== "none");
+      if (!courant) return null;
+      const s = getComputedStyle(courant);
+      return {
+        filtreCourant: s.filter,
+        ombreCourant: s.boxShadow,
+        repere: !!courant.querySelector("span[aria-hidden]"),
+        nbFutursFlous: futures.length,
+      };
+    });
+
+    expect(mesures, "aucune periode en cours a l ecran").not.toBeNull();
+
+    // La nettete : aucun flou sur la periode ouverte.
+    expect(mesures!.filtreCourant, "la periode en cours est floutee").toMatch(/^none$/);
+
+    // Un lisere INTERIEUR, franc. Une lueur s ecrit sans `inset` et avec un
+    // rayon de flou ; un lisere s ecrit avec `inset` et un rayon nul.
+    expect(mesures!.ombreCourant, "la periode en cours n a pas de lisere franc").toContain("inset");
+    expect(
+      mesures!.ombreCourant,
+      `lueur diffuse revenue sur la periode en cours : ${mesures!.ombreCourant}`,
+    ).not.toMatch(/(?<!inset.*)\b(1[0-9]|[2-9][0-9])px\b/);
+
+    // Le repere qui bat.
+    expect(mesures!.repere, "le repere « en ce moment » a disparu").toBe(true);
+
+    // Et le flou reste la marque du futur, sinon la distinction n existe plus.
+    expect(mesures!.nbFutursFlous, "plus aucune periode a venir n est floutee").toBeGreaterThan(0);
+  });
+
   test("en theme clair comme en sombre, la liste montre la periode en cours", async ({ page }) => {
     // Le titre de la ligne en cours a ete blanc EN DUR : lisible en sombre,
     // invisible en clair (1,1 de contraste). Le controle de contraste ne le

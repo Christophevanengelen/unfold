@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import Link from "next/link";
-import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye, TrashBin, Bell, ChartMixedDollar } from "flowbite-react-icons/outline";
+import { User, Sun, Moon, AdjustmentsHorizontal, ArrowRightToBracket, ArrowLeftToBracket, CalendarEdit, Globe, Eye, TrashBin, Bell } from "flowbite-react-icons/outline";
 import { BottomSheet } from "@/components/demo/primitives";
 import { useMomentum } from "@/lib/momentum-store";
 import { PersonalizeFlow } from "@/components/demo/PersonalizeFlow";
@@ -308,18 +307,9 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             </button>
           )}
 
-          {/* Ta vie entiere. Elle vit sur son propre ecran : ce resume ne change
-              pas d un jour a l autre, il a besoin de place, pas d une boite. */}
-          <Link
-            href="/app/vie"
-            onClick={onClose}
-            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
-          >
-            <span className="flex items-center gap-2.5">
-              <ChartMixedDollar size={16} className="text-text-body-subtle" />
-              {t("resume.vie_eyebrow", locale)}
-            </span>
-          </Link>
+          {/* « Ta vie entiere » est partie d ici le 17/09 : le profil, ce sont
+              les reglages, et une vie entiere n est pas un reglage. Elle a son
+              onglet dans la barre du bas. */}
 
           {/* Language picker */}
           <button

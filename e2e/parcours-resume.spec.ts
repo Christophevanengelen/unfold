@@ -159,6 +159,31 @@ test.describe("le resume d une vie", () => {
     ).toBeGreaterThan(0.25);
   });
 
+  test("on y arrive par la barre du bas, et le clic navigue vraiment", async ({ page }) => {
+    await ouvrirTimeline(page);
+
+    /**
+     * Le defaut du 17/09, signale par Christophe : « quand on clique sur Ta
+     * vie entiere, ca ne marche pas ».
+     *
+     * L ecran vivait dans le tiroir profil, derriere un <Link> dont le onClick
+     * fermait le tiroir. La feuille se demontait AVANT que le routeur traite le
+     * clic, donc l ancre disparaissait et la navigation etait annulee — sans
+     * une erreur nulle part, l URL restait simplement la meme.
+     *
+     * Ce test verifie les deux choses d un coup : que l entree est dans la
+     * barre du bas, et que le clic change VRAIMENT d ecran. Verifier la
+     * presence du lien n aurait rien prouve : il etait bien present, et bien
+     * visible, et il ne faisait rien.
+     */
+    const onglet = page.getByRole("link", { name: /my life|ma vie/i });
+    await expect(onglet, "l entree « Ma vie » manque dans la barre du bas").toHaveCount(1);
+
+    await onglet.first().click();
+    await expect(page, "le clic n a pas change d ecran").toHaveURL(/\/app\/vie/);
+    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
+  });
+
   test("l arc dessine les mouvements a l echelle de leur duree", async ({ page }) => {
     await aller(page, "/app/vie");
 
@@ -212,6 +237,31 @@ test.describe("le resume d une vie", () => {
     // Les trois autres sont fermes pour de bon.
     for (const maison of [7, 8, 9]) {
       await expect(page.locator(`[data-arc-ligne='${maison}']`)).toContainText(/\d+ to \d+/);
+    }
+  });
+
+  test("aucun age negatif dans les mouvements", async ({ page }) => {
+    await aller(page, "/app/vie");
+    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
+
+    /**
+     * Une vie commence a zero.
+     *
+     * Le premier chapitre demarre a la naissance, mais pas a la meme seconde
+     * que la date qu on a en magasin : le moteur l ecrit en UTC, on la lit en
+     * heure locale. Quelques heures d ecart suffisent a faire basculer
+     * l arrondi et a afficher « -1 a 26 ans ». Vu a l ecran le 17/09.
+     *
+     * On lit les nombres de chaque ligne plutot que la mise en forme : le
+     * signe moins reste un signe moins dans les dix langues.
+     */
+    const lignes = await page.evaluate(() =>
+      [...document.querySelectorAll("[data-arc-ligne]")].map((e) => (e as HTMLElement).innerText),
+    );
+
+    expect(lignes.length, "aucune ligne de mouvement").toBeGreaterThan(0);
+    for (const ligne of lignes) {
+      expect(ligne, `age negatif a l ecran : ${ligne}`).not.toMatch(/-\s*\d/);
     }
   });
 

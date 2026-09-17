@@ -127,7 +127,25 @@ export function lireLesChapitres(
     const finALHorizon =
       anneesSelonDates !== null && Math.abs(anneesSelonDates - annees) > ECART_TOLERE_ANNEES;
 
-    const ageDebut = Math.floor((debut - naissance) / AN);
+    /**
+     * L age au debut, jamais negatif.
+     *
+     * Le premier chapitre commence a la naissance, mais pas a la meme SECONDE
+     * que celle qu on a en magasin. Le moteur rend `1977-09-26T23:00:00.000Z`
+     * pour une naissance le 27/09 a minuit a Bruxelles : c est le meme instant,
+     * ecrit en UTC. Notre date de naissance, elle, est lue en heure locale de
+     * l appareil.
+     *
+     * Sur un telephone regle sur un autre fuseau, la soustraction passe de
+     * quelques heures sous zero et `Math.floor` rend -1. L ecran affichait
+     * alors « -1 a 26 ans ». Un age negatif est une absurdite, et il apparait
+     * pour une raison qu aucune donnee ne trahit : le calcul est juste, c est
+     * l arrondi qui bascule.
+     *
+     * On borne a zero plutot que d aligner les deux fuseaux : la duree fait
+     * foi, et une vie commence a zero.
+     */
+    const ageDebut = Math.max(0, Math.floor((debut - naissance) / AN));
 
     // « En cours » se lit sur la duree annoncee, pas sur la date de fin : le
     // dernier chapitre est justement celui dont la date de fin ment.

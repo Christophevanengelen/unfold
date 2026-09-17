@@ -1,6 +1,7 @@
 "use client";
 
 import { getTier as getTierCapsules } from "@/lib/capsules";
+import { TierPulse } from "@/components/demo/compat/TierPulse";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, startTransition } from "react";
 
 /**
@@ -790,8 +791,19 @@ function OverviewView({
                 background: `color-mix(in srgb, ${hc ?? "var(--accent-purple)"} ${capsule.isCurrent ? "20" : "13"}%, transparent)`,
                 backdropFilter: "blur(8px)",
                 WebkitBackdropFilter: "blur(8px)",
+                // PLUS DE HALO SUR LA PERIODE EN COURS.
+                //
+                // Elle portait `0 0 16px` a 20 % — une lueur diffuse. Les
+                // periodes a venir, elles, portent `blur(2px)` et 40 %
+                // d opacite. Les deux traitements sont FLOUS : a l ecran, la
+                // periode ouverte et celles qui ne le sont pas encore se
+                // ressemblaient, et on ne savait plus sur laquelle appuyer.
+                //
+                // Ce qui les separe maintenant est la NETTETE, pas la
+                // luminosite : un lisere franc d 1,5 px ici, et une pastille
+                // qui bat au capuchon. Le flou ne designe plus que le futur.
                 boxShadow: capsule.isCurrent
-                  ? `0 0 16px color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 20%, transparent)`
+                  ? `inset 0 0 0 1.5px color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 85%, transparent)`
                   : "none",
                 filter: capsule.isFuture ? "blur(2px)" : "none",
                 opacity: capsule.isFuture ? 0.4 : 1,
@@ -799,15 +811,23 @@ function OverviewView({
               }}
               whileTap={{ scale: 0.95 }}
             >
+              {/* La pastille qui bat — « c est ici, maintenant ».
+                  
+                  Le meme objet que dans Match autour de l avatar, et le meme
+                  composant : un point plein plus un anneau qui s etend. Un
+                  seul langage pour « en ce moment » dans toute l app.
+                  
+                  Posee au capuchon HAUT : c est par la que la periode entre
+                  dans le present, et c est le bord que l oeil rencontre en
+                  descendant la colonne.
+                  
+                  La regle globale de « reduire les animations » arrete
+                  l anneau ; le point plein reste, et avec lui le lisere franc
+                  de la capsule. Rien de ce qui DESIGNE ne depend du mouvement. */}
               {capsule.isCurrent && (
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    borderRadius: w / 2,
-                    background:
-                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
-                  }}
-                />
+                <div className="pointer-events-none absolute left-1/2 -translate-x-1/2" style={{ top: 5 }}>
+                  <TierPulse color={hc ?? "var(--accent-purple)"} size={7} creux />
+                </div>
               )}
               {/* Content block — anchored at bottom inside rounded cap */}
               <div
