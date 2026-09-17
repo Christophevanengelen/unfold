@@ -24,7 +24,6 @@
  */
 
 import { motion, useReducedMotion } from "motion/react";
-import { EyebrowLabel } from "@/components/demo/primitives";
 import { STRINGS_MATCH_DOMAINES, t, type Locale } from "@/lib/i18n-demo";
 import { DOMAINE } from "@/lib/score-match";
 import { CASCADE, ENTREE } from "@/lib/ressorts";
@@ -266,25 +265,9 @@ export function ResumeVie({
       />
 
       <div className="relative">
-        <EyebrowLabel color="var(--text-body-subtle)">{t("resume.vie_eyebrow", locale)}</EyebrowLabel>
-
-        <motion.p
-          className="mt-2.5 text-[26px] leading-[1.12]"
-          style={{
-            fontFamily: "var(--font-titre)",
-            fontWeight: 300,
-            letterSpacing: "-0.02em",
-            color: "var(--text-heading)",
-            textWrap: "balance",
-          }}
-          initial={fige ? false : { opacity: 0, y: 8 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={ENTREE}
-        >
-          {remplir(t("resume.vie_titre", locale), { n: resume.total, age: resume.age })}
-        </motion.p>
-
+        {/* Le titre (eyebrow + phrase) vit desormais dans app/app/vie/page.tsx,
+            en plein ecran au-dessus de L OEUVRE. Le laisser ici aussi doublait
+            le texte a l ecran (ex: "3 periods, across 41 years." apparaissait deux fois). */}
         <div className="mt-5">
           <Frise resume={resume} locale={locale} />
         </div>
