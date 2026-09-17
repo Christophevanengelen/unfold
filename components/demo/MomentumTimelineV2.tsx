@@ -1485,6 +1485,21 @@ export function MomentumTimelineV2() {
     // memoisation verifiable.
   }, [openPremium, userIsPremium, setSelectedCapsule]);
 
+  /**
+   * Les durees de toutes les periodes, en jours.
+   *
+   * Elles servent a une seule chose : donner une echelle a la duree de celle
+   * qu on ouvre. Calculees ici parce que c est ici qu on les a toutes — la
+   * feuille, elle, n en connait qu une.
+   */
+  const dureesVoisines = useMemo(
+    () =>
+      allCapsules
+        .map((c) => (c.endDate.getTime() - c.startDate.getTime()) / 86400000)
+        .filter((j) => Number.isFinite(j) && j > 0),
+    [allCapsules],
+  );
+
   const handleAgeChange = useCallback((age: number) => {
     setVisibleAge(age);
   }, []);
@@ -1903,7 +1918,7 @@ export function MomentumTimelineV2() {
               style={{ background: "var(--voile-feuille)" }}
               onClick={() => setSelectedCapsule(null)}
             />
-            <CapsuleDetailSheet capsule={selectedCapsule} isFuture={selectedCapsule.isFuture} onClose={() => setSelectedCapsule(null)} onNavigateToCapsule={handleNavigateToCapsule} />
+            <CapsuleDetailSheet capsule={selectedCapsule} dureesVoisines={dureesVoisines} isFuture={selectedCapsule.isFuture} onClose={() => setSelectedCapsule(null)} onNavigateToCapsule={handleNavigateToCapsule} />
           </>
         )}
       </AnimatePresence>

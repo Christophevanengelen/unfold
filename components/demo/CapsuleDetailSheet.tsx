@@ -43,7 +43,7 @@ import { Clock, Fire, CalendarMonth, Lightbulb, ChevronDown, ArrowRight, ShareNo
 import { ShareSignalCard } from "./ShareSignalCard";
 import { TypewriterText } from "./TypewriterText";
 import { getPersonalizedText, type PersonalizedText } from "@/lib/openai-personalize";
-import { detectLocale } from "@/lib/i18n-demo";
+import { detectLocale, t } from "@/lib/i18n-demo";
 import { getUserProfileSync } from "@/lib/user-profile";
 import { getBirthDataSync } from "@/lib/birth-data";
 import { getObservedProfileSync, trackCapsuleOpen, trackDomainClick, trackDomainReadTime } from "@/lib/observed-profile";
@@ -51,6 +51,7 @@ import { buildEffectiveProfile, needsRefresh, getStaleFields } from "@/lib/effec
 import { FeedbackThumb } from "@/components/demo/FeedbackThumb";
 import { CielDuSignal } from "@/components/demo/CielDuSignal";
 import { GrilleDeVie } from "@/components/demo/GrilleDeVie";
+import { RegleDeDuree } from "@/components/demo/RegleDeDuree";
 import { chargerPositions, type Position } from "@/lib/positions-api";
 import { formatEuropeanDisplayDate } from "@/lib/european-date";
 import { PremiumBlur } from "@/components/demo/PremiumBlur";
@@ -157,11 +158,21 @@ function BannerIcon({ icon, size = 14 }: { icon: string; size?: number }) {
 // ─── Main Component ──────────────────────────────────────
 export function CapsuleDetailSheet({
   capsule,
+  dureesVoisines,
   isFuture,
   onClose,
   onNavigateToCapsule,
 }: {
   capsule: CapsuleData;
+  /**
+   * Les durees des autres periodes, en jours.
+   *
+   * Sans elles, « 1 mois 15 jours » est un chiffre sans echelle : le lecteur
+   * n a aucun moyen de savoir si c est beaucoup. Elles ne servent qu a ca, et
+   * la regle ne s affiche pas s il n y en a pas assez — mieux vaut le chiffre
+   * seul qu une echelle inventee.
+   */
+  dureesVoisines?: number[];
   isFuture?: boolean;
   onClose: () => void;
   onNavigateToCapsule?: (date: Date) => void;
@@ -608,6 +619,29 @@ export function CapsuleDetailSheet({
           <p className="mt-3 text-[13px] leading-[1.45]" style={{ color: "var(--text-body)" }}>
             {dateLabel} · {duration}
           </p>
+
+          {/* LA REGLE — « long » par rapport a quoi.
+
+              Le chiffre au-dessus ne dit rien tout seul. Ici le trait plein est
+              cette periode, le repere vertical la duree habituelle des autres.
+              On ne dit jamais « long » : on montre, et le lecteur peut
+              contredire le dessin. C est la definition d une illustration
+              honnete — l inverse d une jauge, qui dit remplissage, donc
+              performance, donc promesse. */}
+          {dureesVoisines && dureesVoisines.length > 0 ? (
+            <div className="mt-3 max-w-[260px]">
+              <RegleDeDuree
+                jours={
+                  (new Date(capsule.endDate ?? capsule.startDate).getTime() -
+                    new Date(capsule.startDate).getTime()) /
+                  86400000
+                }
+                voisines={dureesVoisines}
+                accent={houseColor}
+                libelleMediane={t("resume.duree_mediane", locale)}
+              />
+            </div>
+          ) : null}
         </div>
 
         {/* ── LE FILET — le seul de l ecran ──
