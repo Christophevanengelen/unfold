@@ -114,6 +114,12 @@ const PHRASE_FR = /["`]([A-ZÀ-Ü][a-zà-ÿ']+(?: [a-zà-ÿ'{}]+){2,})["`]/g;
 /** Ce qui n a pas a etre traduit. */
 const AUTORISES = [
   { motif: /^app\/(api|admin)\//, raison: "serveur et back-office" },
+  {
+    motif: /^app\/interne\//,
+    raison:
+      "zone protegee par mot de passe (meme garde que /admin), une seule " +
+      "personne interne y ecrit, en francais — pas un ecran produit",
+  },
   { motif: /^app\/app\/astro\//, raison: "outil interne AstroLearn" },
   {
     motif: /^app\/app\/compatibility\/test\//,

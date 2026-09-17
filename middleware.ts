@@ -50,6 +50,28 @@ export function middleware(request: NextRequest) {
     return applySecurityHeaders(NextResponse.next());
   }
 
+  // Zone interne (liaison Marie-Ange) — meme garde que /admin, fermee par
+  // defaut sans mot de passe configure. Voir la note juste au-dessus.
+  if (pathname.startsWith("/interne")) {
+    const liaisonPassword = process.env.LIAISON_PASSWORD;
+    if (!liaisonPassword) {
+      return new NextResponse("Not found", { status: 404, headers: securityHeaders });
+    }
+    {
+      const authHeader = request.headers.get("authorization");
+      if (!authHeader || !isValidBasicAuth(authHeader, liaisonPassword)) {
+        return new NextResponse("Authentication required", {
+          status: 401,
+          headers: {
+            "WWW-Authenticate": 'Basic realm="Unfold Interne"',
+            ...securityHeaders,
+          },
+        });
+      }
+    }
+    return applySecurityHeaders(NextResponse.next());
+  }
+
   // Skip public files, API routes, demo, and Next.js internals
   //
   // /unlock est ici parce qu elle n existe qu a la racine : la page vit dans
