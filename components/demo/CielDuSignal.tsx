@@ -88,10 +88,26 @@ export function CielDuSignal({
   positions,
   locale,
   dateLisible,
+  initiale,
 }: {
   positions: Position[] | null;
   locale: Locale;
   dateLisible: string;
+  /**
+   * L initiale de la personne, au centre.
+   *
+   * Christophe, le 17/09 : « si au centre c est le user, alors utilise
+   * l avatar pour qu il se reconnaisse ».
+   *
+   * Il a raison, et ca leve une ambiguite que j avais laissee : le Soleil
+   * etait au centre ET sur son anneau, deux fois la meme chose a deux
+   * endroits. Le centre n est pas un astre, c est le point de vue — les
+   * longitudes sont geocentriques, donc tout ce qu on voit est place PAR
+   * RAPPORT A QUELQU UN. Autant que ce soit lui.
+   *
+   * Absente, on retombe sur un point neutre plutot que d inventer une lettre.
+   */
+  initiale?: string | null;
 }) {
   const fige = useReducedMotion();
 
@@ -145,25 +161,37 @@ export function CielDuSignal({
           />
         ))}
 
-        {/* Le Soleil au centre : le repere visuel de l onboarding, avec sa
-            lueur a trois couches. Quand le Soleil fait partie du signal, il a
-            en plus son propre anneau et sa vraie longitude — il n est pas
-            represente deux fois pour la meme chose. */}
+        {/* AU CENTRE, LA PERSONNE — pas un astre.
+
+            L onboarding met un Soleil la, et il peut se le permettre : son
+            dessin est un exemple. Ici les longitudes sont GEOCENTRIQUES, donc
+            tout est place par rapport a un point de vue. Mettre le Soleil au
+            centre alors qu il a deja son anneau, c etait le representer deux
+            fois pour deux choses differentes.
+
+            Le disque garde la presence que le Soleil avait — meme taille, meme
+            halo doux — mais il porte une initiale. On se reconnait au milieu de
+            son propre ciel. */}
         <motion.div
-          className="absolute rounded-full"
+          className="absolute flex items-center justify-center rounded-full font-semibold"
           style={{
-            width: 14,
-            height: 14,
-            left: CENTRE - 7,
-            top: CENTRE - 7,
+            width: 30,
+            height: 30,
+            left: CENTRE - 15,
+            top: CENTRE - 15,
             zIndex: 20,
-            backgroundColor: planetConfig.sun.color,
-            boxShadow: `0 0 18px ${planetConfig.sun.color}90, 0 0 36px ${planetConfig.sun.color}55, 0 0 70px ${planetConfig.sun.color}25`,
+            fontSize: 13,
+            background: "var(--bg-brand)",
+            color: "var(--text-on-brand)",
+            boxShadow: "0 0 0 4px var(--bg-secondary), 0 0 26px color-mix(in srgb, var(--bg-brand) 45%, transparent)",
           }}
           initial={fige ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.6 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={fige ? { duration: 0 } : { delay: 0.2, duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-        />
+          aria-hidden="true"
+        >
+          {(initiale ?? "").slice(0, 1).toUpperCase()}
+        </motion.div>
 
         {/* Les planetes. Le conteneur fait le tour, le point contre-tourne pour
             rester droit — exactement la technique de l onboarding. */}

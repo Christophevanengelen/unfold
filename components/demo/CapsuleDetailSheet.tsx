@@ -520,6 +520,7 @@ export function CapsuleDetailSheet({
               positions={ciel}
               locale={locale}
               dateLisible={formatEuropeanDisplayDate(capsule.startDate)}
+              initiale={getBirthDataSync()?.nickname ?? null}
             />
           </div>
         ) : bandeDuJour ? (
