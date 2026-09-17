@@ -21,18 +21,22 @@
  * d ombre ajoutee, pas de cerne renforce. Voir la skill favorable-design.
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BottomSheet } from "./primitives/BottomSheet";
 import { useMessages, useNonLus, marquerToutLu, type Message } from "@/lib/messages";
 import { useLocale } from "@/lib/use-locale";
 import { perso } from "@/lib/perso-i18n";
+import { useMomentum } from "@/lib/momentum-store";
+import { lireLeJour, type ResumeDuJour } from "@/lib/resume-jour";
+import { ResumeJour } from "@/components/demo/resume/ResumeJour";
 import { S } from "@/lib/layout-constants";
 import type { Locale } from "@/lib/i18n-demo";
 
 // ─── Le bandeau de chaque message ────────────────────────────────────────────
 
 function bandeau(type: Message["type"], locale: Locale): string {
+  if (type === "resume_jour") return perso("messages.jour", locale);
   if (type === "briefing_jour") return perso("messages.jour", locale);
   if (type === "briefing_periode") return perso("messages.periode", locale);
   return perso("messages.notif", locale);
@@ -136,7 +140,19 @@ export function PastilleMessages({ onOuvrir }: { onOuvrir: () => void }) {
 
 // ─── Une ligne de la liste ───────────────────────────────────────────────────
 
-function LigneMessage({ message, locale }: { message: Message; locale: Locale }) {
+function LigneMessage({
+  message,
+  locale,
+  resumeDuJour,
+  naissance,
+}: {
+  message: Message;
+  locale: Locale;
+  /** La lecture des periodes ouvertes, deja faite par le parent. */
+  resumeDuJour: ResumeDuJour | null;
+  /** La naissance, pour la signature de fond. */
+  naissance: string | null;
+}) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 6 }}
@@ -161,7 +177,14 @@ function LigneMessage({ message, locale }: { message: Message; locale: Locale })
         </span>
       </div>
 
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-body)" }}>{message.corps}</p>
+      {/* Le resume du jour se DESSINE. Les autres messages restent du texte :
+          une notification n a pas besoin d une carte, et un briefing redige par
+          un modele n a rien a illustrer. */}
+      {message.type === "resume_jour" && resumeDuJour && naissance ? (
+        <ResumeJour resume={resumeDuJour} naissance={naissance} locale={locale} />
+      ) : (
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-body)" }}>{message.corps}</p>
+      )}
 
       {message.action && (
         <p
@@ -180,6 +203,28 @@ function LigneMessage({ message, locale }: { message: Message; locale: Locale })
 export function FeuilleMessages({ ouvert, onFermer }: { ouvert: boolean; onFermer: () => void }) {
   const locale = useLocale();
   const messages = useMessages();
+  const { phases, birthData } = useMomentum();
+
+  /**
+   * La lecture des periodes ouvertes est faite UNE fois ici, pas dans chaque
+   * ligne : elle parcourt plusieurs centaines de phases, et la feuille peut en
+   * afficher une dizaine.
+   *
+   * Le jour est fige au montage de la feuille. Un resume qui changerait pendant
+   * qu on le lit serait un defaut, pas une fraicheur.
+   */
+  // L heure est lue UNE fois, a l ouverture de la feuille. `Date.now()` dans le
+  // corps du rendu rend le meme composant different a chaque passage — et un
+  // resume qui changerait pendant qu on le lit serait un defaut, pas une
+  // fraicheur.
+  const [maintenant] = useState(() => Date.now());
+  const resumeDuJour = useMemo(
+    () => (phases.length > 0 ? lireLeJour(phases, maintenant) : null),
+    [phases, maintenant],
+  );
+  const naissance = birthData?.birthDate
+    ? `${birthData.birthDate}T${birthData.birthTime || "00:00"}`
+    : null;
 
   return (
     <BottomSheet open={ouvert} onClose={onFermer}>
@@ -208,7 +253,12 @@ export function FeuilleMessages({ ouvert, onFermer }: { ouvert: boolean; onFerme
               // une rupture de section franche. Le trait de --border-light
               // n ajoutait rien qu il fallait regarder.
               <div key={m.id}>
-                <LigneMessage message={m} locale={locale} />
+                <LigneMessage
+                  message={m}
+                  locale={locale}
+                  resumeDuJour={resumeDuJour}
+                  naissance={naissance}
+                />
               </div>
             ))}
           </AnimatePresence>

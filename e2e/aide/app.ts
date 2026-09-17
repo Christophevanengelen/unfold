@@ -167,6 +167,24 @@ export async function brancherReseau(page: Page): Promise<Journal> {
       return json({ ok: true, messages: [] });
     }
 
+    if (chemin.endsWith("/api/openai/daily-brief")) {
+      // L ANCIEN briefing, servi valide.
+      //
+      // L app ne l appelle plus depuis le 17/09 : une seule communication par
+      // jour, dessinee a partir des periodes locales. Mais la fixture doit le
+      // servir quand meme, sinon le test « une seule communication » ne peut
+      // pas echouer — on peut rebrancher l ancienne route sans qu aucun test ne
+      // bronche, puisque rien ne lui repond. Un test qui ne peut pas echouer ne
+      // teste rien.
+      return json({
+        ok: true,
+        greeting: "Short greeting.",
+        summary: "An older briefing, kept only so the parcours can prove a second message would show.",
+        action: "Nothing to do.",
+        activeDomains: ["work"],
+      });
+    }
+
     if (chemin.includes("/api/openai/")) {
       // Aucun briefing. Les tests du centre de messages posent eux-memes les
       // messages qu ils veulent : un briefing venu du reseau rendrait le

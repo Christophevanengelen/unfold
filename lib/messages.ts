@@ -49,7 +49,20 @@ const RETENTION_JOURS = 30;
  * ne peut avoir qu un message par jour, ce qui evite d empiler dix copies du
  * briefing quand l ecran se remonte.
  */
-export type TypeMessage = "briefing_jour" | "briefing_periode" | "notification";
+/**
+ * `resume_jour` a ete ajoute le 17/09/2026 et remplace, dans les faits, les
+ * deux briefings ecrits par un modele.
+ *
+ * Christophe : « sers-toi des boudins actifs pour en faire un resume important
+ * en une seule communication ». Deux messages par jour etaient deja une corvee,
+ * et tous deux redisaient moins bien ce que l appareil savait deja : toutes les
+ * periodes, leurs dates, leur domaine, leur qualite.
+ *
+ * Ce message-la ne porte pas de texte redige. Son `corps` n est qu un resume
+ * d une ligne, pour l apercu d une notification ; l ecran, lui, DESSINE les
+ * periodes (components/demo/resume/ResumeJour.tsx).
+ */
+export type TypeMessage = "briefing_jour" | "briefing_periode" | "notification" | "resume_jour";
 
 export interface Message {
   /** `${type}_${AAAA-MM-JJ}` — stable, donc reecrire le meme jour remplace. */

@@ -43,6 +43,7 @@ import { storage } from "@/lib/storage";
 import { apiFetch } from "@/lib/api-client";
 import { detectLocale } from "@/lib/i18n-demo";
 import { deposer, cleDuJour, type TypeMessage } from "@/lib/messages";
+import { lireLeJour } from "@/lib/resume-jour";
 import type { BirthData } from "@/lib/birth-data";
 
 const TTL_MS = 12 * 60 * 60 * 1000;
@@ -57,10 +58,19 @@ interface Briefing {
   echec?: boolean;
 }
 
-const SOURCES: { endpoint: string; type: TypeMessage; cache: string }[] = [
-  { endpoint: "/api/openai/daily-brief", type: "briefing_jour", cache: "daily_brief" },
-  { endpoint: "/api/openai/daily-briefing", type: "briefing_periode", cache: "daily_briefing" },
-];
+/**
+ * UNE seule communication par jour, depuis le 17/09/2026.
+ *
+ * Christophe : « sers-toi des boudins actifs pour en faire un resume important
+ * en une seule communication ». Il y en avait deux, ecrites chacune par un
+ * appel modele a partir des trois signaux bruts les plus forts.
+ *
+ * Les deux anciennes routes ne sont pas supprimees — elles servent encore le
+ * site et restent appelables — mais l app ne les monte plus. Ce qu elle depose
+ * maintenant tient en un message : les periodes ouvertes, dessinees par
+ * `ResumeJour`, et une synthese courte ecrite a partir de ces periodes-la.
+ */
+const SOURCES: { endpoint: string; type: TypeMessage; cache: string }[] = [];
 
 /**
  * Les textes de repli que les routes ont longtemps renvoyes en 200 OK,
@@ -156,26 +166,77 @@ function profilEffectif() {
 }
 
 export function DailyBriefing() {
-  const { birthData } = useMomentum();
+  const { birthData, phases } = useMomentum();
 
   useEffect(() => {
-    if (!birthData) return;
+    if (!birthData || phases.length === 0) return;
     let annule = false;
 
     void (async () => {
+      // Les anciennes sources sont vides : la boucle ne tourne plus, elle est
+      // gardee le temps que les deux routes trouvent leur place ou disparaissent.
       for (const source of SOURCES) {
         if (annule) return;
-        // En serie et non en parallele : les deux routes appellent le meme
-        // fournisseur derriere un compteur d usage partage, et deux requetes
-        // simultanees se comptent double pour un seul ecran.
         await collecter(birthData, source);
       }
+
+      const jour = lireLeJour(phases, Date.now());
+      // Rien d ouvert : on ne depose rien. Le silence est une reponse, mais une
+      // reponse qui n a pas besoin d allumer une pastille.
+      if (jour.aucune || annule) return;
+
+      const cleCache = `resume_jour_${cleDuJour("resume_jour")}`;
+      let texte: { resume?: string; action?: string } | null = null;
+      try {
+        texte = await storage.get<{ resume?: string; action?: string }>(cleCache, TTL_MS);
+      } catch {
+        /* cache absent : on demande */
+      }
+
+      if (!texte?.resume) {
+        try {
+          const res = await apiFetch("/api/openai/resume-jour", {
+            method: "POST",
+            body: JSON.stringify({
+              locale: detectLocale(),
+              // On envoie des FAITS deja traduits, jamais de la mecanique : le
+              // modele ne peut pas laisser passer un jargon qu il ne recoit pas.
+              periodes: jour.ouvertes.slice(0, 6).map((o) => ({
+                domaine: o.phase.houseTopic || o.phase.title,
+                depuis: o.depuis,
+                restants: o.restants,
+                qualite: o.phase.periodQuality,
+              })),
+            }),
+          });
+          const data = res.ok ? await res.json() : null;
+          texte = data?.ok ? { resume: data.resume, action: data.action } : null;
+          if (texte?.resume) {
+            try {
+              await storage.set(cleCache, texte);
+            } catch {
+              /* quota plein : on affiche quand meme */
+            }
+          }
+        } catch {
+          /* reseau coupe : le dessin se suffit, on depose sans texte */
+        }
+      }
+
+      if (annule) return;
+      deposer({
+        type: "resume_jour",
+        // Le corps sert a l apercu d une notification et de repli si le dessin
+        // ne peut pas s afficher. Il n est jamais la seule chose montree.
+        corps: texte?.resume?.trim() || "",
+        action: texte?.action?.trim() || undefined,
+      });
     })();
 
     return () => {
       annule = true;
     };
-  }, [birthData]);
+  }, [birthData, phases]);
 
   return null;
 }

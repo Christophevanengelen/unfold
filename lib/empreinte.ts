@@ -318,3 +318,65 @@ export function construireEmpreinte(p: ParametresEmpreinte): Empreinte {
     longueurs: [un.longueur, deux.longueur],
   };
 }
+
+/* ─── L EMPREINTE D UNE SEULE PERSONNE ──────────────────────────────────────
+ *
+ * Le systeme ci-dessus dessine un LIEN : il lui faut deux naissances et les
+ * chiffres du moteur. Celui-ci dessine quelqu un, a partir de sa seule
+ * naissance.
+ *
+ * ─── CE QUE C EST, ET SURTOUT CE QUE CE N EST PAS ───────────────────────────
+ *
+ * C est une SIGNATURE, au sens d un monogramme : une forme qui n appartient
+ * qu a une personne et qui ne change jamais. Ce n est PAS une lecture. Aucune
+ * valeur ne s y lit, et on ne pretend nulle part le contraire.
+ *
+ * C est une distinction de fond, pas une precaution de langage. Le produit
+ * interdit d inventer un signal ; deriver des « scores » d un hachage de date
+ * pour les dessiner reviendrait exactement a ca. Les parametres viennent donc
+ * de la graine et ne sont presentes comme rien d autre qu un dessin.
+ *
+ * La lignee est celle des identicons : une image unique tiree
+ * deterministiquement d une donnee, rendue toujours belle par une contrainte
+ * de forme — ici les memes bornes etroites que l empreinte de couple.
+ *
+ * ─── POURQUOI CA VAUT LE COUP ───────────────────────────────────────────────
+ *
+ * Une personne a la meme forme partout dans l app, et pour toujours : dans son
+ * profil, dans la liste des connexions, sur la carte qu on partage. C est un
+ * bien du produit, pas une decoration d ecran — et c est ce qu aucune app
+ * d astrologie ne fait.
+ */
+
+/** La graine d une personne. Meme precaution de version que pour un couple. */
+export function graineDeNaissance(naissance: string): string {
+  return `${VERSION}|solo|${naissance}`;
+}
+
+/**
+ * Les parametres du dessin d une personne.
+ *
+ * Ils sont tires de la graine, dans les memes plages que l empreinte de
+ * couple — c est ce qui fait que les deux se ressemblent sans se confondre, et
+ * qu aucune combinaison ne peut produire une forme ratee.
+ *
+ * `porteurs` est fixe a trois : il ne represente rien ici, il donne seulement
+ * la meme texture qu ailleurs.
+ */
+export function empreinteDeNaissance(naissance: string): ParametresEmpreinte {
+  const graine = graineDeNaissance(naissance);
+  const hasard = alea(graineDepuis(graine));
+  const entre = (min: number, max: number) => Math.round(min + hasard() * (max - min));
+  return {
+    // La plage est resserree vers le haut : une signature personnelle doit
+    // etre dense et tenue, jamais famelique. Personne ne doit se retrouver
+    // avec une forme plus pauvre que celle de son voisin.
+    score: entre(45, 92),
+    ressemblance: entre(20, 95),
+    equilibre: entre(55, 100),
+    attractionVersLui: entre(25, 85),
+    attractionVersElle: entre(25, 85),
+    porteurs: 3,
+    graine,
+  };
+}
