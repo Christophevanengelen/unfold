@@ -32,7 +32,7 @@ import { chargerChapitres } from "@/lib/chapitres-api";
 
 export default function ViePage() {
   const locale = useLocale();
-  const { phases, birthData } = useMomentum();
+  const { phases, timelinePhases, birthData } = useMomentum();
 
   // Fige a l ouverture de l ecran : voir la meme precaution dans
   // CentreMessages. Une vie ne se relit pas a la milliseconde.
@@ -181,6 +181,7 @@ export default function ViePage() {
               maintenant={maintenant}
               chapitres={chapitresDeVie ?? undefined}
               phasesAnnee={phases}
+              phasesVie={timelinePhases}
             />
           </div>
         </div>
