@@ -397,7 +397,23 @@ export function StepInput({
                     aria-describedby={dateRefusee ? "date-refusee" : undefined}
                     onInvalidChange={setDateRefusee}
                     className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
-                    style={{ color: "var(--accent-purple)" }}
+                    /**
+                     * CE QU ON TAPE S ECRIT EN COULEUR DE TEXTE, pas en couleur
+                     * d accent.
+                     *
+                     * Christophe, le 17/09 : « on voit pas ce qu on tape ».
+                     * C etait litteral. `--accent-purple` est une couleur
+                     * d ACCENT — elle sert aux libelles, aux pastilles, aux
+                     * grands chiffres. Employee comme couleur du texte saisi,
+                     * elle vaut 4,00 sur le fond clair de la feuille, sous le
+                     * seuil de 4,5 exige pour du texte courant.
+                     *
+                     * `--text-heading` monte a 13,7 en clair et 14,1 en sombre.
+                     * Le champ qu on est en train de remplir est le dernier
+                     * endroit d une app ou l on peut se permettre d etre
+                     * decoratif.
+                     */
+                    style={{ color: "var(--text-heading)" }}
                   />
                 ) : (
                   <input
@@ -454,7 +470,23 @@ export function StepInput({
                       isPlaceField && survol >= 0 ? `ville-${suggestions[survol]?.id}` : undefined
                     }
                     className="mt-1 w-full bg-transparent text-base font-medium outline-none placeholder:text-brand-5"
-                    style={{ color: "var(--accent-purple)" }}
+                    /**
+                     * CE QU ON TAPE S ECRIT EN COULEUR DE TEXTE, pas en couleur
+                     * d accent.
+                     *
+                     * Christophe, le 17/09 : « on voit pas ce qu on tape ».
+                     * C etait litteral. `--accent-purple` est une couleur
+                     * d ACCENT — elle sert aux libelles, aux pastilles, aux
+                     * grands chiffres. Employee comme couleur du texte saisi,
+                     * elle vaut 4,00 sur le fond clair de la feuille, sous le
+                     * seuil de 4,5 exige pour du texte courant.
+                     *
+                     * `--text-heading` monte a 13,7 en clair et 14,1 en sombre.
+                     * Le champ qu on est en train de remplir est le dernier
+                     * endroit d une app ou l on peut se permettre d etre
+                     * decoratif.
+                     */
+                    style={{ color: "var(--text-heading)" }}
                   />
                 )}
               </label>
