@@ -267,6 +267,7 @@ type Strings = {
     d_engagement: string; d_engagement_aide: string;
     d_generosite: string; d_generosite_aide: string;
     d_chaleur: string; d_chaleur_aide: string;
+    lien_titre: string; lien_aide: string; lien_meme: string; lien_complementaire: string; lien_ecart: string; entente_titre: string; entente_aide: string; entente_harmonie: string; entente_friction: string; entente_mixte: string; entente_defaut: string; temperament_titre: string; temperament_aide: string; elem_fire: string; elem_earth: string; elem_air: string; elem_water: string; etincelle_titre: string; etincelle_aide: string; etincelle_aucune: string; etincelle_une: string; etincelle_n: string;
     axe_affirmer: string; axe_affirmer_aide: string;
     axe_rassurer: string; axe_rassurer_aide: string;
     axe_parler: string; axe_parler_aide: string;
@@ -615,6 +616,7 @@ const FR: Strings = {
     d_generosite_aide: "Ce que vous vous offrez sans compter.",
     d_chaleur: "Ce qui réchauffe",
     d_chaleur_aide: "Le besoin de proximité simple, du contact et du réconfort.",
+    lien_titre: "Avez-vous un lien ?", lien_aide: "Le tempérament de chacun, au quotidien — pas l'étincelle.", lien_meme: "un terrain familier", lien_complementaire: "des styles qui se complètent", lien_ecart: "l'attirance d'une vraie différence", entente_titre: "Comment vous entendez-vous ?", entente_aide: "La façon dont vous échangez, au jour le jour.", entente_harmonie: "vous parlez la même langue", entente_friction: "le dialogue demande du travail", entente_mixte: "un mélange de stimulation et de friction", entente_defaut: "une entente qui se construit", temperament_titre: "Tempérament", temperament_aide: "L'élément qui domine chez chacun.", elem_fire: "Feu", elem_earth: "Terre", elem_air: "Air", elem_water: "Eau", etincelle_titre: "Étincelle", etincelle_aide: "Ce qui a été mesuré, pas un chiffre inventé.", etincelle_aucune: "Rien de net mesuré cette fois", etincelle_une: "Une étincelle mesurée", etincelle_n: "{n} étincelles mesurées",
     axe_affirmer: "S'affirmer",
     axe_affirmer_aide: "Prendre sa place, dire je.",
     axe_rassurer: "Rassurer",
@@ -1001,6 +1003,7 @@ const EN: Strings = {
     d_generosite_aide: "What you give each other freely.",
     d_chaleur: "What warms",
     d_chaleur_aide: "The need for plain closeness, contact and comfort.",
+    lien_titre: "Do you have a bond?", lien_aide: "Each person's temperament, day to day — not the spark.", lien_meme: "familiar ground", lien_complementaire: "styles that complement each other", lien_ecart: "the pull of a real difference", entente_titre: "How do you get along?", entente_aide: "How you exchange, day to day.", entente_harmonie: "you speak the same language", entente_friction: "the dialogue takes work", entente_mixte: "a mix of stimulation and friction", entente_defaut: "an understanding still being built", temperament_titre: "Temperament", temperament_aide: "The element that dominates for each of you.", elem_fire: "Fire", elem_earth: "Earth", elem_air: "Air", elem_water: "Water", etincelle_titre: "Spark", etincelle_aide: "What was measured, not an invented number.", etincelle_aucune: "Nothing clear measured this time", etincelle_une: "One spark measured", etincelle_n: "{n} sparks measured",
     axe_affirmer: "Asserting",
     axe_affirmer_aide: "Taking your place, saying I.",
     axe_rassurer: "Reassuring",
@@ -1387,6 +1390,7 @@ const ES: Strings = {
     d_generosite_aide: "Lo que os ofrecéis sin contar.",
     d_chaleur: "Lo que da calor",
     d_chaleur_aide: "La necesidad de cercanía simple, de contacto y de consuelo.",
+    lien_titre: "¿Tenéis un vínculo?", lien_aide: "El temperamento de cada uno, en el día a día — no la chispa.", lien_meme: "un terreno familiar", lien_complementaire: "estilos que se complementan", lien_ecart: "la atracción de una diferencia real", entente_titre: "¿Cómo os entendéis?", entente_aide: "La forma en que intercambiáis, día a día.", entente_harmonie: "habláis el mismo idioma", entente_friction: "el diálogo cuesta trabajo", entente_mixte: "una mezcla de estímulo y fricción", entente_defaut: "un entendimiento que se está construyendo", temperament_titre: "Temperamento", temperament_aide: "El elemento que domina en cada uno.", elem_fire: "Fuego", elem_earth: "Tierra", elem_air: "Aire", elem_water: "Agua", etincelle_titre: "Chispa", etincelle_aide: "Lo que se midió, no una cifra inventada.", etincelle_aucune: "Nada claro medido esta vez", etincelle_une: "Una chispa medida", etincelle_n: "{n} chispas medidas",
     axe_affirmer: "Afirmarse",
     axe_affirmer_aide: "Ocupar tu sitio, decir yo.",
     axe_rassurer: "Tranquilizar",
@@ -1773,6 +1777,7 @@ const DE: Strings = {
     d_generosite_aide: "Was ihr euch schenkt, ohne zu rechnen.",
     d_chaleur: "Was wärmt",
     d_chaleur_aide: "Das Bedürfnis nach einfacher Nähe, Berührung und Trost.",
+    lien_titre: "Habt ihr eine Bindung?", lien_aide: "Das Temperament jedes Einzelnen, im Alltag — nicht der Funke.", lien_meme: "vertrautes Terrain", lien_complementaire: "Stile, die sich ergänzen", lien_ecart: "die Anziehung eines echten Unterschieds", entente_titre: "Wie kommt ihr miteinander aus?", entente_aide: "Wie ihr euch austauscht, im Alltag.", entente_harmonie: "ihr sprecht dieselbe Sprache", entente_friction: "der Dialog braucht Arbeit", entente_mixte: "eine Mischung aus Anregung und Reibung", entente_defaut: "ein Verständnis, das noch wächst", temperament_titre: "Temperament", temperament_aide: "Das Element, das bei jedem überwiegt.", elem_fire: "Feuer", elem_earth: "Erde", elem_air: "Luft", elem_water: "Wasser", etincelle_titre: "Funke", etincelle_aide: "Was gemessen wurde, keine erfundene Zahl.", etincelle_aucune: "Diesmal nichts Eindeutiges gemessen", etincelle_une: "Ein Funke gemessen", etincelle_n: "{n} Funken gemessen",
     axe_affirmer: "Sich behaupten",
     axe_affirmer_aide: "Seinen Platz nehmen, Ich sagen.",
     axe_rassurer: "Beruhigen",
@@ -2159,6 +2164,7 @@ const IT: Strings = {
     d_generosite_aide: "Quello che vi offrite senza contare.",
     d_chaleur: "Ciò che scalda",
     d_chaleur_aide: "Il bisogno di vicinanza semplice, di contatto e di conforto.",
+    lien_titre: "Avete un legame?", lien_aide: "Il temperamento di ciascuno, giorno per giorno — non la scintilla.", lien_meme: "un terreno familiare", lien_complementaire: "stili che si completano", lien_ecart: "l'attrazione di una vera differenza", entente_titre: "Come andate d'accordo?", entente_aide: "Il modo in cui vi confrontate, giorno per giorno.", entente_harmonie: "parlate la stessa lingua", entente_friction: "il dialogo richiede impegno", entente_mixte: "un misto di stimolo e attrito", entente_defaut: "un'intesa ancora da costruire", temperament_titre: "Temperamento", temperament_aide: "L'elemento che domina in ciascuno.", elem_fire: "Fuoco", elem_earth: "Terra", elem_air: "Aria", elem_water: "Acqua", etincelle_titre: "Scintilla", etincelle_aide: "Ciò che è stato misurato, non un numero inventato.", etincelle_aucune: "Nessuna scintilla netta misurata questa volta", etincelle_une: "Una scintilla misurata", etincelle_n: "{n} scintille misurate",
     axe_affirmer: "Affermarsi",
     axe_affirmer_aide: "Prendere il proprio posto, dire io.",
     axe_rassurer: "Rassicurare",
@@ -2545,6 +2551,7 @@ const PT: Strings = {
     d_generosite_aide: "O que oferecem um ao outro sem contar.",
     d_chaleur: "O que aquece",
     d_chaleur_aide: "A necessidade de proximidade simples, de contacto e de conforto.",
+    lien_titre: "Vocês têm uma ligação?", lien_aide: "O temperamento de cada um, no dia a dia — não a faísca.", lien_meme: "um terreno familiar", lien_complementaire: "estilos que se complementam", lien_ecart: "a atração de uma diferença real", entente_titre: "Como vocês se entendem?", entente_aide: "A forma como trocam ideias, no dia a dia.", entente_harmonie: "falam a mesma língua", entente_friction: "o diálogo exige trabalho", entente_mixte: "uma mistura de estímulo e atrito", entente_defaut: "um entendimento ainda em construção", temperament_titre: "Temperamento", temperament_aide: "O elemento que domina em cada um.", elem_fire: "Fogo", elem_earth: "Terra", elem_air: "Ar", elem_water: "Água", etincelle_titre: "Faísca", etincelle_aide: "O que foi medido, não um número inventado.", etincelle_aucune: "Nada de claro medido desta vez", etincelle_une: "Uma faísca medida", etincelle_n: "{n} faíscas medidas",
     axe_affirmer: "Afirmar-se",
     axe_affirmer_aide: "Ocupar o teu lugar, dizer eu.",
     axe_rassurer: "Tranquilizar",
@@ -2931,6 +2938,7 @@ const NL: Strings = {
     d_generosite_aide: "Wat jullie elkaar geven zonder te rekenen.",
     d_chaleur: "Wat warmte geeft",
     d_chaleur_aide: "De behoefte aan gewone nabijheid, aanraking en troost.",
+    lien_titre: "Hebben jullie een band?", lien_aide: "Het temperament van elk van jullie, dag na dag — niet de vonk.", lien_meme: "vertrouwd terrein", lien_complementaire: "stijlen die elkaar aanvullen", lien_ecart: "de aantrekkingskracht van een echt verschil", entente_titre: "Hoe komen jullie met elkaar overeen?", entente_aide: "Hoe jullie dagelijks met elkaar omgaan.", entente_harmonie: "jullie spreken dezelfde taal", entente_friction: "de dialoog kost moeite", entente_mixte: "een mix van prikkeling en wrijving", entente_defaut: "een verstandhouding die nog groeit", temperament_titre: "Temperament", temperament_aide: "Het element dat bij elk overheerst.", elem_fire: "Vuur", elem_earth: "Aarde", elem_air: "Lucht", elem_water: "Water", etincelle_titre: "Vonk", etincelle_aide: "Wat gemeten is, geen verzonnen cijfer.", etincelle_aucune: "Deze keer niets duidelijks gemeten", etincelle_une: "Eén vonk gemeten", etincelle_n: "{n} vonken gemeten",
     axe_affirmer: "Jezelf neerzetten",
     axe_affirmer_aide: "Je plek innemen, ik zeggen.",
     axe_rassurer: "Geruststellen",
@@ -3317,6 +3325,7 @@ const JA: Strings = {
     d_generosite_aide: "見返りを数えずに渡せるものです。",
     d_chaleur: "温めるもの",
     d_chaleur_aide: "近くにいること、触れること、なぐさめへの欲求です。",
+    lien_titre: "二人に絆はある?", lien_aide: "日々の気質の相性 — ひらめきとは別のもの。", lien_meme: "馴染みのある土台", lien_complementaire: "補い合うスタイル", lien_ecart: "本当の違いが引き寄せる", entente_titre: "どれくらい気が合う?", entente_aide: "日々のやり取りの仕方。", entente_harmonie: "同じ言葉で話せている", entente_friction: "対話には努力が要る", entente_mixte: "刺激と摩擦が入り混じっている", entente_defaut: "これから築かれていく理解", temperament_titre: "気質", temperament_aide: "それぞれで優勢な元素。", elem_fire: "火", elem_earth: "地", elem_air: "風", elem_water: "水", etincelle_titre: "ひらめき", etincelle_aide: "実際に測定されたもの。作った数字ではない。", etincelle_aucune: "今回ははっきりしたものは測定されなかった", etincelle_une: "ひらめきが1つ測定された", etincelle_n: "ひらめきが{n}つ測定された",
     axe_affirmer: "自分を通す",
     axe_affirmer_aide: "自分の場所を取り、私と言うこと。",
     axe_rassurer: "安心させる",
@@ -3703,6 +3712,7 @@ const ZH: Strings = {
     d_generosite_aide: "你们不计较地给对方的东西。",
     d_chaleur: "带来暖意的部分",
     d_chaleur_aide: "对简单的靠近、接触和安慰的需要。",
+    lien_titre: "你们之间有羁绊吗?", lien_aide: "日常中各自的气质 — 不是火花。", lien_meme: "熟悉的基础", lien_complementaire: "互补的风格", lien_ecart: "真实差异带来的吸引", entente_titre: "你们相处得如何?", entente_aide: "日常交流的方式。", entente_harmonie: "你们说着同一种语言", entente_friction: "对话需要努力", entente_mixte: "刺激与摩擦交织", entente_defaut: "仍在建立中的默契", temperament_titre: "气质", temperament_aide: "每个人身上占主导的元素。", elem_fire: "火", elem_earth: "土", elem_air: "风", elem_water: "水", etincelle_titre: "火花", etincelle_aide: "实际测量到的,不是编造的数字。", etincelle_aucune: "这次没有测到明显的火花", etincelle_une: "测到一处火花", etincelle_n: "测到{n}处火花",
     axe_affirmer: "站出来",
     axe_affirmer_aide: "占住自己的位置，说我。",
     axe_rassurer: "让人安心",
@@ -4089,6 +4099,7 @@ const AR: Strings = {
     d_generosite_aide: "ما تمنحانه لبعضكما بلا حساب.",
     d_chaleur: "ما يدفئ",
     d_chaleur_aide: "الحاجة إلى قرب بسيط، وإلى اللمس والمواساة.",
+    lien_titre: "هل بينكما رابط؟", lien_aide: "مزاج كل شخص، يوميًا — وليس الشرارة.", lien_meme: "أرضية مألوفة", lien_complementaire: "أساليب تكمّل بعضها", lien_ecart: "جاذبية اختلاف حقيقي", entente_titre: "كيف تنسجمان معًا؟", entente_aide: "طريقة تواصلكما، يومًا بعد يوم.", entente_harmonie: "تتحدثان اللغة نفسها", entente_friction: "الحوار يحتاج إلى جهد", entente_mixte: "مزيج من التحفيز والاحتكاك", entente_defaut: "تفاهم ما زال قيد البناء", temperament_titre: "المزاج", temperament_aide: "العنصر الغالب لدى كل واحد.", elem_fire: "النار", elem_earth: "التراب", elem_air: "الهواء", elem_water: "الماء", etincelle_titre: "الشرارة", etincelle_aide: "ما تم قياسه فعليًا، لا رقم مُختلَق.", etincelle_aucune: "لم يُقَس شيء واضح هذه المرة", etincelle_une: "شرارة واحدة مقيسة", etincelle_n: "{n} شرارات مقيسة",
     axe_affirmer: "إثبات النفس",
     axe_affirmer_aide: "أن تأخذ مكانك، وأن تقول أنا.",
     axe_rassurer: "الطمأنة",

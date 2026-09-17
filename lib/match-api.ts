@@ -16,12 +16,23 @@
  *
  * C est ce qui permet a un rapport deja consulte de s ouvrir instantanement,
  * sans le moindre reseau.
+ *
+ * LA CLEF A CHANGE LE 17/09/2026
+ *
+ * Marie-Ange a corrige `POST /api/match` : `bond` et `mutualUnderstanding`
+ * sont nouveaux, `generalUnderstanding` s est enrichi, et `attraction` a
+ * change de forme (un pourcentage devenu une liste d aspects). Une entree deja
+ * en cache porte l ancienne forme et la porterait pour toujours — sans
+ * expiration, rien ne l aurait jamais forcee a se rafraichir. On change donc
+ * le nom de la clef : les caches existants sont ignores, chaque rapport
+ * repasse une fois par le reseau, et la clef precedente reste abandonnee dans
+ * `localStorage` (quelques ko, jamais relus).
  */
 
 import { apiFetch } from "@/lib/api-client";
 import type { BirthData } from "@/lib/birth-data";
 
-const CLE_CACHE = "unfold_match_cache";
+const CLE_CACHE = "unfold_match_cache_2026_09_17";
 /** Au dela, on jette les plus anciennes : une entree pese environ 4 ko. */
 const MAX_ENTREES = 30;
 

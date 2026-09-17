@@ -26,10 +26,22 @@
  *    décoratif qui ment sur sa densité. On garde les axes qui portent quelque
  *    chose, classés, et on dit combien sont restés muets.
  *
- * 3. **L'asymétrie est une donnée, pas un détail.** `attraction` rend `aToB` et
- *    `bToA` séparément (53 et 56 sur le couple de test), `gift` aussi. Aucun
- *    produit du marché n'écrit deux lectures pour un même lien — c'est la
- *    conclusion de la veille du 11/09, et la matière existe.
+ * 3. **L'asymétrie est une donnée, pas un détail.** `gift` rend deux directions
+ *    nommées, chacune avec sa maison. Aucun produit du marché n'écrit deux
+ *    lectures pour un même lien — c'est la conclusion de la veille du 11/09,
+ *    et la matière existe.
+ *
+ * ─── LA MISE A JOUR DU 17/09 (Marie-Ange) ───────────────────────────────────
+ *
+ * Trois champs corrigés : `bond` (nouveau — « avez-vous un lien ? »),
+ * `generalUnderstanding` (enrichi — élément dominant + tempérament complet) et
+ * `mutualUnderstanding` (nouveau — « comment vous entendez-vous ? »). Et une
+ * rupture de forme silencieuse sur `attraction` : ce n'était plus un
+ * pourcentage dans les deux sens (`aToB`/`bToA`), mais une liste d'aspects
+ * mesurés (`hits`, `count`). Les phrases du moteur (`headline`, `bulletPoints`,
+ * les noms de planète des `hits`) restent en anglais et nomment la technique —
+ * elles ne passent jamais telles quelles à l'écran (voir décision n° 1). On en
+ * tire une clef de traduction par palier connu, jamais le texte du moteur.
  */
 
 /** Les dix axes du moteur, dans l'ordre où il les rend. */
@@ -68,10 +80,41 @@ export interface Dimension {
   clef: string;
   valeur: number;
   palier: Palier;
-  /** Vrai quand la dimension se lit dans les deux sens. */
-  asymetrique?: boolean;
-  versLui?: number;
-  versElle?: number;
+}
+
+/** Feu, Terre, Air, Eau — jamais le mot anglais du moteur. */
+export type ElementAxe = "feu" | "terre" | "air" | "eau";
+
+/**
+ * Un score de paire avec son élément dominant de chaque côté — la forme
+ * partagée par `bond` (le lien) et `generalUnderstanding` (le tempérament) :
+ * même moteur de comparaison (KS/Greenbaum), deux cartes différentes.
+ */
+export interface LienDuo {
+  score: number;
+  palier: Palier;
+  /**
+   * Le palier du `headline` moteur, traduit. `null` si le moteur rend une
+   * phrase qu'on ne reconnaît pas — le score et les jauges restent, la phrase
+   * se tait plutôt que d'inventer une traduction.
+   */
+  clef: string | null;
+  element1: ElementAxe | null;
+  element2: ElementAxe | null;
+  element1Pct: number;
+  element2Pct: number;
+}
+
+/** « Comment vous entendez-vous ? » — mutualUnderstanding. */
+export interface Entente {
+  score: number;
+  palier: Palier;
+  clef: string;
+}
+
+/** « Y a-t-il une étincelle ? » — attraction, depuis le 17/09 une liste, plus un %. */
+export interface Etincelle {
+  compte: number;
 }
 
 export interface AxePorteur {
@@ -107,6 +150,14 @@ export interface LectureMatch {
   dominantElle: string | null;
   /** Qui prend l'ascendant, si le moteur se prononce nettement. */
   ascendant: { qui: "lui" | "elle"; confiance: number } | null;
+  /** « Avez-vous un lien ? » — bond, nouveau le 17/09. */
+  lien: LienDuo | null;
+  /** Le tempérament dominant de chacun — generalUnderstanding, enrichi le 17/09. */
+  temperament: LienDuo | null;
+  /** « Comment vous entendez-vous ? » — mutualUnderstanding, nouveau le 17/09. */
+  entente: Entente | null;
+  /** L'étincelle mesurée — attraction, changée de forme le 17/09. */
+  etincelle: Etincelle | null;
   /**
    * Ce que chacun apporte a l autre, dans les deux sens.
    *
@@ -118,14 +169,36 @@ export interface LectureMatch {
 }
 
 interface BrutScore { score?: number; label?: string }
+
+/**
+ * La forme partagée par `bond` et `generalUnderstanding`, mesurée en direct
+ * sur `POST /api/match` le 17/09 (couple de test Christophe/Patricia).
+ */
+interface BrutLienDuo {
+  score?: number;
+  label?: string;
+  headline?: string;
+  element1?: string;
+  element2?: string;
+  element1Pct?: number;
+  element2Pct?: number;
+}
+
 interface BrutMatch {
   compatibility?: BrutScore;
   resemblance?: BrutScore;
   balance?: BrutScore;
-  attraction?: { aToB?: number; bToA?: number };
+  /**
+   * Change de forme le 17/09 : ce n'est plus un pourcentage dans les deux sens
+   * (`aToB`/`bToA`), mais une liste d'aspects tendus (≤3°) mesurés entre les
+   * deux themes. `count` est ce qu'on affiche ; `hits` porte des noms de
+   * planete et ne passe jamais a l'ecran.
+   */
+  attraction?: { hits?: unknown[]; count?: number; desc?: string };
+  bond?: BrutLienDuo;
   boss?: { who?: string; confidence?: number };
   exclusive?: BrutScore;
-  generalUnderstanding?: BrutScore;
+  generalUnderstanding?: BrutLienDuo;
   /**
    * `gift` N A PLUS DE SCORE, et c est une bonne nouvelle.
    *
@@ -146,8 +219,8 @@ interface BrutMatch {
     person2GivesPerson1?: { house?: number; domain?: string; desc?: string };
   };
   hugs?: { score?: number };
-  /** Arrive avec la mise a jour du 17/09. Pas encore lu par l ecran. */
-  mutualUnderstanding?: BrutScore;
+  /** « Comment vous entendez-vous ? » — arrive avec la mise a jour du 17/09. */
+  mutualUnderstanding?: { score?: number; label?: string; headline?: string; hits?: unknown[] };
   compatibilityRadar?: { planet?: string; pointsperc?: number; pointsperc2?: number }[];
   person1?: { dominantPlanet?: { planet?: string } };
   person2?: { dominantPlanet?: { planet?: string } };
@@ -189,6 +262,61 @@ function axeDe(nom: unknown): Axe | null {
   return (AXES as readonly string[]).includes(n) ? (n as Axe) : null;
 }
 
+const ELEMENT_CLEF: Record<string, ElementAxe> = {
+  fire: "feu",
+  earth: "terre",
+  air: "air",
+  water: "eau",
+};
+
+/** « Water » → `eau`, et rien si le moteur nomme un element qu'on ne connait pas. */
+function elementDe(nom: unknown): ElementAxe | null {
+  const n = typeof nom === "string" ? nom.toLowerCase() : "";
+  return ELEMENT_CLEF[n] ?? null;
+}
+
+/**
+ * Le `headline` de `bond`/`generalUnderstanding` vient du palier de la paire
+ * d'elements (meme element / compatibles / opposes) — trois formulations fixes
+ * cote moteur (`API-MATCHING.md` §1). On reconnait ces trois-la ; une phrase
+ * qu on ne reconnait pas rend `null` plutot qu une traduction devinee.
+ */
+function clefLien(headline: unknown): string | null {
+  const h = typeof headline === "string" ? headline.toLowerCase() : "";
+  if (h.includes("familiar")) return "rapport.lien_meme";
+  if (h.includes("complementary")) return "rapport.lien_complementaire";
+  if (h.includes("deep difference")) return "rapport.lien_ecart";
+  return null;
+}
+
+/**
+ * Le `headline` de `mutualUnderstanding` — quatre formulations fixes cote
+ * moteur, dont une par defaut documentee (« mutual understanding »). Contrai-
+ * rement a `clefLien`, une phrase non reconnue retombe donc sur ce defaut
+ * plutot que sur `null` : le moteur promet toujours l une des quatre.
+ */
+function clefEntente(headline: unknown): string {
+  const h = typeof headline === "string" ? headline.toLowerCase() : "";
+  if (h.includes("similar attitudes")) return "rapport.entente_harmonie";
+  if (h.includes("disagreements")) return "rapport.entente_friction";
+  if (h.includes("mix of stimulation")) return "rapport.entente_mixte";
+  return "rapport.entente_defaut";
+}
+
+function lireLienDuo(b?: BrutLienDuo): LienDuo | null {
+  if (typeof b?.score !== "number") return null;
+  const score = borne(b.score);
+  return {
+    score,
+    palier: palierDe(score),
+    clef: clefLien(b.headline),
+    element1: elementDe(b.element1),
+    element2: elementDe(b.element2),
+    element1Pct: borne(b.element1Pct),
+    element2Pct: borne(b.element2Pct),
+  };
+}
+
 /**
  * Range la réponse du moteur. Rend `null` si la compatibilité manque : sans
  * elle il n'y a pas de rapport, et un rapport sans son chiffre de tête serait
@@ -216,21 +344,10 @@ export function lireMatch(brut: unknown): LectureMatch | null {
     dimension("rapport.d_equilibre", m.balance?.score),
   ];
 
-  // L'attraction se lit dans les deux sens : c'est la seule dimension dont
-  // l'écart entre les deux vaut plus que la moyenne.
-  const versElle = borne(m.attraction?.aToB);
-  const versLui = borne(m.attraction?.bToA);
-  const attraction: Dimension = {
-    clef: "rapport.d_attraction",
-    valeur: Math.round((versElle + versLui) / 2),
-    palier: palierDe((versElle + versLui) / 2),
-    asymetrique: Math.abs(versElle - versLui) >= 8,
-    versLui,
-    versElle,
-  };
-
+  // L'attraction n'est plus un score depuis le 17/09 : une liste d'aspects
+  // mesurés, pas un pourcentage. Elle sort donc de la grille de dimensions et
+  // vit dans son propre champ (`etincelle`), lu plus bas.
   const nuances: Dimension[] = [
-    attraction,
     dimensionSiChiffre("rapport.d_comprehension", m.generalUnderstanding?.score),
     /**
      * `exclusive` EST RETIRE DE L AFFICHAGE, le 17/09/2026.
@@ -296,6 +413,23 @@ export function lireMatch(brut: unknown): LectureMatch | null {
   const cadeauVersElle = lireCadeau(m.gift?.person1GivesPerson2);
   const cadeauVersLui = lireCadeau(m.gift?.person2GivesPerson1);
 
+  const lien = lireLienDuo(m.bond);
+  const temperament = lireLienDuo(m.generalUnderstanding);
+
+  const entente: Entente | null =
+    typeof m.mutualUnderstanding?.score === "number"
+      ? {
+          score: borne(m.mutualUnderstanding.score),
+          palier: palierDe(borne(m.mutualUnderstanding.score)),
+          clef: clefEntente(m.mutualUnderstanding.headline),
+        }
+      : null;
+
+  const etincelle: Etincelle | null =
+    typeof m.attraction?.count === "number"
+      ? { compte: Math.max(0, Math.round(m.attraction.count)) }
+      : null;
+
   return {
     score,
     palier: palierDe(score),
@@ -311,5 +445,9 @@ export function lireMatch(brut: unknown): LectureMatch | null {
     dominantLui: dominant(m.person1),
     dominantElle: dominant(m.person2),
     ascendant,
+    lien,
+    temperament,
+    entente,
+    etincelle,
   };
 }

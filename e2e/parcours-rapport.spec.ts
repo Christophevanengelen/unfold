@@ -58,8 +58,44 @@ test.describe("rapport de compatibilite", () => {
 
   test("le score du moteur s affiche", async ({ page }) => {
     await ouvrirRapport(page);
-    // 73 est le score de la fixture, qui est la reponse reelle du moteur.
-    await expect(page.getByText("73", { exact: true }).first()).toBeVisible();
+    // 77 est le score de la fixture, qui est la reponse reelle du moteur
+    // (couple de test du 17/09 : Christophe/Patricia, Bruxelles).
+    await expect(page.getByText("77", { exact: true }).first()).toBeVisible();
+  });
+
+  /**
+   * Les quatre cartes de la mise a jour du 17/09 (Marie-Ange) : `bond`,
+   * `generalUnderstanding` enrichi, `mutualUnderstanding`, et le changement de
+   * forme de `attraction`. Sans le branchement, `bond`/`mutualUnderstanding`
+   * ne sont lus nulle part (`lecture.lien`/`lecture.entente` restent `null`,
+   * les cartes ne rendent rien) et `attraction` retombe silencieusement sur
+   * zero (voir la note dans `match.md` : « sans mise a jour, la carte
+   * affichera 0 »).
+   */
+  test("le lien, le tempérament, l entente et l étincelle du 17/09 s affichent", async ({ page }) => {
+    await ouvrirRapport(page);
+
+    // bond : headline "familiar elemental bond" -> "familiar ground". Le
+    // meme headline arrive aussi sur generalUnderstanding sur ce couple —
+    // deux cartes, meme phrase, ce n est pas un doublon a corriger.
+    await expect(page.getByText("Do you have a bond?")).toBeVisible();
+    await expect(page.getByText("familiar ground").first()).toBeVisible();
+
+    // generalUnderstanding enrichi : jauges d element, memes deux elements
+    // "Water" que dans la fixture (element1/element2).
+    await expect(page.getByText("Temperament", { exact: true })).toBeVisible();
+    await expect(page.getByText("Water").first()).toBeVisible();
+
+    // mutualUnderstanding : headline "mix of stimulation and friction in how
+    // you talk" -> le palier "mixte".
+    await expect(page.getByText("How do you get along?")).toBeVisible();
+    await expect(page.getByText("a mix of stimulation and friction")).toBeVisible();
+
+    // attraction (nouvelle forme) : `count: 0` sur ce couple. Une carte qui
+    // affiche encore un pourcentage ici serait la regression que match.md
+    // annonce : « sans mise a jour la carte affichera 0 ».
+    await expect(page.getByText("Spark", { exact: true })).toBeVisible();
+    await expect(page.getByText("Nothing clear measured this time")).toBeVisible();
   });
 
   test("une reponse encore EMBALLEE est lue quand meme", async ({ page }) => {
@@ -75,7 +111,9 @@ test.describe("rapport de compatibilite", () => {
     await page.addInitScript(
       ([clef, valeur]) => localStorage.setItem(clef as string, valeur as string),
       [
-        "unfold_match_cache",
+        // La clef a change le 17/09 (voir lib/match-api.ts) : le cache
+        // se casse volontairement sur la mise a jour du moteur.
+        "unfold_match_cache_2026_09_17",
         JSON.stringify({
           "1985-04-12|08:30|50.8503|4.3517|Europe/Brussels>1982-09-02|02:15|50.8503|4.3517|Europe/Brussels":
             {
