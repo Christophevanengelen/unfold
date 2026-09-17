@@ -33,3 +33,73 @@ Ce que les brouillons 1 → 15 (2 septembre 2026) ont fixé, pour que la suite s
 1. Route moteur « correspondance » : pour une vie, le classement des personnalités de la base par similarité (sujets, calendrier, rythme) avec leurs faits datés.
 2. Route « fenêtres d'une vie » sur date + heure + lieu (six routes publiques aujourd'hui limitées à un personId).
 3. Les mêmes écrans branchés sur l'utilisateur réel de l'app, avec les jetons du dépôt.
+
+---
+
+## Écrire un parcours qui mord — relevé du 17 septembre 2026
+
+Six fois dans l'histoire de ce dépôt, un test a annoncé « passed » sans rien
+vérifier. Voici les formes que ça prend, toutes rencontrées en vrai.
+
+### 1. Le test qui verrouille la faute
+
+`parcours-rapport.spec.ts` exigeait `/100` à l'écran pour prouver que la
+vitrine montrait « le produit d'aujourd'hui ». Ce `/100` était un **score
+inventé**, et c'était précisément le défaut à corriger. Le test a donc protégé
+la faute pendant une journée, et il a fallu le réécrire pour livrer la
+correction.
+
+**Avant d'écrire une assertion, se demander : est-ce que je verrouille une
+qualité, ou une habitude ?**
+
+### 2. La fixture qui n'atteint pas le code testé
+
+Un test ouvrait la période **en cours** pour vérifier qu'aucun nom de technique
+n'atteint l'écran. Or la période en cours du jeu de test est un transit, dont
+le libellé ne contient aucun des mots interdits. Retirer complètement le
+garde-fou ne changeait rien : le sabotage passait.
+
+**Corrigé en ouvrant plusieurs périodes**, dont celles qui portent les libellés
+bruts. Un test qui ne touche pas le code qu'il garde est décoratif.
+
+### 3. Le test de présence à la place du test d'effet
+
+« Le lien est-il visible ? » — il l'était, et il ne faisait rien : un `<Link>`
+dont le `onClick` fermait le tiroir se démontait avant que le routeur traite le
+clic. **Le parcours doit CLIQUER et vérifier l'URL**, pas constater une
+présence.
+
+Même famille : compter des pixels plutôt que l'effet. Les flèches de la
+timeline sautent de 1 344 px ; vérifier ce nombre laisse passer une régression
+de la hauteur d'un mois. **On mesure l'ÂGE affiché** — le seul nombre que la
+personne voit, et il ne peut changer d'exactement un que si le saut vaut douze
+mois.
+
+### 4. Mesurer la boîte transformée
+
+`getBoundingClientRect()` rend la boîte **après transformation**. Un segment qui
+entre en `scaleX` se mesure à 0,1 % de large au lieu de 32 %. Pour un fait de
+mise en page, utiliser `offsetWidth` : la transformation ne le touche pas.
+
+### 5. L'écran publie sa donnée
+
+Chercher « le premier élément dont le texte est un nombre » attrape ce qu'on
+trouve : la pastille, son parent, ou le même chiffre ailleurs. La mesure devient
+intermittente — et **un test intermittent apprend à douter de soi plutôt que du
+code**.
+
+L'écran doit publier ce qu'il affiche : `data-age-lu`, `data-arc-total`,
+`data-vitrine-vide`. Le parcours lit une donnée, pas une apparence.
+
+### 6. Compter les appels réseau, pas les intentions
+
+Le contrat de l'app est : une naissance, un calcul, puis plus rien sur le
+réseau. Pour le prouver, `page.route()` compte les appels, on quitte l'écran,
+on y revient, et on exige toujours **un seul**. Lire le code ne prouve rien —
+un cache peut exister et ne pas servir.
+
+### La règle qui les couvre toutes
+
+**Un contrôle qu'on n'a pas essayé de casser n'est pas un contrôle.** On écrit
+le test, on le fait passer, puis on remet le défaut et on exige qu'il échoue.
+Si le sabotage passe, c'est le test qui est faux — pas le code qui est bon.

@@ -119,11 +119,14 @@ export default function ConnectionsPage() {
       {/* Header */}
       <div className="mb-1 text-center">
         <h1 className="font-display text-2xl font-bold text-text-heading">{t("connexions.titre", locale)}</h1>
-        <p className="text-xs text-text-body-subtle">
-          {connections.length > 0
-            ? t("connexions.compte", locale).replace("{n}", String(connections.length))
-            : perso("compat.invitez", locale)}
-        </p>
+        {/* Rien sous le titre quand la liste est vide : la vitrine porte sa
+            propre phrase, et « Invitez quelqu un pour commencer » la doublait
+            en vouvoyant, alors que tout le reste de l app tutoie. */}
+        {connections.length > 0 ? (
+          <p className="text-xs text-text-body-subtle">
+            {t("connexions.compte", locale).replace("{n}", String(connections.length))}
+          </p>
+        ) : null}
       </div>
 
       {/* Rhythm inbox */}
@@ -157,10 +160,19 @@ export default function ConnectionsPage() {
         </motion.button>
       )}
 
-      {/* Divider */}
+      {/* Le separateur et les deux actions n apparaissent QUE s il y a deja des
+          connexions.
+          
+          Sans connexion, la vitrine porte l appel a l action, et un seul : un
+          bouton plein pour inviter, un lien discret pour « j ai recu un code ».
+          Les garder ici en plus faisait deux fois les memes gestes sur le meme
+          ecran, avec deux hierarchies differentes — et cela remettait le code
+          FAV-XXXX en clair a l ecran, alors que c est de la plomberie qui a sa
+          place dans la feuille de partage. */}
+      {connections.length > 0 ? (
+      <>
       <div className="my-5 h-px" style={{ background: "var(--surface-medium)" }} />
 
-      {/* Share + enter code */}
       <div className="space-y-3">
         <Link
           href="/app/invite/share"
@@ -254,6 +266,8 @@ export default function ConnectionsPage() {
           </motion.div>
         )}
       </div>
+      </>
+      ) : null}
     </div>
   );
 }

@@ -119,6 +119,7 @@ type Strings = {
   };
   nav: {
     timeline: string;
+    vie: string;
     match: string;
     profile: string;
   };
@@ -211,6 +212,7 @@ type Strings = {
     familles: string;
     mesure: string;
     puis: string;
+    titre_vide: string; sous_vide: string; inviter: string; recu: string;
     /** Les dix sujets, tels que les donnees mesurees les nomment (clef en
      *  francais, cote producteur) — traduits pour l affichage. */
     sujets: Record<string, string>;
@@ -366,6 +368,7 @@ const FR: Strings = {
   },
   nav: {
     timeline: "Timeline",
+    vie: "Ma vie",
     match: "Match",
     profile: "Profil",
   },
@@ -455,6 +458,10 @@ const FR: Strings = {
     familles: "De quoi leur vie parle le plus",
     mesure: "Chez la vie médiane, on ne parle que {p} % du temps. Le reste, c'est le silence — et c'est une bonne nouvelle.",
     puis: "Invite quelqu'un de ton cercle : vous verrez vos deux rythmes côte à côte.",
+    titre_vide: "Ça se lit dans les deux sens.",
+    sous_vide: "Ce qui te porte vers quelqu'un n'est jamais ce qui le porte vers toi. Il faut être deux pour le voir.",
+    inviter: "Inviter quelqu'un",
+    recu: "J'ai reçu un code",
     sujets: {
       "toi-même": "toi-même",
       "échanges, entourage": "échanges, entourage",
@@ -732,6 +739,7 @@ const EN: Strings = {
   },
   nav: {
     timeline: "Timeline",
+    vie: "My life",
     match: "Match",
     profile: "Profile",
   },
@@ -821,6 +829,10 @@ const EN: Strings = {
     familles: "What their life is mostly about",
     mesure: "For the median life, we only speak {p} % of the time. The rest is silence — and that's good news.",
     puis: "Invite someone from your circle: you'll see both rhythms side by side.",
+    titre_vide: "It reads both ways.",
+    sous_vide: "What draws you to someone is never what draws them to you. It takes two to see it.",
+    inviter: "Invite someone",
+    recu: "I have a code",
     sujets: {
       "toi-même": "yourself",
       "échanges, entourage": "exchanges, close circle",
@@ -1098,6 +1110,7 @@ const ES: Strings = {
   },
   nav: {
     timeline: "Línea de tiempo",
+    vie: "Mi vida",
     match: "Match",
     profile: "Perfil",
   },
@@ -1187,6 +1200,10 @@ const ES: Strings = {
     familles: "De qué habla más su vida",
     mesure: "En la vida mediana solo hablamos el {p} % del tiempo. El resto es silencio, y es una buena noticia.",
     puis: "Invita a alguien de tu círculo: veréis vuestros dos ritmos juntos.",
+    titre_vide: "Se lee en los dos sentidos.",
+    sous_vide: "Lo que te acerca a alguien nunca es lo que lo acerca a ti. Hacen falta dos para verlo.",
+    inviter: "Invitar a alguien",
+    recu: "Tengo un código",
     sujets: {
       "toi-même": "tú mismo",
       "échanges, entourage": "intercambios, entorno",
@@ -1464,6 +1481,7 @@ const DE: Strings = {
   },
   nav: {
     timeline: "Zeitleiste",
+    vie: "Mein Leben",
     match: "Match",
     profile: "Profil",
   },
@@ -1553,6 +1571,10 @@ const DE: Strings = {
     familles: "Wovon ihr Leben am meisten handelt",
     mesure: "Beim mittleren Leben sprechen wir nur {p} % der Zeit. Der Rest ist Stille — und das ist eine gute Nachricht.",
     puis: "Lade jemanden aus deinem Kreis ein: ihr seht eure beiden Rhythmen nebeneinander.",
+    titre_vide: "Es liest sich in beide Richtungen.",
+    sous_vide: "Was dich zu jemandem zieht, ist nie das, was ihn zu dir zieht. Dafür braucht es zwei.",
+    inviter: "Jemanden einladen",
+    recu: "Ich habe einen Code",
     sujets: {
       "toi-même": "du selbst",
       "échanges, entourage": "Austausch, Umfeld",
@@ -1830,6 +1852,7 @@ const IT: Strings = {
   },
   nav: {
     timeline: "Timeline",
+    vie: "La mia vita",
     match: "Match",
     profile: "Profilo",
   },
@@ -1919,6 +1942,10 @@ const IT: Strings = {
     familles: "Di cosa parla di più la loro vita",
     mesure: "Nella vita mediana parliamo solo il {p} % del tempo. Il resto è silenzio — ed è una buona notizia.",
     puis: "Invita qualcuno della tua cerchia: vedrete i vostri due ritmi affiancati.",
+    titre_vide: "Si legge nei due sensi.",
+    sous_vide: "Ciò che ti avvicina a qualcuno non è mai ciò che lo avvicina a te. Bisogna essere in due per vederlo.",
+    inviter: "Invitare qualcuno",
+    recu: "Ho un codice",
     sujets: {
       "toi-même": "te stesso",
       "échanges, entourage": "scambi, cerchia",
@@ -2196,6 +2223,7 @@ const PT: Strings = {
   },
   nav: {
     timeline: "Linha do tempo",
+    vie: "A minha vida",
     match: "Match",
     profile: "Perfil",
   },
@@ -2285,6 +2313,10 @@ const PT: Strings = {
     familles: "Do que fala mais a vida delas",
     mesure: "Na vida mediana só falamos {p} % do tempo. O resto é silêncio — e é uma boa notícia.",
     puis: "Convida alguém do teu círculo: vão ver os dois ritmos lado a lado.",
+    titre_vide: "Lê-se nos dois sentidos.",
+    sous_vide: "O que te aproxima de alguém nunca é o que o aproxima de ti. São precisos dois para o ver.",
+    inviter: "Convidar alguém",
+    recu: "Tenho um código",
     sujets: {
       "toi-même": "ti próprio",
       "échanges, entourage": "trocas, círculo",
@@ -2562,6 +2594,7 @@ const NL: Strings = {
   },
   nav: {
     timeline: "Tijdlijn",
+    vie: "Mijn leven",
     match: "Match",
     profile: "Profiel",
   },
@@ -2651,6 +2684,10 @@ const NL: Strings = {
     familles: "Waar hun leven vooral over gaat",
     mesure: "Bij het mediane leven spreken we maar {p} % van de tijd. De rest is stilte — en dat is goed nieuws.",
     puis: "Nodig iemand uit je kring uit: jullie zien beide ritmes naast elkaar.",
+    titre_vide: "Het leest in twee richtingen.",
+    sous_vide: "Wat jou naar iemand trekt, is nooit wat hem naar jou trekt. Daar zijn er twee voor nodig.",
+    inviter: "Iemand uitnodigen",
+    recu: "Ik heb een code",
     sujets: {
       "toi-même": "jezelf",
       "échanges, entourage": "uitwisselingen, kring",
@@ -2928,6 +2965,7 @@ const JA: Strings = {
   },
   nav: {
     timeline: "タイムライン",
+    vie: "人生",
     match: "マッチ",
     profile: "プロフィール",
   },
@@ -3017,6 +3055,10 @@ const JA: Strings = {
     familles: "その人生が主に語ること",
     mesure: "中央値の人生では、語るのは全体の{p}％だけ。残りは沈黙で、それは良い知らせです。",
     puis: "身近な人を招待すると、二つのリズムを並べて見られます。",
+    titre_vide: "両方向から読める。",
+    sous_vide: "あなたを引き寄せるものと、相手を引き寄せるものは同じではありません。見るには二人必要です。",
+    inviter: "誰かを招待する",
+    recu: "コードを持っています",
     sujets: {
       "toi-même": "自分自身",
       "échanges, entourage": "人との行き来",
@@ -3294,6 +3336,7 @@ const ZH: Strings = {
   },
   nav: {
     timeline: "时间线",
+    vie: "人生",
     match: "匹配",
     profile: "个人资料",
   },
@@ -3383,6 +3426,10 @@ const ZH: Strings = {
     familles: "他们的人生最常谈论什么",
     mesure: "在中位数的人生里，我们只在{p}%的时间开口。其余是沉默——这是好消息。",
     puis: "邀请你身边的人：你们会并排看到两种节奏。",
+    titre_vide: "双向可读。",
+    sous_vide: "把你引向某人的，与把某人引向你的，从来不是同一件事。要看见它，需要两个人。",
+    inviter: "邀请某人",
+    recu: "我有邀请码",
     sujets: {
       "toi-même": "你自己",
       "échanges, entourage": "交流与身边人",
@@ -3660,6 +3707,7 @@ const AR: Strings = {
   },
   nav: {
     timeline: "الجدول الزمني",
+    vie: "حياتي",
     match: "مطابقة",
     profile: "الملف الشخصي",
   },
@@ -3749,6 +3797,10 @@ const AR: Strings = {
     familles: "عمَّ تتحدث حياتهم أكثر",
     mesure: "في الحياة الوسيطة لا نتكلم سوى {p} % من الوقت. الباقي صمت — وهذه بشرى.",
     puis: "ادعُ أحداً من دائرتك: سترَون إيقاعيكما جنباً إلى جنب.",
+    titre_vide: "يُقرأ في الاتجاهين.",
+    sous_vide: "ما يجذبك إلى شخص ما ليس أبدًا ما يجذبه إليك. يلزم اثنان لرؤية ذلك.",
+    inviter: "دعوة شخص",
+    recu: "لديّ رمز",
     sujets: {
       "toi-même": "أنت نفسك",
       "échanges, entourage": "التواصل والمحيط",

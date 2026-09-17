@@ -132,7 +132,7 @@ export function ConnectionList({ connections, myBirthData, onDeleted }: Connecti
           « Partagez votre code ou entrez celui d un proche » — c est-a-dire
           exactement ce que disent les deux boutons places juste dessous. Il
           occupait la moitie de l ecran pour repeter la page. */}
-      {connections.length === 0 && <VitrineBase locale={locale} />}
+      {connections.length === 0 && <VitrineBase locale={locale} naissance={myBirthData} />}
     </>
   );
 }

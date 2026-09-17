@@ -1,6 +1,7 @@
 "use client";
 
 import { getTier as getTierCapsules } from "@/lib/capsules";
+import { TierPulse } from "@/components/demo/compat/TierPulse";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, startTransition } from "react";
 
 /**
@@ -423,7 +424,19 @@ function OverviewView({
 }: {
   capsules: CapsuleData[];
   onTapCapsule: (capsule: CapsuleData) => void;
-  onAgeChange: (age: number) => void;
+  /**
+   * Seule la vue AFFICHEE renseigne l age. Absente, la vue se tait.
+   *
+   * Les deux vues sont montees en meme temps — c est ce qui permet de basculer
+   * sans recharger. Mais elles appelaient toutes les deux le meme poseur
+   * d etat, chacune depuis SA position de defilement. La vue cachee, restee au
+   * debut de la vie, ecrasait ce que la vue visible venait d ecrire : la
+   * pastille affichait tantot le bon age, tantot celui de l autre vue, selon
+   * laquelle avait parle en dernier.
+   *
+   * C est ce qui faisait qu un saut d une annee ne changeait pas le chiffre.
+   */
+  onAgeChange?: (age: number) => void;
 }) {
   const locale = useLocale();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -658,7 +671,7 @@ function OverviewView({
         const d = yToDate(centerY);
         const diffMs = d.getTime() - birthDate.getTime();
         const age = Math.max(0, Math.min(100, Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000))));
-        if (age !== lastAge) { lastAge = age; onAgeChange(age); }
+        if (age !== lastAge) { lastAge = age; onAgeChange?.(age); }
         const away = Math.abs(centerY - nowY) > el.clientHeight * 0.8;
         if (away !== lastAway) { lastAway = away; setIsAwayFromNow(away); }
       });
@@ -790,8 +803,19 @@ function OverviewView({
                 background: `color-mix(in srgb, ${hc ?? "var(--accent-purple)"} ${capsule.isCurrent ? "20" : "13"}%, transparent)`,
                 backdropFilter: "blur(8px)",
                 WebkitBackdropFilter: "blur(8px)",
+                // PLUS DE HALO SUR LA PERIODE EN COURS.
+                //
+                // Elle portait `0 0 16px` a 20 % — une lueur diffuse. Les
+                // periodes a venir, elles, portent `blur(2px)` et 40 %
+                // d opacite. Les deux traitements sont FLOUS : a l ecran, la
+                // periode ouverte et celles qui ne le sont pas encore se
+                // ressemblaient, et on ne savait plus sur laquelle appuyer.
+                //
+                // Ce qui les separe maintenant est la NETTETE, pas la
+                // luminosite : un lisere franc d 1,5 px ici, et une pastille
+                // qui bat au capuchon. Le flou ne designe plus que le futur.
                 boxShadow: capsule.isCurrent
-                  ? `0 0 16px color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 20%, transparent)`
+                  ? `inset 0 0 0 1.5px color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 85%, transparent)`
                   : "none",
                 filter: capsule.isFuture ? "blur(2px)" : "none",
                 opacity: capsule.isFuture ? 0.4 : 1,
@@ -799,15 +823,23 @@ function OverviewView({
               }}
               whileTap={{ scale: 0.95 }}
             >
+              {/* La pastille qui bat — « c est ici, maintenant ».
+                  
+                  Le meme objet que dans Match autour de l avatar, et le meme
+                  composant : un point plein plus un anneau qui s etend. Un
+                  seul langage pour « en ce moment » dans toute l app.
+                  
+                  Posee au capuchon HAUT : c est par la que la periode entre
+                  dans le present, et c est le bord que l oeil rencontre en
+                  descendant la colonne.
+                  
+                  La regle globale de « reduire les animations » arrete
+                  l anneau ; le point plein reste, et avec lui le lisere franc
+                  de la capsule. Rien de ce qui DESIGNE ne depend du mouvement. */}
               {capsule.isCurrent && (
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    borderRadius: w / 2,
-                    background:
-                      `radial-gradient(ellipse 80% 25% at 50% 85%, color-mix(in srgb, ${hc ?? "var(--accent-purple)"} 12%, transparent) 0%, transparent 70%)`,
-                  }}
-                />
+                <div className="pointer-events-none absolute left-1/2 -translate-x-1/2" style={{ top: 5 }}>
+                  <TierPulse color={hc ?? "var(--accent-purple)"} size={7} creux />
+                </div>
               )}
               {/* Content block — anchored at bottom inside rounded cap */}
               <div
@@ -1614,9 +1646,27 @@ export function MomentumTimelineV2() {
            telephone, il fallait la deuxieme main. Elle descend juste au-dessus
            de la barre d onglets, dans la zone que le pouce atteint sans effort.
            Masquee pendant l accueil et le guide. ── */}
-      {!showWelcome && !showGuide && <div className="absolute left-0 right-0 z-20 flex items-center justify-center" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)", paddingInline: S.px }}>
+      {/* LE CONTENEUR NE PREND PAS LES CLICS, LA PASTILLE SI.
+          
+          Il est en `left-0 right-0` : sa boite fait toute la largeur de
+          l ecran, alors que ce qu on voit dedans est une pastille centree de
+          quelques dizaines de points. Tout le reste est du vide — et ce vide
+          etait cliquable, a la hauteur exacte ou se trouvent le bouton
+          MAINTENANT a gauche et les fleches haut/bas a droite.
+          
+          Christophe, le 17/09 : « on dirait qu il y a un layer au-dessus qui
+          m empeche de les cliquer ». C etait litteralement cela.
+          
+          Le z-index ne sauve pas : les fleches sont en z-30 DANS le sous-arbre
+          de la vue, ce conteneur est en z-20 au niveau du composant. Deux
+          contextes d empilement differents — les nombres ne se comparent pas
+          entre eux, et c est le dernier peint qui gagne.
+          
+          Les deux autres conteneurs pleine largeur de ce fichier (lignes 232 et
+          1791) portent deja `pointer-events-none`. Celui-ci avait ete oublie. */}
+      {!showWelcome && !showGuide && <div className="pointer-events-none absolute left-0 right-0 z-20 flex items-center justify-center" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)", paddingInline: S.px }}>
         <div
-          className="flex items-center gap-0.5 rounded-full p-0.5"
+          className="pointer-events-auto flex items-center gap-0.5 rounded-full p-0.5"
           style={PILL_STYLE}
         >
           {(["overview", "list"] as ViewMode[]).map((mode) => (
@@ -1747,11 +1797,22 @@ export function MomentumTimelineV2() {
         });
         return (
           <>
+            {/* `onAgeChange` ne part qu a la vue affichee : voir le commentaire
+                sur la prop. Deux vues montees qui ecrivent le meme age, chacune
+                depuis sa propre position, se contredisent en silence. */}
             <div className="absolute inset-0 pt-9" style={vue(viewMode === "overview")}>
-              <OverviewView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
+              <OverviewView
+                capsules={allCapsules}
+                onTapCapsule={handleTapCapsule}
+                onAgeChange={viewMode === "overview" ? handleAgeChange : undefined}
+              />
             </div>
             <div className="absolute inset-0 pt-9" style={vue(viewMode === "list")}>
-              <ListView capsules={allCapsules} onTapCapsule={handleTapCapsule} onAgeChange={handleAgeChange} />
+              <ListView
+                capsules={allCapsules}
+                onTapCapsule={handleTapCapsule}
+                onAgeChange={viewMode === "list" ? handleAgeChange : undefined}
+              />
             </div>
           </>
         );
@@ -1804,6 +1865,15 @@ export function MomentumTimelineV2() {
             }}
           >
             <span
+              // L age que le curseur de lecture designe, publie comme donnee.
+              //
+              // Un parcours qui cherche « le premier element dont le texte est
+              // un nombre » attrape ce qu il trouve : la pastille, son parent,
+              // ou le meme chiffre ailleurs a l ecran. La mesure devient
+              // intermittente, et un test intermittent ne prouve rien — il
+              // apprend a douter de soi plutot que du code. Ici l ecran dit
+              // lui-meme ce qu il affiche.
+              data-age-lu={visibleAge}
               className="font-display tabular-nums leading-none"
               style={{
                 color: isToday

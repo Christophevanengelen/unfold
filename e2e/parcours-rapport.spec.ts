@@ -287,13 +287,26 @@ test.describe("rapport de compatibilite", () => {
  * la vitrine et le produit se voie tout de suite.
  */
 test.describe("la vitrine montre le produit d aujourd hui", () => {
-  test("sans connexion, l empreinte et le chiffre sont la", async ({ page }) => {
+  test("sans connexion, l empreinte est la — et c est la SIENNE", async ({ page }) => {
+    /**
+     * REECRIT LE 17/09 AU SOIR. Ce test exigeait « /100 » a l ecran : il
+     * gardait le score d exemple, qui etait justement le defaut. Un test peut
+     * verrouiller une faute aussi surement qu il protege une qualite, et
+     * celui-ci l a fait pendant une journee.
+     *
+     * L intention d origine reste, et elle est bonne : la vitrine doit montrer
+     * le produit d AUJOURD HUI, pas une ancienne fiche. Ce qui change, c est ce
+     * qui en tient lieu de preuve — l empreinte, et le fait qu elle soit tiree
+     * de la naissance de la personne et non d un couple invente.
+     */
     await brancherReseau(page);
     await semer(page); // aucune connexion : c est tout l objet du test
+    await page.addInitScript(() => {
+      try { localStorage.removeItem("unfold_connections"); } catch { /* stockage refuse */ }
+    });
     await aller(page, "/app/compatibility");
 
-    // Le chiffre de l exemple, dans la typographie du rapport.
-    await expect(page.getByText("/100")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("[data-vitrine-vide]")).toBeVisible({ timeout: 15000 });
 
     // L empreinte : sans elle, la vitrine est retombee sur l ancienne fiche.
     const traces = await page.evaluate(
@@ -323,5 +336,69 @@ test.describe("rapport de compatibilite — theme clair", () => {
       const [r, v, b] = (couleur.match(/\d+/g) ?? []).map(Number);
       expect(r > 150 && v > 150 && b < 110, `trait jaune en theme clair : ${couleur}`).toBe(false);
     }
+  });
+});
+
+test.describe("l ecran sans aucune connexion", () => {
+  test.beforeEach(async ({ page }) => {
+    await brancherReseau(page);
+    await semer(page);
+    await page.addInitScript(() => {
+      try { localStorage.removeItem("unfold_connections"); } catch { /* stockage refuse */ }
+    });
+  });
+
+  test("aucun chiffre invente, et surtout pas un score", async ({ page }) => {
+    /**
+     * Christophe, le 17/09 : « pour l ecran de demarrage, j aimerais quelque
+     * chose qui vende beaucoup mieux ».
+     *
+     * L ecran montrait une carte d exemple avec un score de 73/100. Trois
+     * defauts en un, et le premier est le plus grave : LE PREMIER CHIFFRE QUE
+     * LA PERSONNE VOYAIT ETAIT FAUX. Un produit qui vend un resultat calcule ne
+     * peut pas apprendre, sur son ecran d accueil, que ses nombres sont
+     * decoratifs. Il posait en plus une ancre a 73, contre laquelle un vrai
+     * score de 54 se serait vecu comme un echec.
+     *
+     * Ce test interdit le retour de tout nombre sur cet ecran. Pas seulement
+     * « 73 » : n importe quel score, n importe quelle jauge. Tant qu il n y a
+     * qu une naissance, il n y a rien a chiffrer.
+     */
+    await aller(page, "/app/compatibility");
+    await expect(page.locator("[data-vitrine-vide]")).toBeVisible({ timeout: 20_000 });
+
+    const texte = await page.locator("[data-vitrine-vide]").innerText();
+
+    // Un score, une note, un pourcentage : aucun n a de raison d exister avant
+    // qu il y ait deux naissances.
+    expect(texte, `chiffre a l ecran : ${texte}`).not.toMatch(/\d/);
+    expect(texte).not.toMatch(/\/\s*100/);
+
+    // Et aucune barre de progression : une jauge dit remplissage, donc
+    // performance, donc promesse.
+    const jauges = await page.locator("[data-vitrine-vide] [role='img']").count();
+    expect(jauges, "une jauge est revenue sur l ecran vide").toBe(0);
+  });
+
+  test("le verre montre la meme courbe, pas une seconde personne", async ({ page }) => {
+    /**
+     * Le concept de l ecran : UNE empreinte, la sienne, et un disque de verre
+     * dans lequel la MEME courbe se lit decalee. Dessiner une seconde empreinte
+     * serait inventer un deuxieme humain — exactement la faute qu on vient de
+     * retirer, sous une autre forme.
+     *
+     * Deux traces, une seule graine : c est ce qu on verifie.
+     */
+    await aller(page, "/app/compatibility");
+    await expect(page.locator("[data-vitrine-vide]")).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator("[data-vitrine-verre]")).toHaveCount(1);
+
+    const traces = await page.evaluate(() => {
+      const svgs = [...document.querySelectorAll("[data-vitrine-vide] svg")];
+      return svgs.map((s) => [...s.querySelectorAll("path")].map((p) => p.getAttribute("d")).join("|"));
+    });
+
+    expect(traces.length, "il faut deux rendus de la courbe").toBe(2);
+    expect(traces[0], "les deux rendus ne dessinent pas la meme courbe").toBe(traces[1]);
   });
 });

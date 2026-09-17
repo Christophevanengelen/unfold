@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Heart, Clock, User, MessageDots } from "flowbite-react-icons/outline";
+import { Heart, Clock, User, MessageDots, ChartMixed } from "flowbite-react-icons/outline";
 import { t } from "@/lib/i18n-demo";
 import { useLocale } from "@/lib/use-locale";
 import { useConnexions } from "@/components/demo/use-connexions";
@@ -91,6 +91,21 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
       href: "/app/timeline",
       icon: Clock,
       label: t("nav.timeline", locale),
+    },
+    // « Ma vie » est une DESTINATION, pas un reglage.
+    //
+    // Elle vivait dans le tiroir profil, ou elle n avait rien a faire : le
+    // profil, ce sont les reglages. Et le lien y etait casse — un <Link> dont
+    // le onClick fermait le tiroir, donc l ancre disparaissait avant que le
+    // routeur traite le clic, et rien ne se passait.
+    //
+    // Sa place est ici, juste apres la timeline : les deux montrent le meme
+    // temps a deux echelles. L une l annee, l autre la vie entiere.
+    {
+      key: "vie" as const,
+      href: "/app/vie",
+      icon: ChartMixed,
+      label: t("nav.vie", locale),
     },
     {
       key: "match" as const,

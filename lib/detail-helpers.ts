@@ -406,6 +406,30 @@ const JARGON_API: [RegExp, string][] = [
  * libelle anglais brut du moteur, avec ses noms d aspects. Maintenant les dix
  * passent par la meme table.
  */
+/**
+ * Ce qui trahit un libelle encore technique APRES traduction.
+ *
+ * Mesure du 17/09/2026, capture d ecran de Christophe : la feuille affichait
+ * « Cycle de vie Fortune+Spirit L2 Scorpio ». La table avait bien remplace
+ * « ZR » par « Cycle de vie » — et laisse passer le nom du lot, le niveau et le
+ * signe. Un libelle A MOITIE traduit est pire qu un libelle brut : il a l air
+ * intentionnel, donc personne ne le signale comme un bug.
+ *
+ * On ne rallonge pas la table de remplacement : elle ne peut pas suivre tout ce
+ * que le moteur inventera. On REFUSE d afficher ce qu on n a pas su traduire
+ * entierement. Rien vaut mieux qu a moitie.
+ */
+const RESTE_TECHNIQUE: RegExp[] = [
+  // Les lots hellenistiques, seuls ou combines : « Fortune+Spirit », « Lot of Eros ».
+  /\b(Fortune|Spirit|Eros|Nemesis|Necessity|Courage|Victory|Basis|Exaltation)\b/i,
+  // Les niveaux du decoupage : L1 a L4.
+  /\bL[1-4]\b/,
+  // Les douze signes, en anglais — le moteur ne les traduit jamais.
+  /\b(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\b/i,
+  // Les noms d aspects et de points restes en anglais.
+  /\b(ascendant|midheaven|descendant|imum coeli|lot of)\b/i,
+];
+
 export function translateApiLabel(label: string | undefined, locale?: Locale): string | null {
   if (!label) return null;
   const loc = resolveLocale(locale);
@@ -420,6 +444,13 @@ export function translateApiLabel(label: string | undefined, locale?: Locale): s
   for (const [motif, cle] of JARGON_API) {
     result = result.replace(motif, recit(cle, loc));
   }
+
+  // Le garde-fou de sortie. Voir RESTE_TECHNIQUE : on prefere ne rien montrer
+  // plutot que de montrer un libelle a moitie traduit.
+  for (const motif of RESTE_TECHNIQUE) {
+    if (motif.test(result)) return null;
+  }
+
   return result;
 }
 

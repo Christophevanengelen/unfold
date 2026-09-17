@@ -27,8 +27,8 @@ import { afficheDisponible, dessinerAfficheDeVie } from "@/lib/carte-vie";
 import { STRINGS_MATCH_DOMAINES } from "@/lib/i18n-demo";
 import { DOMAINE } from "@/lib/score-match";
 import { reussi, toucher } from "@/lib/haptique";
-import { apiFetch } from "@/lib/api-client";
 import { lireLesChapitres, type ChapitreDeVie } from "@/lib/chapitres-vie";
+import { chargerChapitres } from "@/lib/chapitres-api";
 
 export default function ViePage() {
   const locale = useLocale();
@@ -69,21 +69,13 @@ export default function ViePage() {
     if (!birthData?.birthDate || !naissanceIso) return;
     let abandonne = false;
 
-    apiFetch("/api/chapitres", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        birthDate: birthData.birthDate,
-        birthTime: birthData.birthTime || "00:00",
-        latitude: birthData.latitude,
-        longitude: birthData.longitude,
-        timezone: birthData.timezone,
-      }),
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((paquet) => {
-        if (abandonne || !paquet?.success) return;
-        setChapitresDeVie(lireLesChapitres(paquet.periodes, naissanceIso, maintenant, locale));
+    // `chargerChapitres` rend le cache s il existe, et n appelle le moteur que
+    // la premiere fois pour une naissance donnee — le meme contrat que le reste
+    // de l app : une naissance, un calcul, puis plus rien sur le reseau.
+    chargerChapitres(birthData)
+      .then((periodes) => {
+        if (abandonne || !periodes) return;
+        setChapitresDeVie(lireLesChapitres(periodes, naissanceIso, maintenant, locale));
       })
       .catch(() => {
         /* Le moteur n a pas repondu : l ecran se passe de l arc. */
