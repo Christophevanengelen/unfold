@@ -37,7 +37,7 @@
  * decide pas.
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, Fire, CalendarMonth, Lightbulb, ChevronDown, ArrowRight, ShareNodes } from "flowbite-react-icons/outline";
 import { ShareSignalCard } from "./ShareSignalCard";
@@ -52,6 +52,8 @@ import { FeedbackThumb } from "@/components/demo/FeedbackThumb";
 import { CielDuSignal } from "@/components/demo/CielDuSignal";
 import { GrilleDeVie } from "@/components/demo/GrilleDeVie";
 import { RegleDeDuree } from "@/components/demo/RegleDeDuree";
+import { BandeDuJour } from "@/components/demo/BandeDuJour";
+import { heuresDuJour } from "@/lib/soleil";
 import { chargerPositions, type Position } from "@/lib/positions-api";
 import { formatEuropeanDisplayDate } from "@/lib/european-date";
 import { PremiumBlur } from "@/components/demo/PremiumBlur";
@@ -314,6 +316,43 @@ export function CapsuleDetailSheet({
   // Trois au maximum : au-dela, le cercle devient un semis de points et l ecart
   // qu on veut montrer ne se lit plus.
   const clefsCiel = capsule.planets.filter((p) => p in planetConfig).slice(0, 3).join(",");
+
+  /**
+   * De quoi dessiner la bande du jour, ou `null`.
+   *
+   * Le lieu est celui de la NAISSANCE — c est la seule ancre geographique de
+   * l app, et c est deja celle que le moteur utilise pour tout le reste. Pour
+   * une periode passee, ou la personne se trouvait vraiment est de toute facon
+   * inconnaissable : on ne le devine pas.
+   */
+  const bandeDuJour = useMemo(() => {
+    const b = getBirthDataSync();
+    if (!b || typeof b.latitude !== "number" || typeof b.longitude !== "number") return null;
+    if (!dateSignal) return null;
+    // Le decalage du lieu ce jour-la. `Intl` connait les regles de chaque
+    // fuseau, y compris l heure d ete — une table figee se tromperait d une
+    // heure entiere la moitie de l annee.
+    let decalage = 0;
+    try {
+      const f = new Intl.DateTimeFormat("en-US", { timeZone: b.timezone, timeZoneName: "longOffset" });
+      const p = f.formatToParts(new Date(`${dateSignal}T12:00:00Z`)).find((x) => x.type === "timeZoneName");
+      const m = p?.value ? /GMT([+-])(\d{2}):(\d{2})/.exec(p.value) : null;
+      if (m) decalage = (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
+    } catch {
+      /* Fuseau inconnu : on reste a UTC plutot que de deviner. */
+    }
+    const h = heuresDuJour(dateSignal, b.latitude, b.longitude, decalage);
+    if (!h || h.lever === null || h.coucher === null) return null;
+    const minutes = Math.max(0, Math.round(h.coucher - h.lever));
+    return {
+      lat: b.latitude,
+      lon: b.longitude,
+      decalage,
+      libelle: t("resume.jour_duree", locale)
+        .replace("{h}", String(Math.floor(minutes / 60)))
+        .replace("{m}", String(minutes % 60).padStart(2, "0")),
+    };
+  }, [dateSignal, locale]);
 
   useEffect(() => {
     if (!dateSignal || !clefsCiel) return;
@@ -618,6 +657,28 @@ export function CapsuleDetailSheet({
           <p className="mt-3 text-[13px] leading-[1.45]" style={{ color: "var(--text-body)" }}>
             {dateLabel} · {duration}
           </p>
+
+          {/* LA BANDE DU JOUR — a quoi ressemblait la journee.
+
+              Vingt-quatre heures decoupees aux heures REELLES du soleil au lieu
+              de naissance : nuit, les trois crepuscules, plein jour. Calculees
+              en local, sans un seul appel reseau.
+
+              Une journee de decembre et une de juin ne se ressemblent pas, et
+              ca se voit sans une etiquette. C est la reponse a « trop de texte
+              et pas assez d illustrations » : une image qui se lit en un
+              dixieme de seconde et qui ne dit que des faits. */}
+          {bandeDuJour ? (
+            <div className="mt-4 max-w-[300px]">
+              <BandeDuJour
+                date={dateSignal}
+                latitude={bandeDuJour.lat}
+                longitude={bandeDuJour.lon}
+                decalageMinutes={bandeDuJour.decalage}
+                libelle={bandeDuJour.libelle}
+              />
+            </div>
+          ) : null}
 
           {/* LA REGLE — « long » par rapport a quoi.
 

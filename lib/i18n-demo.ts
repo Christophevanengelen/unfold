@@ -289,6 +289,7 @@ type Strings = {
     vie_eyebrow: string; vie_titre: string; vie_chapitres: string;
     vie_arc: string; vie_arc_encours: string; vie_arc_ages: string; vie_arc_depuis: string;
     duree_mediane: string;
+    jour_duree: string;
     vie_depuis_age: string; vie_ans: string; vie_legende: string;
     vie_plus_charge: string; vie_bascules_un: string; vie_bascules_n: string;
     vie_affiche: string; vie_affiche_en_cours: string; vie_affiche_aide: string;
@@ -655,6 +656,7 @@ const FR: Strings = {
     vie_arc_ages: "{a} à {b} ans",
     vie_arc_depuis: "à partir de {a} ans",
     duree_mediane: "le trait marque la durée habituelle",
+    jour_duree: "{h} h {m} de jour ce jour-là",
     vie_depuis_age: "depuis {a} ans",
     vie_ans: "{n} ans",
     vie_legende: "Une colonne par année vécue, haute comme le nombre de périodes ouvertes cette année-là.",
@@ -1027,6 +1029,7 @@ const EN: Strings = {
     vie_arc_ages: "{a} to {b}",
     vie_arc_depuis: "from {a} onwards",
     duree_mediane: "the mark shows the usual length",
+    jour_duree: "{h} h {m} of daylight that day",
     vie_depuis_age: "from age {a}",
     vie_ans: "{n} yrs",
     vie_legende: "One column per year lived, as tall as the number of periods open that year.",
@@ -1399,6 +1402,7 @@ const ES: Strings = {
     vie_arc_ages: "de {a} a {b} años",
     vie_arc_depuis: "a partir de los {a}",
     duree_mediane: "la marca indica la duración habitual",
+    jour_duree: "{h} h {m} de luz ese día",
     vie_depuis_age: "desde los {a} años",
     vie_ans: "{n} años",
     vie_legende: "Una columna por año vivido, tan alta como el número de periodos abiertos ese año.",
@@ -1771,6 +1775,7 @@ const DE: Strings = {
     vie_arc_ages: "{a} bis {b} Jahre",
     vie_arc_depuis: "ab {a} Jahren",
     duree_mediane: "die Marke zeigt die übliche Dauer",
+    jour_duree: "{h} Std. {m} Tageslicht an jenem Tag",
     vie_depuis_age: "ab {a} Jahren",
     vie_ans: "{n} Jahre",
     vie_legende: "Eine Spalte pro gelebtem Jahr, so hoch wie die Zahl der Phasen, die in dem Jahr offen waren.",
@@ -2143,6 +2148,7 @@ const IT: Strings = {
     vie_arc_ages: "da {a} a {b} anni",
     vie_arc_depuis: "a partire da {a} anni",
     duree_mediane: "il segno indica la durata abituale",
+    jour_duree: "{h} h {m} di luce quel giorno",
     vie_depuis_age: "dai {a} anni",
     vie_ans: "{n} anni",
     vie_legende: "Una colonna per ogni anno vissuto, alta quanto il numero di periodi aperti quell'anno.",
@@ -2515,6 +2521,7 @@ const PT: Strings = {
     vie_arc_ages: "dos {a} aos {b} anos",
     vie_arc_depuis: "a partir dos {a} anos",
     duree_mediane: "a marca indica a duração habitual",
+    jour_duree: "{h} h {m} de luz nesse dia",
     vie_depuis_age: "a partir dos {a} anos",
     vie_ans: "{n} anos",
     vie_legende: "Uma coluna por ano vivido, alta como o número de períodos abertos naquele ano.",
@@ -2887,6 +2894,7 @@ const NL: Strings = {
     vie_arc_ages: "{a} tot {b} jaar",
     vie_arc_depuis: "vanaf {a} jaar",
     duree_mediane: "het streepje toont de gebruikelijke duur",
+    jour_duree: "{h} u {m} daglicht die dag",
     vie_depuis_age: "vanaf {a} jaar",
     vie_ans: "{n} jaar",
     vie_legende: "Eén kolom per geleefd jaar, zo hoog als het aantal periodes dat dat jaar openstond.",
@@ -3259,6 +3267,7 @@ const JA: Strings = {
     vie_arc_ages: "{a}歳から{b}歳",
     vie_arc_depuis: "{a}歳から",
     duree_mediane: "印は通常の長さを示します",
+    jour_duree: "その日の日照時間は{h}時間{m}分",
     vie_depuis_age: "{a}歳から",
     vie_ans: "{n}年",
     vie_legende: "生きた1年ごとに柱が1本。その年に開いていた期間の数だけ高くなります。",
@@ -3631,6 +3640,7 @@ const ZH: Strings = {
     vie_arc_ages: "{a} 岁到 {b} 岁",
     vie_arc_depuis: "从 {a} 岁起",
     duree_mediane: "刻度标示通常的时长",
+    jour_duree: "那天有 {h} 小时 {m} 分日照",
     vie_depuis_age: "从 {a} 岁起",
     vie_ans: "{n} 年",
     vie_legende: "每活过一年一根柱子，高度等于那一年进行中的周期数。",
@@ -4003,6 +4013,7 @@ const AR: Strings = {
     vie_arc_ages: "من {a} إلى {b} سنة",
     vie_arc_depuis: "ابتداءً من {a} سنة",
     duree_mediane: "تشير العلامة إلى المدة المعتادة",
+    jour_duree: "‏{h} س {m} د من ضوء النهار في ذلك اليوم",
     vie_depuis_age: "من سن {a}",
     vie_ans: "{n} سنة",
     vie_legende: "عمود لكل سنة عشتها، ارتفاعه بعدد الفترات المفتوحة في تلك السنة.",
