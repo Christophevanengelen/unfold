@@ -82,6 +82,14 @@ export interface AxePorteur {
   elle: number;
 }
 
+/** Ce qu une personne apporte a l autre, tel que le moteur le nomme. */
+export interface Cadeau {
+  /** Le domaine, en clair : « finance », « family ». Traduit par l ecran. */
+  domaine: string;
+  /** La phrase du moteur. En anglais aujourd hui — voir la note a Marie-Ange. */
+  texte: string;
+}
+
 export interface LectureMatch {
   /** Le chiffre de tête. */
   score: number;
@@ -99,6 +107,14 @@ export interface LectureMatch {
   dominantElle: string | null;
   /** Qui prend l'ascendant, si le moteur se prononce nettement. */
   ascendant: { qui: "lui" | "elle"; confiance: number } | null;
+  /**
+   * Ce que chacun apporte a l autre, dans les deux sens.
+   *
+   * C est la reponse du moteur a la demande n° 1 de MATCHING-CONTRAT.md :
+   * l asymetrie exposee en CHAMPS et non enfermee dans une phrase. Aucun autre
+   * produit du marche n ecrit deux lectures pour un meme lien.
+   */
+  cadeaux: { versElle: Cadeau; versLui: Cadeau } | null;
 }
 
 interface BrutScore { score?: number; label?: string }
@@ -110,8 +126,28 @@ interface BrutMatch {
   boss?: { who?: string; confidence?: number };
   exclusive?: BrutScore;
   generalUnderstanding?: BrutScore;
-  gift?: { score?: number };
+  /**
+   * `gift` N A PLUS DE SCORE, et c est une bonne nouvelle.
+   *
+   * Mesure du 17/09 au soir, apres la mise a jour du moteur : la forme est
+   * passee de `{ score, label, desc }` a deux directions nommees, chacune avec
+   * sa maison et son domaine. C est exactement ce qu on demandait — le lien se
+   * lit dans les deux sens — et c est une rupture de contrat silencieuse.
+   *
+   * Notre code lisait `gift.score`, ne trouvait rien, et affichait
+   * « Generosite 0/100 », etiquetee « faible ». Un champ absent ne leve aucune
+   * erreur : il se propage en `undefined`, `borne()` le ramene a zero, et
+   * l ecran annonce un resultat mesure. C est la cinquieme classe de bugs du
+   * depot dans sa forme la plus couteuse — celle qui MENT au lieu de se taire.
+   */
+  gift?: {
+    score?: number;
+    person1GivesPerson2?: { house?: number; domain?: string; desc?: string };
+    person2GivesPerson1?: { house?: number; domain?: string; desc?: string };
+  };
   hugs?: { score?: number };
+  /** Arrive avec la mise a jour du 17/09. Pas encore lu par l ecran. */
+  mutualUnderstanding?: BrutScore;
   compatibilityRadar?: { planet?: string; pointsperc?: number; pointsperc2?: number }[];
   person1?: { dominantPlanet?: { planet?: string } };
   person2?: { dominantPlanet?: { planet?: string } };
@@ -131,6 +167,20 @@ function borne(v: unknown): number {
 function dimension(clef: string, v: unknown): Dimension {
   const valeur = borne(v);
   return { clef, valeur, palier: palierDe(valeur) };
+}
+
+/**
+ * La meme, mais qui se TAIT quand le moteur n envoie pas de chiffre.
+ *
+ * `borne(undefined)` vaut zero, et zero est une MESURE : « cette dimension est
+ * au plus bas ». Afficher zero pour un champ absent, c est inventer un
+ * resultat — exactement ce que ce produit s interdit partout ailleurs.
+ *
+ * La regle : un chiffre qu on n a pas ne s affiche pas. Une dimension en moins
+ * se remarque a peine ; une dimension fausse se retient.
+ */
+function dimensionSiChiffre(clef: string, v: unknown): Dimension | null {
+  return typeof v === "number" && Number.isFinite(v) ? dimension(clef, v) : null;
 }
 
 /** « Venus » → `venus`, et rien si le moteur nomme un axe qu'on ne connaît pas. */
@@ -181,11 +231,13 @@ export function lireMatch(brut: unknown): LectureMatch | null {
 
   const nuances: Dimension[] = [
     attraction,
-    dimension("rapport.d_comprehension", m.generalUnderstanding?.score),
-    dimension("rapport.d_engagement", m.exclusive?.score),
-    dimension("rapport.d_generosite", m.gift?.score),
-    dimension("rapport.d_chaleur", m.hugs?.score),
-  ];
+    dimensionSiChiffre("rapport.d_comprehension", m.generalUnderstanding?.score),
+    dimensionSiChiffre("rapport.d_engagement", m.exclusive?.score),
+    // `gift` n a plus de score depuis le 17/09 : il se lit dans les deux sens,
+    // et se trouve desormais dans `cadeaux`.
+    dimensionSiChiffre("rapport.d_generosite", m.gift?.score),
+    dimensionSiChiffre("rapport.d_chaleur", m.hugs?.score),
+  ].filter((d): d is Dimension => d !== null);
 
   const radar = Array.isArray(m.compatibilityRadar) ? m.compatibilityRadar : [];
   const tous: AxePorteur[] = [];
@@ -218,9 +270,21 @@ export function lireMatch(brut: unknown): LectureMatch | null {
         : null
       : null;
 
+  const lireCadeau = (c?: { domain?: string; desc?: string }): Cadeau | null =>
+    c && typeof c.domain === "string" && typeof c.desc === "string"
+      ? { domaine: c.domain, texte: c.desc }
+      : null;
+  const cadeauVersElle = lireCadeau(m.gift?.person1GivesPerson2);
+  const cadeauVersLui = lireCadeau(m.gift?.person2GivesPerson1);
+
   return {
     score,
     palier: palierDe(score),
+    // Les deux sens, ou rien : un seul sens donnerait a croire que l autre
+    // n apporte pas, alors qu on ne l a simplement pas recu.
+    cadeaux: cadeauVersElle && cadeauVersLui
+      ? { versElle: cadeauVersElle, versLui: cadeauVersLui }
+      : null,
     socle,
     nuances,
     porteurs: tous,

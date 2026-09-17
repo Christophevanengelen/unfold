@@ -78,6 +78,13 @@ export function Piste({
         </span>
       </div>
       <div
+        // La piste publie sa valeur.
+        //
+        // Un parcours qui cherche « un zero dans un aria-label » attrape aussi
+        // les AXES, ou un zero est une vraie mesure — une personne peut n avoir
+        // aucun point sur un axe. Sans ce marqueur, le test confondait les deux
+        // et signalait un defaut la ou il n y en avait pas.
+        data-dimension={v}
         className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full"
         role="img"
         aria-label={`${titre} : ${niveau}`}

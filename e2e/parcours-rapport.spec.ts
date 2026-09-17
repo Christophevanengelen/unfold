@@ -339,6 +339,45 @@ test.describe("rapport de compatibilite — theme clair", () => {
   });
 });
 
+test.describe("le rapport ne chiffre que ce qu il a recu", () => {
+  test("aucune dimension a zero quand le moteur n envoie pas le champ", async ({ page }) => {
+    /**
+     * Le 17/09 au soir, le moteur a change la forme de `gift` : de
+     * `{ score, label, desc }` a deux directions nommees, chacune avec sa
+     * maison et son domaine. C etait la demande n° 1 de MATCHING-CONTRAT.md —
+     * l asymetrie exposee en champs — et c est une rupture silencieuse.
+     *
+     * L app lisait `gift.score`, ne trouvait rien, et affichait « Generosite
+     * 0/100 », etiquetee « faible ». Personne n a rien vu : un champ absent ne
+     * leve aucune erreur, `undefined` se propage, et zero est une valeur
+     * PARFAITEMENT VALIDE — c est une mesure, « au plus bas ».
+     *
+     * Ce test refuse tout zero dans les dimensions du rapport. Un zero vrai
+     * existe, mais il est assez rare pour qu on prefere le perdre plutot que
+     * de laisser passer un champ absent maquille en mesure.
+     */
+    await brancherReseau(page);
+    await semer(page, { connexions: [ALEX] });
+    await ouvrirRapport(page);
+    await page.waitForTimeout(1200);
+
+    // On vise les DIMENSIONS, pas les axes : sur un axe, un zero est une vraie
+    // mesure — une personne peut n avoir aucun point dessus, et la fixture en
+    // contient. Sur une dimension, un zero ne peut venir que d un champ absent.
+    const valeurs = await page.evaluate(() =>
+      [...document.querySelectorAll("[data-dimension]")].map((e) =>
+        Number(e.getAttribute("data-dimension")),
+      ),
+    );
+
+    expect(valeurs.length, "aucune dimension a l ecran").toBeGreaterThan(0);
+    expect(
+      valeurs.filter((v) => v === 0),
+      `dimension(s) a zero : ${valeurs.join(", ")}`,
+    ).toEqual([]);
+  });
+});
+
 test.describe("l ecran sans aucune connexion", () => {
   test.beforeEach(async ({ page }) => {
     await brancherReseau(page);

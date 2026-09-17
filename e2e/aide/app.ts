@@ -122,7 +122,23 @@ export async function brancherReseau(
           boss: { who: "person2", confidence: 63 },
           exclusive: { score: 59 },
           generalUnderstanding: { score: 48 },
-          gift: { score: 57 },
+          // `gift` N A PLUS DE SCORE depuis la mise a jour du moteur du 17/09 :
+          // il rend deux directions nommees. Recopie de la reponse reelle,
+          // mesuree ce soir-la. Garder l ancienne forme aurait rendu le defaut
+          // invisible — l app affichait « Generosite 0 » en production pendant
+          // que la fixture disait 57.
+          gift: {
+            person1GivesPerson2: {
+              house: 2,
+              domain: "finance",
+              desc: "financial support and advice on building what you own",
+            },
+            person2GivesPerson1: {
+              house: 4,
+              domain: "family",
+              desc: "stability, a sense of family, and real-estate advice",
+            },
+          },
           hugs: { score: 50 },
           compatibilityRadar: [
             { planet: "Sun", pointsperc: 0, pointsperc2: 0 },
