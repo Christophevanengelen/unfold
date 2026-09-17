@@ -1,41 +1,67 @@
-# Matching API — where it is and how to start
+# Matching feature — status and what needs your call
 
-Christophe — the compatibility/matching backend endpoint is ready. This doc points you to it so you (or whoever builds the matching UI) can start wiring it up without waiting on us.
+Christophe — quick update on the 12 matching screens (the ones in your
+screenshots in `match/`). Short version: **half the cards are now built on
+the real algorithm from the old app, half are still a temporary stand-in**,
+and there's one decision only you can make about how far to chase the rest.
 
-## Where to find it
+## The 12 cards, screen by screen
 
-Full reference: [`API-COMPLETE-DOCUMENTATION.md`](API-COMPLETE-DOCUMENTATION.md) — search for `### POST /api/match` (around line 2159). That file is the complete API doc for the whole backend (Marie Ange's `full-suite-spiritual-api`), just copied into this repo so it lives next to the web platform code. If it ever looks out of date, the source of truth is `C:\Users\marie\Documents\api-doc-complete\API-COMPLETE-DOCUMENTATION.md` on Marie Ange's machine.
+| # | Screen (your screenshot) | Status | What that means |
+|---|---|---|---|
+| 1 | [Compatibility %](match/1.jpeg) | ⚠️ Placeholder | Shows a number, but not calculated the real way yet — see "the one decision" below |
+| 2 | [Radar — what you're drawn to](match/2.jpeg) | ⚠️ Placeholder | Same root cause as #1 |
+| 3 | [Satisfaction / balance](match/3.jpeg) | ⚠️ Placeholder | Right idea (balanced vs. lopsided), wrong math underneath — being fixed |
+| 4 | [Similarity %](match/4-simil.jpeg) | ⚠️ Placeholder | Same root cause as #1, though numbers happen to land close in testing |
+| 5 | [Radar — how similar you are](match/5-simil.jpeg) | ⚠️ Placeholder | Same root cause as #1 |
+| 6 | [The gifts you give](match/6-gift.jpeg) | ✅ Real | Rebuilt from the old app's actual formula this round |
+| 7 | [Temperament](match/7-temp.jpeg) | ✅ Real | Rebuilt from the old app's actual formula this round |
+| 8 | [Who takes the initiative](match/8-boss.jpeg) | ✅ Real | Rebuilt from the old app's actual formula this round |
+| 9 | [The most loyal](match/8-loyal.jpeg) | ✅ Real | Rebuilt from the old app's actual formula this round |
+| 10 | [How do you get along](match/10-getalong.jpeg) | 🟡 Right idea, placeholder text | Looking at the correct thing (how you two communicate), but the wording isn't pulled from the old app yet |
+| 11 | [Do you have a bond](match/9-bond.jpeg) | ⚠️ Placeholder | Not yet traced to the old app's formula |
+| 12 | Hugs | ⚠️ Placeholder, partly understood | We know roughly how the old app scored this, one detail still missing |
 
-## The endpoint
+**4 of 12 are done for real** (gifts, temperament, initiative, loyalty).
+The rest still show *something* on screen — nothing is broken or blank —
+but the number/text isn't the one the old app would have shown for the
+same two people.
 
-```
-POST http://ai.zebrapad.io/full-suite-spiritual-api/api/match
-```
+## The one decision that's actually yours
 
-No API key needed for this one. Send two people, get back compatibility scores.
+Cards #1, #2, #4, #5 (compatibility %, both radars, similarity %) turned
+out to work differently than we assumed. In the old app, your score
+wasn't just "you vs. this one other person" — it was **your position
+among your ~400 closest matches out of every person ever in the
+database**. Same idea as "you're in the top 5% of compatible pairs,"
+not a fixed formula between two people.
 
-**What it returns:**
-- `compatibility` — the real thing, ported from the legacy French app's actual matching algorithm (not a guess/heuristic)
-- `resemblance` — how similar two people's dominant-planet makeup is
-- `balance` — whether the pairing is balanced or lopsided
-- `attraction`, `boss`, `exclusive`, `generalUnderstanding`, `gift`, `hugs` — original scores we built for this app (compatibility/resemblance/balance are the only ones ported 1:1 from the legacy algorithm)
-- Two radar-chart arrays (10 planets each) for compatibility and similarity, ready to plug into a chart component
+Rebuilding that for real means standing up a system that recomputes
+everyone's ranking as the user base grows — real infrastructure, not a
+code tweak.
 
-**What you send:** two people (`person1`, `person2`). Each one can be sent three ways — pick whichever is easiest per screen:
-1. Raw birth data (name, birth date/time, lat/long, timezone)
-2. Just a name — it'll fuzzy-search the database
-3. A person ID, if you already have one from a previous lookup
+**Your call:**
+- **Keep the current simplified version** (a direct two-person comparison,
+  no ranking against the whole database) — it already looks and feels
+  right on screen, it's just not a byte-for-byte match to the old app's
+  math. Zero extra cost.
+- **Ask us to build the real ranking system** — more accurate to the old
+  app, but real backend work to size up first.
 
-**Quick example:**
-```json
-{
-  "person1": { "firstName": "Alice", "birthDate": "1990-04-12", "birthTime": "08:30", "latitude": 50.8503, "longitude": 4.3517, "timezone": "Europe/Brussels" },
-  "person2": { "firstName": "Bob", "birthDate": "1988-11-02", "birthTime": "21:15", "latitude": 48.8566, "longitude": 2.3522, "timezone": "Europe/Paris" }
-}
-```
+If you don't have a strong opinion, our recommendation is to ship with
+the simplified version and revisit later if users start comparing scores
+between friends and something looks off.
 
-Full request/response shapes, field-by-field notes, and the DB-lookup examples are all in the API doc linked above.
+## One small loose end
 
-## Where this fits in Unfold
+Card #12 (Hugs) — we understand most of the old formula but one step
+(how it picks which "combo" to show, out of several tied placements)
+isn't pinned down yet. No decision needed from you, just flagging it's
+not finished.
 
-This is a backend endpoint on Marie Ange's API — it's not part of this repo's code. For the Unfold demo/app, this should be wired up the same way as other API data: add the contract to [`types/api.ts`](types/api.ts) and a mock response to [`lib/mock-data.ts`](lib/mock-data.ts) so the demo screens can show it before the real integration is live (see the "API Contract First" rule in [`CLAUDE.md`](CLAUDE.md)).
+## For whoever's writing the code
+
+The full technical trace — every formula, every source file from the old
+app, every open question — lives in
+[`API-MATCHING.md`](API-MATCHING.md). That doc is for the engineer
+wiring this up, not required reading for you.

@@ -16,6 +16,8 @@ import { instructionLangue } from "@/lib/instruction-langue";
 import { validerTexteRedaction, type ValidationTexte } from "@/lib/garde-jargon";
 
 export const LIMITE_MOTS_ASTROLOGUE = 140;
+/** Un dossier multi-techniques a plus a dire ; 140 mots coupaient le « quand ». */
+export const LIMITE_MOTS_DOSSIER = 180;
 
 const SOCLE_MECANIQUE_VERS_DOMAINE = `DE LA MÉCANIQUE AU DOMAINE DE VIE — LA RÈGLE CENTRALE :
 Les faits qu'on te donne parlent de maisons, de fenêtres, de force de convergence. C'est ta matière de travail, pas ton vocabulaire. Traduis systématiquement :
@@ -78,6 +80,44 @@ ${SOCLE_MECANIQUE_VERS_DOMAINE}
 
 VOIX : tutoiement partout, français courant, sobre, direct, premium. Maximum ${LIMITE_MOTS_ASTROLOGUE} mots au total pour les quatre champs. Une phrase finie vaut mieux qu'une phrase riche : coupe le contenu, jamais la phrase.${carnet}${langue}`;
       const userMessage = `Rédige la réponse à partir des faits donnés ci-dessus. N'ajoute aucune donnée qui n'y figure pas.`;
+      return { systemPrompt, userMessage };
+    }
+
+    case "dossier-domaine": {
+      const pertinents = verdict.faits.filter((f) => f.pertinent);
+      const autres = verdict.faits.filter((f) => !f.pertinent);
+      const prochaine =
+        pertinents
+          .map((f) => f.prochain)
+          .filter((d): d is string => !!d)
+          .sort()[0] ?? verdict.fenetre?.fin ?? null;
+      const systemPrompt = `Tu écris la réponse de "Parle avec un astrologue" sur Favorable (le personnage s'appelle Vela). La personne a posé une question sur UN domaine de vie. On a parcouru plusieurs techniques indépendantes (profection annuelle et mensuelle, transits lents, chapitre de fond / pic, éclipses sur l'axe, périodes planétaires du seigneur du domaine, numérologie) et on a GARDÉ ce qui touche ce domaine.
+
+DOMAINE DEMANDÉ : maison ${verdict.maisonDemandee} (traduire — jamais écrire le numéro). Sujet interne : ${verdict.domaine}.
+
+${question ? `CE QU'ELLE T'A DEMANDÉ, mot pour mot :\n"${question}"\n` : ""}
+FAITS PERTINENTS POUR CE DOMAINE (${pertinents.length} technique(s) d'accord) :
+${pertinents.map((f) => `- [${f.technique}] ${f.resume}`).join("\n") || "(aucun)"}
+${autres.length > 0 ? `\nAUTRES FAITS, hors domaine (ne les mets pas au centre) :\n${autres.map((f) => `- [${f.technique}] ${f.resume}`).join("\n")}` : ""}
+${verdict.fenetre ? `\nFenêtre d'ensemble : ${verdict.fenetre.debut} → ${verdict.fenetre.fin} (${verdict.fenetre.force} techniques).` : ""}
+${prochaine ? `Prochaine date calculée, à donner telle quelle : ${prochaine}.` : "Aucune prochaine date isolable — n'en invente pas."}
+
+RÈGLE DE PERTINENCE — inverse de l'ancienne faute.
+
+Ces faits PARLENT du domaine demandé. Tu réponds SUR CE DOMAINE. Interdit de commencer par « Sur le travail précisément, rien de net ne ressort » (ou équivalent) : c'est faux dès qu'un fait pertinent existe. Mesure du 17/09/2026 : question travail, année de carrière + pic + transit long sur un point de ce domaine, et la réponse disait que rien ne bougeait au travail.
+
+Réponds STRICTEMENT en JSON, ces quatre champs :
+{
+  "cePasse": "ce qui se passe SUR LE DOMAINE DEMANDÉ, en langage courant — l'année en cours si elle le met en avant, le mouvement long s'il y en a un, le chapitre de pic s'il vient de s'ouvrir",
+  "dOuCaVient": "plusieurs façons indépendantes de compter pointent la même chose, SANS jamais les nommer (pas de profection, pas de ZR, pas d'éclipse, pas de transit)",
+  "ceQuiChange": "descriptif, jamais prédictif ; ce que ça change concrètement, avec les durées FOURNIES",
+  "prochaineDate": ${prochaine ? `"1 phrase courte donnant UNIQUEMENT la date ${prochaine}, jamais une autre — ex: 'Le prochain passage net est autour du [date].'"` : `"1 phrase qui dit simplement qu'aucune date nette n'est isolable, sans en inventer une"`}
+}
+
+${SOCLE_MECANIQUE_VERS_DOMAINE}
+
+VOIX : tutoiement partout, français courant, sobre, direct, premium. Maximum ${LIMITE_MOTS_DOSSIER} mots au total. Une phrase finie vaut mieux qu'une phrase riche.${carnet}${langue}`;
+      const userMessage = `Rédige la réponse à partir des faits du domaine. N'ajoute aucune date qui n'y figure pas.`;
       return { systemPrompt, userMessage };
     }
 
@@ -209,7 +249,7 @@ export function champsAValider(verdict: VerdictAstrologue, sortie: Record<string
   // ne le peut pas honnetement (pas de fenetre isolable dans un texte libre)
   // et s'arrete a trois champs — voir les commentaires sur chaque prompt.
   const champsAttendus =
-    verdict.type === "parle"
+    verdict.type === "parle" || verdict.type === "dossier-domaine"
       ? (["cePasse", "dOuCaVient", "ceQuiChange", "prochaineDate"] as const)
       : verdict.type === "signal-direct"
         ? (["cePasse", "dOuCaVient", "ceQuiChange"] as const)
@@ -231,5 +271,7 @@ export function validerSortieRedaction(verdict: VerdictAstrologue, sortie: unkno
   if (!champs) {
     return { valide: false, raison: "reponse_invalide", detail: "champ manquant ou non textuel" };
   }
-  return validerTexteRedaction(champs, { limiteMots: LIMITE_MOTS_ASTROLOGUE });
+  const limite =
+    verdict.type === "dossier-domaine" ? LIMITE_MOTS_DOSSIER : LIMITE_MOTS_ASTROLOGUE;
+  return validerTexteRedaction(champs, { limiteMots: limite });
 }

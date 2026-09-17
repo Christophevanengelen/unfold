@@ -80,7 +80,7 @@ import {
 } from "@/lib/astrologue-session";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 const TOCTOC_BASE = "https://ai.zebrapad.io/full-suite-spiritual-api";
 const OPENAI_MODEL = "gpt-4o-mini";
@@ -260,7 +260,7 @@ async function handlePost(request: NextRequest) {
           // On resserre a la reprise : la premiere version etait juste sur le
           // fond, c est la forme qu il faut corriger, pas reinventer le texte.
           temperature: correction ? 0.3 : 0.6,
-          max_tokens: 400,
+          max_tokens: 550,
         }),
       });
       if (!res.ok) {
@@ -307,7 +307,7 @@ async function handlePost(request: NextRequest) {
     // une 4e partie "prochaine date" ; "signal-direct" s'arrete a trois
     // parties, sans date a annoncer honnetement (voir garde-jargon.champsAValider).
     const texteAffiche =
-      routage.verdict.type === "parle"
+      routage.verdict.type === "parle" || routage.verdict.type === "dossier-domaine"
         ? [o.cePasse, o.dOuCaVient, o.ceQuiChange, o.prochaineDate].join(" ")
         : routage.verdict.type === "signal-direct"
           ? [o.cePasse, o.dOuCaVient, o.ceQuiChange].join(" ")
@@ -343,7 +343,7 @@ async function handlePost(request: NextRequest) {
         // regulieres, ce qui reviendrait a reecrire par-dessus la redaction.
         // Absent quand le verdict n a pas cette forme (silence, question).
         parties:
-          routage.verdict.type === "parle"
+          routage.verdict.type === "parle" || routage.verdict.type === "dossier-domaine"
             ? {
                 cePasse: o.cePasse,
                 dOuCaVient: o.dOuCaVient,
@@ -383,11 +383,15 @@ async function handlePost(request: NextRequest) {
                 fin: routage.verdict.fenetre.declencheur.fin,
                 approximee: routage.verdict.fenetre.approximee,
               }
-            // Une question au present n a pas de fenetre a montrer : le moteur
-            // rend une hierarchie de signaux actifs, pas une periode. On dessine
-            // donc ce qu il y a — combien de choses sont actives, et comment
-            // elles se classent — au lieu de forcer une frise sur des donnees
-            // qui n en ont pas.
+            : routage.verdict.type === "dossier-domaine" && routage.verdict.fenetre
+              ? {
+                  forme: "fenetre" as const,
+                  maison: routage.verdict.maisonDemandee,
+                  force: routage.verdict.fenetre.force,
+                  debut: routage.verdict.fenetre.debut,
+                  fin: routage.verdict.fenetre.fin,
+                  approximee: routage.verdict.fenetre.approximee,
+                }
             : routage.verdict.type === "signal-direct" && routage.verdict.signaux.length > 0
               ? {
                   forme: "signaux" as const,

@@ -54,6 +54,7 @@ const CONTROLES = [
   { nom: "Maquette de l experience", cmd: ["node", ["scripts/verifier-maquette.mjs"]] },
   { nom: "Textes du moteur", cmd: ["node", ["--experimental-strip-types", "scripts/verifier-textes-moteur.mjs"]] },
   { nom: "Contrat de l astrologue", cmd: ["node", ["scripts/verifier-astrologue.mjs"]] },
+  { nom: "Techniques de Vela", cmd: ["node", ["--experimental-strip-types", "scripts/verifier-astrologue-techniques.mjs"]] },
   { nom: "Garde-jargon", cmd: ["node", ["--experimental-strip-types", "scripts/verifier-garde-jargon.mjs"]] },
   { nom: "Empreinte generative", cmd: ["node", ["--experimental-strip-types", "scripts/verifier-empreinte.mjs"]] },
   { nom: "Resumes jour et vie", cmd: ["node", ["--experimental-strip-types", "scripts/verifier-resumes.mjs"]] },
