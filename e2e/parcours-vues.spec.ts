@@ -80,6 +80,113 @@ test.describe("bascule timeline / liste", () => {
     await expect(page.locator('[data-guide="capsule"]').first()).toBeHidden();
   });
 
+  test("les commandes de defilement ne sont pas avalees par un calque", async ({ page }) => {
+    /**
+     * Christophe, le 17/09 : « les boutons haut, bas et maintenant ne
+     * fonctionnent pas bien, on dirait qu il y a un layer au-dessus ».
+     *
+     * C etait litteralement cela. Le selecteur de vue est pose dans un
+     * conteneur `left-0 right-0` : sa boite fait TOUTE la largeur de l ecran
+     * alors qu on n y voit qu une pastille centree. Le vide autour etait
+     * cliquable, exactement a la hauteur du bouton MAINTENANT et des fleches.
+     * Playwright nommait le coupable : « <div class="absolute left-0 right-0
+     * z-20 …"> intercepts pointer events ».
+     *
+     * Le z-index ne reglait rien : les fleches sont en z-30 DANS le sous-arbre
+     * de la vue, le conteneur en z-20 au niveau du composant — deux contextes
+     * d empilement, des nombres qui ne se comparent pas.
+     *
+     * CE TEST CLIQUE ET MESURE LE DEFILEMENT. Verifier que les boutons sont
+     * visibles n aurait rien prouve : ils l etaient, et ils ne faisaient rien.
+     */
+
+    await ouvrirTimeline(page);
+    await page.waitForTimeout(2000);
+
+    const defilement = () => page.evaluate(() => {
+      const e = [...document.querySelectorAll("*")].find((x) => x.scrollHeight > x.clientHeight + 200 && x.scrollTop > 0) as HTMLElement | undefined;
+      return e ? Math.round(e.scrollTop) : -1;
+    });
+
+    /** L age lu par le curseur — la seule mesure que la personne voit. */
+    const ageLu = () =>
+      page.evaluate(() => Number(document.querySelector("[data-age-lu]")?.getAttribute("data-age-lu") ?? NaN));
+
+    const fleches = page.locator("div.absolute.right-2:visible button");
+    console.log("fleches trouvees :", await fleches.count());
+
+    const avant = await defilement();
+    await fleches.nth(0).click({ timeout: 4000 });
+    await page.waitForTimeout(1400);
+    const apresHaut = await defilement();
+    console.log("HAUT :", avant, "->", apresHaut, apresHaut !== avant ? "BOUGE" : "FIGE");
+
+    await fleches.nth(1).click({ timeout: 4000 });
+    await page.waitForTimeout(1400);
+    const apresBas = await defilement();
+    console.log("BAS  :", apresHaut, "->", apresBas, apresBas !== apresHaut ? "BOUGE" : "FIGE");
+
+    // MAINTENANT n apparait que loin d aujourd hui.
+    // On defile le conteneur lui-meme : la molette de la souris ne vise pas
+    // forcement la bonne boite dans une pile d elements absolus.
+    await page.evaluate(() => {
+      const e = [...document.querySelectorAll("*")].find((x) => x.scrollHeight > x.clientHeight + 200) as HTMLElement | undefined;
+      if (e) e.scrollTop = Math.max(0, e.scrollTop - 6000);
+    });
+    await page.waitForTimeout(1500);
+    const now = page.locator("button", { hasText: /^now$|^maintenant$/i }).first();
+    const vu = await now.isVisible().catch(() => false);
+    console.log("MAINTENANT visible :", vu);
+    // Le bouton n apparait que loin d aujourd hui. S il n a pas paru, on ne
+    // conclut rien : on ne transforme pas une absence en succes.
+    expect(vu, "le bouton MAINTENANT n est pas apparu — le test ne prouve rien").toBe(true);
+
+    const avantNow = await defilement();
+    await now.click({ timeout: 4000 });
+    await page.waitForTimeout(1600);
+    const apresNow = await defilement();
+    console.log("NOW  :", avantNow, "->", apresNow);
+    expect(apresNow, "le bouton MAINTENANT ne fait rien").not.toBe(avantNow);
+
+    expect(apresHaut, "la fleche HAUT ne fait rien").not.toBe(avant);
+    expect(apresBas, "la fleche BAS ne fait rien").not.toBe(apresHaut);
+  });
+
+  test("les fleches sautent d une annee, pas d une distance", async ({ page }) => {
+    /**
+     * Christophe, le 17/09 : « les boutons haut et bas, c est pour sauter
+     * d une annee a l autre ».
+     *
+     * Le test au-dessus prouve seulement que l ecran BOUGE. Bouger n est pas
+     * sauter d une annee : un defilement de trois mois passerait aussi, et le
+     * jour ou quelqu un touche la hauteur d un mois — `PX_PER_MONTH` — le saut
+     * deviendrait silencieusement faux sans qu aucun test ne bronche.
+     *
+     * On mesure donc l AGE, pas les pixels. C est le seul nombre que la
+     * personne voit, et il ne peut changer d exactement un que si le saut vaut
+     * douze mois.
+     */
+    await ouvrirTimeline(page);
+    await page.waitForTimeout(2000);
+
+    const ageLu = () =>
+      page.evaluate(() => Number(document.querySelector("[data-age-lu]")?.getAttribute("data-age-lu") ?? NaN));
+
+    const fleches = page.locator("div.absolute.right-2:visible button");
+    const depart = await ageLu();
+    expect(Number.isFinite(depart), "aucun age lisible a l ecran").toBe(true);
+
+    await fleches.nth(1).click();
+    await page.waitForTimeout(1600);
+    const apresBas = await ageLu();
+    expect(apresBas, `bas : ${depart} -> ${apresBas}, ce n est pas une annee`).toBe(depart - 1);
+
+    await fleches.nth(0).click();
+    await page.waitForTimeout(1600);
+    const apresHaut = await ageLu();
+    expect(apresHaut, `haut : ${apresBas} -> ${apresHaut}, ce n est pas une annee`).toBe(depart);
+  });
+
   test("la periode en cours se distingue par la NETTETE, pas par la lueur", async ({ page }) => {
     /**
      * Christophe, le 17/09 : « le halo lumineux des cercles actifs, on les
