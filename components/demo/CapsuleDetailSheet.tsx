@@ -313,9 +313,20 @@ export function CapsuleDetailSheet({
     capsule.startDate instanceof Date
       ? capsule.startDate.toISOString().slice(0, 10)
       : String(capsule.startDate ?? "").slice(0, 10);
-  // Trois au maximum : au-dela, le cercle devient un semis de points et l ecart
-  // qu on veut montrer ne se lit plus.
-  const clefsCiel = capsule.planets.filter((p) => p in planetConfig).slice(0, 3).join(",");
+  /**
+   * TOUTES les planetes de la periode, pas trois.
+   *
+   * Christophe, le 17/09 : « le nombre de points dans les boudins doit etre
+   * represente dans l animation du detail ».
+   *
+   * Il a raison, et ma limite a trois etait arbitraire : le type dit « 1 a 5
+   * transits actifs » et la capsule en montre autant de points dans la
+   * timeline. Ouvrir la fiche et en trouver moins fait douter du dessin — et
+   * quand on doute d un dessin, on n en lit plus aucun.
+   *
+   * Cinq anneaux tiennent dans le cadre : les rayons sont echelonnes pour ca.
+   */
+  const clefsCiel = capsule.planets.filter((p) => p in planetConfig).slice(0, 5).join(",");
 
   /**
    * De quoi dessiner la bande du jour, ou `null`.
@@ -511,6 +522,38 @@ export function CapsuleDetailSheet({
               dateLisible={formatEuropeanDisplayDate(capsule.startDate)}
             />
           </div>
+        ) : bandeDuJour ? (
+          /**
+           * TOUTE periode a son illustration, et elle vient AVANT le texte.
+           *
+           * Christophe, le 17/09 : « les animations ne sont pas sur tous les
+           * boudins, elles doivent venir avant le texte ».
+           *
+           * Il avait raison sur les deux points. Le ciel ne s affiche que si la
+           * periode porte des planetes en transit — les periodes de type cycle
+           * de vie n en ont aucune, et leur fiche s ouvrait donc directement
+           * sur du texte. Un ecran sur deux commencait par une illustration,
+           * l autre par un paragraphe : ce n est pas une mise en page, c est un
+           * hasard.
+           *
+           * La bande du jour, elle, est calculable pour N IMPORTE QUELLE date :
+           * il suffit d une date et d un lieu, et on a les deux. Elle prend donc
+           * la tete quand il n y a pas de ciel a montrer.
+           *
+           * En tete elle est plus haute et pleine largeur — c est l illustration
+           * de l ecran, pas une annexe des metadonnees.
+           */
+          <div className="-mx-5 mb-5 px-5">
+            <BandeDuJour
+              date={dateSignal}
+              latitude={bandeDuJour.lat}
+              longitude={bandeDuJour.lon}
+              decalageMinutes={bandeDuJour.decalage}
+              libelle={bandeDuJour.libelle}
+              hauteur={64}
+              dateLisible={formatEuropeanDisplayDate(capsule.startDate)}
+            />
+          </div>
         ) : null}
 
         {/* ── L ETAT — une ligne de surtitre, plus une pastille ──
@@ -668,7 +711,7 @@ export function CapsuleDetailSheet({
               ca se voit sans une etiquette. C est la reponse a « trop de texte
               et pas assez d illustrations » : une image qui se lit en un
               dixieme de seconde et qui ne dit que des faits. */}
-          {bandeDuJour ? (
+          {bandeDuJour && ciel && ciel.length > 0 ? (
             <div className="mt-4 max-w-[300px]">
               <BandeDuJour
                 date={dateSignal}

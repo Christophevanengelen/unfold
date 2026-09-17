@@ -192,6 +192,8 @@ export async function brancherReseau(
         positions: [
           { planete: "sun", longitude: 84.1186, retrograde: false },
           { planete: "saturn", longitude: 288.9135, retrograde: true },
+          { planete: "venus", longitude: 37.4021, retrograde: false },
+          { planete: "mars", longitude: 211.6683, retrograde: false },
         ],
       });
     }

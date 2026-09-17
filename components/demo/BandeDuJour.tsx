@@ -88,6 +88,8 @@ export function BandeDuJour({
   longitude,
   decalageMinutes,
   libelle,
+  hauteur = 26,
+  dateLisible,
 }: {
   /** La date de la periode, en ISO. */
   date: string;
@@ -97,6 +99,10 @@ export function BandeDuJour({
   decalageMinutes: number;
   /** « 9 h 12 de jour », deja formate et traduit par l appelant. */
   libelle: string;
+  /** Plus haute quand elle sert d illustration en tete de fiche. */
+  hauteur?: number;
+  /** La date, quand la bande porte l ecran : c est sa provenance. */
+  dateLisible?: string;
 }) {
   const fige = useReducedMotion();
 
@@ -139,7 +145,20 @@ export function BandeDuJour({
 
   return (
     <figure className="m-0 w-full" data-bande={segments.length}>
-      <div className="flex h-[26px] w-full overflow-hidden rounded-[3px]" role="img" aria-label={libelle}>
+      {dateLisible ? (
+        <div
+          className="mb-2 text-center text-[11px] font-semibold uppercase"
+          style={{ color: "var(--text-body)", letterSpacing: "0.14em" }}
+        >
+          {dateLisible}
+        </div>
+      ) : null}
+      <div
+        className="flex w-full overflow-hidden rounded-[4px]"
+        style={{ height: hauteur }}
+        role="img"
+        aria-label={libelle}
+      >
         {segments.map((s, i) => (
           <motion.div
             key={`${s.debut}-${i}`}
@@ -150,7 +169,10 @@ export function BandeDuJour({
           />
         ))}
       </div>
-      <figcaption className="mt-1.5 text-[11px]" style={{ color: "var(--text-body)" }}>
+      <figcaption
+        className={dateLisible ? "mt-2 text-center text-[11px]" : "mt-1.5 text-[11px]"}
+        style={{ color: "var(--text-body)" }}
+      >
         {libelle}
       </figcaption>
     </figure>
