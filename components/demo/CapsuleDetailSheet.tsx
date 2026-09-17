@@ -469,7 +469,6 @@ export function CapsuleDetailSheet({
             <CielDuSignal
               positions={ciel}
               locale={locale}
-              teinte={houseColor}
               dateLisible={formatEuropeanDisplayDate(capsule.startDate)}
             />
           </div>
