@@ -445,13 +445,45 @@ export function translateApiLabel(label: string | undefined, locale?: Locale): s
     result = result.replace(motif, recit(cle, loc));
   }
 
-  // Le garde-fou de sortie. Voir RESTE_TECHNIQUE : on prefere ne rien montrer
-  // plutot que de montrer un libelle a moitie traduit.
+  /**
+   * Le garde-fou de sortie — ON ELAGUE, ON NE JETTE PLUS TOUT.
+   *
+   * Premiere version du 17/09 : des qu un mot technique survivait, le libelle
+   * entier etait refuse. C etait trop brutal, et Christophe l a vu tout de
+   * suite : « il me semble qu on a perdu plein d informations […] je ne veux
+   * pas qu on soit degradant, je veux qu on ameliore ».
+   *
+   * Il avait raison. « Cycle de vie Fortune+Spirit L2 Scorpio » devenait RIEN,
+   * alors qu on savait parfaitement traduire « Cycle de vie ». On jetait la
+   * partie comprise avec la partie incomprise.
+   *
+   * Maintenant on RETIRE les morceaux techniques et on garde le reste. Le
+   * libelle n est refuse que s il ne reste plus rien de lisible — moins de
+   * trois lettres, ou uniquement de la ponctuation.
+   */
   for (const motif of RESTE_TECHNIQUE) {
-    if (motif.test(result)) return null;
+    result = result.replace(new RegExp(motif.source, motif.flags.includes("g") ? motif.flags : motif.flags + "g"), "");
   }
 
-  return result;
+  /**
+   * Le menage d apres coupe.
+   *
+   * Retirer les mots techniques laisse des cicatrices : « ZR L2 — Virgo
+   * (fortune) » devenait « Life cycle — () ». Une parenthese vide et un tiret
+   * orphelin se lisent comme un bug, ce qui est pire que le jargon d origine —
+   * le jargon avait au moins l air d etre du contenu.
+   *
+   * Dans l ordre : les parentheses et crochets devenus vides, les separateurs
+   * qui se suivent, les espaces doubles, puis la ponctuation en bout.
+   */
+  result = result
+    .replace(/[([{]\s*[)\]}]/g, "")
+    .replace(/\s*([+·—–-])\s*(?=[+·—–-])/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^[\s+·—–\-(),.]+|[\s+·—–\-(),.]+$/g, "")
+    .trim();
+
+  return result.replace(/[^A-Za-zÀ-ÿ]/g, "").length >= 3 ? result : null;
 }
 
 // ─── Cycle Narrative ────────────────────────────────────

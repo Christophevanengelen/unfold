@@ -176,6 +176,26 @@ export async function brancherReseau(
       return json({ ok: true, messages: [] });
     }
 
+    if (chemin.endsWith("/api/positions")) {
+      /**
+       * Des positions VRAIES, mesurees le 17/09/2026 sur le moteur pour le
+       * 15 juin 2019. Longitudes ecliptiques en degres.
+       *
+       * On ne met pas des angles ronds : 84,1186 et 288,9135 ont un ecart de
+       * 155,2°, et c est cet ecart que la corde dessine. Des valeurs rondes
+       * donneraient une figure trop reguliere, donc un test qui ne verrait pas
+       * une figure fausse.
+       */
+      return json({
+        success: true,
+        date: "2019-06-15",
+        positions: [
+          { planete: "sun", longitude: 84.1186, retrograde: false },
+          { planete: "saturn", longitude: 288.9135, retrograde: true },
+        ],
+      });
+    }
+
     if (chemin.endsWith("/api/chapitres")) {
       /**
        * Les quatre mouvements, recopies du VRAI paquet du 17/09/2026 apres
