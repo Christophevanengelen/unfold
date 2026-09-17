@@ -416,6 +416,7 @@ function Corps({
       <Asymetrie lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Apports lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Tempo lecture={lecture} locale={locale} nomAutre={nomAutre} />
+      <Cadeaux lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Commun lecture={lecture} locale={locale} nomAutre={nomAutre} nomMoi={nomMoi} empreinte={empreinte} />
       <Methode locale={locale} />
       </div>
@@ -591,6 +592,81 @@ function Apports({
       </div>
 
       {muets ? <p className="mt-4 text-[11px] leading-snug text-text-body-subtle">{muets}</p> : null}
+    </Section>
+  );
+}
+
+/**
+ * Ce que chacun apporte a l autre — deux lectures d un meme lien.
+ *
+ * ─── POURQUOI CETTE SECTION EXISTE ──────────────────────────────────────────
+ *
+ * C est la seule chose du rapport que personne d autre ne fait. Tous les
+ * produits du marche rendent UN chiffre pour un couple ; celui-ci dit ce qui va
+ * de A vers B et ce qui va de B vers A, separement, et ce n est jamais la meme
+ * chose.
+ *
+ * Le moteur l a expose en champs le 17/09, apres la demande n° 1 de
+ * MATCHING-CONTRAT.md. Avant, les deux sens etaient enfermes dans une phrase en
+ * anglais dont on ne pouvait rien tirer.
+ *
+ * ─── LES DEUX SENS, OU RIEN ─────────────────────────────────────────────────
+ *
+ * `lecture.cadeaux` vaut `null` des qu il manque un des deux. N en montrer
+ * qu un donnerait a croire que l autre n apporte rien — alors qu on ne l a
+ * simplement pas recu. C est la meme regle que partout : on ne comble pas un
+ * manque, on se tait.
+ *
+ * ─── LE TEXTE EST CELUI DU MOTEUR, ET IL EST EN ANGLAIS ─────────────────────
+ *
+ * `desc` arrive en anglais aujourd hui, et c est un des points de la note a
+ * Marie-Ange. On l affiche quand meme : la phrase decrit un vecu — « un soutien
+ * financier », « de la stabilite et un sens de la famille » — sans aucun nom de
+ * technique. Elle passe donc la regle de silence, et une phrase juste dans la
+ * mauvaise langue vaut mieux qu une case vide.
+ */
+function Cadeaux({
+  lecture,
+  locale,
+  nomAutre,
+}: {
+  lecture: LectureMatch;
+  locale: Locale;
+  nomAutre: string;
+}) {
+  if (!lecture.cadeaux) return null;
+  const { versElle, versLui } = lecture.cadeaux;
+
+  const lignes = [
+    { qui: t("rapport.cadeau_toi", locale), cadeau: versElle, doux: false },
+    { qui: remplir(t("rapport.cadeau_autre", locale), { nom: nomAutre }), cadeau: versLui, doux: true },
+  ];
+
+  return (
+    <Section className="pb-8" delai={0.05}>
+      <EyebrowLabel color="var(--text-body-subtle)">{t("rapport.cadeau_titre", locale)}</EyebrowLabel>
+      <p className="mt-1.5 text-[13px] leading-snug text-text-body">
+        {t("rapport.cadeau_aide", locale)}
+      </p>
+
+      {/* Deux blocs, pas deux cartes : c est l ecart et le liser qui separent.
+          Une carte par sens ferait lire deux objets independants, alors que
+          c est UN lien vu de deux cotes. */}
+      <div className="mt-4 space-y-4">
+        {lignes.map((l, i) => (
+          <div
+            key={i}
+            className="border-l-2 pl-3.5"
+            style={{ borderColor: l.doux ? "var(--border-base)" : "var(--bg-brand)" }}
+            data-cadeau={l.doux ? "autre" : "toi"}
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body">
+              {l.qui}
+            </p>
+            <p className="mt-1 text-[15px] leading-[1.45] text-text-heading">{l.cadeau.texte}</p>
+          </div>
+        ))}
+      </div>
     </Section>
   );
 }

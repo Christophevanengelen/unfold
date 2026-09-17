@@ -378,6 +378,41 @@ test.describe("le rapport ne chiffre que ce qu il a recu", () => {
   });
 });
 
+test.describe("ce que chacun apporte", () => {
+  test.beforeEach(async ({ page }) => {
+    await brancherReseau(page);
+    await semer(page, { connexions: [ALEX] });
+  });
+
+  test("les DEUX sens s affichent, et ils different", async ({ page }) => {
+    /**
+     * La seule chose du rapport que personne d autre ne fait : ce qui va de A
+     * vers B et ce qui va de B vers A, separement.
+     *
+     * Le moteur l a expose en champs le 17/09, apres la demande n° 1 de
+     * MATCHING-CONTRAT.md. Avant, les deux sens etaient enfermes dans une
+     * phrase dont on ne pouvait rien tirer.
+     *
+     * Ce test verifie les DEUX blocs ET le fait qu ils disent des choses
+     * differentes. Compter deux blocs n aurait rien prouve : afficher deux fois
+     * la meme phrase donnerait deux blocs et detruirait tout l interet.
+     */
+    await ouvrirRapport(page);
+    await page.waitForTimeout(1500);
+
+    const blocs = page.locator("[data-cadeau]");
+    await expect(blocs, "les deux sens ne sont pas la").toHaveCount(2);
+
+    const textes = await blocs.allInnerTexts();
+    expect(textes[0].trim().length, "un sens est vide").toBeGreaterThan(10);
+    expect(textes[1].trim().length, "un sens est vide").toBeGreaterThan(10);
+    expect(
+      textes[0].trim(),
+      "les deux sens disent la meme chose — l asymetrie a disparu",
+    ).not.toBe(textes[1].trim());
+  });
+});
+
 test.describe("l ecran sans aucune connexion", () => {
   test.beforeEach(async ({ page }) => {
     await brancherReseau(page);
