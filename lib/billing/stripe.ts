@@ -7,7 +7,23 @@ export function getStripe(): Stripe {
   if (_stripe) return _stripe;
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY not configured");
-  _stripe = new Stripe(key, { apiVersion: "2026-04-22.dahlia" });
+  /**
+   * LA VERSION D API RESTE EPINGLEE, volontairement.
+   *
+   * Le SDK a ete mis a jour le 17/09/2026 et son type exige desormais
+   * « 2026-08-26.dahlia ». Suivre le type changerait la version d API que
+   * Stripe applique a NOS appels — donc le comportement reel des paiements,
+   * sans qu aucun test ne le couvre.
+   *
+   * Epingler la version d API est la pratique documentee par Stripe : on la
+   * fait monter deliberement, apres avoir lu le journal des changements, pas
+   * parce qu une mise a jour de paquet l a decide. Le cast dit exactement cela.
+   *
+   * Pour la faire monter : lire https://docs.stripe.com/upgrades, verifier les
+   * changements sur `checkout.session` et `customer.subscription`, puis
+   * retirer ce cast.
+   */
+  _stripe = new Stripe(key, { apiVersion: "2026-04-22.dahlia" as Stripe.LatestApiVersion });
   return _stripe;
 }
 

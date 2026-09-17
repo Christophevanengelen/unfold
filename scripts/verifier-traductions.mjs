@@ -67,9 +67,9 @@ function verifierClesT() {
 }
 
 function verifierClesPerso() {
-  const module = readFileSync("lib/perso-i18n.ts", "utf8");
+  const source = readFileSync("lib/perso-i18n.ts", "utf8");
   const connues = new Set(
-    [...module.matchAll(/^ {2}"([a-z0-9._]+)":/gm)].map((m) => m[1]),
+    [...source.matchAll(/^ {2}"([a-z0-9._]+)":/gm)].map((m) => m[1]),
   );
   const fautives = [];
   for (const fichier of fichiers) {

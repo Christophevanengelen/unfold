@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { amenerAuDessusDuClavier } from "@/lib/use-clavier";
+import { amenerAuDessusDuClavier, useClavier } from "@/lib/use-clavier";
 import { motion, AnimatePresence } from "motion/react";
 import { CTA_IMMEDIAT, CTA_DEPART, CTA_ARRIVEE } from "@/lib/onboarding-motion";
 import { DateInput } from "@/components/ui/DateInput";
@@ -130,6 +130,7 @@ export function StepInput({
 }: StepInputProps & { mode?: "onboarding" | "edition" }) {
   const locale = detectLocale();
   const fields = champs(locale);
+  const clavier = useClavier();
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   // « repos », « cherche », « vide » et « echec » sont quatre choses
@@ -287,9 +288,32 @@ export function StepInput({
     //
     // On fait defiler tout le contenu plutot que d epingler le bouton en bas :
     // la vue web ne se redimensionne pas a l ouverture du clavier, donc un
-    // bouton epingle serait cache DERRIERE lui. Defiler laisse au moins la
-    // personne l amener au-dessus.
-    <motion.div className="flex h-full flex-col overflow-y-auto">
+    // bouton epingle serait cache DERRIERE lui.
+    //
+    // ─── LE DEGAGEMENT SOUS LE CLAVIER ─────────────────────────────────────
+    //
+    // Mesure du 17/09 sur iPhone 16 Pro, formulaire d onboarding : au toucher
+    // du champ « lieu de naissance », le clavier se leve et coupe le champ en
+    // deux. La liste des villes, qui s ouvre DESSOUS, passe entierement hors de
+    // vue — et c est precisement ce champ dont on ne peut rien faire sans voir
+    // la liste.
+    //
+    // `scrollIntoView` ne pouvait rien : le conteneur porte `h-full`, donc avec
+    // `KeyboardResize.None` il croit toujours occuper tout l ecran. Son contenu
+    // tient dedans, `scrollHeight` egale `clientHeight`, et il n y a
+    // litteralement RIEN a faire defiler.
+    //
+    // Le degagement lui rend la hauteur que le clavier lui prend : le contenu
+    // devient plus grand que le cadre, le defilement redevient possible, et le
+    // recadrage du champ fonctionne enfin. C est la condition sans laquelle
+    // tout le reste etait inoperant.
+    <motion.div
+      className="flex h-full flex-col overflow-y-auto"
+      style={{
+        paddingBottom: clavier > 0 ? clavier : undefined,
+        transition: "padding-bottom 250ms cubic-bezier(0.23, 1, 0.32, 1)",
+      }}
+    >
 
       {/* Back */}
       <motion.button
@@ -426,7 +450,7 @@ export function StepInput({
                       // une fois son animation finie — sinon il reste dessous,
                       // et pour le lieu de naissance la liste des villes s ouvre
                       // entierement hors de vue.
-                      amenerAuDessusDuClavier(e.currentTarget);
+                      amenerAuDessusDuClavier(e.currentTarget, { avecListe: isPlaceField });
                       if (isPlaceField) {
                         choisirSens();
                         if (suggestions.length > 0) setShowSuggestions(true);
@@ -546,7 +570,16 @@ export function StepInput({
                         ...(versLeHaut
                           ? { bottom: "100%", marginBottom: 4 }
                           : { top: "100%", marginTop: 4 }),
-                        maxHeight: 220,
+                        /**
+                         * La liste ne descend jamais sous le clavier.
+                         *
+                         * 220 px etait une valeur fixe, choisie sans lui : avec
+                         * le clavier leve il ne reste qu environ 300 px sous le
+                         * champ, et la liste en occupait 220 dont la moitie
+                         * hors de vue. On lui donne la place reellement
+                         * disponible, et jamais plus de 220.
+                         */
+                        maxHeight: clavier > 0 ? Math.min(220, Math.max(120, 300 - 80)) : 220,
                         background: "var(--bg-secondary)",
                       }}
                       initial={{ opacity: 0, y: versLeHaut ? 4 : -4 }}

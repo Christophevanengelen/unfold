@@ -108,9 +108,27 @@ export function useClavier(): number {
  * est techniquement visible et pratiquement illisible, surtout quand une liste
  * de suggestions doit s ouvrir dessous.
  */
-export function amenerAuDessusDuClavier(element: HTMLElement | null, delaiMs = 320): void {
+export function amenerAuDessusDuClavier(
+  element: HTMLElement | null,
+  options: {
+    /**
+     * Le champ ouvre une liste SOUS lui — une saisie de ville, par exemple.
+     *
+     * Mesure du 17/09 sur iPhone 16 Pro : centre, le champ etait bien visible
+     * mais sa liste de villes debordait sous le clavier, et on ne voyait qu une
+     * proposition sur quatre. Un champ dont la reponse est dans la liste ne
+     * sert a rien si la liste est cachee.
+     *
+     * On le cale donc en HAUT de l espace libre, pour laisser la place a ce qui
+     * s ouvre dessous.
+     */
+    avecListe?: boolean;
+    delaiMs?: number;
+  } = {},
+): void {
   if (!element) return;
+  const { avecListe = false, delaiMs = 320 } = options;
   window.setTimeout(() => {
-    element.scrollIntoView({ behavior: "smooth", block: "center" });
+    element.scrollIntoView({ behavior: "smooth", block: avecListe ? "start" : "center" });
   }, delaiMs);
 }

@@ -1088,6 +1088,20 @@ export default function BirthChartPage() {
     prefetchTransitDate(anchorDate, [anchorDate, targetDate], direction);
   }, [prefetchTransitDate]);
 
+  /**
+   * La boucle d animation s appelle elle-meme, image apres image.
+   *
+   * Se nommer dans son propre corps fait qu elle se capture a sa PREMIERE
+   * version : les images suivantes continuent d appeler l ancienne, avec les
+   * anciennes valeurs. React 19 le signale, et c est un vrai piege — une boucle
+   * d animation qui fige ses dependances joue la bonne animation avec les
+   * mauvaises donnees.
+   *
+   * La reference est toujours a jour, elle. Chaque image appelle la derniere
+   * version de la fonction.
+   */
+  const runPlaybackFrameRef = useRef<() => void>(() => {});
+
   const runPlaybackFrame = useCallback(() => {
     if (!isPlayingRef.current || viewModeRef.current !== "transit") {
       playbackRafRef.current = null;
@@ -1118,7 +1132,7 @@ export default function BirthChartPage() {
       }
       // Reset segment timer so the step plays at full duration once real data arrives.
       playbackSegmentRef.current = { ...segment, startedAt: performance.now() };
-      playbackRafRef.current = requestAnimationFrame(runPlaybackFrame);
+      playbackRafRef.current = requestAnimationFrame(() => runPlaybackFrameRef.current());
       return;
     }
 
@@ -1145,7 +1159,7 @@ export default function BirthChartPage() {
     applyPlanetsToOverlay(displayPlanets);
 
     if (progress < 1) {
-      playbackRafRef.current = requestAnimationFrame(runPlaybackFrame);
+      playbackRafRef.current = requestAnimationFrame(() => runPlaybackFrameRef.current());
       return;
     }
 
@@ -1170,7 +1184,7 @@ export default function BirthChartPage() {
     }
 
     startPlaybackSegment(segment.targetInstant);
-    playbackRafRef.current = requestAnimationFrame(runPlaybackFrame);
+    playbackRafRef.current = requestAnimationFrame(() => runPlaybackFrameRef.current());
   }, [applyPlanetsToOverlay, startPlaybackSegment]);
 
   useEffect(() => {
@@ -1214,6 +1228,13 @@ export default function BirthChartPage() {
       stopPlayback();
     };
   }, [isPlaying, viewMode, runPlaybackFrame, startPlaybackSegment, stopPlayback]);
+
+  // La reference suit la derniere version de la boucle. Dans un effet et non
+  // pendant le rendu : une ref ne se touche pas au rendu, c est precisement ce
+  // qui la rend fiable entre deux images.
+  useEffect(() => {
+    runPlaybackFrameRef.current = runPlaybackFrame;
+  }, [runPlaybackFrame]);
 
   const handleViewModeChange = useCallback((mode: ViewMode) => {
     if (mode === "natal") {

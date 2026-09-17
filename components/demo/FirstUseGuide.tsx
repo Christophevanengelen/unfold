@@ -27,7 +27,7 @@
  *    trou et son anneau : deux formes statiques.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { t, detectLocale, isRTL } from "@/lib/i18n-demo";
 
 const CLE_FAIT = "unfold_first_use_done";
@@ -146,6 +146,67 @@ export function relanceDemandee(): boolean {
   }
 }
 
+/**
+ * Mesure une cible dans le repere d un hote.
+ *
+ * HORS DU COMPOSANT A DESSEIN. Le corps ne lit que son hote et son selecteur :
+ * il n y a rien a memoriser. En useCallback il fallait declarer `conteneur` en
+ * dependance alors que le corps lit `conteneur.current` — ce ne sont pas la
+ * meme chose, et le compilateur React refusait d optimiser tout le composant
+ * plutot que de laisser passer l ecart (react-hooks/preserve-manual-memoization).
+ */
+function mesurerDans(hote: HTMLElement | null, selecteur: string): Rect | null {
+  if (!hote) return null;
+  const base = hote.getBoundingClientRect();
+
+  const elements = Array.from(hote.querySelectorAll(selecteur));
+  if (elements.length === 0) return null;
+
+  let t0 = Infinity, l0 = Infinity, b0 = -Infinity, r0 = -Infinity;
+  for (const el of elements) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    t0 = Math.min(t0, r.top); l0 = Math.min(l0, r.left);
+    b0 = Math.max(b0, r.bottom); r0 = Math.max(r0, r.right);
+  }
+  if (!Number.isFinite(t0)) return null;
+
+  const marge = 8;
+  let largeur = r0 - l0 + marge * 2;
+  let gauche = l0 - base.left - marge;
+  // Les capsules font 14 a 28 points de large. Le guide dit « touche » : la
+  // zone qu il designe doit etre atteignable, donc au moins 44.
+  if (largeur < 44) {
+    gauche -= (44 - largeur) / 2;
+    largeur = 44;
+  }
+
+  let haut = t0 - base.top - marge;
+  let hauteur = b0 - t0 + marge * 2;
+
+  // Bornage au conteneur.
+  //
+  // La colonne defile : ses capsules debordent largement au-dessus et
+  // au-dessous du panneau visible, et getBoundingClientRect rend leurs
+  // coordonnees reelles, negatives comprises. Sans bornage, le trou
+  // deborde, les quatre bandes du voile calculent des hauteurs negatives et
+  // s effondrent — le voile disparait et l anneau sort de l ecran.
+  //
+  // On borne apres l elargissement a 44 : l ordre inverse pourrait
+  // repousser la zone hors du panneau.
+  const droite = Math.min(gauche + largeur, base.width);
+  gauche = Math.max(0, gauche);
+  largeur = Math.max(0, droite - gauche);
+
+  const bas = Math.min(haut + hauteur, base.height);
+  haut = Math.max(0, haut);
+  hauteur = Math.max(0, bas - haut);
+
+  if (largeur === 0 || hauteur === 0) return null;
+
+  return { top: haut, left: gauche, width: largeur, height: hauteur };
+}
+
 export function FirstUseGuide({
   conteneur,
   onDone,
@@ -184,68 +245,12 @@ export function FirstUseGuide({
     },
   ];
 
-  /** Mesure une cible dans le repere du conteneur. */
-  const mesurer = useCallback(
-    (selecteur: string): Rect | null => {
-      const hote = conteneur?.current;
-      if (!hote) return null;
-      const base = hote.getBoundingClientRect();
-
-      const elements = Array.from(hote.querySelectorAll(selecteur));
-      if (elements.length === 0) return null;
-
-      let t0 = Infinity, l0 = Infinity, b0 = -Infinity, r0 = -Infinity;
-      for (const el of elements) {
-        const r = el.getBoundingClientRect();
-        if (r.width === 0 || r.height === 0) continue;
-        t0 = Math.min(t0, r.top); l0 = Math.min(l0, r.left);
-        b0 = Math.max(b0, r.bottom); r0 = Math.max(r0, r.right);
-      }
-      if (!Number.isFinite(t0)) return null;
-
-      const marge = 8;
-      let largeur = r0 - l0 + marge * 2;
-      let gauche = l0 - base.left - marge;
-      // Les capsules font 14 a 28 points de large. Le guide dit « touche » : la
-      // zone qu il designe doit etre atteignable, donc au moins 44.
-      if (largeur < 44) {
-        gauche -= (44 - largeur) / 2;
-        largeur = 44;
-      }
-
-      let haut = t0 - base.top - marge;
-      let hauteur = b0 - t0 + marge * 2;
-
-      // Bornage au conteneur.
-      //
-      // La colonne defile : ses capsules debordent largement au-dessus et
-      // au-dessous du panneau visible, et getBoundingClientRect rend leurs
-      // coordonnees reelles, negatives comprises. Sans bornage, le trou
-      // deborde, les quatre bandes du voile calculent des hauteurs negatives et
-      // s effondrent — le voile disparait et l anneau sort de l ecran.
-      //
-      // On borne apres l elargissement a 44 : l ordre inverse pourrait
-      // repousser la zone hors du panneau.
-      const droite = Math.min(gauche + largeur, base.width);
-      gauche = Math.max(0, gauche);
-      largeur = Math.max(0, droite - gauche);
-
-      const bas = Math.min(haut + hauteur, base.height);
-      haut = Math.max(0, haut);
-      hauteur = Math.max(0, bas - haut);
-
-      if (largeur === 0 || hauteur === 0) return null;
-
-      return { top: haut, left: gauche, width: largeur, height: hauteur };
-    },
-    [conteneur],
-  );
 
   // On ne garde que les pas dont la cible existe. Un pas qui pointe le vide est
   // pire que pas de pas.
   useEffect(() => {
     const image = requestAnimationFrame(() => {
-      const utiles = TOUS.filter((p) => mesurer(p.selecteur) !== null);
+      const utiles = TOUS.filter((p) => mesurerDans(conteneur?.current ?? null, p.selecteur) !== null);
       if (utiles.length === 0) {
         marquerGuideVu();
         onDone();
@@ -270,7 +275,7 @@ export function FirstUseGuide({
     if (!pasUtiles) return;
     const relever = () => {
       const p = pasUtiles[pas];
-      setRect(p ? mesurer(p.selecteur) : null);
+      setRect(p ? mesurerDans(conteneur?.current ?? null, p.selecteur) : null);
     };
     relever();
     window.addEventListener("resize", relever);
@@ -279,7 +284,7 @@ export function FirstUseGuide({
       window.removeEventListener("resize", relever);
       window.removeEventListener("orientationchange", relever);
     };
-  }, [pas, pasUtiles, mesurer]);
+  }, [pas, pasUtiles, conteneur]);
 
   if (!pasUtiles) return null;
   const courant = pasUtiles[pas];

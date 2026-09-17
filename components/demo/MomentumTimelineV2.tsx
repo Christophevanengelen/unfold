@@ -1446,7 +1446,12 @@ export function MomentumTimelineV2() {
     }
     mesurer("signal_ouvert", { futur: capsule.isFuture === true });
     setSelectedCapsule(capsule);
-  }, [openPremium, userIsPremium]);
+    // `setSelectedCapsule` est declare bien qu il soit stable : le compilateur
+    // React refuse d optimiser une memoisation dont les dependances declarees
+    // ne correspondent pas a celles qu il deduit. Le declarer ne change rien a
+    // l execution — un poseur d etat garde la meme identite — et rend la
+    // memoisation verifiable.
+  }, [openPremium, userIsPremium, setSelectedCapsule]);
 
   const handleAgeChange = useCallback((age: number) => {
     setVisibleAge(age);
@@ -1459,7 +1464,9 @@ export function MomentumTimelineV2() {
       .map(c => ({ c, dist: Math.abs(c.startDate.getTime() - ts) }))
       .sort((a, b) => a.dist - b.dist)[0]?.c;
     if (match) setSelectedCapsule(match);
-  }, [allCapsules]);
+    // Meme raison qu au-dessus : un poseur d etat est stable, le declarer ne
+    // change rien et rend la memoisation verifiable.
+  }, [allCapsules, setSelectedCapsule]);
 
   // Show spinner only when we have NO data at all.
   // If year data (phases) arrived, show timeline immediately — lifetime loads in background.
