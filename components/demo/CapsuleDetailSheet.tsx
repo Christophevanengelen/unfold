@@ -37,18 +37,25 @@
  * decide pas.
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, Fire, CalendarMonth, Lightbulb, ChevronDown, ArrowRight, ShareNodes } from "flowbite-react-icons/outline";
 import { ShareSignalCard } from "./ShareSignalCard";
 import { TypewriterText } from "./TypewriterText";
 import { getPersonalizedText, type PersonalizedText } from "@/lib/openai-personalize";
-import { detectLocale } from "@/lib/i18n-demo";
+import { detectLocale, t } from "@/lib/i18n-demo";
 import { getUserProfileSync } from "@/lib/user-profile";
 import { getBirthDataSync } from "@/lib/birth-data";
 import { getObservedProfileSync, trackCapsuleOpen, trackDomainClick, trackDomainReadTime } from "@/lib/observed-profile";
 import { buildEffectiveProfile, needsRefresh, getStaleFields } from "@/lib/effective-profile";
 import { FeedbackThumb } from "@/components/demo/FeedbackThumb";
+import { CielDuSignal } from "@/components/demo/CielDuSignal";
+import { GrilleDeVie } from "@/components/demo/GrilleDeVie";
+import { RegleDeDuree } from "@/components/demo/RegleDeDuree";
+import { BandeDuJour } from "@/components/demo/BandeDuJour";
+import { heuresDuJour } from "@/lib/soleil";
+import { chargerPositions, type Position } from "@/lib/positions-api";
+import { formatEuropeanDisplayDate } from "@/lib/european-date";
 import { PremiumBlur } from "@/components/demo/PremiumBlur";
 import { usePremiumStatus } from "@/lib/premium-gate";
 import { MicroRefresh } from "@/components/demo/MicroRefresh";
@@ -153,11 +160,21 @@ function BannerIcon({ icon, size = 14 }: { icon: string; size?: number }) {
 // ─── Main Component ──────────────────────────────────────
 export function CapsuleDetailSheet({
   capsule,
+  dureesVoisines,
   isFuture,
   onClose,
   onNavigateToCapsule,
 }: {
   capsule: CapsuleData;
+  /**
+   * Les durees des autres periodes, en jours.
+   *
+   * Sans elles, « 1 mois 15 jours » est un chiffre sans echelle : le lecteur
+   * n a aucun moyen de savoir si c est beaucoup. Elles ne servent qu a ca, et
+   * la regle ne s affiche pas s il n y en a pas assez — mieux vaut le chiffre
+   * seul qu une echelle inventee.
+   */
+  dureesVoisines?: number[];
   isFuture?: boolean;
   onClose: () => void;
   onNavigateToCapsule?: (date: Date) => void;
@@ -279,6 +296,74 @@ export function CapsuleDetailSheet({
   }, [loadAiText]);
 
   const phase = capsule.phases[0];
+
+  /**
+   * Le ciel de cette periode — les positions REELLES a sa date.
+   *
+   * Charge a part : le moteur met une seconde a rendre une position. L attendre
+   * retarderait tout ce qui est deja pret. La figure apparait quand elle
+   * arrive ; si elle n arrive jamais, la feuille est exactement ce qu elle
+   * etait avant.
+   *
+   * Aucun etat d attente n est dessine : un squelette a cet endroit
+   * annoncerait une figure qui peut ne pas venir.
+   */
+  const [ciel, setCiel] = useState<Position[] | null>(null);
+  const dateSignal =
+    capsule.startDate instanceof Date
+      ? capsule.startDate.toISOString().slice(0, 10)
+      : String(capsule.startDate ?? "").slice(0, 10);
+  // Trois au maximum : au-dela, le cercle devient un semis de points et l ecart
+  // qu on veut montrer ne se lit plus.
+  const clefsCiel = capsule.planets.filter((p) => p in planetConfig).slice(0, 3).join(",");
+
+  /**
+   * De quoi dessiner la bande du jour, ou `null`.
+   *
+   * Le lieu est celui de la NAISSANCE — c est la seule ancre geographique de
+   * l app, et c est deja celle que le moteur utilise pour tout le reste. Pour
+   * une periode passee, ou la personne se trouvait vraiment est de toute facon
+   * inconnaissable : on ne le devine pas.
+   */
+  const bandeDuJour = useMemo(() => {
+    const b = getBirthDataSync();
+    if (!b || typeof b.latitude !== "number" || typeof b.longitude !== "number") return null;
+    if (!dateSignal) return null;
+    // Le decalage du lieu ce jour-la. `Intl` connait les regles de chaque
+    // fuseau, y compris l heure d ete — une table figee se tromperait d une
+    // heure entiere la moitie de l annee.
+    let decalage = 0;
+    try {
+      const f = new Intl.DateTimeFormat("en-US", { timeZone: b.timezone, timeZoneName: "longOffset" });
+      const p = f.formatToParts(new Date(`${dateSignal}T12:00:00Z`)).find((x) => x.type === "timeZoneName");
+      const m = p?.value ? /GMT([+-])(\d{2}):(\d{2})/.exec(p.value) : null;
+      if (m) decalage = (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
+    } catch {
+      /* Fuseau inconnu : on reste a UTC plutot que de deviner. */
+    }
+    const h = heuresDuJour(dateSignal, b.latitude, b.longitude, decalage);
+    if (!h || h.lever === null || h.coucher === null) return null;
+    const minutes = Math.max(0, Math.round(h.coucher - h.lever));
+    return {
+      lat: b.latitude,
+      lon: b.longitude,
+      decalage,
+      libelle: t("resume.jour_duree", locale)
+        .replace("{h}", String(Math.floor(minutes / 60)))
+        .replace("{m}", String(minutes % 60).padStart(2, "0")),
+    };
+  }, [dateSignal, locale]);
+
+  useEffect(() => {
+    if (!dateSignal || !clefsCiel) return;
+    let abandonne = false;
+    chargerPositions(dateSignal, clefsCiel.split(",")).then((p) => {
+      if (!abandonne && p) setCiel(p);
+    });
+    return () => {
+      abandonne = true;
+    };
+  }, [dateSignal, clefsCiel]);
   const tc = getTimeContext(capsule.isCurrent, capsule.isFuture, locale);
   const tierLabel = getTierLabel(capsule.tier, locale);
   // `?? "work"` transformait toute capsule sans domaine en maison 10 : la fiche
@@ -410,27 +495,71 @@ export function CapsuleDetailSheet({
         style={{ paddingBottom: "calc(24px + var(--safe-bottom, 0px))" }}
       >
 
-        {/* ── Section 1: Context Banner ── */}
-        <div
-          className="flex items-center gap-2 rounded-full px-3 py-1.5 mb-4"
-          style={{
-            // Le bandeau a son propre fond, teinte de la couleur de maison :
-            // il se detache de la feuille sans avoir besoin d etre cerne.
-            background: `color-mix(in srgb, ${houseColor} 10%, transparent)`,
-            width: "fit-content",
-          }}
-        >
-          <div style={{ color: houseColor }}>
-            <BannerIcon icon={tc.bannerIcon} size={12} />
+        {/* ── LE CIEL — les positions reelles a la date de la periode ──
+
+            En tete, et debordant les marges : c est le seul element de l ecran
+            a le faire, et c est ce debordement qui le rend dominant, pas une
+            hauteur plus grande.
+
+            Il n apparait QUE si le moteur a repondu. Pas de cadre, pas de fond,
+            pas de lueur : la figure est posee sur le fond de la feuille. */}
+        {ciel && ciel.length > 0 ? (
+          <div className="-mx-5 mb-5 flex justify-center">
+            <CielDuSignal
+              positions={ciel}
+              locale={locale}
+              dateLisible={formatEuropeanDisplayDate(capsule.startDate)}
+            />
           </div>
-          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-heading)" }}>
-            {tc.bannerLabel}
-          </span>
+        ) : null}
+
+        {/* ── L ETAT — une ligne de surtitre, plus une pastille ──
+
+            REECRIT LE 17/09/2026. Christophe : « je veux vraiment une mise en
+            page tres elaboree, magnifique a regarder, avec des beaux titres,
+            comme un magazine ».
+
+            La pastille avait un fond teinte, un pictogramme et un point qui
+            bat — trois marques pour dire une chose. Un magazine ne met pas ce
+            qu il a a dire dans une gelule : il l ecrit en petites capitales
+            espacees, et le blanc autour fait le reste.
+
+            Le point de couleur reste, parce qu il porte la teinte du domaine et
+            qu il bat quand la periode est ouverte. Le pictogramme part : image
+            plus mot, c est deux fois le meme mot. */}
+        <div className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           {tc.context === "current" && (
             <span
-              className="h-1.5 w-1.5 rounded-full animate-pulse"
+              className="h-[7px] w-[7px] shrink-0 rounded-full animate-pulse"
               style={{ background: houseColor }}
             />
+          )}
+          <span
+            className="text-[11px] font-semibold uppercase"
+            style={{ color: "var(--text-heading)", letterSpacing: "0.16em" }}
+          >
+            {tc.bannerLabel}
+          </span>
+
+          {/* LE TIER REJOINT L ETAT, sur la MEME ligne.
+
+              Ils s empilaient : « EN COURS », puis « MOMENT FORT 3/4 », puis
+              les dates — trois lignes d etiquettes de suite, en trois couleurs.
+              C est le dernier reste de l effet liste : quatre objets qui disent
+              tous QUAND, chacun sur sa ligne.
+
+              Une seule ligne, un seul niveau de lecture, et le blanc en dessous
+              porte le grand chiffre. */}
+          <span
+            className="text-[11px] font-semibold uppercase"
+            style={{ color: "var(--text-brand)", letterSpacing: "0.16em" }}
+          >
+            {tierLabel}
+          </span>
+          {phase?.score !== undefined && (
+            <span className="text-[11px] font-semibold" style={{ color: "var(--text-body)" }}>
+              {phase.score}/4
+            </span>
           )}
         </div>
 
@@ -453,79 +582,156 @@ export function CapsuleDetailSheet({
           />
         )}
 
-        {/* ── Section 2: Hero — Tier + Score + Rarity + Dates ── */}
-        <div className="mb-5">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-[10px] font-semibold uppercase tracking-[0.15em]"
-              style={{ color: "var(--text-brand)" }}
-            >
-              {tierLabel}
-            </span>
-            {/* `phase?.score &&` masquait le badge quand le score valait 0 :
-                un score nul est une mesure, pas une absence de mesure. On teste
-                la presence de la valeur, pas sa verite. */}
-            {phase?.score !== undefined && (
-              <span
-                className="rounded-full px-2 py-0.5 text-[9px] font-bold tabular-nums"
-                style={{
-                  background: `color-mix(in srgb, ${houseColor} 15%, transparent)`,
-                  color: houseTexte,
-                }}
-              >
-                {phase.score}/4
-              </span>
-            )}
-          </div>
+        {/* ── L ACCROCHE ──
 
+            Le rang de vie remonte en tete et passe en GOODLY LIGHT a 68 px.
+
+            Pourquoi lui : c est la seule information de la fiche qui soit a la
+            fois rare, factuelle, et introuvable ailleurs. Le statut se lit deja
+            dans la timeline d ou l on vient, les dates sont des coordonnees, le
+            recit est du texte. Le rang, lui, n existe nulle part.
+
+            Pourquoi Goodly, et pourquoi si grand : elle ne devient distinctive
+            qu en Light et au-dela de 30 px — en dessous, c est une sans arrondie
+            de plus. Un chiffre de 68 px en 300 est exactement le terrain ou
+            elle donne ce qu elle a. C est le SEUL element de l ecran a cette
+            echelle, et c est cet ecart qui casse l effet tableau.
+
+            `--font-titre`, pas `--font-display` : dans ce depot
+            `--font-display` vaut Uniform Rounded. Le chiffre etait donc en
+            Uniform, et personne ne l avait vu. */}
+        <div className="mb-5">
           {/* `nombre &&` en JSX rend le 0 lui-meme a l ecran : un « 0 » nu
               apparaissait dans la fiche. On teste la presence de la valeur. */}
           {rarityText && displayLifetimeNum !== undefined && displayLifetimeTotal !== undefined && (
-            <div className="flex items-baseline gap-2 mt-1">
+            <div className="mt-1 flex items-end gap-3">
               <span
-                className="text-3xl font-bold tabular-nums font-display"
-                style={{ color: "var(--text-heading)" }}
+                style={{
+                  fontFamily: "var(--font-titre)",
+                  fontWeight: 300,
+                  fontSize: 68,
+                  lineHeight: 0.86,
+                  letterSpacing: "-0.04em",
+                  color: "var(--text-heading)",
+                }}
               >
                 {displayLifetimeNum}
-                <span className="text-sm font-normal align-super" style={{ color: "var(--text-body)" }}>e</span>
+                <span
+                  className="align-super"
+                  style={{ fontSize: 20, fontWeight: 400, color: "var(--text-body)" }}
+                >
+                  e
+                </span>
               </span>
-              <span className="text-xs" style={{ color: "var(--text-body)" }}>
-                {rarityText}
-              </span>
+              <div className="flex flex-col gap-2 pb-1.5">
+                <span
+                  className="max-w-[14ch] text-[15px] leading-[1.25]"
+                  style={{ color: "var(--text-body)" }}
+                >
+                  {rarityText}
+                </span>
+
+                {/* LA GRILLE — le denominateur, dessine.
+
+                    « 2ᵉ sur 2 » se lit ; « ■ ■ » se VOIT. Les frequences
+                    naturelles sont comprises la ou les pourcentages ne le sont
+                    pas, et une grille d unites ne peut pas mentir : elle montre
+                    combien de fois la chose peut arriver.
+
+                    Une case par occurrence, toujours la meme case — c est la
+                    regle d Isotype : on repete l unite, on ne l agrandit pas.
+                    Les passees en aplat efface, celle-ci en couleur, les a
+                    venir en contour. Une seule case vive sur toute la grille. */}
+                <GrilleDeVie
+                  rang={displayLifetimeNum}
+                  total={displayLifetimeTotal}
+                  accent={houseColor}
+                />
+              </div>
             </div>
           )}
 
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[11px] tabular-nums" style={{ color: "var(--text-body)" }}>
-              {dateLabel}
-            </span>
-            <span
-              className="rounded-full px-2 py-0.5 text-[9px] font-medium"
-              style={{
-                background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)",
-                color: "var(--text-brand)",
-              }}
-            >
-              {duration}
-            </span>
-          </div>
+          {/* Les dates et la duree : UNE phrase, pas deux objets. La gelule de
+              duree disait « je suis une donnee a part » alors qu elle finit la
+              meme information. Le point median suffit a les separer. */}
+          <p className="mt-3 text-[13px] leading-[1.45]" style={{ color: "var(--text-body)" }}>
+            {dateLabel} · {duration}
+          </p>
+
+          {/* LA BANDE DU JOUR — a quoi ressemblait la journee.
+
+              Vingt-quatre heures decoupees aux heures REELLES du soleil au lieu
+              de naissance : nuit, les trois crepuscules, plein jour. Calculees
+              en local, sans un seul appel reseau.
+
+              Une journee de decembre et une de juin ne se ressemblent pas, et
+              ca se voit sans une etiquette. C est la reponse a « trop de texte
+              et pas assez d illustrations » : une image qui se lit en un
+              dixieme de seconde et qui ne dit que des faits. */}
+          {bandeDuJour ? (
+            <div className="mt-4 max-w-[300px]">
+              <BandeDuJour
+                date={dateSignal}
+                latitude={bandeDuJour.lat}
+                longitude={bandeDuJour.lon}
+                decalageMinutes={bandeDuJour.decalage}
+                libelle={bandeDuJour.libelle}
+              />
+            </div>
+          ) : null}
+
+          {/* LA REGLE — « long » par rapport a quoi.
+
+              Le chiffre au-dessus ne dit rien tout seul. Ici le trait plein est
+              cette periode, le repere vertical la duree habituelle des autres.
+              On ne dit jamais « long » : on montre, et le lecteur peut
+              contredire le dessin. C est la definition d une illustration
+              honnete — l inverse d une jauge, qui dit remplissage, donc
+              performance, donc promesse. */}
+          {dureesVoisines && dureesVoisines.length > 0 ? (
+            <div className="mt-3 max-w-[260px]">
+              <RegleDeDuree
+                jours={
+                  (new Date(capsule.endDate ?? capsule.startDate).getTime() -
+                    new Date(capsule.startDate).getTime()) /
+                  86400000
+                }
+                voisines={dureesVoisines}
+                accent={houseColor}
+                libelleMediane={t("resume.duree_mediane", locale)}
+              />
+            </div>
+          ) : null}
         </div>
+
+        {/* ── LE FILET — le seul de l ecran ──
+
+            Il ne separe pas deux blocs, il separe DEUX NATURES. Au-dessus, ce
+            que la machine a mesure : des positions, un rang, des dates. En
+            dessous, ce qu on en dit : un domaine, un recit, un conseil.
+
+            C est la seule frontiere de la feuille qui ne soit pas qu un
+            changement de sujet, donc la seule qui merite un trait plutot que du
+            vide. Partout ailleurs, l ecart fait le travail. Un filet par bloc
+            reproduirait la liste de base de donnees qu on vient de defaire. */}
+        <div className="mb-6 h-px" style={{ background: "var(--border-base)" }} />
 
         {/* ── Section 3: Life Areas — fluid phrase with color dots ── */}
         {phase?.apiTopics && phase.apiTopics.length > 0 ? (
           <div className="mb-5">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
+            <div className="mb-2 flex flex-wrap items-center gap-x-5 gap-y-2">
               {phase.apiTopics.map((topic: { house: number; color: string; topic: string }, i: number) => {
                 const hm = houseConfig[topic.house as HouseNumber];
+                // PLUS DE GELULE. Le 17/09, ces pastilles avaient un fond
+                // teinte, un point ET un mot : trois marques pour dire un
+                // domaine. Une rangee de gelules colorees est exactement ce qui
+                // fait lire un ecran comme une liste de champs.
+                //
+                // Le point garde la couleur — c est sa place mesuree, le texte
+                // y tombait a 2,04 — et le mot se pose a cote, sur le fond de
+                // la feuille.
                 return hm ? (
-                  <div key={i} className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-                    style={{
-                      // 01/09/2026 : plus de lisere. La pastille a deja un
-                      // fond a elle, d une teinte differente de la surface
-                      // qui la porte — c est ce fond qui la decoupe. Le
-                      // trait redisait la meme separation en plus dur.
-                      background: `color-mix(in srgb, ${topic.color} 10%, transparent)`,
-                    }}>
+                  <div key={i} className="flex items-center gap-2">
                     {/* La couleur vit sur le POINT et sur le fond, pas dans les lettres.
                        Mesure du 17/09 en theme clair : le nom du domaine peint
                        dans la couleur du domaine tombait a 2,04, celui d une
@@ -535,73 +741,43 @@ export function CapsuleDetailSheet({
                        recurrent du depot : le texte peint dans la couleur qui
                        teinte son propre fond. */}
                     <div className="h-2 w-2 rounded-full" style={{ background: topic.color }} />
-                    <span className="text-[11px] font-medium" style={{ color: "var(--text-heading)" }}>{hm.label}</span>
+                    <span className="text-[13px] font-medium" style={{ color: "var(--text-heading)" }}>{hm.label}</span>
                   </div>
                 ) : null;
               })}
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-body)" }}>
+            {/* Le chapo : un cran au-dessus du corps, comme dans un magazine.
+                C est lui qui donne envie de lire la suite. */}
+            <p className="text-[16px] leading-[1.45]" style={{ color: "var(--text-body)" }}>
               {topicsNarrative}
             </p>
           </div>
         ) : houseMeta ? (
           <div className="mb-5">
-            <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 w-fit mb-2"
-              style={{
-                // 01/09/2026 : plus de lisere. La pastille a deja un
-                // fond a elle, d une teinte differente de la surface
-                // qui la porte — c est ce fond qui la decoupe. Le
-                // trait redisait la meme separation en plus dur.
-                background: `color-mix(in srgb, ${houseColor} 10%, transparent)`,
-              }}>
+            <div className="mb-2 flex w-fit items-center gap-2">
               <div className="h-2 w-2 rounded-full" style={{ background: houseColor }} />
-              <span className="text-[11px] font-medium" style={{ color: "var(--text-heading)" }}>{houseMeta.label}</span>
+              <span className="text-[13px] font-medium" style={{ color: "var(--text-heading)" }}>{houseMeta.label}</span>
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-body)" }}>
+            <p className="text-[16px] leading-[1.45]" style={{ color: "var(--text-body)" }}>
               {domainNarrative}
             </p>
           </div>
         ) : null}
 
-        {/* ── Section 4: Planet pills + narrative ── */}
+        {/* ── Section 4: le recit des planetes ──
+
+            LES PASTILLES DE PLANETES ONT DISPARU LE 17/09.
+
+            Elles nommaient « Saturne » et « Soleil » quarante points sous une
+            figure qui nomme deja Saturne et Soleil, a leur position. Dire deux
+            fois la meme chose sur un ecran qu on fait defiler est la
+            redondance la plus couteuse : elle prend la place, et elle affaiblit
+            la figure en la faisant passer pour un ornement dont le texte
+            dessous serait la version serieuse.
+
+            Le recit, lui, reste : il dit quelque chose que la figure ne dit
+            pas. */}
         <div className="mb-5">
-          <div className="flex flex-wrap gap-2">
-            {capsule.planets.map((planet) => {
-              const pc = planetConfig[planet];
-              const isSolarEclipse = planet === "solar-eclipse";
-              return (
-                <motion.div
-                  key={planet}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                  className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
-                  style={{
-                    // 01/09/2026 : plus de lisere. La pastille a deja un
-                    // fond a elle, d une teinte differente de la surface
-                    // qui la porte — c est ce fond qui la decoupe. Le
-                    // trait redisait la meme separation en plus dur.
-                    background: `color-mix(in srgb, ${pc.color} 12%, transparent)`,
-                  }}
-                >
-                  <div
-                    className="h-2 w-2 rounded-full"
-                    style={{
-                      background: isSolarEclipse
-                        ? "linear-gradient(135deg, #1a1a1a 45%, #C9A86C 55%)"
-                        : pc.color,
-                      boxShadow: isSolarEclipse
-                        ? "0 0 6px rgba(201, 168, 108, 0.5)"
-                        : `0 0 6px ${pc.color}`,
-                    }}
-                  />
-                  <span className="text-[11px] font-medium" style={{ color: "var(--text-heading)" }}>
-                    {pc.label}
-                  </span>
-                </motion.div>
-              );
-            })}
-          </div>
           {/* Hide static ZR description once AI story is loaded — AI corps already covers it */}
           {planetNarrative && !(phase?.apiCategory === "zr" && aiText) && (
             <p className="mt-3 text-[12px] leading-relaxed italic" style={{ color: "var(--text-body)" }}>
@@ -630,7 +806,27 @@ export function CapsuleDetailSheet({
               </div>
             </PremiumBlur>
           </div>
-        ) : (
+        ) : (() => {
+          /**
+           * Le libelle traduit, calcule UNE fois — et il peut valoir `null`.
+           *
+           * Depuis le 17/09, `translateApiLabel` refuse de rendre un libelle
+           * reste a moitie technique (« Cycle de vie Fortune+Spirit L2
+           * Scorpio »). C etait la bonne decision, mais elle a laisse un titre
+           * ORPHELIN : « CE QUI SE DEROULE » s affichait au-dessus de rien.
+           *
+           * Vu sur le simulateur, pas dans le code. Un surtitre sans contenu
+           * est pire qu une section absente : il annonce quelque chose qui ne
+           * vient pas, et la personne croit que l app a echoue.
+           *
+           * La section entiere ne s affiche donc que si elle a quelque chose a
+           * dire — un libelle, un titre, un recit, ou un chargement en cours.
+           */
+          const libelle = phase.apiLabel ? translateApiLabel(phase.apiLabel, locale) : null;
+          const aQuelqueChose =
+            !!libelle || !!aiText?.titre || !!aiText?.story || aiLoading || !!streamingCorps;
+          if (!aQuelqueChose) return null;
+          return (
           <div className="mb-5">
             <span
               className="text-[9px] font-semibold uppercase tracking-wider"
@@ -638,10 +834,9 @@ export function CapsuleDetailSheet({
             >
               {tc.storyLabel}
             </span>
-            {/* Show translated API label — the real transit name */}
-            {phase.apiLabel && (
+            {libelle && (
               <p className="mt-1 text-[11px] font-medium" style={{ color: "var(--text-body)" }}>
-                {translateApiLabel(phase.apiLabel, locale)}
+                {libelle}
               </p>
             )}
             {aiText?.titre && (
@@ -663,27 +858,37 @@ export function CapsuleDetailSheet({
               </div>
             ) : null}
           </div>
-        ))}
+          );
+        })())}
 
         {/* ── Section 6: Insight Card ── */}
         {/* Always shown (AI text preferred, rich template fallback otherwise) */}
+        {/* LA SEULE CARTE DE L ECRAN.
+
+            Elle etait une parmi cinq, toutes au meme dessin : meme rayon, meme
+            fond, meme pictogramme. C est cette repetition qui faisait lire la
+            feuille comme un tableau — « la boite grise autour de chaque bloc »
+            est le marqueur numero un d une interface generee.
+
+            Il n en reste qu une, et c est ce qui lui rend son poids. Son fond
+            est `--bg-tertiary` NU : le violet a 6 % pose par-dessus un fond deja
+            violet ne se voyait pas et coutait un calcul. Le pictogramme part :
+            ampoule plus « insight », c est deux fois le meme mot. */}
         {!shouldBlurAi && (insightText || aiLoading) && (
           <div
-            className="rounded-xl px-4 py-3 mb-4"
-            style={{
-              background: tc.context === "current"
-                ? "color-mix(in srgb, var(--accent-purple) 10%, var(--bg-tertiary))"
-                : "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
-            }}
+            className="mb-5 rounded-2xl px-5 py-4"
+            style={{ background: "var(--bg-tertiary)" }}
           >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Lightbulb size={12} style={{ color: "var(--text-brand)" }} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
+            <div className="mb-2">
+              <span
+                className="text-[11px] font-semibold uppercase"
+                style={{ color: "var(--text-brand)", letterSpacing: "0.16em" }}
+              >
                 {tc.insightLabel}
               </span>
             </div>
             {insightText ? (
-              <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+              <p className="text-[16px] leading-[1.5]" style={{ color: "var(--text-body)" }}>
                 {aiText?.insight
                   ? <TypewriterText text={insightText} speed={45} />
                   : insightText}
@@ -835,22 +1040,26 @@ export function CapsuleDetailSheet({
             </PremiumBlur>
           </div>
         ) : (
-          <div
-            className="rounded-xl px-4 py-3 mb-4"
-            style={{
-              background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))",
-            }}
-          >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <ArrowRight size={12} style={{ color: "var(--text-brand)" }} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
+          // LE SECOND TEMPS, PAS UNE SECONDE CARTE.
+          //
+          // « Pour maintenant » et « en pratique » disent la meme chose a deux
+          // distances : ce qui se passe, ce qu on en fait. Deux cartes
+          // identiques cote a cote donnent un tableau ; une pensee en deux
+          // temps donne une pensee. Le fond disparait, le surtitre reste, et
+          // c est l ecart qui separe.
+          <div className="mb-5">
+            <div className="mb-2">
+              <span
+                className="text-[11px] font-semibold uppercase"
+                style={{ color: "var(--text-brand)", letterSpacing: "0.16em" }}
+              >
                 {tc.context === "past" ? "Avec le recul" : tc.context === "current" ? "En pratique" : perso("fiche.preparer", locale)}
               </span>
             </div>
             {aiLoading && !guidanceText ? (
               <div className="h-3 w-3/5 rounded animate-pulse" style={{ background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)" }} />
             ) : (
-              <p className="text-xs leading-relaxed" style={{ color: "var(--text-body)" }}>
+              <p className="text-[16px] leading-[1.5]" style={{ color: "var(--text-body)" }}>
                 {aiText?.guidance
                   ? <TypewriterText text={aiText.guidance} speed={45} />
                   : guidanceText}

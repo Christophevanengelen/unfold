@@ -726,6 +726,25 @@ button, a, [role="button"], [role="link"],
   --bg-primary: #F5F1FA;
   --bg-secondary: #ECE7F5;
   --bg-tertiary: #E2DCEE;
+
+  /* ── La rampe de la bande du jour ──────────────────────────────────────
+     Cinq aplats, du plein jour a la nuit, pour components/demo/BandeDuJour.
+
+     Ils sont declares en JETONS et non calcules par `color-mix` a partir de
+     l accent, parce qu un `color-mix` vers l accent S INVERSE en theme
+     sombre : le violet y est plus CLAIR que le fond, donc la nuit devenait
+     plus lumineuse que le jour. Semantiquement faux, et invisible dans le
+     code — vu a l ecran le 17/09.
+
+     La regle tient dans les deux themes : le jour est le fond de la surface,
+     et chaque cran vers la nuit s en eloigne dans la direction du contraste.
+     En clair on descend vers le violet profond, en sombre on descend vers le
+     bleu de nuit. Le composant ne connait que les noms. */
+  --jour-plein: #E2DCEE;
+  --jour-civil: #CFC5E4;
+  --jour-nautique: #B2A4D4;
+  --jour-astronomique: #9484C4;
+  --jour-nuit: #6E5EA8;
   /* #7C6BBF donnait 4,46 avec du blanc dessus — juste sous le seuil, donc
      le libelle de CHAQUE bouton principal etait sous la limite en theme
      clair. Deux points de luminosite suffisent a passer a 4,53. */
@@ -895,6 +914,14 @@ button, a, [role="button"], [role="link"],
   --bg-primary: #1B1535;
   --bg-secondary: #221C3F;
   --bg-tertiary: #2A244B;
+
+  /* La meme rampe, en sombre : la nuit est la plus SOMBRE, le jour le plus
+     clair. Voir le bloc clair pour la raison d etre de ces jetons. */
+  --jour-plein: #3B3468;
+  --jour-civil: #332C5B;
+  --jour-nautique: #2A244B;
+  --jour-astronomique: #221C3D;
+  --jour-nuit: #191330;
   --bg-brand: #695EAF;
   --bg-brand-soft: #2F275E;
   --bg-brand-strong: #483E86;
