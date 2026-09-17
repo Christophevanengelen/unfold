@@ -727,6 +727,35 @@ button, a, [role="button"], [role="link"],
   --bg-secondary: #ECE7F5;
   --bg-tertiary: #E2DCEE;
 
+  /* ── L encre de « Ta vie entiere » ─────────────────────────────────────
+     La branche est peinte au pinceau sur la carte : il lui faut une encre,
+     et une encre diluee pour l echo pose dessous. Deux jetons, pas des
+     valeurs semees dans le composant — le canvas les LIT au moment de
+     peindre, et repeint quand le theme change. */
+  --encre-trait: #2B2140;
+  --encre-diluee: #B3A9CC;
+
+  /* ── Les douze maisons, en couleur ─────────────────────────────────────
+     `ChapitreDeVie.maison` porte « le numero de maison, pour les jetons de
+     couleur de l app » — mais la table n existait pas, et « Ta vie entiere »
+     rendait donc tout en gris. La voici.
+
+     Aucune teinte nouvelle : chacune reprend la valeur d une famille deja
+     declaree plus haut (brief ou perso), choisie sur le SENS de la maison.
+     Le rangement est celui de DOMAINE dans lib/score-match.ts. */
+  --maison-1:  #7C6BBF;  /* identite   — perso-career   */
+  --maison-2:  #D4A843;  /* argent     — perso-money    */
+  --maison-3:  #6FA3A0;  /* proches    — brief-communication */
+  --maison-4:  #C4727A;  /* foyer      — brief-foyer    */
+  --maison-5:  #CF7E5B;  /* creation   — perso-creativity */
+  --maison-6:  #7BA88A;  /* sante      — brief-sante    */
+  --maison-7:  #E87E9A;  /* couple     — perso-love     */
+  --maison-8:  #B07AAF;  /* partage    — brief-transformation */
+  --maison-9:  #8B80C9;  /* idees      — brief-voyage   */
+  --maison-10: #7B8CC4;  /* metier     — brief-carriere */
+  --maison-11: #9B7ECF;  /* amis       — perso-friends-network */
+  --maison-12: #9B85C4;  /* retrait    — brief-spiritualite */
+
   /* ── La rampe de la bande du jour ──────────────────────────────────────
      Cinq aplats, du plein jour a la nuit, pour components/demo/BandeDuJour.
 
@@ -914,6 +943,24 @@ button, a, [role="button"], [role="link"],
   --bg-primary: #1B1535;
   --bg-secondary: #221C3F;
   --bg-tertiary: #2A244B;
+
+  /* La meme encre, de nuit : le trait s eclaircit, l echo s assombrit. */
+  --encre-trait: #E4DEF5;
+  --encre-diluee: #4A4270;
+
+  /* Les memes douze, eclaircies pour tenir sur la nuit. */
+  --maison-1:  #A392E4;
+  --maison-2:  #E8C46A;
+  --maison-3:  #8FC6C3;
+  --maison-4:  #E0929A;
+  --maison-5:  #E89E7C;
+  --maison-6:  #9CC7AA;
+  --maison-7:  #F29FB7;
+  --maison-8:  #CE9BCD;
+  --maison-9:  #A8A0E0;
+  --maison-10: #9CADE0;
+  --maison-11: #B79EE6;
+  --maison-12: #B7A4DF;
 
   /* La meme rampe, en sombre : la nuit est la plus SOMBRE, le jour le plus
      clair. Voir le bloc clair pour la raison d etre de ces jetons. */
