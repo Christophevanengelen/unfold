@@ -394,7 +394,27 @@ export function BrancheDeVie({
   const encreRef = useRef<HTMLCanvasElement | null>(null);
   const vifRef = useRef<HTMLCanvasElement | null>(null);
   const [lu, setLu] = useState<Marque | Grappe | null>(null);
-  const [theme, setTheme] = useState(0);
+  /**
+   * Epingle ou non.
+   *
+   * Sans cette distinction, le clic annulait sa propre lecture : le survol
+   * posait la marque, puis le clic — qui basculait — la retirait aussitot.
+   * Au doigt il n y a pas de survol, donc le clic POSE ; a la souris il
+   * epingle, et un second clic sur la meme marque relache.
+   */
+  const [fixe, setFixe] = useState(false);
+  /**
+   * Repeindre, mais seulement quand il y a de quoi.
+   *
+   * `next-themes` pose sa classe APRES le montage. L observateur voyait donc
+   * une mutation a chaque ouverture, relançait la peinture, et son nettoyage
+   * annulait la pousse en cours : il ne restait a l ecran que le lavis dilue
+   * et le premier trait. On ne repeint donc que si l encre — ou la largeur —
+   * a reellement change, et on n anime qu a la premiere peinture.
+   */
+  const [cle, setCle] = useState(0);
+  const dejaAnime = useRef(false);
+  const signature = useRef("");
 
   // Le bas de la branche : le plus ancien age dont on ait quelque chose a
   // dire — un chapitre ou un compte. Pas zero par defaut : dessiner de zero
@@ -755,19 +775,31 @@ export function BrancheDeVie({
     [plan, fige, fil],
   );
 
-  // Premiere peinture, puis a chaque changement de theme ou de largeur.
   useEffect(() => {
-    const stop = peindre(true);
+    const stop = peindre(!dejaAnime.current);
+    dejaAnime.current = true;
     return stop;
-  }, [peindre, theme]);
+  }, [peindre, cle]);
 
   useEffect(() => {
-    const obs = new MutationObserver(() => setTheme((n) => n + 1));
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    const relire = () => {
+      const h = hote.current;
+      if (!h) return;
+      const te = lireLesTeintes(h);
+      const sig = `${te.trait}|${te.diluee}|${te.discret}|${h.clientWidth}`;
+      if (sig === signature.current) return;
+      const premier = signature.current === "";
+      signature.current = sig;
+      // La premiere lecture ne declenche rien : la peinture vient de partir.
+      if (!premier) setCle((n) => n + 1);
+    };
+    relire();
+    const obs = new MutationObserver(relire);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
     let tm: ReturnType<typeof setTimeout>;
     const surTaille = () => {
       clearTimeout(tm);
-      tm = setTimeout(() => setTheme((n) => n + 1), 200);
+      tm = setTimeout(relire, 200);
     };
     window.addEventListener("resize", surTaille);
     return () => {
@@ -826,8 +858,21 @@ export function BrancheDeVie({
                 key={i}
                 type="button"
                 aria-label={titre}
-                onClick={() => setLu((p) => (p === cible ? null : cible))}
-                onMouseEnter={() => setLu(cible)}
+                onClick={() => {
+                  if (fixe && lu === cible) {
+                    setFixe(false);
+                    setLu(null);
+                  } else {
+                    setFixe(true);
+                    setLu(cible);
+                  }
+                }}
+                onMouseEnter={() => {
+                  if (!fixe) setLu(cible);
+                }}
+                onMouseLeave={() => {
+                  if (!fixe) setLu(null);
+                }}
                 className="absolute rounded-full"
                 style={{
                   left: `${((cible.x - 22) / L) * 100}%`,
