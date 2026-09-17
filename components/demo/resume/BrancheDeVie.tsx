@@ -56,18 +56,6 @@ import type { ResumeDeVie } from "@/lib/resume-vie";
 import type { ChapitreDeVie } from "@/lib/chapitres-vie";
 import type { MomentumPhase } from "@/types/momentum";
 
-/* ── Le cadre de dessin ─────────────────────────────────────────────────────
-   Un repere fixe : on dessine toujours dans 360 x 620, et le canvas est mis a
-   l echelle de la largeur reelle. Les coordonnees restent donc lisibles, et
-   rien ne bouge quand le telephone change de largeur. */
-const L = 340;
-const H = 660;
-const MARGE_BAS = 34;
-const MARGE_HAUT = 26;
-
-/** Le sol est en bas : une branche pousse vers le haut. */
-const yDe = (u: number) => H - MARGE_BAS - u * (H - MARGE_BAS - MARGE_HAUT);
-
 /* ── Un hasard REPRODUCTIBLE ────────────────────────────────────────────────
    Deux rendus de la meme vie doivent donner la meme image — sinon l affiche
    qu on imprime n est pas celle qu on avait a l ecran. D ou un bruit calcule
@@ -84,50 +72,6 @@ function lisse(a: number, b: number, t: number): number {
 function ondule(x: number, graine: number): number {
   const i = Math.floor(x);
   return lisse(bruit(i + graine * 1013), bruit(i + 1 + graine * 1013), x - i);
-}
-
-type Teinte = { trait: string; diluee: string; papier: string; sceau: string; discret: string };
-
-function lireLesTeintes(el: HTMLElement): Teinte {
-  const s = getComputedStyle(el);
-  const v = (nom: string) => s.getPropertyValue(nom).trim();
-  return {
-    trait: v("--encre-trait"),
-    diluee: v("--encre-diluee"),
-    papier: v("--bg-secondary"),
-    sceau: v("--bg-brand"),
-    discret: v("--text-body-subtle"),
-  };
-}
-
-/**
- * La couleur d une forme : TROIS, pas douze.
- *
- * Christophe, le 17/09 : « il faut aussi les trois couleurs, comme dans
- * l artefact ». Les douze maisons donnaient douze teintes tres proches — sur
- * ses donnees, presque toutes violettes — et l oeuvre retombait en monochrome.
- *
- * Or Favorable a deja son decoupage en trois : `DomainKey = love | health |
- * work`, et `houseToDomain` (lib/event-labels.ts) dit quelle maison va dans
- * quelle famille. C est la traduction du projet, pas la mienne. Trois teintes
- * franchement distinctes, deja declarees : rose, violet, bleu.
- *
- * La MAISON reste la verite du texte ; la couleur, elle, dit la famille. Le
- * lecteur voit trois courants et lit le detail exact en touchant.
- */
-const JETON_FAMILLE: Record<string, string> = {
-  love: "--domaine-love",
-  work: "--domaine-career",
-  health: "--domaine-health-energy",
-};
-function couleurDe(maison: number | undefined, phase: MomentumPhase | undefined, teinte: Teinte, el: HTMLElement): string {
-  const famille = houseToDomain(maison) ?? phase?.domain ?? null;
-  if (famille && JETON_FAMILLE[famille]) {
-    const jeton = getComputedStyle(el).getPropertyValue(JETON_FAMILLE[famille]).trim();
-    if (jeton) return jeton;
-  }
-  const c = phase?.color ?? phase?.apiTopics?.[0]?.color;
-  return typeof c === "string" && c.length > 0 ? c : teinte.discret;
 }
 
 /* ── Les pieces du dessin ───────────────────────────────────────────────────
@@ -175,74 +119,10 @@ type Point = { x: number; y: number; u: number };
  * SURFACE. On calcule donc les deux bords le long de la normale, et on remplit.
  * `jusqua` permet de n en peindre qu une partie : c est ce qui fait pousser.
  */
-function coup(g: Ctx, pts: Point[], largeur: (u: number) => number, col: string, graine: number, jusqua: number) {
-  const n = Math.max(2, Math.min(pts.length, jusqua));
-  if (n < 2) return;
-  const gauche: number[][] = [];
-  const droite: number[][] = [];
-  for (let k = 0; k < n; k++) {
-    const p = pts[k];
-    const a = pts[Math.max(0, k - 1)];
-    const b = pts[Math.min(pts.length - 1, k + 1)];
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const l = Math.hypot(dx, dy) || 1;
-    const nx = -dy / l;
-    const ny = dx / l;
-    let w = largeur(p.u) / 2;
-    // La pointe qui avance pendant qu on peint : sans ca le trait pousse avec
-    // un bout carre, ce qui ne ressemble a aucun pinceau.
-    if (jusqua < pts.length && k > n - 5) w *= (n - k) / 5;
-    const j1 = 0.3 * ondule(k * 0.8, graine + 5);
-    const j2 = 0.3 * ondule(k * 0.8, graine + 9);
-    gauche.push([p.x + nx * (w + j1), p.y + ny * (w + j1)]);
-    droite.push([p.x - nx * (w + j2), p.y - ny * (w + j2)]);
-  }
-  const bord = gauche.concat(droite.reverse());
-  g.globalAlpha = 0.94;
-  g.fillStyle = col;
-  g.beginPath();
-  g.moveTo(bord[0][0], bord[0][1]);
-  for (let i = 1; i < bord.length; i++) g.lineTo(bord[i][0], bord[i][1]);
-  g.closePath();
-  g.fill();
-  g.globalAlpha = 1;
-  // Le poil sec : on EFFACE de fines stries dans l encre, surtout vers la fin
-  // du geste. Le papier reapparait — c est le « flying white », et il ne peut
-  // pas s obtenir en ajoutant quelque chose par-dessus.
-  g.save();
-  g.globalCompositeOperation = "destination-out";
-  g.lineCap = "round";
-  const stries = 2 + Math.floor(Math.abs(bruit(graine + 3)) * 3);
-  for (let s = 0; s < stries; s++) {
-    const depart = Math.floor(n * (0.34 + 0.26 * Math.abs(bruit(graine + s * 5))));
-    const decal = bruit(graine + s * 17) * 0.7;
-    g.globalAlpha = 0.5 + 0.35 * Math.abs(bruit(graine + s * 11));
-    g.lineWidth = 0.45 + Math.abs(bruit(graine + s * 23)) * 0.85;
-    g.beginPath();
-    for (let k = depart; k < n; k++) {
-      const p = pts[k];
-      const a = pts[Math.max(0, k - 1)];
-      const b = pts[Math.min(pts.length - 1, k + 1)];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const l = Math.hypot(dx, dy) || 1;
-      const w = (largeur(p.u) / 2) * decal;
-      const x = p.x + (-dy / l) * w;
-      const y = p.y + (dx / l) * w;
-      if (k === depart) g.moveTo(x, y);
-      else g.lineTo(x, y);
-    }
-    g.stroke();
-  }
-  g.restore();
-}
-
-/** L echo dilue, pose AVANT l encre : c est lui qui donne la profondeur. */
 function echo(g: Ctx, pts: Point[], largeur: (u: number) => number, col: string, graine: number) {
-  const decale = pts.map((p) => ({ x: p.x + 5, y: p.y + 4, u: p.u }));
+  const decale = pts.map((p) => ({ x: p.x + 1, y: p.y + 1, u: p.u }));
   g.save();
-  g.globalAlpha = 0.16;
+  g.globalAlpha = 0.11;
   g.fillStyle = col;
   const gauche: number[][] = [];
   const droite: number[][] = [];
@@ -252,7 +132,7 @@ function echo(g: Ctx, pts: Point[], largeur: (u: number) => number, col: string,
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const l = Math.hypot(dx, dy) || 1;
-    const w = (largeur(p.u) / 2) * 1.35;
+    const w = (largeur(p.u) / 2) * 1.22;
     gauche.push([p.x - dy / l * w, p.y + dx / l * w]);
     droite.push([p.x + dy / l * w, p.y - dx / l * w]);
   });
@@ -338,75 +218,290 @@ function petale(g: Ctx, x: number, y: number, ang: number, len: number, larg: nu
 }
 
 /** La fleur. `part` va du bouton ferme a la fleur ouverte. */
-function fleur(g: Ctx, x: number, y: number, R: number, col: string, graine: number, a: number, part: number, encre: string) {
-  const rot = bruit(graine) * 6.28;
-  const n = 4 + Math.floor(Math.abs(bruit(graine + 41)) * 4);
-  const forme = 0.7 + Math.abs(bruit(graine + 43)) * 0.6;
-  const aplati = 0.74 + Math.abs(bruit(graine + 47)) * 0.26;
-  const ouvre = Math.min(1, part * 1.15);
-  const len = R * (0.2 + 0.8 * ouvre);
-  const larg = R * 0.7 * (0.35 + 0.65 * Math.min(1, part * 1.3));
-  const al = a * Math.min(1, part * 1.6);
+function fleurette(g: Ctx, x: number, y: number, r: number, col: string, graine: number, a: number, part: number, encre: string) {
   g.save();
-  g.translate(x, y);
-  g.scale(1, aplati);
-  g.translate(-x, -y);
-  for (let i = 0; i < n; i++) {
-    const ang = rot + ((i * 6.2832) / n) * (0.25 + 0.75 * ouvre) + bruit(graine + i * 3) * 0.2 * part;
-    petale(g, x, y, ang, len * (0.92 + 0.2 * bruit(graine + i * 5)), larg * (0.9 + 0.2 * bruit(graine + i * 7)), col, al, forme);
+  g.globalAlpha = a;
+  fleurDePrunier(g, x, y, r * 2, col, encre, graine, part, bruit(graine + 2), -0.6);
+  g.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CE QUI EST DESSINE
+
+   UNE GRAINE = UNE PERIODE QUI ABOUTIT.
+
+   Christophe, le 17/09 : « montre les graines avec un petit cercle qui montre
+   la ou il faut cliquer, pour qu on comprenne qu une graine egale une periode
+   avec un aboutissement ». C est devenu la regle du dessin.
+
+   Le moteur note chaque periode de 1 a 4 (`score`) et nomme lui-meme 3
+   « Majeur » et 4 « Exceptionnel » (lib/domain-config.tsx). Une periode ainsi
+   notee devient UNE BRINDILLE :
+     — sa TACHE a la base, la ou elle s ouvre, cerclee d un anneau qui respire :
+       c est la qu on touche ;
+     — sa FLEUR a la pointe, la ou elle aboutit ;
+     — et la brindille elle-meme entre les deux : sa longueur, c est la duree.
+   Le lien graine -> fleur n est donc pas un fil pose dessus, c est le bois.
+
+   La direction artistique (17/09, technique du prunier a l encre) impose :
+   quatre calibres de trait avec decrochement aux noeuds ; deux valeurs
+   d encre par coup, jamais d aplat ; le poil sec confine au tronc, en fin de
+   geste, cote exterieur ; les fleurs SEULEMENT sur les brindilles ; 65 a 75 %
+   de vide. Les chiffres ci-dessous sont les siens.
+
+   Le temps DESCEND : la naissance en haut, aujourd hui en bas. On parcourt sa
+   vie au doigt, et la branche se peint a mesure qu on avance. C est donc une
+   branche retombante qui entre par le haut — un motif classique de l estampe,
+   epaisse a l entree, cheveu a la pointe.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Une duree en jours, dite dans la langue : Intl s en charge, dix langues sans une chaine. */
+function duree(jours: number, locale: string): string {
+  const j = Math.max(1, Math.round(jours));
+  const dit = (n: number, unit: "day" | "month" | "year") => new Intl.NumberFormat(locale, { style: "unit", unit, unitDisplay: "long" }).format(n);
+  if (j >= 365) return dit(Math.round(j / 365.25), "year");
+  if (j >= 30) return dit(Math.round(j / 30.44), "month");
+  return dit(j, "day");
+}
+
+const L = 340;
+const PAD_T = 60;
+const PAD_B = 90;
+const yDe = (pos: number, H: number) => PAD_T + pos * (H - PAD_T - PAD_B);
+
+type Famille = "love" | "health" | "work";
+const FAMILLES: Famille[] = ["love", "work", "health"];
+const JETON_FAMILLE: Record<Famille, string> = {
+  love: "--domaine-love",
+  work: "--domaine-career",
+  health: "--domaine-health-energy",
+};
+const CLEF_FAMILLE: Record<Famille, string> = {
+  love: "resume.branche_dom_love",
+  work: "resume.branche_dom_work",
+  health: "resume.branche_dom_health",
+};
+
+/* ── Le coup de pinceau : des poils, pas une forme ────────────────────────
+   Le contour rempli d une seule valeur faisait « buche ». Ici le trait est
+   une poignee de POILS (Strassmann, Hairy Brushes, 1986) : chacun a sa
+   position sous la touffe, sa charge d encre, sa vitesse d epuisement.
+   Chaque poil pose des empreintes serrees le long du geste ; la charge
+   pilote l alpha ET la largeur, et decroit de facon exponentielle sur la
+   seconde moitie du geste. Le poil sec (飛白) n est pas gomme : il n est
+   simplement plus depose, la ou la charge passe sous le grain du papier.
+   Deux valeurs d encre par coup, comme le veut la direction artistique :
+   le flanc de pression est charge (0,80), le flanc de fuite l est moins
+   (0,45). `sec` reserve l epuisement aux ordres 0 et 1 — le tronc. */
+function coupDePinceau(g: Ctx, pts: Point[], largeur: (u: number) => number, col: string, graine: number, jusqua: number, sec: boolean, depuis = 1) {
+  const n = Math.max(2, Math.min(pts.length, jusqua));
+  if (n < 2) return;
+  // autant de poils que le trait est large : un cheveu en a cinq, le tronc douze
+  const wMax = Math.max(largeur(0), largeur(0.5), largeur(1)) / 2;
+  const N = Math.max(5, Math.min(12, Math.round(wMax / 1.5)));
+  // la touffe : les poils se serrent au centre, s eclaircissent aux bords
+  const poils = Array.from({ length: N }, (_, j) => {
+    const u = (j / (N - 1)) * 2 - 1;
+    const off = Math.sign(u) * Math.pow(Math.abs(u), 0.7) * 0.92;
+    return {
+      off,
+      charge: (off < 0 ? 0.8 : 0.45) * (0.85 + 0.3 * Math.abs(bruit(graine + j * 7))),
+      fuite: sec ? 0.55 + 0.5 * Math.abs(bruit(graine + j * 11)) : 0.3,
+      phase: Math.abs(bruit(graine + j * 13)) * 400,
+    };
+  });
+  let longueur = 0;
+  for (let k = 1; k < pts.length; k++) longueur += Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y);
+  const SEC = sec ? 0.5 : 0.18; // le grain du papier qui refuse l encre
+  g.save();
+  g.fillStyle = col;
+  let s = 0;
+  let reste = 0; // l empreinte suivante, reportee d un segment a l autre
+  for (let k = 1; k < n; k++) {
+    const a = pts[k - 1];
+    const b = pts[k];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const l = Math.hypot(dx, dy) || 1;
+    const nx = -dy / l;
+    const ny = dx / l;
+    // le cote convexe du geste : c est la que le poil sec a le droit d etre
+    const c = pts[Math.min(pts.length - 1, k + 1)];
+    const convexe = Math.sign(dx * (c.y - b.y) - dy * (c.x - b.x)) || 1;
+    const wA = largeur(a.u) / 2;
+    const wB = largeur(b.u) / 2;
+    const rayon = Math.max(0.8, ((wA + wB) / N) * 1.05);
+    const pas = rayon * 0.55;
+    let d = reste;
+    if (k < depuis) {
+      // deja pose : on avance l etat du geste sans rien deposer
+      for (; d < l; d += pas) { /* rien */ }
+      reste = d - l;
+      s += l;
+      continue;
+    }
+    for (; d < l; d += pas) {
+      const tt = d / l;
+      const sx = a.x + dx * tt;
+      const sy = a.y + dy * tt;
+      const w = wA + (wB - wA) * tt;
+      const avancee = Math.max(0, ((s + d) / longueur - 0.5) / 0.5); // 0 avant la moitie
+      for (const p of poils) {
+        const exterieur = p.off * convexe > 0;
+        const fuite = exterieur ? p.fuite : p.fuite * 0.3;
+        const encre = p.charge * Math.exp(-avancee * fuite) * (1 + 0.12 * bruit(Math.round((s + d) / 9) + p.phase));
+        // le grain du papier, lu le long du poil : des fibres, pas des briques
+        const grain = 0.5 + 0.5 * bruit(Math.round((s + d) / 3) + Math.round(p.phase * 11) + graine);
+        if (avancee > 0 && encre < (1 - grain) * SEC) continue; // la fibre reste blanche
+        const ww = w * (0.5 + 0.5 * encre);
+        const x = sx + nx * p.off * ww + 0.4 * bruit(Math.round((s + d) / 5) + p.phase * 3);
+        const y = sy + ny * p.off * ww;
+        g.globalAlpha = Math.min(0.6, 0.5 * encre * (0.8 + 0.4 * grain));
+        g.beginPath();
+        g.arc(x, y, rayon * (0.65 + 0.45 * encre), 0, 6.2832);
+        g.fill();
+      }
+    }
+    reste = d - l;
+    s += l;
   }
   g.restore();
-  touche(g, x, y, R * 0.22 * Math.min(1, 0.4 + part), col, al * 0.8);
-  if (part > 0.7) {
-    const s = (part - 0.7) / 0.3;
-    g.strokeStyle = encre;
-    g.globalAlpha = a * 0.45 * s;
-    g.lineWidth = 0.5;
-    for (let i = 0; i < 7; i++) {
-      const ang = bruit(graine + i * 13) * 6.28;
+}
+
+/* ── La fleur de prunier (梅花) ────────────────────────────────────────────
+   Cinq petales RONDS a 72° ± 7°, rayon ± 8 % ; coeur a 0,2 du diametre ; sept
+   etamines en eventail de 160°, fines, aux antheres en encre brulee ; trois
+   sepales du cote de l attache. Le trait de petale est plus CLAIR et plus fin
+   que la brindille qui le porte : c est ce rapport qui fait respirer la fleur.
+   Les fleurs varient par ARCHETYPES, pas par bruit : face, profil, bouton,
+   dos, tombante. `part` va du bouton ferme a la fleur ouverte. */
+type Archetype = "face" | "profil" | "bouton" | "dos" | "tombante";
+function archetypeDe(graine: number, ouverte: boolean): Archetype {
+  const r = (bruit(graine + 101) + 1) / 2;
+  if (ouverte) return r < 0.7 ? "face" : r < 0.88 ? "profil" : "dos";
+  return r < 0.4 ? "face" : r < 0.6 ? "profil" : r < 0.8 ? "bouton" : r < 0.9 ? "dos" : "tombante";
+}
+function fleurDePrunier(g: Ctx, x: number, y: number, D: number, col: string, encre: string, graine: number, part: number, versX: number, versY: number, ouverte = false) {
+  const arch = archetypeDe(graine, ouverte);
+  const rot = Math.atan2(versY, versX) + bruit(graine) * 0.44; // regarde vers l exterieur, ± 25°
+  const ouvre = Math.min(1, part * 1.15);
+  const Lp = D * 0.45 * (arch === "bouton" ? 0.33 : 1) * (0.2 + 0.8 * ouvre);
+  const coeur = D * 0.2;
+  const aplati = arch === "profil" ? 0.45 : arch === "tombante" ? 0.7 : 1;
+  const al = Math.min(1, part * 1.6);
+  g.save();
+  g.translate(x, y);
+  g.rotate(rot);
+  g.scale(1, aplati);
+  const nP = arch === "profil" ? 3 : arch === "bouton" ? 2 : 5;
+  for (let i = 0; i < nP; i++) {
+    const ang = (i * 6.2832) / 5 * (0.3 + 0.7 * ouvre) + bruit(graine + i * 3) * 0.122;
+    const len = Lp * (1 + 0.08 * bruit(graine + i * 5));
+    const larg = len * (0.88 + 0.12 * Math.abs(bruit(graine + i * 7))); // rond, pas effile
+    g.save();
+    g.rotate(ang);
+    g.beginPath();
+    g.moveTo(0, -coeur * 0.5);
+    g.bezierCurveTo(larg * 0.55, -coeur * 0.5 - len * 0.15, larg * 0.5, -len * 0.95, 0, -len);
+    g.bezierCurveTo(-larg * 0.5, -len * 0.95, -larg * 0.55, -coeur * 0.5 - len * 0.15, 0, -coeur * 0.5);
+    g.closePath();
+    g.globalAlpha = 0.72 * al;
+    g.fillStyle = col;
+    g.fill();
+    // le trait de petale : 淡墨, 1 unite, plus clair que le bois
+    g.globalAlpha = 0.3 * al;
+    g.lineWidth = 0.9;
+    g.strokeStyle = col;
+    g.stroke();
+    g.restore();
+  }
+  // le coeur
+  g.globalAlpha = 0.45 * al;
+  g.fillStyle = col;
+  g.beginPath();
+  g.arc(0, 0, coeur * 0.5, 0, 6.2832);
+  g.fill();
+  // etamines et antheres, sauf de dos et en bouton
+  if (arch !== "dos" && arch !== "bouton" && part > 0.65) {
+    const s2 = Math.min(1, (part - 0.65) / 0.35);
+    const nE = 7;
+    const evt = 160 * (Math.PI / 180);
+    g.strokeStyle = col;
+    g.lineWidth = 0.45;
+    for (let i = 0; i < nE; i++) {
+      const a = -evt / 2 + (evt * i) / (nE - 1) + bruit(graine + i * 13) * 0.08 - Math.PI / 2;
+      const lg = D * 0.28 * (0.85 + 0.3 * Math.abs(bruit(graine + i * 17))) * s2;
+      const ex = Math.cos(a) * lg;
+      const ey = Math.sin(a) * lg;
+      g.globalAlpha = 0.34 * al;
       g.beginPath();
-      g.moveTo(x, y);
-      g.lineTo(x + Math.cos(ang) * R * 0.32 * s, y + Math.sin(ang) * R * 0.32 * s);
+      g.moveTo(0, 0);
+      g.lineTo(ex, ey);
       g.stroke();
+      // l anthere : le seul point d encre brulee de la fleur
+      g.globalAlpha = 0.8 * al * s2;
+      g.fillStyle = encre;
+      g.beginPath();
+      g.arc(ex, ey, 0.7, 0, 6.2832);
+      g.fill();
     }
-    g.globalAlpha = 1;
   }
+  // le calice : trois sepales du cote de l attache — la fleur est POSEE
+  g.globalAlpha = 0.55 * al;
+  g.fillStyle = encre;
+  for (let i = -1; i <= 1; i++) {
+    const a = Math.PI / 2 + i * 0.5;
+    g.beginPath();
+    g.arc(Math.cos(a) * coeur * 0.55, Math.sin(a) * coeur * 0.55, D * 0.06, 0, 6.2832);
+    g.fill();
+  }
+  g.restore();
 }
 
-/** Une petite fleur de grappe ; sous une certaine taille, une simple touche. */
-function fleurette(g: Ctx, x: number, y: number, r: number, col: string, graine: number, a: number, part: number, encre: string) {
-  const rr = r * Math.min(1, part * 1.1);
-  if (rr < 2.3) {
-    touche(g, x, y, rr, col, a * Math.min(1, part * 1.5));
-    return;
-  }
-  fleur(g, x, y, rr * 1.1, col, graine, a * 1.4, part, encre);
+/* ── L anneau qui respire ─────────────────────────────────────────────────
+   La ou il faut toucher. Un seul trait fin, jamais un disque : c est un
+   repere, pas un bouton. */
+function anneau(g: Ctx, x: number, y: number, r: number, col: string, phase: number) {
+  const k = 0.5 + 0.5 * Math.sin(phase);
+  g.save();
+  g.strokeStyle = col;
+  g.lineWidth = 1;
+  g.globalAlpha = 0.55 - 0.3 * k;
+  g.beginPath();
+  g.arc(x, y, r + 3 + 5 * k, 0, 6.2832);
+  g.stroke();
+  g.globalAlpha = 0.85;
+  g.lineWidth = 1.2;
+  g.beginPath();
+  g.arc(x, y, r + 2, 0, 6.2832);
+  g.stroke();
+  g.restore();
 }
 
-/* ── Ce qui est dessine, calcule une fois ───────────────────────────────── */
+/* ── Ce qui est pose sur la branche ─────────────────────────────────────── */
 
-type Grappe = { u: number; x: number; y: number; R: number; maison?: number; phase?: MomentumPhase; graine: number; age: number; compte: number; libelle: string; boutons: { x: number; y: number; r: number; graine: number; a: number }[] };
-type Marque = {
-  kind: "tache" | "fleur";
-  u: number;
-  x: number;
-  y: number;
-  /** Le point d attache sur la branche : la brindille part de la. */
-  ax: number;
-  ay: number;
-  r: number;
-  maison?: number;
-  phase?: MomentumPhase;
-  graine: number;
-  age: number;
-  /** Quand : « 26 ans » a l echelle d une vie, « 4 mars » a celle d un mois. */
-  libelle: string;
-  /** Le libelle du domaine, quand le moteur en donne un. */
+/** Une periode majeure : une brindille, sa tache a la base, sa fleur a la pointe. */
+type Paire = {
+  famille: Famille;
+  posGraine: number;
+  posFleur: number;
+  quandGraine: string;
+  quandFleur: string;
+  ecart: string;
   domaine: string | null;
-  /** Pour une fleur : le chapitre ouvert qui la contient, s il y en a un. */
-  /** Pour une fleur : la position du chapitre ouvert qui la contient. */
-  ouvertA: number | null;
+  score: number;
+  graine: number;
+  /** Encore a venir : la fleur n est pas eclose, on ne la dessine pas ouverte. */
+  aVenir: boolean;
 };
+type PairePosee = Paire & {
+  brindille: Point[];
+  gx: number; gy: number; rG: number;
+  fx: number; fy: number; D: number;
+  vx: number; vy: number; // vers l exterieur, pour orienter la fleur
+};
+type Grappe = { pos: number; compte: number; famille: Famille | null; quand: string; graine: number };
+type GrappePosee = Grappe & { x: number; y: number; R: number; brindille: Point[]; boutons: { x: number; y: number; D: number; graine: number }[] };
 
 export function BrancheDeVie({
   resume,
@@ -414,771 +509,866 @@ export function BrancheDeVie({
   maintenant,
   chapitres,
   phasesAnnee,
+  phasesVie,
 }: {
   resume: ResumeDeVie;
   locale: Locale;
   /** L instant de lecture, fige par l appelant — jamais `Date.now()` ici. */
   maintenant: number;
-  /**
-   * Les grands mouvements, quand la route allegee a repondu.
-   *
-   * Ils changent tout pour ce dessin : `annees` ne compte que les annees que
-   * le moteur documente — sur le cas de test, a partir de 39 ans seulement —
-   * alors que ceux-ci portent la vie ENTIERE. Sans eux la branche n avait
-   * qu une grappe et aucune tache. Absents, on retombe sur `annees` : le
-   * dessin est plus pauvre, jamais faux.
-   */
+  /** Les grands mouvements : ils donnent la portee de l echelle « Vie ». */
   chapitres?: ChapitreDeVie[];
-  /**
-   * Les periodes de l annee, telles que le store les tient deja.
-   *
-   * Elles portent des dates exactes : c est ce qui permet les echelles
-   * courtes. Sans elles, seule « Vie » est proposee — on ne montre jamais un
-   * onglet qui n aurait rien a dire.
-   */
+  /** Les periodes de l annee, datees : les echelles « Annee » et « Mois ». */
   phasesAnnee?: MomentumPhase[];
+  /** Les periodes de toute la vie, datees : l echelle « Vie ». */
+  phasesVie?: MomentumPhase[];
 }) {
   const fige = useReducedMotion();
   const hote = useRef<HTMLDivElement | null>(null);
   const encreRef = useRef<HTMLCanvasElement | null>(null);
   const vifRef = useRef<HTMLCanvasElement | null>(null);
-  const [lu, setLu] = useState<Marque | Grappe | null>(null);
-  /**
-   * Epingle ou non.
-   *
-   * Sans cette distinction, le clic annulait sa propre lecture : le survol
-   * posait la marque, puis le clic — qui basculait — la retirait aussitot.
-   * Au doigt il n y a pas de survol, donc le clic POSE ; a la souris il
-   * epingle, et un second clic sur la meme marque relache.
-   */
-  const [fixe, setFixe] = useState(false);
-  /**
-   * Repeindre, mais seulement quand il y a de quoi.
-   *
-   * `next-themes` pose sa classe APRES le montage. L observateur voyait donc
-   * une mutation a chaque ouverture, relançait la peinture, et son nettoyage
-   * annulait la pousse en cours : il ne restait a l ecran que le lavis dilue
-   * et le premier trait. On ne repeint donc que si l encre — ou la largeur —
-   * a reellement change, et on n anime qu a la premiere peinture.
-   */
-  const [cle, setCle] = useState(0);
-  const dejaAnime = useRef(false);
-  const signature = useRef("");
-
-  // Le bas de la branche : le plus ancien age dont on ait quelque chose a
-  // dire — un chapitre ou un compte. Pas zero par defaut : dessiner de zero
-  // quand le calcul commence a 39 ans ferait croire a 39 annees vides.
   const [echelle, setEchelle] = useState<"vie" | "annee" | "mois">("vie");
-
-  const depart = Math.max(
-    0,
-    Math.min(
-      resume.premiereDocumentee ?? resume.age,
-      ...(chapitres && chapitres.length > 0 ? chapitres.map((c) => c.ageDebut) : [resume.premiereDocumentee ?? resume.age]),
-    ),
-  );
+  const [eteintes, setEteintes] = useState<Set<Famille>>(() => new Set());
+  const [choix, setChoix] = useState<number | null>(null); // index de la paire
+  const [cle, setCle] = useState(0);
+  const signature = useRef("");
   const noms = useMemo(() => STRINGS_MATCH_DOMAINES(locale), [locale]);
 
-  /**
-   * La branche, les grappes et les marques — en coordonnees de dessin.
-   *
-   * Tout est derive du resume : rien ici ne sait ce qu est un theme, une
-   * couleur ou une langue. Les teintes sont appliquees au moment de peindre.
-   */
-  /**
-   * Les echelles courtes : « Annee » = les douze mois en cours, « Mois » = les
-   * jours du mois. Memes periodes, autre fenetre — c est un ZOOM, pas une
-   * autre donnee. Les libelles de date viennent d `Intl`, donc les dix langues
-   * sont couvertes sans une seule chaine a traduire.
-   */
-  const court = useMemo(() => {
-    if (echelle === "vie") return null;
-    const per = (phasesAnnee ?? [])
-      .map((ph) => ({ ph, d: new Date(ph.startDate).getTime(), f: ph.endDate ? new Date(ph.endDate).getTime() : null }))
-      .filter((x) => Number.isFinite(x.d));
-    if (per.length === 0) return null;
+  /* ── La fenetre de temps ─────────────────────────────────────────────────
+     Trois echelles, memes periodes datees : un ZOOM. Tout est ramene a une
+     position 0 (le haut, le debut) .. 1 (le bas, maintenant). Les libelles
+     viennent d Intl : dix langues sans une chaine a traduire. */
+  const fen = useMemo(() => {
     const now = new Date(maintenant);
-    const debut = echelle === "annee" ? new Date(now.getFullYear(), 0, 1) : new Date(now.getFullYear(), now.getMonth(), 1);
-    const fin = echelle === "annee" ? new Date(now.getFullYear() + 1, 0, 1) : new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const t0 = debut.getTime();
-    const t1 = fin.getTime();
-    const span = t1 - t0;
-    const pas = echelle === "annee" ? 12 : Math.round(span / 86400000);
-    const posDe = (t: number) => Math.min(1, Math.max(0, (t - t0) / span));
-    const bornes: number[] = [];
-    for (let i = 0; i <= pas; i++) {
-      bornes.push(echelle === "annee" ? new Date(now.getFullYear(), i, 1).getTime() : t0 + i * 86400000);
+    let t0: number;
+    let t1: number;
+    let unites: number;
+    const reperes: { pos: number; libelle: string }[] = [];
+    let libelleDe: (pos: number) => string;
+    let ecartDe: (a: number, b: number) => string;
+    const posDe = (t: number) => Math.min(1, Math.max(0, (t - t0) / (t1 - t0)));
+    if (echelle === "vie") {
+      const nais = resume.annees.length && resume.age > 0 ? maintenant - resume.age * 365.2425 * 86400000 : maintenant - 86400000 * 365;
+      // La ou quelque chose est documente : pas de zero par defaut.
+      const premier = Math.max(0, Math.min(resume.premiereDocumentee ?? resume.age, ...(chapitres?.map((c) => c.ageDebut) ?? [resume.age])));
+      t0 = nais + premier * 365.2425 * 86400000;
+      t1 = maintenant;
+      unites = Math.max(2, resume.age - premier);
+      const pas = unites > 60 ? 10 : unites > 30 ? 5 : unites > 12 ? 2 : 1;
+      for (let age = Math.ceil(premier / pas) * pas; age <= resume.age; age += pas) {
+        reperes.push({ pos: posDe(nais + age * 365.2425 * 86400000), libelle: String(age) });
+      }
+      const fl = new Intl.DateTimeFormat(locale, { month: "short", year: "numeric" });
+      libelleDe = (pos) => fl.format(new Date(t0 + pos * (t1 - t0)));
+      ecartDe = (a, b) => duree(((b - a) * (t1 - t0)) / 86400000, locale);
+    } else if (echelle === "annee") {
+      // La fenetre s arrete a MAINTENANT : le bois ne pousse pas dans le futur.
+      // Ce qui est date devant est dans la liste, en bas — jamais dessine.
+      t0 = new Date(now.getFullYear(), 0, 1).getTime();
+      t1 = maintenant;
+      unites = Math.max(1, (t1 - t0) / (30.44 * 86400000));
+      const fmt = new Intl.DateTimeFormat(locale, { month: "short" });
+      for (let m = 0; m <= now.getMonth(); m++) {
+        const d = new Date(now.getFullYear(), m, 1).getTime();
+        reperes.push({ pos: posDe(d), libelle: fmt.format(new Date(d)) });
+      }
+      const fl = new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" });
+      libelleDe = (pos) => fl.format(new Date(t0 + pos * (t1 - t0)));
+      ecartDe = (a, b) => duree(((b - a) * (t1 - t0)) / 86400000, locale);
+    } else {
+      t0 = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      t1 = maintenant;
+      unites = Math.max(1, (t1 - t0) / 86400000);
+      for (let d = 0; d < unites; d += 5) {
+        reperes.push({ pos: posDe(t0 + d * 86400000), libelle: String(d + 1) });
+      }
+      const fl = new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" });
+      libelleDe = (pos) => fl.format(new Date(t0 + pos * (t1 - t0)));
+      ecartDe = (a, b) => duree(((b - a) * (t1 - t0)) / 86400000, locale);
     }
-    // Le compte : combien de periodes ouvertes sur chaque case.
-    const comptes = bornes.slice(0, -1).map((a, i) => {
-      const b = bornes[i + 1];
-      return per.filter((x) => x.d < b && (x.f === null || x.f > a)).length;
+    return { t0, t1, unites, reperes, libelleDe, ecartDe, posDe, posMaintenant: posDe(maintenant) };
+  }, [echelle, resume, chapitres, maintenant, locale]);
+
+  /* ── Les periodes majeures -> les paires ; toutes les periodes -> la densite ── */
+  const donnees = useMemo(() => {
+    const source = echelle === "vie" ? (phasesVie ?? []) : (phasesAnnee ?? []);
+    const per = source
+      .map((ph) => ({ ph, d: new Date(ph.startDate).getTime(), f: ph.endDate ? new Date(ph.endDate).getTime() : null }))
+      .filter((x) => Number.isFinite(x.d) && x.d < fen.t1 && (x.f === null || x.f > fen.t0));
+    const familleDe = (ph: MomentumPhase): Famille | null => houseToDomain(ph.house) ?? (ph.domain as Famille) ?? null;
+
+    // La densite : combien de periodes ouvertes par unite.
+    const comptes: number[] = [];
+    const n = Math.max(2, Math.round(fen.unites));
+    for (let i = 0; i < n; i++) {
+      const a = fen.t0 + ((fen.t1 - fen.t0) * i) / n;
+      const b = fen.t0 + ((fen.t1 - fen.t0) * (i + 1)) / n;
+      comptes.push(per.filter((x) => x.d < b && (x.f === null || x.f > a)).length);
+    }
+
+    // Les paires : une par periode majeure, les plus fortes d abord, espacees.
+    // Le moteur en marque 511 sur une vie : on garde ce que l oeil peut lire.
+    const maxPaires = echelle === "vie" ? 9 : echelle === "annee" ? 8 : 6;
+    const majeures = per
+      .filter((x) => (x.ph.score ?? 0) >= 3 && x.d >= fen.t0)
+      .sort((a, b) => (b.ph.score ?? 0) - (a.ph.score ?? 0) || (b.ph.intensity ?? 0) - (a.ph.intensity ?? 0));
+    const paires: Paire[] = [];
+    for (const x of majeures) {
+      const fam = familleDe(x.ph);
+      if (!fam) continue;
+      const pG = fen.posDe(x.d);
+      // La fleur : au terme de la periode, ou a l horizon si elle court encore.
+      const fin = Math.min(fen.t1, x.f ?? x.d + 30 * 86400000);
+      const pF = fen.posDe(fin);
+      if (paires.some((p) => Math.abs(p.posGraine - pG) < 0.045)) continue;
+      if (paires.length >= maxPaires) break;
+      paires.push({
+        famille: fam,
+        posGraine: pG,
+        posFleur: Math.max(pG + 0.02, pF),
+        quandGraine: fen.libelleDe(pG),
+        quandFleur: fen.libelleDe(pF),
+        ecart: fen.ecartDe(pG, pF),
+        domaine: x.ph.house ? (noms[DOMAINE[x.ph.house]] ?? null) : null,
+        score: x.ph.score ?? 3,
+        graine: Math.round(x.d / 3600000) % 100000,
+        aVenir: (x.f ?? Infinity) > maintenant,
+      });
+    }
+    paires.sort((a, b) => a.posGraine - b.posGraine);
+
+    // Aujourd hui : ce qui est ouvert, par famille.
+    const ouvertes: Record<Famille, number> = { love: 0, work: 0, health: 0 };
+    per.forEach((x) => {
+      if (x.d <= maintenant && (x.f === null || x.f >= maintenant)) {
+        const f = familleDe(x.ph);
+        if (f) ouvertes[f]++;
+      }
     });
-    const fmt = new Intl.DateTimeFormat(locale, echelle === "annee" ? { month: "short" } : { day: "numeric" });
-    const reperes = bornes.slice(0, -1).map((a, i) => ({ pos: posDe(a), libelle: fmt.format(new Date(a)), i }))
-      .filter((r, i) => (echelle === "annee" ? true : i % 5 === 0));
-    const libelleDe = (pos: number) =>
-      new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(new Date(t0 + pos * span));
-    const ouvertures = per
-      .filter((x) => x.d >= t0 && x.d < t1)
-      .map((x) => ({ pos: posDe(x.d), domaine: x.ph.house ? (noms[DOMAINE[x.ph.house]] ?? null) : null, maison: x.ph.house, phase: x.ph }));
-    return { comptes, reperes, libelleDe, ouvertures, posMaintenant: posDe(maintenant) };
-  }, [echelle, phasesAnnee, maintenant, locale, noms]);
+    // Les floraisons qui viennent : majeures pas encore ouvertes, les trois prochaines.
+    const aVenir = source
+      .map((ph) => ({ ph, d: new Date(ph.startDate).getTime() }))
+      .filter((x) => Number.isFinite(x.d))
+      .filter((x) => (x.ph.score ?? 0) >= 3 && x.d > maintenant)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 3)
+      .map((x) => ({ famille: familleDe(x.ph), quand: new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(new Date(x.d)), domaine: x.ph.house ? (noms[DOMAINE[x.ph.house]] ?? null) : null }));
+    return { comptes, paires, ouvertes, aVenir };
+  }, [echelle, phasesVie, phasesAnnee, fen, noms, maintenant, locale]);
+
+  /* ── La geometrie : la branche retombante et ce qui s y pose ─────────────
+     Hauteur du dessin selon le nombre d unites : on parcourt, on n entasse pas.
+     Axe du tronc au tiers (0,34 ou 0,66 de la largeur), diagonale tenue,
+     trois tournants nets, courbure aux noeuds seulement. */
+  const H = Math.max(1400, Math.min(2800, Math.round(fen.unites * (echelle === "vie" ? 42 : echelle === "annee" ? 190 : 72))));
 
   const plan = useMemo(() => {
-    /* ── La source, ramenee a une seule forme ─────────────────────────────
-       Tout ce qui suit travaille en POSITION (0 = le bas, 1 = maintenant),
-       jamais en ages ni en dates. C est ce qui permet aux trois echelles de
-       partager exactement la meme geometrie : seule la source change. */
-    type Src = {
-      comptes: number[];
-      ouvertures: { pos: number; domaine: string | null; maison?: number; phase?: MomentumPhase }[];
-      bascules: { pos: number; maison?: number; phase?: MomentumPhase }[];
-      reperes: { pos: number; libelle: string }[];
-      libelleDe: (pos: number) => string;
-    };
-    let src: Src;
-
-    if (court) {
-      src = {
-        comptes: court.comptes,
-        ouvertures: court.ouvertures,
-        // A l echelle courte, le moteur ne marque pas de bascule : on n en
-        // invente pas. La branche et les taches suffisent.
-        bascules: [],
-        reperes: court.reperes,
-        libelleDe: court.libelleDe,
-      };
-    } else {
-      const span = Math.max(1, resume.age - depart);
-      if (span < 2 && (!chapitres || chapitres.length === 0)) return null;
-      const parAge = new Map(resume.annees.map((a) => [a.age, a.periodes]));
-      const posDe = (age: number) => Math.min(1, Math.max(0, (age - depart) / span));
-      const comptes: number[] = [];
-      for (let age = depart; age <= resume.age; age++) comptes.push(parAge.get(age) ?? -1);
-      const ouvertures = (chapitres && chapitres.length > 0
-        ? chapitres.map((c) => ({ ageDebut: c.ageDebut, domaine: c.domaine, maison: c.maison, phase: undefined as MomentumPhase | undefined }))
-        : resume.chapitres.map((c) => ({
-            ageDebut: c.ageDebut,
-            domaine: c.phase.house ? (noms[DOMAINE[c.phase.house]] ?? null) : null,
-            maison: c.phase.house,
-            phase: c.phase,
-          }))
-      )
-        // Ni avant le premier age documente, ni APRES aujourd hui : le moteur
-        // rend des chapitres au-dela de son horizon, et les dessiner en haut
-        // les ferait passer pour le present. Le produit est descriptif.
-        .filter((c) => c.ageDebut >= depart && c.ageDebut <= resume.age)
-        .map((c) => ({ pos: posDe(c.ageDebut), domaine: c.domaine, maison: c.maison, phase: c.phase }));
-      const bascules = resume.bascules
-        .filter((b) => b.age >= depart && b.age <= resume.age)
-        .map((b) => ({ pos: posDe(b.age), maison: b.phase.house, phase: b.phase }));
-      const reperes: { pos: number; libelle: string }[] = [];
-      const pas = span > 60 ? 20 : span > 30 ? 10 : 5;
-      for (let age = depart; age <= resume.age; age += pas) reperes.push({ pos: posDe(age), libelle: String(age) });
-      src = {
-        comptes,
-        ouvertures,
-        bascules,
-        reperes,
-        libelleDe: (pos) => t("resume.vie_ans", locale).replace("{n}", String(Math.round(depart + pos * span))),
-      };
-    }
-
-    const n = src.comptes.length;
-    if (n < 2) return null;
-    const connus = src.comptes.filter((c) => c >= 0);
-    const hautCompte = Math.max(1, ...connus);
-    /** Le compte a cette position, ou `null` la ou le moteur ne compte pas. */
-    const compteA = (u: number): number | null => {
-      const i = Math.round(u * (n - 1));
-      const c = src.comptes[Math.min(n - 1, Math.max(0, i))];
-      return c === undefined || c < 0 ? null : c;
-    };
-
-    // Le troncal : quelques coups de pinceau bout a bout, avec une cassure a
-    // chaque noeud. C est ce zigzag qui fait une branche et pas une courbe.
-    const segments: { pts: Point[]; u0: number; u1: number; graine: number }[] = [];
+    const n = donnees.comptes.length;
+    const haut = Math.max(1, ...donnees.comptes);
+    // le tronc : 5 noeuds, entre-noeuds inegaux, trois tournants
+    const entre = [1, 0.62, 1.45, 0.78, 1.2];
+    const tot = entre.reduce((a, b) => a + b, 0);
+    const tournants = [27, -33, 18, -22, 12].map((d) => (d * Math.PI) / 180);
+    const cote = bruit(7) > 0 ? 0.34 : 0.66;
+    const segments: { pts: Point[]; u0: number; u1: number; graine: number; larg0: number; larg1: number }[] = [];
     const noeuds: { u: number; x: number; y: number }[] = [];
-    const nSeg = 6;
-    let x = L * 0.42;
-    let cap = 0.16;
-    noeuds.push({ u: 0, x, y: yDe(0) });
-    for (let i = 0; i < nSeg; i++) {
-      const u0 = i / nSeg;
-      const u1 = (i + 1) / nSeg;
-      const y0 = yDe(u0);
-      const y1 = yDe(u1);
-      cap += (i % 2 ? -1 : 1) * (0.3 + 0.26 * Math.abs(bruit(i * 13 + 7)));
-      const x1 = Math.max(46, Math.min(L - 46, x + Math.tan(cap) * (y0 - y1) * 0.5));
-      const mx = (x + x1) / 2 + bruit(i * 29 + 3) * 16;
-      const my = (y0 + y1) / 2 + bruit(i * 31 + 5) * 8;
+    let x = L * cote;
+    let cap = (22 * Math.PI) / 180 * (cote < 0.5 ? 1 : -1); // la diagonale dominante
+    let capAvant = cap;
+    let u = 0;
+    let larg = 26; // ordre 0
+    noeuds.push({ u: 0, x, y: yDe(0, H) });
+    for (let i = 0; i < entre.length; i++) {
+      const u0 = u;
+      const u1 = i === entre.length - 1 ? 1 : u + entre[i] / tot;
+      cap += tournants[i];
+      const y0 = yDe(u0, H);
+      const y1 = yDe(u1, H);
+      const x1 = Math.max(60, Math.min(L - 60, x + Math.tan(cap) * (y1 - y0) * 0.34));
+      // continuite de tangente au noeud : le geste ne casse pas, il tourne
+      const capAvant0 = capAvant;
+      const x0 = x;
+      const lg = Math.hypot(x1 - x, y1 - y0);
+      const c1x = x + Math.sin(capAvant) * lg * 0.28;
+      const c1y = y0 + Math.cos(capAvant) * lg * 0.28;
+      const c2x = x1 - Math.sin(cap) * lg * 0.36 + bruit(i * 29 + 3) * 5;
+      const c2y = y1 - Math.cos(cap) * lg * 0.36;
       const pts: Point[] = [];
-      const N = 42;
+      const N = 44;
       for (let k = 0; k <= N; k++) {
-        const t2 = k / N;
-        const v = 1 - t2;
-        pts.push({ x: v * v * x + 2 * v * t2 * mx + t2 * t2 * x1, y: v * v * y0 + 2 * v * t2 * my + t2 * t2 * y1, u: u0 + (u1 - u0) * t2 });
+        const s = k / N;
+        const v = 1 - s;
+        pts.push({
+          x: v * v * v * x + 3 * v * v * s * c1x + 3 * v * s * s * c2x + s * s * s * x1,
+          y: v * v * v * y0 + 3 * v * v * s * c1y + 3 * v * s * s * c2y + s * s * s * y1,
+          u: u0 + (u1 - u0) * s,
+        });
       }
-      segments.push({ pts, u0, u1, graine: i * 7 + 1 });
+      capAvant = cap;
+      const larg1 = larg * 0.9; // 8-12 % de perte dans le segment
+      if (i === 0) {
+        // l entree : le geste vient d au-dessus du cadre
+        const ex0 = Math.sin(capAvant0) * 70;
+        const ey0 = Math.cos(capAvant0) * 70;
+        for (let k = 8; k >= 1; k--) pts.unshift({ x: x0 - ex0 * (k / 8), y: y0 - ey0 * (k / 8), u: -0.001 * k });
+      }
+      segments.push({ pts, u0, u1, graine: i * 7 + 1, larg0: larg, larg1 });
+      larg = larg1 * 0.85; // decrochement au noeud
       x = x1;
+      u = u1;
       noeuds.push({ u: u1, x, y: y1 });
     }
-    const largeur = (u: number) => {
-      const bas = 12.5 * Math.pow(1 - u, 0.8) + 1.8;
-      // La ou le moteur compte, l epaisseur suit le compte. La ou il ne compte
-      // pas, elle reste neutre : une branche fine ne veut pas dire « periode
-      // calme », elle veut dire « rien de mesure ici ».
-      const c = compteA(u);
-      const charge = c === null ? 1 : 0.55 + 0.9 * (c / hautCompte);
-      return bas * charge * (1 + 0.08 * ondule(u * 5, 3));
+    const largeurTronc = (uu: number) => {
+      const sg = segments.find((s) => uu <= s.u1) ?? segments[segments.length - 1];
+      const s = (uu - sg.u0) / (sg.u1 - sg.u0 || 1);
+      const base = sg.larg0 + (sg.larg1 - sg.larg0) * Math.max(0, Math.min(1, s));
+      // la densite, lissee d une annee a l autre : le bois grossit, il ne saute pas
+      const pos = Math.max(0, Math.min(n - 1, uu * (n - 1)));
+      const i0 = Math.floor(pos);
+      const c = (donnees.comptes[i0] ?? 0) * (1 - (pos - i0)) + (donnees.comptes[Math.min(n - 1, i0 + 1)] ?? 0) * (pos - i0);
+      return base * (0.9 + 0.2 * (c / haut)) * (1 + 0.04 * ondule(uu * 6, 3));
     };
-    const surLaBranche = (u: number) => {
-      for (const sg of segments) {
-        if (u <= sg.u1 || sg === segments[segments.length - 1]) {
-          const q = Math.max(0, Math.min(1, (u - sg.u0) / (sg.u1 - sg.u0 || 1)));
-          const k = Math.round(q * (sg.pts.length - 1));
-          const pp = sg.pts[k];
-          const a = sg.pts[Math.max(0, k - 1)];
-          const b = sg.pts[Math.min(sg.pts.length - 1, k + 1)];
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const l = Math.hypot(dx, dy) || 1;
-          return { x: pp.x, y: pp.y, nx: -dy / l, ny: dx / l, w: largeur(u) };
-        }
-      }
-      const pp = segments[0].pts[0];
-      return { x: pp.x, y: pp.y, nx: 1, ny: 0, w: largeur(0) };
+    const surLeTronc = (uu: number) => {
+      const sg = segments.find((s) => uu <= s.u1) ?? segments[segments.length - 1];
+      const s = Math.max(0, Math.min(1, (uu - sg.u0) / (sg.u1 - sg.u0 || 1)));
+      const k = Math.round(s * (sg.pts.length - 1));
+      const p = sg.pts[k];
+      const a = sg.pts[Math.max(0, k - 1)];
+      const b = sg.pts[Math.min(sg.pts.length - 1, k + 1)];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const l = Math.hypot(dx, dy) || 1;
+      return { x: p.x, y: p.y, nx: -dy / l, ny: dx / l, tx: dx / l, ty: dy / l, w: largeurTronc(uu) };
     };
 
-    // Les grappes : les cases les plus chargees, espacees pour que le papier
-    // respire. Peu et grandes — une vie n est pas un semis.
-    const pics = src.comptes
-      .map((c, i) => ({ i, compte: c, pos: i / (n - 1) }))
-      .filter((a) => a.compte > 0)
-      .filter((a, i, tab) => (i === 0 || a.compte >= tab[i - 1].compte) && (i === tab.length - 1 || a.compte >= tab[i + 1].compte))
-      .sort((a, b) => b.compte - a.compte);
-    const grappes: Grappe[] = [];
+    // les brindilles : une par paire, de la graine (base) a la fleur (pointe)
+    const paires: PairePosee[] = donnees.paires.map((p, i) => {
+      const bp = surLeTronc(p.posGraine);
+      const dir = bruit(p.graine + 3) > 0 ? 1 : -1;
+      // La pointe est a la DATE de la fleur : la longueur, c est la duree.
+      // Retombante : elle s ecarte du bois en descendant, 30 a 45° du fil.
+      // Une periode d un an ferait une brindille aussi longue que le tronc :
+      // la longueur suit la duree jusqu a un plafond, au-dela elle le dit assez.
+      const chute = Math.max(22, Math.min(150, (yDe(p.posFleur, H) - bp.y) * 0.8));
+      const ey = bp.y + chute;
+      const lateral = Math.max(26, Math.min(96, chute * (0.7 + 0.25 * Math.abs(bruit(p.graine + 5))) + 18));
+      const exC = Math.max(24, Math.min(L - 24, bp.x + dir * lateral));
+      const mx = bp.x + (exC - bp.x) * 0.55 + dir * 6;
+      const my = bp.y + chute * 0.3 + bruit(p.graine + 11) * 4;
+      const brindille: Point[] = [];
+      const N = 40;
+      for (let k = 0; k <= N; k++) {
+        const s = k / N;
+        const v = 1 - s;
+        brindille.push({ x: v * v * bp.x + 2 * v * s * mx + s * s * exC, y: v * v * bp.y + 2 * v * s * my + s * s * ey, u: s });
+      }
+      const pal = [1, 0.82, 0.62][i % 3 === 0 ? 0 : i % 3 === 1 ? 1 : 2];
+      const D = 30 * pal * (p.score >= 4 ? 1.1 : 1);
+      const vx = exC - bp.x;
+      const vy = ey - bp.y;
+      const lv = Math.hypot(vx, vy) || 1;
+      // la tache est posee la ou la brindille quitte le bois : sur son depart
+      const gx = bp.x + (vx / lv) * (bp.w * 0.5 + 4);
+      const gy = bp.y + (vy / lv) * (bp.w * 0.5 + 4);
+      return { ...p, brindille, gx, gy, rG: 7.5, fx: exC, fy: ey, D, vx, vy };
+    });
+
+    // les grappes : une par 550-750 unites, aux cases les plus chargees, intervalles inegaux
+    const grappes: GrappePosee[] = [];
+    const pics = donnees.comptes
+      .map((c, i) => ({ i, c, pos: i / (n - 1) }))
+      .filter((a) => a.c > 0)
+      .sort((a, b) => b.c - a.c);
+    const nbG = Math.max(1, Math.round(H / 650));
+    const ecarts = [1, 1.65, 1.15, 1.8];
+    let dernierePos = -1;
     for (const pk of pics) {
-      if (grappes.some((g) => Math.abs(g.u - pk.pos) < 0.1)) continue;
-      if (grappes.length >= 6) break;
-      const bp = surLaBranche(pk.pos);
-      const gr = Math.round(pk.pos * 4000) + pk.compte * 17;
-      const cote = bruit(gr) > 0 ? 1 : -1;
-      const dist = bp.w + 12 + 20 * Math.abs(bruit(gr + 5));
-      const cx = bp.x + cote * bp.nx * dist;
-      const cy = bp.y + cote * bp.ny * dist;
-      const force = pk.compte / hautCompte;
-      const R = 11 + force * 15;
-      const nb = 5 + Math.round(force * 7);
-      const boutons = [];
+      if (grappes.length >= nbG) break;
+      const minEcart = (ecarts[grappes.length % ecarts.length] * 550) / H;
+      if (dernierePos >= 0 && Math.abs(pk.pos - dernierePos) < minEcart) continue;
+      if (paires.some((p) => Math.abs(p.posGraine - pk.pos) < 0.03)) continue;
+      const bp = surLeTronc(pk.pos);
+      const gr = Math.round(pk.pos * 4000) + pk.c * 17;
+      const dir = bruit(gr) > 0 ? 1 : -1;
+      const R = 30 + (pk.c / haut) * 22;
+      const chute = 46 + (pk.c / haut) * 40;
+      const cx = Math.max(30, Math.min(L - 30, bp.x + dir * (bp.w / 2 + chute * 0.9)));
+      const cy = bp.y + chute;
+      const brindille: Point[] = [];
+      for (let k = 0; k <= 30; k++) {
+        const t = k / 30;
+        const v = 1 - t;
+        const mx = bp.x + (cx - bp.x) * 0.5 + dir * 5;
+        const my = bp.y + chute * 0.3;
+        brindille.push({ x: v * v * bp.x + 2 * v * t * mx + t * t * cx, y: v * v * bp.y + 2 * v * t * my + t * t * cy, u: t });
+      }
+      const nb = 3 + Math.round((pk.c / haut) * 4); // 3 a 7, par trois et par cinq
+      const boutons: GrappePosee["boutons"] = [];
+      const pal = [1, 0.82, 0.62];
       for (let k = 0; k < nb; k++) {
-        const ang = bruit(gr + k * 7) * 6.28;
-        const dd = Math.pow(Math.abs(bruit(gr + k * 3)), 0.68) * R;
-        boutons.push({ x: cx + Math.cos(ang) * dd, y: cy + Math.sin(ang) * dd * 0.82, r: 2.4 + Math.abs(bruit(gr + k * 11)) * 3.6, graine: gr + k * 29, a: 0.34 + 0.3 * Math.abs(bruit(gr + k * 5)) });
+        let ok = false;
+        for (let essai = 0; essai < 12 && !ok; essai++) {
+          const a = bruit(gr + k * 7 + essai) * 6.28;
+          const dd = Math.pow(Math.abs(bruit(gr + k * 3 + essai * 5)), 0.6) * R;
+          const bx2 = cx + Math.cos(a) * dd;
+          const by2 = cy + Math.sin(a) * dd * 0.85;
+          const D = 16 * pal[k % 3 === 0 ? 2 : k % 3 === 1 ? 1 : 0];
+          if (boutons.every((b) => Math.hypot(b.x - bx2, b.y - by2) >= 1.15 * (b.D + D) / 2)) {
+            boutons.push({ x: bx2, y: by2, D, graine: gr + k * 29 });
+            ok = true;
+          }
+        }
       }
-      const dedans = src.ouvertures.filter((ov) => ov.pos <= pk.pos).slice(-1)[0];
-      grappes.push({ u: pk.pos, x: cx, y: cy, R, maison: dedans?.maison, phase: dedans?.phase, graine: gr, age: pk.compte, compte: pk.compte, boutons, libelle: src.libelleDe(pk.pos) });
+      const fam = paires.filter((p) => p.posGraine <= pk.pos).slice(-1)[0]?.famille ?? null;
+      grappes.push({ pos: pk.pos, compte: pk.c, famille: fam, quand: fen.libelleDe(pk.pos), graine: gr, x: cx, y: cy, R, brindille, boutons });
+      dernierePos = pk.pos;
     }
+    // le tronc, d un seul geste : tous les segments bout a bout
+    const tronc: Point[] = [];
+    segments.forEach((sg, i) => sg.pts.forEach((p, k) => { if (i === 0 || k > 0) tronc.push(p); }));
+    return { segments, noeuds, largeurTronc, surLeTronc, paires, grappes, tronc };
+  }, [donnees, fen, H]);
 
-    const marques: Marque[] = [];
-    src.ouvertures.forEach((c, i) => {
-      const bp = surLaBranche(c.pos);
-      const gr = i * 131 + 11;
-      const cote = bruit(gr + 3) > 0 ? 1 : -1;
-      marques.push({
-        kind: "tache",
-        u: c.pos,
-        ax: bp.x,
-        ay: bp.y,
-        x: bp.x + cote * bp.nx * (bp.w + 13 + 10 * Math.abs(bruit(gr))),
-        y: bp.y + cote * bp.ny * (bp.w + 13),
-        r: 7 + 3.5 * Math.abs(bruit(gr + 1)),
-        maison: c.maison,
-        phase: c.phase,
-        graine: gr,
-        age: 0,
-        libelle: src.libelleDe(c.pos),
-        domaine: c.domaine,
-        ouvertA: null,
-      });
-    });
-    src.bascules.forEach((b, i) => {
-      const bp = surLaBranche(b.pos);
-      const gr = i * 197 + 23;
-      const cote = bruit(gr + 3) > 0 ? -1 : 1;
-      const ouv = src.ouvertures.filter((ov) => ov.pos <= b.pos).slice(-1)[0];
-      marques.push({
-        kind: "fleur",
-        u: b.pos,
-        ax: bp.x,
-        ay: bp.y,
-        x: bp.x + cote * bp.nx * (bp.w + 17 + 14 * Math.abs(bruit(gr))),
-        y: bp.y + cote * bp.ny * (bp.w + 17),
-        r: 12 + 6 * Math.abs(bruit(gr + 7)),
-        maison: b.maison,
-        phase: b.phase,
-        graine: gr,
-        age: 0,
-        libelle: src.libelleDe(b.pos),
-        domaine: ouv?.domaine ?? null,
-        ouvertA: ouv ? ouv.pos : null,
-      });
-    });
-
-    return { segments, noeuds, largeur, surLaBranche, grappes, marques, reperes: src.reperes };
-  }, [resume, depart, noms, chapitres, court, locale]);
-
-  /** Le fil entre une tache et sa fleur : un cheveu d encre diluee. */
-  const fil = useCallback(
-    (g: Ctx, de: { x: number; y: number }, vers: { x: number; y: number }, col: string, net: boolean) => {
-      g.save();
-      g.lineCap = "round";
-      g.strokeStyle = col;
-      g.globalAlpha = net ? 0.75 : 0.28;
-      g.lineWidth = net ? 0.9 : 0.4;
-      g.beginPath();
-      const mx = (de.x + vers.x) / 2 + (vers.y - de.y) * 0.16;
-      const my = (de.y + vers.y) / 2 + (de.x - vers.x) * 0.16;
-      g.moveTo(de.x, de.y);
-      g.quadraticCurveTo(mx, my, vers.x, vers.y);
-      g.stroke();
-      g.globalAlpha = 1;
-      g.restore();
-    },
-    [],
-  );
-
-  /* ── La peinture ─────────────────────────────────────────────────────── */
-  const peindre = useCallback(
-    (anime: boolean) => {
-      const h = hote.current;
-      const cEncre = encreRef.current;
-      const cVif = vifRef.current;
-      if (!h || !cEncre || !cVif || !plan) return () => {};
-
-      const teinte = lireLesTeintes(h);
-      const large = h.clientWidth || L;
-      const ech = large / L;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      [cEncre, cVif].forEach((c) => {
-        c.width = Math.round(large * dpr);
-        c.height = Math.round(H * ech * dpr);
-        c.style.width = `${large}px`;
-        c.style.height = `${H * ech}px`;
-        const g = c.getContext("2d");
-        if (g) g.setTransform(dpr * ech, 0, 0, dpr * ech, 0, 0);
-      });
-      const g = cEncre.getContext("2d");
-      const gv = cVif.getContext("2d");
-      if (!g || !gv) return () => {};
-      const vider = (ctx: Ctx, c: HTMLCanvasElement) => {
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, c.width, c.height);
-        ctx.restore();
-      };
-      vider(g, cEncre);
-      vider(gv, cVif);
-
-      // L echo d abord : c est un lavis, il passe SOUS l encre.
-      plan.segments.forEach((sg) => echo(g, sg.pts, plan.largeur, teinte.diluee, sg.graine));
-
-      const grappes = plan.grappes.map((gr) => ({ ...gr, col: couleurDe(gr.maison, gr.phase, teinte, h) }));
-      const marques = plan.marques.map((m) => ({ ...m, col: couleurDe(m.maison, m.phase, teinte, h) }));
-
-      const finir = () => {
-        plan.segments.forEach((sg, i) => {
-          coup(g, sg.pts, plan.largeur, teinte.trait, sg.graine, 1e9);
-          const nd = plan.noeuds[i + 1];
-          if (nd && i < plan.segments.length - 1) touche(g, nd.x, nd.y, plan.largeur(nd.u) * 0.42, teinte.trait, 0.4);
-        });
-        grappes.forEach((gr) => {
-          const bp = plan.surLaBranche(gr.u);
-          fil(g, bp, gr, teinte.trait, false);
-          gr.boutons.forEach((b) => fleurette(g, b.x, b.y, b.r, gr.col, b.graine, b.a, 1, teinte.trait));
-        });
-        marques.forEach((m) => {
-          fil(g, { x: m.ax, y: m.ay }, m, teinte.trait, false);
-          if (m.kind === "tache") tache(g, m.x, m.y, m.r, m.col, m.graine, 1);
-          else {
-            const source = m.ouvertA !== null ? marques.find((o) => o.kind === "tache" && o.age === m.ouvertA) : undefined;
-            if (source) fil(g, source, m, teinte.trait, false);
-            fleur(g, m.x, m.y, m.r, m.col, m.graine, 0.92, 1, teinte.trait);
-          }
-        });
-      };
-
-      if (!anime || fige) {
-        finir();
-        return () => {};
-      }
-
-      /* La pousse : un coup de pinceau apres l autre, de bas en haut. Chaque
-         fleur a sa propre horloge, declenchee quand la branche l a atteinte —
-         la floraison SUIT la pousse, elle ne se joue pas en parallele. */
-      const PAS = 460;
-      type Tache = { debut: number; duree: number; fait: boolean; faire: (q: number, fini: boolean) => void };
-      const taches: Tache[] = [];
-      let curseur = 0;
-      plan.segments.forEach((sg, i) => {
-        const nd = plan.noeuds[i + 1];
-        taches.push({
-          debut: curseur,
-          duree: PAS,
-          fait: false,
-          faire: (q, fini) => {
-            if (fini) {
-              coup(g, sg.pts, plan.largeur, teinte.trait, sg.graine, 1e9);
-              if (nd && i < plan.segments.length - 1) touche(g, nd.x, nd.y, plan.largeur(nd.u) * 0.42, teinte.trait, 0.4);
-            } else {
-              coup(gv, sg.pts, plan.largeur, teinte.trait, sg.graine, Math.max(2, Math.round(q * sg.pts.length)));
-            }
-          },
-        });
-        curseur += PAS * 0.8;
-      });
-      const quand = (u: number) => PAS * 0.8 * plan.segments.length * u;
-      grappes.forEach((gr) => {
-        const bp = plan.surLaBranche(gr.u);
-        const t0 = quand(gr.u) + 140;
-        taches.push({ debut: t0, duree: 300, fait: false, faire: (q, fini) => { void q; fil(fini ? g : gv, bp, gr, teinte.trait, false); } });
-        gr.boutons.forEach((b, j) => {
-          taches.push({
-            debut: t0 + 300 + j * 60,
-            duree: 420,
-            fait: false,
-            faire: (q, fini) => fleurette(fini ? g : gv, b.x, b.y, b.r, gr.col, b.graine, b.a, fini ? 1 : q, teinte.trait),
-          });
-        });
-      });
-      marques.forEach((m) => {
-        const t0 = quand(m.u) + 200;
-        taches.push({ debut: t0, duree: 240, fait: false, faire: (q, fini) => { void q; fil(fini ? g : gv, { x: m.ax, y: m.ay }, m, teinte.trait, false); } });
-        if (m.kind === "tache") {
-          taches.push({ debut: t0 + 200, duree: 700, fait: false, faire: (q, fini) => tache(fini ? g : gv, m.x, m.y, m.r, m.col, m.graine, fini ? 1 : q) });
-        } else {
-          const source = m.ouvertA !== null ? marques.find((o) => o.kind === "tache" && o.age === m.ouvertA) : undefined;
-          if (source) taches.push({ debut: t0, duree: 400, fait: false, faire: (q, fini) => { void q; fil(fini ? g : gv, source, m, teinte.trait, false); } });
-          taches.push({
-            debut: t0 + 380,
-            duree: 900,
-            fait: false,
-            faire: (q, fini) => fleur(fini ? g : gv, m.x, m.y, m.r, m.col, m.graine, 0.92, fini ? 1 : q, teinte.trait),
-          });
-        }
-      });
-
-      let vivant = true;
-      let image = 0;
-      const t0 = performance.now();
-      const tour = (maintenant: number) => {
-        if (!vivant) return;
-        const el = maintenant - t0;
-        vider(gv, cVif);
-        let reste = false;
-        for (const tc of taches) {
-          if (tc.fait) continue;
-          if (el < tc.debut) {
-            reste = true;
-            continue;
-          }
-          const q = Math.min(1, (el - tc.debut) / tc.duree);
-          if (q >= 1) {
-            tc.faire(1, true);
-            tc.fait = true;
-          } else {
-            tc.faire(q, false);
-            reste = true;
-          }
-        }
-        if (reste) image = requestAnimationFrame(tour);
-        else {
-          vider(gv, cVif);
-          image = 0;
-        }
-      };
-      image = requestAnimationFrame(tour);
-      return () => {
-        vivant = false;
-        if (image) cancelAnimationFrame(image);
-      };
-    },
-    [plan, fige, fil],
-  );
-
-  useEffect(() => {
-    const stop = peindre(!dejaAnime.current);
-    dejaAnime.current = true;
-    return stop;
-  }, [peindre, cle]);
-
-  useEffect(() => {
-    const relire = () => {
-      const h = hote.current;
-      if (!h) return;
-      const te = lireLesTeintes(h);
-      const sig = `${te.trait}|${te.diluee}|${te.discret}|${h.clientWidth}`;
-      if (sig === signature.current) return;
-      const premier = signature.current === "";
-      signature.current = sig;
-      // La premiere lecture ne declenche rien : la peinture vient de partir.
-      if (!premier) setCle((n) => n + 1);
-    };
-    relire();
-    const obs = new MutationObserver(relire);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
-    let tm: ReturnType<typeof setTimeout>;
-    const surTaille = () => {
-      clearTimeout(tm);
-      tm = setTimeout(relire, 200);
-    };
-    window.addEventListener("resize", surTaille);
-    return () => {
-      obs.disconnect();
-      window.removeEventListener("resize", surTaille);
-      clearTimeout(tm);
+  /* ── Les couleurs, lues du theme au moment de peindre ─────────────────────
+     Aucune couleur ici : elles vivent dans globals.css, et le canvas les lit.
+     Ainsi le dessin suit le theme clair/sombre sans une ligne de plus. */
+  const palette = useCallback(() => {
+    const el = hote.current;
+    const st = el ? getComputedStyle(el) : null;
+    const lit = (v: string, repli: string) => (st?.getPropertyValue(v).trim() || repli);
+    const familles = {} as Record<Famille, string>;
+    FAMILLES.forEach((f) => { familles[f] = lit(JETON_FAMILLE[f], lit("--encre-trait", "currentColor")); });
+    return {
+      encre: lit("--encre-trait", "currentColor"),
+      diluee: lit("--encre-diluee", "currentColor"),
+      papier: lit("--bg-secondary", "transparent"),
+      texte: lit("--text-body-subtle", "currentColor"),
+      police: st?.fontFamily || "sans-serif",
+      familles,
     };
   }, []);
 
-  /* ── La brise ────────────────────────────────────────────────────────────
-     Un cerisier qui s effeuille, pas une pluie de confettis.
+  /* ── Le chevalet : deux toiles, une regle ────────────────────────────────
+     L encre s accumule sur la premiere. La seconde est essuyee a chaque
+     image : c est la que respirent les anneaux, que tombent les petales, que
+     s ouvre ce qui est en train de naitre. On ne repeint l encre que quand
+     le dessin change (echelle, familles, theme) — jamais parce que React a
+     rendu. */
+  const etat = useRef({
+    revele: 0,        // jusqu ou la branche est peinte (0..1)
+    cible: 0,         // jusqu ou le doigt est descendu
+    tamponnes: new Set<string>(), // ce qui est deja sur l encre
+    troncPose: 1, // jusqu ou le tronc est pose (index de point)
+    naissances: new Map<string, number>(), // ce qui est en train de naitre : t0
+    petales: [] as { x: number; y: number; vx: number; vy: number; ang: number; va: number; vie: number; t: number; col: string; len: number; vrille: number }[],
+    dernierPetale: 0,
+    dernierSouffle: 0,
+    souffle: 0,
+    rafale: 0,
+    boucle: 0,
+    t0: 0,
+    largeurCss: L,
+  });
 
-     Quatre choses font la difference, et elles sont toutes dans la physique
-     du petale, pas dans le nombre :
-       — il VRILLE : son echelle horizontale oscille, donc il se montre de
-         face puis de profil. C est ce qui se lit comme « il tourne » ;
-       — il tombe LENTEMENT et jamais droit : le balancement lateral est plus
-         ample que la vitesse de chute ;
-       — le vent vient par RAFALES, partagees par tous les petales, donc ils
-         derivent ensemble au lieu de faire chacun son bruit ;
-       — il nait et meurt en fondu, et jamais deux ne partent ensemble.
+  const visibles = useMemo(() => plan.paires.filter((p) => !eteintes.has(p.famille)), [plan, eteintes]);
 
-     Elle vit sur le calque du haut, jamais sur l encre, et s arrete quand
-     l onglet est cache : une animation invisible ne doit rien couter. */
   useEffect(() => {
-    if (fige || !plan) return;
-    const cv = vifRef.current;
-    const h = hote.current;
-    if (!cv || !h) return;
-    const gv = cv.getContext("2d");
-    if (!gv) return;
-    const teinte = lireLesTeintes(h);
-    const sources = [
-      ...plan.grappes.flatMap((gr) => gr.boutons.map((b) => ({ x: b.x, y: b.y, r: b.r, maison: gr.maison, phase: gr.phase }))),
-      ...plan.marques.filter((m) => m.kind === "fleur").map((m) => ({ x: m.x, y: m.y, r: m.r * 0.5, maison: m.maison, phase: m.phase })),
-    ];
-    if (sources.length === 0) return;
-
-    type Petale = {
-      x: number; y: number; col: string; len: number; forme: number;
-      rot: number; vr: number;            // orientation et sa vitesse
-      vrille: number; vvrille: number;    // la rotation sur lui-meme
-      vy: number; bal: number; ph: number; fq: number;
-      age: number; vie: number;
-    };
-    let petales: Petale[] = [];
-    let image = 0;
-    let horloge = performance.now();
-    let dernier = horloge;
-    let prochain = 300;
-    let vivant = true;
-
-    const naitre = (): Petale => {
-      const src = sources[Math.floor(Math.random() * sources.length)];
-      return {
-        x: src.x + (Math.random() - 0.5) * src.r * 1.6,
-        y: src.y + (Math.random() - 0.5) * src.r,
-        col: couleurDe(src.maison, src.phase, teinte, h),
-        len: 3.4 + Math.random() * 4.2,
-        forme: 0.8 + Math.random() * 0.5,
-        rot: Math.random() * 6.28,
-        vr: (Math.random() - 0.5) * 1.6,
-        vrille: Math.random() * 6.28,
-        vvrille: 1.6 + Math.random() * 2.4,
-        vy: 7 + Math.random() * 7,
-        bal: 9 + Math.random() * 14,
-        ph: Math.random() * 6.28,
-        fq: 0.5 + Math.random() * 0.7,
-        age: 0,
-        vie: 7 + Math.random() * 5,
-      };
-    };
-
-    const tour = (now: number) => {
-      if (!vivant) return;
-      const dt = Math.min(0.05, (now - horloge) / 1000);
-      horloge = now;
-      const sec = now / 1000;
-      // La rafale : lente, partagee, jamais nulle. Deux sinus de periodes
-      // premieres entre elles, pour qu elle ne se repete pas a l oreille.
-      const rafale = 0.55 + 0.45 * Math.sin(sec * 0.23) * Math.sin(sec * 0.07 + 1.3);
-
-      if (now - dernier > prochain && petales.length < 26) {
-        dernier = now;
-        prochain = 150 + Math.random() * 420;
-        petales.push(naitre());
-        if (Math.random() < 0.35) petales.push(naitre());
+    const hoteEl = hote.current;
+    const encreEl = encreRef.current;
+    const vifEl = vifRef.current;
+    if (!hoteEl || !encreEl || !vifEl) return;
+    const gE = encreEl.getContext("2d");
+    const gV = vifEl.getContext("2d");
+    if (!gE || !gV) return;
+    const pal = palette();
+    const sig = JSON.stringify([echelle, [...eteintes], pal.encre, pal.familles, plan.paires.length, cle]);
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const largeurCss = hoteEl.clientWidth || L;
+    const s = largeurCss / L;
+    const hauteurCss = H * s;
+    // Redimensionner une toile l efface et remet sa regle a zero : on ne le
+    // fait que si la taille a vraiment change — et alors on repeint tout.
+    const W = Math.round(largeurCss * dpr);
+    const Hp = Math.round(hauteurCss * dpr);
+    for (const c of [encreEl, vifEl]) {
+      if (c.width !== W || c.height !== Hp) {
+        c.width = W;
+        c.height = Hp;
+        c.style.width = `${largeurCss}px`;
+        c.style.height = `${hauteurCss}px`;
+        signature.current = "";
       }
-
-      gv.save();
-      gv.setTransform(1, 0, 0, 1, 0, 0);
-      gv.clearRect(0, 0, cv.width, cv.height);
-      gv.restore();
-
-      petales = petales.filter((pt) => pt.age < pt.vie && pt.y < H + 12);
-      for (const pt of petales) {
-        pt.age += dt;
-        pt.vrille += pt.vvrille * dt;
-        pt.rot += pt.vr * dt;
-        // Le balancement domine la chute : un petale ne tombe pas, il flotte.
-        pt.x += (Math.sin(pt.ph + pt.age * pt.fq) * pt.bal + rafale * 9) * dt;
-        pt.y += pt.vy * (0.75 + 0.35 * Math.cos(pt.ph + pt.age * pt.fq)) * dt;
-        const fondu = Math.min(1, pt.age * 1.6) * Math.min(1, (pt.vie - pt.age) / 2);
-        petale(gv, pt.x, pt.y, pt.rot, pt.len, pt.len * 0.66, pt.col, 0.62 * fondu, pt.forme, Math.cos(pt.vrille));
-      }
-      image = requestAnimationFrame(tour);
-    };
-
-    const partir = () => {
-      if (!image && !document.hidden) {
-        horloge = performance.now();
-        dernier = horloge;
-        image = requestAnimationFrame(tour);
-      }
-    };
-    const arreter = () => {
-      if (image) cancelAnimationFrame(image);
-      image = 0;
-    };
-    const surVisibilite = () => (document.hidden ? arreter() : partir());
-    // On laisse la pousse finir avant que le vent se leve.
-    const depart = setTimeout(partir, 2600);
-    document.addEventListener("visibilitychange", surVisibilite);
-    return () => {
-      vivant = false;
-      clearTimeout(depart);
-      arreter();
-      document.removeEventListener("visibilitychange", surVisibilite);
-    };
-  }, [plan, fige, cle]);
-
-  if (!plan) return null;
-  void maintenant;
-
-  /** Ce qu on lit quand on touche. Toujours des faits, jamais un jugement. */
-  const lecture = (() => {
-    if (!lu) return { titre: t("resume.branche_aide", locale), detail: t("resume.branche_legende", locale) };
-    if ("compte" in lu) {
-      return {
-        titre: t("resume.branche_grappe", locale).replace("{a}", lu.libelle).replace("{n}", String(lu.compte)),
-        detail: t("resume.branche_legende", locale),
-      };
     }
-    const quoi = t(lu.kind === "tache" ? "resume.branche_tache" : "resume.branche_fleur", locale);
-    return {
-      titre: `${quoi} — ${lu.libelle}`,
-      detail: lu.domaine ?? t("resume.branche_legende", locale),
-    };
-  })();
+    const E = etat.current;
+    E.largeurCss = largeurCss;
+    gE.setTransform(dpr * s, 0, 0, dpr * s, 0, 0);
+    if (signature.current !== sig) {
+      signature.current = sig;
+      gE.clearRect(0, 0, L, H);
+      E.revele = fige ? 1 : 0;
+      E.tamponnes.clear();
+      E.troncPose = 1;
+      E.naissances.clear();
+      E.petales = [];
+      E.t0 = performance.now();
+    }
+    gV.setTransform(dpr * s, 0, 0, dpr * s, 0, 0);
 
-  /* Les echelles courtes n apparaissent que si le store a des periodes datees
-     a montrer : on ne propose jamais un onglet qui n aurait rien a dire. */
-  const echellesDispo: { clef: "vie" | "annee" | "mois"; libelle: string }[] = [
-    { clef: "vie", libelle: t("resume.branche_ech_vie", locale) },
-    ...((phasesAnnee?.length ?? 0) > 0
-      ? ([
-          { clef: "annee" as const, libelle: t("resume.branche_ech_annee", locale) },
-          { clef: "mois" as const, libelle: t("resume.branche_ech_mois", locale) },
-        ])
-      : []),
+    const colDe = (f: Famille | null) => (f ? pal.familles[f] : pal.encre);
+    const couleurTexte = pal.texte;
+    const largeurTige = (p: PairePosee) => (u: number) => {
+      // ordre 3 -> 4 : de 6 a 2, le decrochement a la base compris
+      const w0 = Math.min(6, plan.largeurTronc(p.posGraine) * 0.62 * 0.5);
+      return Math.max(1.2, w0 + (2 - w0) * u) * (1 + 0.1 * ondule(u * 5, p.graine));
+    };
+
+    /* Ce que la personne voit de la branche : ce qu elle a fait descendre. */
+    const mesurerCible = () => {
+      const r = hoteEl.getBoundingClientRect();
+      const basVisible = window.innerHeight - r.top - 110;
+      E.cible = Math.max(0, Math.min(1, basVisible / hauteurCss));
+    };
+    mesurerCible();
+
+    /* Un objet nait sur la toile vive, puis se pose sur l encre. */
+    const naissance = (id: string, duree: number, now: number, dessine: (part: number, g: Ctx) => void) => {
+      if (E.tamponnes.has(id)) return true;
+      let t0 = E.naissances.get(id);
+      if (t0 === undefined) {
+        t0 = now;
+        E.naissances.set(id, t0);
+      }
+      const part = fige ? 1 : Math.min(1, (now - t0) / duree);
+      if (part >= 1) {
+        dessine(1, gE);
+        E.tamponnes.add(id);
+        E.naissances.delete(id);
+        return true;
+      }
+      dessine(part, gV);
+      return false;
+    };
+
+    const peindreRepere = (rp: { pos: number; libelle: string }) => {
+      const y = yDe(rp.pos, H);
+      const pt = plan.surLeTronc(rp.pos);
+      const gauche = pt.x < L / 2;
+      gE.save();
+      gE.globalAlpha = 0.85;
+      gE.fillStyle = couleurTexte;
+      gE.font = `500 10px ${pal.police}`;
+      gE.textAlign = gauche ? "right" : "left";
+      gE.textBaseline = "middle";
+      gE.fillText(rp.libelle, gauche ? L - 14 : 14, y);
+      gE.restore();
+    };
+
+    const peindrePaire = (p: PairePosee, g: Ctx, partTache: number, partTige: number, partFleur: number, col: string) => {
+      if (partTache > 0) tache(g, p.gx, p.gy, p.rG, col, p.graine, partTache);
+      if (partTige > 0) {
+        const n = Math.max(2, Math.round(p.brindille.length * partTige));
+        coupDePinceau(g, p.brindille, largeurTige(p), pal.encre, p.graine, n, false);
+      }
+      if (partFleur > 0) {
+        // encore ouverte : un bouton, ferme mais bien visible — il attend
+        const D = p.aVenir ? p.D * 0.8 : p.D;
+        fleurDePrunier(g, p.fx, p.fy, D, col, pal.encre, p.graine + (p.aVenir ? 1000 : 0), p.aVenir ? Math.min(partFleur, 0.5) : partFleur, p.vx, p.vy, !p.aVenir);
+      }
+    };
+
+    const image = (now: number) => {
+      E.boucle = requestAnimationFrame(image);
+      if (document.hidden) return;
+      // la branche avance vers le doigt, a la vitesse d un pinceau
+      const vitesse = 0.55 / 1000; // de la hauteur par milliseconde
+      const dt = Math.min(48, now - (E.t0 || now));
+      E.t0 = now;
+      if (E.revele < E.cible) E.revele = Math.min(E.cible, E.revele + vitesse * dt);
+      const rv = E.revele;
+
+      gV.clearRect(0, 0, L, H);
+
+      /* 1. le tronc : un seul geste, pose sur l encre a mesure qu on descend */
+      {
+        const T = plan.tronc;
+        const larg = (u: number) => plan.largeurTronc(u);
+        const cibleIdx = rv >= 1 ? T.length : Math.max(1, T.findIndex((p) => p.u > rv));
+        if (cibleIdx > E.troncPose) {
+          coupDePinceau(gE, T, larg, pal.encre, 1, cibleIdx, true, E.troncPose);
+          E.troncPose = cibleIdx;
+        }
+        plan.segments.forEach((sg, i) => {
+          const id = `e${i}`;
+          if (E.tamponnes.has(id) || rv < sg.u1) return;
+          echo(gE, sg.pts, (u) => plan.largeurTronc(u), pal.diluee, sg.graine + 5);
+          E.tamponnes.add(id);
+        });
+      }
+      // la pointe d aujourd hui, encore humide
+      if (rv >= 0.995) {
+        const pt = plan.surLeTronc(1);
+        const k = 0.5 + 0.5 * Math.sin(now / 900);
+        gV.save();
+        gV.globalAlpha = 0.16 + 0.1 * k;
+        gV.fillStyle = pal.diluee;
+        gV.beginPath();
+        gV.arc(pt.x, pt.y, pt.w * 0.9 + 6 + 3 * k, 0, 6.2832);
+        gV.fill();
+        gV.restore();
+      }
+
+      /* 2. les reperes du temps */
+      fen.reperes.forEach((rp, i) => {
+        const id = `r${i}`;
+        if (E.tamponnes.has(id) || rv < rp.pos) return;
+        peindreRepere(rp);
+        E.tamponnes.add(id);
+      });
+
+      /* 3. les paires : la tache boit, la brindille pousse, la fleur s ouvre */
+      visibles.forEach((p, i) => {
+        if (rv < p.posGraine) return;
+        const col = colDe(p.famille);
+        const id = `p${p.graine}`;
+        if (choix === i && !E.tamponnes.has(id)) {
+          // en focus : on la laisse naitre quand meme, mais sur l encre
+          E.tamponnes.add(id);
+          peindrePaire(p, gE, 1, 1, 1, col);
+          return;
+        }
+        naissance(id, 2600, now, (part, g) => {
+          const a = Math.min(1, part / 0.28);
+          const b = Math.max(0, Math.min(1, (part - 0.22) / 0.45));
+          const c = Math.max(0, Math.min(1, (part - 0.62) / 0.38));
+          peindrePaire(p, g, a, b, c, col);
+        });
+      });
+
+      /* 4. les grappes : boutons de fleurs, par trois et par cinq */
+      plan.grappes.forEach((gr) => {
+        if (rv < gr.pos) return;
+        const col = gr.famille && !eteintes.has(gr.famille) ? colDe(gr.famille) : pal.diluee;
+        naissance(`gb${gr.graine}`, 800, now, (part, g) => {
+          const n = Math.max(2, Math.round(gr.brindille.length * part));
+          coupDePinceau(g, gr.brindille, (u) => Math.max(1.2, 5 - 3.2 * u), pal.encre, gr.graine, n, false);
+        });
+        gr.boutons.forEach((b, k) => {
+          const id = `g${gr.graine}-${k}`;
+          naissance(id, 1400 + k * 160, now, (part, g) => {
+            const pp = Math.max(0, Math.min(1, (part * (1400 + k * 160) - 700 - k * 160) / 700));
+            if (pp > 0) fleurette(g, b.x, b.y, b.D * 0.5, col, b.graine, 0.85, pp, pal.encre);
+          });
+        });
+      });
+
+      /* 5. le voile du focus : tout s efface un peu, sauf la paire choisie */
+      if (choix !== null && visibles[choix]) {
+        const p = visibles[choix];
+        gV.save();
+        gV.globalAlpha = 0.8;
+        gV.fillStyle = pal.papier;
+        gV.fillRect(0, 0, L, H);
+        gV.restore();
+        peindrePaire(p, gV, 1, 1, 1, colDe(p.famille));
+      }
+
+      /* 6. les anneaux : la ou il faut toucher */
+      if (!fige) {
+        visibles.forEach((p, i) => {
+          if (!E.tamponnes.has(`p${p.graine}`)) return;
+          if (choix !== null && choix !== i) return;
+          const lent = choix === i ? 0.5 : 1;
+          anneau(gV, p.gx, p.gy, p.rG, colDe(p.famille), now / (1300 / lent) + i * 1.7);
+        });
+      }
+
+      /* 7. les petales : une fleur eclose en laisse partir un, parfois */
+      if (!fige) {
+        const ecloses = visibles.filter((p) => !p.aVenir && E.tamponnes.has(`p${p.graine}`) && (choix === null || visibles[choix] === p));
+        if (now - E.dernierSouffle > 6000 + 6000 * Math.random()) {
+          E.dernierSouffle = now;
+          E.rafale = 1;
+        }
+        E.rafale *= 0.985;
+        E.souffle = 0.35 + E.rafale * 1.2 + 0.2 * Math.sin(now / 2100);
+        const cadence = 900 - E.rafale * 650;
+        if (ecloses.length && now - E.dernierPetale > cadence && E.petales.length < 22) {
+          E.dernierPetale = now;
+          const p = ecloses[Math.floor(Math.random() * ecloses.length)];
+          E.petales.push({
+            x: p.fx + (Math.random() - 0.5) * p.D * 0.6,
+            y: p.fy + (Math.random() - 0.5) * p.D * 0.4,
+            vx: 0.15 + Math.random() * 0.3,
+            vy: 0.35 + Math.random() * 0.35,
+            ang: Math.random() * 6.28,
+            va: (Math.random() - 0.5) * 0.06,
+            vie: 5200 + Math.random() * 3000,
+            t: now,
+            col: colDe(p.famille),
+            len: p.D * 0.42 * (0.7 + Math.random() * 0.4),
+            vrille: Math.random() * 6.28,
+          });
+        }
+        E.petales = E.petales.filter((pt) => now - pt.t < pt.vie && pt.y < H + 20);
+        for (const pt of E.petales) {
+          const age = (now - pt.t) / pt.vie;
+          pt.vrille += 0.05 + E.rafale * 0.04;
+          pt.x += (pt.vx + E.souffle * 0.55) * (dt / 16) + Math.sin(pt.vrille) * 0.5;
+          pt.y += (pt.vy + Math.cos(pt.vrille * 0.6) * 0.18) * (dt / 16);
+          pt.ang += pt.va + Math.sin(pt.vrille * 0.7) * 0.03;
+          const al = age < 0.1 ? age / 0.1 : age > 0.75 ? (1 - age) / 0.25 : 1;
+          petale(gV, pt.x, pt.y, pt.ang, pt.len, pt.len * 0.62, pt.col, 0.32 * al, 0.6 + 0.4 * Math.abs(Math.sin(pt.vrille)), Math.cos(pt.vrille * 0.8));
+        }
+      }
+    };
+
+    const surDefilement = () => mesurerCible();
+    document.addEventListener("scroll", surDefilement, { passive: true, capture: true });
+    window.addEventListener("resize", surDefilement);
+    E.t0 = performance.now();
+    E.boucle = requestAnimationFrame(image);
+    return () => {
+      cancelAnimationFrame(E.boucle);
+      document.removeEventListener("scroll", surDefilement, { capture: true });
+      window.removeEventListener("resize", surDefilement);
+    };
+  }, [plan, fen, visibles, echelle, eteintes, choix, cle, fige, palette, H]);
+
+  /* Le theme change : les couleurs aussi. On repeint. */
+  useEffect(() => {
+    const obs = new MutationObserver(() => setCle((k) => k + 1));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+
+  /* ── Toucher : la tache ou la fleur la plus proche, sinon le vide ────────── */
+  const surToucher = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const s = r.width / L;
+    const x = (e.clientX - r.left) / s;
+    const y = (e.clientY - r.top) / s;
+    let meilleur = -1;
+    let dMin = 26;
+    visibles.forEach((p, i) => {
+      if (!etat.current.tamponnes.has(`p${p.graine}`)) return;
+      const d = Math.min(Math.hypot(p.gx - x, p.gy - y), Math.hypot(p.fx - x, p.fy - y));
+      if (d < dMin) { dMin = d; meilleur = i; }
+    });
+    setChoix(meilleur >= 0 ? (choix === meilleur ? null : meilleur) : null);
+  }, [visibles, choix]);
+
+  const basculer = (f: Famille) => {
+    setChoix(null);
+    setEteintes((prev) => {
+      const n = new Set(prev);
+      if (n.has(f)) n.delete(f);
+      else if (n.size < FAMILLES.length - 1) n.add(f);
+      return n;
+    });
+  };
+
+  const choisie = choix !== null ? visibles[choix] : null;
+  const NIVEAUX: { id: typeof echelle; clef: string; sous: string }[] = [
+    { id: "vie", clef: "resume.branche_ech_vie", sous: "resume.branche_niv_vie_sous" },
+    { id: "annee", clef: "resume.branche_ech_annee", sous: "resume.branche_niv_annee_sous" },
+    { id: "mois", clef: "resume.branche_ech_mois", sous: "resume.branche_niv_mois_sous" },
   ];
 
   return (
-    <div>
-      {echellesDispo.length > 1 ? (
-        <div
-          className="mx-auto mb-2 flex w-fit gap-1 rounded-full p-1"
-          style={{ background: "var(--bg-tertiary)" }}
-          role="tablist"
-        >
-          {echellesDispo.map((e) => {
-            const actif = echelle === e.clef;
+    <div ref={hote} className="relative w-full select-none" style={{ background: "var(--bg-secondary)" }}>
+      {/* ── Les trois echelles et les trois familles, colles en haut ── */}
+      <div className="sticky top-0 z-20 px-4 pt-2 pb-2" style={{ background: "linear-gradient(var(--bg-secondary) 70%, transparent)" }}>
+        <div role="tablist" aria-label={t("resume.branche_ech_vie", locale)} className="flex gap-1">
+          {NIVEAUX.map((n) => (
+            <button
+              key={n.id}
+              role="tab"
+              type="button"
+              aria-selected={echelle === n.id}
+              onClick={() => { setChoix(null); setEchelle(n.id); }}
+              className="flex-1 rounded-full px-2 py-1.5 text-center leading-tight transition-colors"
+              style={{
+                background: echelle === n.id ? "var(--bg-brand)" : "var(--bg-tertiary)",
+                color: echelle === n.id ? "var(--text-on-brand)" : "var(--text-body-subtle)",
+              }}
+            >
+              <span className="block text-[12px] font-semibold">{t(n.clef, locale)}</span>
+              <span className="block text-[9.5px] opacity-80">{t(n.sous, locale)}</span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-1.5 flex gap-1.5">
+          {FAMILLES.map((f) => {
+            const eteinte = eteintes.has(f);
             return (
               <button
-                key={e.clef}
+                key={f}
                 type="button"
-                role="tab"
-                aria-selected={actif}
-                onClick={() => {
-                  setEchelle(e.clef);
-                  setLu(null);
-                  setFixe(false);
-                }}
-                className="min-h-[44px] rounded-full px-4 text-[13px] font-semibold"
-                style={{
-                  background: actif ? "var(--bg-secondary)" : "transparent",
-                  color: actif ? "var(--text-heading)" : "var(--text-body-subtle)",
-                }}
+                aria-pressed={!eteinte}
+                onClick={() => basculer(f)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full py-1 text-[11px] font-medium transition-opacity"
+                style={{ background: "var(--bg-tertiary)", color: "var(--text-heading)", opacity: eteinte ? 0.4 : 1 }}
               >
-                {e.libelle}
+                <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[f]})` }} />
+                {t(CLEF_FAMILLE[f], locale)}
               </button>
             );
           })}
         </div>
-      ) : null}
+      </div>
 
-      <div ref={hote} className="relative w-full touch-manipulation">
-        <canvas ref={encreRef} className="block w-full" />
-        <canvas ref={vifRef} className="pointer-events-none absolute inset-0 h-full w-full" />
+      {/* ── L oeuvre ── */}
+      <div className="relative w-full" style={{ aspectRatio: `${L} / ${H}` }}>
+        <canvas ref={encreRef} aria-hidden className="encre-multiplie absolute left-0 top-0" />
+        <canvas
+          ref={vifRef}
+          role="img"
+          aria-label={t("resume.branche_legende", locale)}
+          className="absolute left-0 top-0 cursor-pointer touch-manipulation"
+          onPointerDown={surToucher}
+        />
+        {/* Les memes cibles, pour le clavier et les lecteurs d ecran. */}
+        {visibles.map((p, i) => (
+          <button
+            key={p.graine}
+            type="button"
+            className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 focus-visible:opacity-100 focus-visible:ring-2"
+            style={{ left: `${(p.gx / L) * 100}%`, top: `${(p.gy / H) * 100}%` }}
+            aria-label={`${t(CLEF_FAMILLE[p.famille], locale)} · ${p.quandGraine} → ${p.quandFleur}`}
+            aria-pressed={choix === i}
+            onClick={() => setChoix(choix === i ? null : i)}
+          />
+        ))}
+        <p className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-[11px] text-text-body-subtle">
+          {t("resume.branche_ici", locale)}
+        </p>
+      </div>
 
-        {/* Les zones tactiles. Un canvas ne se touche pas : ce sont de vrais
-            boutons posés dessus, donc atteignables au clavier et annonces par
-            les lecteurs d ecran. 44 px minimum, la regle d Apple. */}
-        <div className="absolute inset-0">
-          {[...plan.marques, ...plan.grappes].map((m, i) => {
-            const cible = "kind" in m ? m : m;
-            const titre =
-              "compte" in cible
-                ? t("resume.branche_grappe", locale).replace("{a}", cible.libelle).replace("{n}", String(cible.compte))
-                : `${t(cible.kind === "tache" ? "resume.branche_tache" : "resume.branche_fleur", locale)} — ${cible.libelle}`;
+      {/* ── Ce qui apparait quand on a touche ── */}
+      <div className="sticky bottom-[calc(72px+env(safe-area-inset-bottom))] z-20 px-3 pointer-events-none" aria-live="polite">
+        {choisie ? (
+          <div className="pointer-events-auto rounded-2xl p-3.5 shadow-lg" style={{ background: "var(--bg-secondary)", border: "1px solid var(--bg-tertiary)" }}>
+            <div className="flex items-center gap-2">
+              <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[choisie.famille]})` }} />
+              <p className="text-[12px] font-semibold" style={{ color: "var(--text-heading)" }}>
+                {t(CLEF_FAMILLE[choisie.famille], locale)}
+              </p>
+              <button type="button" onClick={() => setChoix(null)} className="ml-auto text-[11px] text-text-body-subtle" aria-label={t("resume.branche_fermer", locale)}>
+                ✕
+              </button>
+            </div>
+            <p className="mt-1.5 text-[13px] leading-snug" style={{ color: "var(--text-heading)" }}>
+              {t("resume.branche_ouverte", locale).replace("{a}", choisie.quandGraine)}
+              {" · "}
+              {choisie.aVenir
+                ? t("resume.branche_encore", locale)
+                : t("resume.branche_fleurit", locale).replace("{b}", choisie.quandFleur).replace("{n}", choisie.ecart)}
+            </p>
+            <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">{t("resume.branche_tache_fleur", locale)}</p>
+          </div>
+        ) : null}
+      </div>
+
+      {/* ── Aujourd hui : ce qui est ouvert, par famille ── */}
+      <section className="px-5 pt-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_aujourdhui", locale)}</p>
+        <p className="mt-1 text-[12px] text-text-body-subtle">{t("resume.branche_aujourdhui_aide", locale)}</p>
+        <div className="mt-3 flex flex-col gap-2">
+          {FAMILLES.map((f) => {
+            const n = donnees.ouvertes[f];
+            const max = Math.max(1, ...FAMILLES.map((x) => donnees.ouvertes[x]));
             return (
-              <button
-                key={i}
-                type="button"
-                aria-label={titre}
-                onClick={() => {
-                  if (fixe && lu === cible) {
-                    setFixe(false);
-                    setLu(null);
-                  } else {
-                    setFixe(true);
-                    setLu(cible);
-                  }
-                }}
-                onMouseEnter={() => {
-                  if (!fixe) setLu(cible);
-                }}
-                onMouseLeave={() => {
-                  if (!fixe) setLu(null);
-                }}
-                className="absolute rounded-full"
-                style={{
-                  left: `${((cible.x - 22) / L) * 100}%`,
-                  top: `${((cible.y - 22) / H) * 100}%`,
-                  width: `${(44 / L) * 100}%`,
-                  height: `${(44 / H) * 100}%`,
-                }}
-              />
+              <div key={f} className="flex items-center gap-3">
+                <span className="w-16 text-[12px]" style={{ color: "var(--text-heading)" }}>{t(CLEF_FAMILLE[f], locale)}</span>
+                <span className="h-1.5 flex-1 rounded-full" style={{ background: "var(--bg-tertiary)" }}>
+                  <span className="block h-full rounded-full transition-[width] duration-700" style={{ width: `${(n / max) * 100}%`, background: `var(${JETON_FAMILLE[f]})` }} />
+                </span>
+                <span className="w-6 text-right text-[12px] tabular-nums" style={{ color: "var(--text-heading)" }}>{n}</span>
+              </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      <div className="mt-2 min-h-[42px]">
-        <p className="text-[12.5px] font-semibold leading-snug text-text-heading">{lecture.titre}</p>
-        <p className="mt-0.5 text-[11px] leading-snug text-text-body-subtle">{lecture.detail}</p>
-      </div>
+      {/* ── La tache et la fleur : ce que veulent dire les deux signes ── */}
+      <section className="px-5 pt-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_comment", locale)}</p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <Demo genre="tache" titre={t("resume.branche_tache_titre", locale)} texte={t("resume.branche_tache_expl", locale)} palette={palette} />
+          <Demo genre="fleur" titre={t("resume.branche_fleur_titre", locale)} texte={t("resume.branche_fleur_expl", locale)} palette={palette} />
+        </div>
+      </section>
+
+      {/* ── Les floraisons qui viennent : datees, jamais promises ── */}
+      <section className="px-5 pt-8 pb-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_prochaines", locale)}</p>
+        <p className="mt-1 text-[12px] text-text-body-subtle">{t("resume.branche_prochaines_aide", locale)}</p>
+        {donnees.aVenir.length ? (
+          <ul className="mt-3 flex flex-col gap-2">
+            {donnees.aVenir.map((v, i) => (
+              <li key={i} className="flex items-center gap-2.5 text-[13px]" style={{ color: "var(--text-heading)" }}>
+                <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: v.famille ? `var(${JETON_FAMILLE[v.famille]})` : "var(--bg-tertiary)" }} />
+                <span className="tabular-nums">{v.quand}</span>
+                <span className="text-text-body-subtle">{v.famille ? t(CLEF_FAMILLE[v.famille], locale) : ""}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-[13px] text-text-body-subtle">{t("resume.branche_prochaines_rien", locale)}</p>
+        )}
+      </section>
     </div>
+  );
+}
+
+/* ── Une petite toile qui montre un signe, et le rejoue quand on la touche ── */
+function Demo({ genre, titre, texte, palette }: { genre: "tache" | "fleur"; titre: string; texte: string; palette: () => { encre: string; diluee: string; familles: Record<Famille, string> } }) {
+  const ref = useRef<HTMLCanvasElement | null>(null);
+  const [tour, setTour] = useState(0);
+  const fige = useReducedMotion();
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const g = c.getContext("2d");
+    if (!g) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = 120;
+    const Hh = 84;
+    c.width = W * dpr;
+    c.height = Hh * dpr;
+    c.style.width = `${W}px`;
+    c.style.height = `${Hh}px`;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const pal = palette();
+    const col = pal.familles.love;
+    const t0 = performance.now();
+    let id = 0;
+    const image = (now: number) => {
+      const part = fige ? 1 : Math.min(1, (now - t0) / 1600);
+      g.clearRect(0, 0, W, Hh);
+      if (genre === "tache") {
+        tache(g, W / 2, Hh / 2, 9, col, 41 + tour, part);
+        anneau(g, W / 2, Hh / 2, 9, col, now / 1300);
+      } else {
+        const pts: Point[] = [];
+        for (let k = 0; k <= 30; k++) {
+          const u = k / 30;
+          pts.push({ x: 18 + u * 70, y: Hh - 14 - u * 46 + Math.sin(u * 3) * 5, u });
+        }
+        const n = Math.max(2, Math.round(pts.length * Math.min(1, part / 0.5)));
+        coupDePinceau(g, pts, (u) => 4 - 2.5 * u, pal.encre, 7, n, false);
+        const pf = Math.max(0, (part - 0.45) / 0.55);
+        if (pf > 0) fleurDePrunier(g, 88, 24, 30, col, pal.encre, 3, pf, 1, -0.6, true);
+      }
+      if (part < 1) id = requestAnimationFrame(image);
+    };
+    id = requestAnimationFrame(image);
+    return () => cancelAnimationFrame(id);
+  }, [genre, tour, fige, palette]);
+  return (
+    <button type="button" onClick={() => setTour((n) => n + 1)} className="flex flex-col items-center rounded-2xl p-3 text-left" style={{ background: "var(--bg-tertiary)" }}>
+      <canvas ref={ref} aria-hidden />
+      <span className="mt-1 self-start text-[12px] font-semibold" style={{ color: "var(--text-heading)" }}>{titre}</span>
+      <span className="mt-0.5 self-start text-[11px] leading-snug text-text-body-subtle">{texte}</span>
+    </button>
   );
 }

@@ -1365,3 +1365,8 @@ main:has(> .landing-immersive) + footer {
      donc bouger le dessin. */
   --halo-zone-teaser: conic-gradient(from 260deg, transparent 0deg, rgba(124,107,191,0.06) 20deg, rgba(124,107,191,0.12) 50deg, rgba(124,107,191,0.06) 80deg, transparent 100deg);
 }
+
+/* L encre se multiplie sur le papier (le noir sur blanc se superpose
+   comme de la vraie encre) ; en sombre, l encre est claire : on l ecrante. */
+.encre-multiplie { mix-blend-mode: multiply; }
+.dark .encre-multiplie { mix-blend-mode: screen; }
