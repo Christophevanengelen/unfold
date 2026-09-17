@@ -22,6 +22,7 @@ import { useLocale } from "@/lib/use-locale";
 import { t } from "@/lib/i18n-demo";
 import { lireLaVie } from "@/lib/resume-vie";
 import { ResumeVie } from "@/components/demo/resume/ResumeVie";
+import { BrancheDeVie } from "@/components/demo/resume/BrancheDeVie";
 import { afficheDisponible, dessinerAfficheDeVie } from "@/lib/carte-vie";
 import { STRINGS_MATCH_DOMAINES } from "@/lib/i18n-demo";
 import { DOMAINE } from "@/lib/score-match";
@@ -155,7 +156,37 @@ export default function ViePage() {
           la navigation. Christophe, le 17/09 : « pas besoin de bouton retour
           puisqu on a clique sur le menu, profite de tout l espace ».
           La carte porte deja son titre, l en-tete etait un doublon. */}
-      <div className="mx-auto w-full max-w-[560px] px-3 pt-4">
+      {/* L OEUVRE, PLEIN ECRAN.
+          Christophe, le 17/09 : « prends tout l ecran, ne mets pas ca dans une
+          carte ». Elle n est donc ni dans la carte du resume ni dans le
+          conteneur a largeur limitee : elle va d un bord a l autre, et les
+          chiffres viennent dessous. */}
+      {resume && !resume.vide ? (
+        <div className="px-0 pt-2">
+          <p className="px-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">
+            {t("resume.vie_eyebrow", locale)}
+          </p>
+          <p
+            className="mt-1.5 px-5 text-[26px] leading-[1.12]"
+            style={{ fontFamily: "var(--font-titre)", fontWeight: 300, letterSpacing: "-0.02em", color: "var(--text-heading)", textWrap: "balance" }}
+          >
+            {t("resume.vie_titre", locale)
+              .replace("{n}", String(resume.total))
+              .replace("{age}", String(resume.age))}
+          </p>
+          <div className="mt-2">
+            <BrancheDeVie
+              resume={resume}
+              locale={locale}
+              maintenant={maintenant}
+              chapitres={chapitresDeVie ?? undefined}
+              phasesAnnee={phases}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mx-auto w-full max-w-[560px] px-3 pt-6">
         {resume && !resume.vide && naissance ? (
           <>
             <ResumeVie resume={resume} naissance={naissance} locale={locale} maintenant={maintenant} chapitresDeVie={chapitresDeVie ?? undefined} />

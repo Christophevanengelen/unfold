@@ -32,7 +32,6 @@ import type { ResumeDeVie } from "@/lib/resume-vie";
 import { avanceeDuChapitre, chapitreCourant, type ChapitreDeVie } from "@/lib/chapitres-vie";
 import type { MomentumPhase } from "@/types/momentum";
 import { Signature } from "./Signature";
-import { BrancheDeVie } from "./BrancheDeVie";
 
 function domaine(phase: MomentumPhase, locale: Locale): string | null {
   const clef = phase.house ? DOMAINE[phase.house] : undefined;
@@ -285,13 +284,6 @@ export function ResumeVie({
         >
           {remplir(t("resume.vie_titre", locale), { n: resume.total, age: resume.age })}
         </motion.p>
-
-        {/* La branche d abord : c est l image de la vie. La frise juste apres
-            donne le compte exact — on regarde, puis on compte. Elle est en
-            AJOUT : si le dessin ne rend rien, l ecran reste ce qu il etait. */}
-        <div className="mt-4">
-          <BrancheDeVie resume={resume} locale={locale} chapitres={chapitresDeVie} />
-        </div>
 
         <div className="mt-5">
           <Frise resume={resume} locale={locale} />
