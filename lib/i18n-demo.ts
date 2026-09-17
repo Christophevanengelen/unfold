@@ -286,6 +286,7 @@ type Strings = {
     vie_eyebrow: string; vie_titre: string; vie_chapitres: string;
     vie_depuis_age: string; vie_ans: string; vie_legende: string;
     vie_plus_charge: string; vie_bascules_un: string; vie_bascules_n: string;
+    vie_affiche: string; vie_affiche_en_cours: string; vie_affiche_aide: string;
   };
   boudin: {
     titre: string;
@@ -642,6 +643,9 @@ const FR: Strings = {
     vie_plus_charge: "Année la plus chargée : {a} ans, {n} périodes",
     vie_bascules_un: "1 bascule marquée par le moteur",
     vie_bascules_n: "{n} bascules marquées par le moteur",
+    vie_affiche: "Partager mon affiche",
+    vie_affiche_en_cours: "On prépare l'affiche",
+    vie_affiche_aide: "Une image de ta vie entière, à garder ou à envoyer.",
   },
   boudin: {
     titre: "Timeline de vie",
@@ -998,6 +1002,9 @@ const EN: Strings = {
     vie_plus_charge: "Year with the most periods: age {a}, {n} periods",
     vie_bascules_un: "1 turning point flagged by the engine",
     vie_bascules_n: "{n} turning points flagged by the engine",
+    vie_affiche: "Share my poster",
+    vie_affiche_en_cours: "Preparing the poster",
+    vie_affiche_aide: "One image of your whole life, to keep or to send.",
   },
   boudin: {
     titre: "Lifetime timeline",
@@ -1354,6 +1361,9 @@ const ES: Strings = {
     vie_plus_charge: "Año con más periodos: {a} años, {n} periodos",
     vie_bascules_un: "1 punto de inflexión marcado por el cálculo",
     vie_bascules_n: "{n} puntos de inflexión marcados por el cálculo",
+    vie_affiche: "Compartir mi póster",
+    vie_affiche_en_cours: "Preparando el póster",
+    vie_affiche_aide: "Una imagen de toda tu vida, para guardar o enviar.",
   },
   boudin: {
     titre: "Línea de tiempo de vida",
@@ -1710,6 +1720,9 @@ const DE: Strings = {
     vie_plus_charge: "Jahr mit den meisten Phasen: mit {a} Jahren, {n} Phasen",
     vie_bascules_un: "1 Wendepunkt, von der Berechnung markiert",
     vie_bascules_n: "{n} Wendepunkte, von der Berechnung markiert",
+    vie_affiche: "Mein Poster teilen",
+    vie_affiche_en_cours: "Poster wird erstellt",
+    vie_affiche_aide: "Ein Bild deines ganzen Lebens, zum Behalten oder Senden.",
   },
   boudin: {
     titre: "Lebens-Zeitleiste",
@@ -2066,6 +2079,9 @@ const IT: Strings = {
     vie_plus_charge: "Anno con più periodi: {a} anni, {n} periodi",
     vie_bascules_un: "1 svolta segnata dal calcolo",
     vie_bascules_n: "{n} svolte segnate dal calcolo",
+    vie_affiche: "Condividi il mio poster",
+    vie_affiche_en_cours: "Sto preparando il poster",
+    vie_affiche_aide: "Un'immagine di tutta la tua vita, da tenere o da inviare.",
   },
   boudin: {
     titre: "Timeline di vita",
@@ -2422,6 +2438,9 @@ const PT: Strings = {
     vie_plus_charge: "Ano com mais períodos: {a} anos, {n} períodos",
     vie_bascules_un: "1 ponto de virada marcado pelo cálculo",
     vie_bascules_n: "{n} pontos de virada marcados pelo cálculo",
+    vie_affiche: "Compartilhar meu pôster",
+    vie_affiche_en_cours: "Preparando o pôster",
+    vie_affiche_aide: "Uma imagem da sua vida inteira, para guardar ou enviar.",
   },
   boudin: {
     titre: "Linha do tempo de vida",
@@ -2778,6 +2797,9 @@ const NL: Strings = {
     vie_plus_charge: "Jaar met de meeste periodes: {a} jaar, {n} periodes",
     vie_bascules_un: "1 omslagpunt door de berekening gemarkeerd",
     vie_bascules_n: "{n} omslagpunten door de berekening gemarkeerd",
+    vie_affiche: "Mijn poster delen",
+    vie_affiche_en_cours: "Poster wordt gemaakt",
+    vie_affiche_aide: "Eén beeld van je hele leven, om te bewaren of te sturen.",
   },
   boudin: {
     titre: "Levenstijdlijn",
@@ -3134,6 +3156,9 @@ const JA: Strings = {
     vie_plus_charge: "期間が最も多い年：{a}歳、{n}件",
     vie_bascules_un: "計算が示した転換点 1件",
     vie_bascules_n: "計算が示した転換点 {n}件",
+    vie_affiche: "ポスターを共有",
+    vie_affiche_en_cours: "ポスターを準備しています",
+    vie_affiche_aide: "あなたの人生すべてを一枚の絵に。保存も共有もできます。",
   },
   boudin: {
     titre: "生涯タイムライン",
@@ -3490,6 +3515,9 @@ const ZH: Strings = {
     vie_plus_charge: "周期最多的一年：{a} 岁，{n} 个",
     vie_bascules_un: "1 个由计算标出的转折点",
     vie_bascules_n: "{n} 个由计算标出的转折点",
+    vie_affiche: "分享我的海报",
+    vie_affiche_en_cours: "正在准备海报",
+    vie_affiche_aide: "把你的一生化为一张图，可以保存，也可以分享。",
   },
   boudin: {
     titre: "一生时间线",
@@ -3846,6 +3874,9 @@ const AR: Strings = {
     vie_plus_charge: "السنة الأكثر فترات: سن {a}، {n} فترة",
     vie_bascules_un: "نقطة تحول واحدة حدّدها الحساب",
     vie_bascules_n: "{n} نقاط تحول حدّدها الحساب",
+    vie_affiche: "مشاركة ملصقي",
+    vie_affiche_en_cours: "جارٍ تحضير الملصق",
+    vie_affiche_aide: "صورة واحدة لحياتك كلها، لتحتفظ بها أو ترسلها.",
   },
   boudin: {
     titre: "الجدول الزمني للحياة",

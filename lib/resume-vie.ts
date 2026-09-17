@@ -168,3 +168,22 @@ export function lireLaVie(
     bascules,
   };
 }
+
+/**
+ * Le seuil en dessous duquel on ne fabrique pas d affiche.
+ *
+ * Strava exige trois activites avant de generer un bilan d annee, et pour une
+ * bonne raison : un bilan construit sur trop peu de donnees ne deçoit pas
+ * seulement, il abime la confiance dans tous les suivants. Une « affiche de
+ * vie » qui montre deux barres n est pas une vie — c est une promesse qu on ne
+ * tient pas.
+ *
+ * Huit annees documentees : assez pour qu une frise ressemble a une frise.
+ */
+export const ANNEES_MINIMUM = 8;
+
+/** Y a-t-il de quoi faire une affiche ? L ecran s en sert pour cacher le bouton. */
+export function afficheDisponible(resume: Pick<ResumeDeVie, "vide" | "age" | "premiereDocumentee">): boolean {
+  if (resume.vide || resume.premiereDocumentee === null) return false;
+  return resume.age - resume.premiereDocumentee + 1 >= ANNEES_MINIMUM;
+}
