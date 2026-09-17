@@ -314,7 +314,7 @@ type Strings = {
     branche_prochaines_aide: string;
     branche_prochaines_rien: string;
     branche_ici: string; branche_fermer: string; branche_ouverte: string; branche_fleurit: string; branche_encore: string; branche_tache_fleur: string;
-    branche_naissance: string; branche_avenir: string; branche_graine_avant: string; branche_graine_apres: string;
+    branche_naissance: string; branche_avenir: string; branche_graine_avant: string; branche_graine_apres: string; branche_filtres: string;
   };
   boudin: {
     titre: string;
@@ -727,6 +727,7 @@ const FR: Strings = {
     branche_avenir: "Les années devant toi. Le papier reste nu.",
     branche_graine_avant: "Graine précédente",
     branche_graine_apres: "Graine suivante",
+    branche_filtres: "Les domaines montrés",
   },
   boudin: {
     titre: "Timeline de vie",
@@ -1139,6 +1140,7 @@ const EN: Strings = {
     branche_avenir: "The years ahead of you. The paper stays bare.",
     branche_graine_avant: "Previous seed",
     branche_graine_apres: "Next seed",
+    branche_filtres: "Which domains are shown",
   },
   boudin: {
     titre: "Lifetime timeline",
@@ -1551,6 +1553,7 @@ const ES: Strings = {
     branche_avenir: "Los años que tienes delante. El papel queda desnudo.",
     branche_graine_avant: "Semilla anterior",
     branche_graine_apres: "Semilla siguiente",
+    branche_filtres: "Los dominios mostrados",
   },
   boudin: {
     titre: "Línea de tiempo de vida",
@@ -1963,6 +1966,7 @@ const DE: Strings = {
     branche_avenir: "Die Jahre vor dir. Das Papier bleibt leer.",
     branche_graine_avant: "Vorheriges Saatkorn",
     branche_graine_apres: "Nächstes Saatkorn",
+    branche_filtres: "Angezeigte Bereiche",
   },
   boudin: {
     titre: "Lebens-Zeitleiste",
@@ -2375,6 +2379,7 @@ const IT: Strings = {
     branche_avenir: "Gli anni davanti a te. La carta resta nuda.",
     branche_graine_avant: "Seme precedente",
     branche_graine_apres: "Seme successivo",
+    branche_filtres: "I domini mostrati",
   },
   boudin: {
     titre: "Timeline di vita",
@@ -2787,6 +2792,7 @@ const PT: Strings = {
     branche_avenir: "Os anos à tua frente. O papel fica nu.",
     branche_graine_avant: "Semente anterior",
     branche_graine_apres: "Semente seguinte",
+    branche_filtres: "Os domínios mostrados",
   },
   boudin: {
     titre: "Linha do tempo de vida",
@@ -3199,6 +3205,7 @@ const NL: Strings = {
     branche_avenir: "De jaren die voor je liggen. Het papier blijft leeg.",
     branche_graine_avant: "Vorig zaadje",
     branche_graine_apres: "Volgend zaadje",
+    branche_filtres: "Welke domeinen te zien zijn",
   },
   boudin: {
     titre: "Levenstijdlijn",
@@ -3611,6 +3618,7 @@ const JA: Strings = {
     branche_avenir: "これからの歳月。紙はまだ白いまま。",
     branche_graine_avant: "前の種",
     branche_graine_apres: "次の種",
+    branche_filtres: "表示する領域",
   },
   boudin: {
     titre: "生涯タイムライン",
@@ -4023,6 +4031,7 @@ const ZH: Strings = {
     branche_avenir: "你前方的岁月。纸仍是空白。",
     branche_graine_avant: "上一颗种子",
     branche_graine_apres: "下一颗种子",
+    branche_filtres: "显示哪些领域",
   },
   boudin: {
     titre: "一生时间线",
@@ -4435,6 +4444,7 @@ const AR: Strings = {
     branche_avenir: "السنوات التي أمامك. تبقى الورقة خالية.",
     branche_graine_avant: "البذرة السابقة",
     branche_graine_apres: "البذرة التالية",
+    branche_filtres: "المجالات المعروضة",
   },
   boudin: {
     titre: "الجدول الزمني للحياة",

@@ -556,6 +556,8 @@ export function BrancheDeVie({
   const [cle, setCle] = useState(0);
   /** Ou le regard se trouve dans le papier, 0..1. Pour la pastille et les sauts. */
   const [ou, setOu] = useState(0);
+  /** Les trois domaines sont allumes d office : le reglage reste range. */
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
   const signature = useRef("");
   const noms = useMemo(() => STRINGS_MATCH_DOMAINES(locale), [locale]);
 
@@ -1369,6 +1371,16 @@ export function BrancheDeVie({
             onClick={() => setChoix(choix === i ? null : i)}
           />
         ))}
+        {/* Ou l on se trouve : la meme pastille que la frise, au milieu du
+            regard, au bord droit. Elle suit le doigt, elle ne dit rien d autre. */}
+        <span
+          className="pointer-events-none absolute right-3 z-10 flex h-7 -translate-y-1/2 items-center rounded-full px-2.5 text-[11px] font-semibold tabular-nums"
+          style={{ ...VERRE, top: `${ou * 100}%` }}
+          aria-hidden
+        >
+          {libelleOu}
+        </span>
+
         {/* Aujourd hui n est plus au bas du papier : il est a sa date. */}
         <div className="pointer-events-none absolute left-0 right-0 flex items-center gap-2 px-5" style={{ top: `${fen.posMaintenant * 100}%` }}>
           <span aria-hidden className="h-px flex-1" style={{ background: "var(--encre-diluee)", opacity: 0.5 }} />
@@ -1379,21 +1391,13 @@ export function BrancheDeVie({
         </p>
       </div>
 
-      {/* ═══ 4. COLLE EN BAS : ce qu on touche, ou on est, et les vues ══════
-          Christophe, le 17/09 : « les options vie, annee, mois, avec les
-          filtres, doivent etre en sticky, en bas, collees a la bottom nav ». */}
-      <div
-        className="sticky z-20 px-3 pb-2 pt-6"
-        style={{
-          // Le conteneur qui defile reserve deja la ZONE DE SECURITE dans son
-          // padding bas (`var(--safe-bottom)`, app/app/layout.tsx) : l origine
-          // d un `bottom` collant est donc deja au-dessus d elle. Il ne reste
-          // que la hauteur de la barre d onglets a franchir — la compter deux
-          // fois decollait le bandeau, ne rien compter le passait dessous.
-          bottom: "var(--barre-onglets)",
-          background: "linear-gradient(transparent, var(--bg-primary) 38%)",
-        }}
-      >
+      {/* ═══ 4. LES AIDES, FLOTTANTES ET COLLEES EN BAS ════════════════════
+          Christophe, le 17/09 : « ca doit etre exactement comme dans le langage
+          de navigation qu on a deja appris sur la timeline — beaucoup plus
+          minimaliste, fin et finement integre ». Donc : aucun aplat, que des
+          pastilles de verre ; les trois domaines allumes d office et le reglage
+          range ; les trois vues en un segment compact, pas trois gros boutons. */}
+      <div className="sticky z-20 px-3" style={{ bottom: "var(--barre-onglets)" }}>
         <div aria-live="polite">
           {choisie ? (
             <div className="mb-2 rounded-2xl p-3.5 shadow-lg" style={{ background: "var(--bg-secondary)", border: "1px solid var(--bg-tertiary)" }}>
@@ -1418,64 +1422,105 @@ export function BrancheDeVie({
           ) : null}
         </div>
 
-        {/* Ou on se trouve, et comment sauter d une graine a l autre. */}
-        <div className="mb-1.5 flex items-center gap-1.5">
+        {/* Les trois domaines : ranges, et sortis seulement si on les demande. */}
+        {filtresOuverts ? (
+          <div className="mb-1.5 flex justify-center gap-1.5">
+            {FAMILLES.map((f) => {
+              const eteinte = eteintes.has(f);
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  aria-pressed={!eteinte}
+                  onClick={() => basculer(f)}
+                  className="relative flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider transition-opacity before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
+                  style={{ ...VERRE, opacity: eteinte ? 0.42 : 1 }}
+                >
+                  <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[f]})` }} />
+                  {t(CLEF_FAMILLE[f], locale)}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* Une seule ligne, fine. Les fleches de graine en graine flottent
+            juste au-dessus, a droite, comme sur la frise. Les zones tactiles
+            font 44 points par `before:-inset-*` : le dessin reste mince. */}
+        <div className="flex items-end gap-1.5 pb-2">
           {loinDAujourdhui ? (
             <button
               type="button"
               onClick={() => { toucher(); allerA(fen.posMaintenant); }}
-              className="flex h-11 items-center rounded-full px-4 text-[10px] font-semibold uppercase tracking-wider"
+              className="relative flex h-7 items-center rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
               style={VERRE}
             >
               {perso("timeline.maintenant", locale)}
             </button>
           ) : null}
-          <span className="ml-auto flex h-11 items-center rounded-full px-3.5 text-[12px] font-semibold tabular-nums" style={VERRE} aria-live="polite">
-            {libelleOu}
-          </span>
-          <button type="button" onClick={() => versGraine(-1)} className="flex h-11 w-11 items-center justify-center rounded-full" style={VERRE} aria-label={t("resume.branche_graine_avant", locale)}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </button>
-          <button type="button" onClick={() => versGraine(1)} className="flex h-11 w-11 items-center justify-center rounded-full" style={VERRE} aria-label={t("resume.branche_graine_apres", locale)}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </button>
-        </div>
 
-        <div role="tablist" aria-label={t("resume.branche_ech_vie", locale)} className="flex gap-1">
-          {NIVEAUX.map((n) => (
-            <button
-              key={n.id}
-              role="tab"
-              type="button"
-              aria-selected={echelle === n.id}
-              onClick={() => { toucher(); setChoix(null); setEchelle(n.id); }}
-              className="flex-1 rounded-full px-2 py-2 text-center text-[13px] font-semibold transition-colors"
-              style={{
-                background: echelle === n.id ? "var(--bg-brand)" : "var(--bg-tertiary)",
-                color: echelle === n.id ? "var(--text-on-brand)" : "var(--text-body-subtle)",
-              }}
-            >
-              {t(n.clef, locale)}
-            </button>
-          ))}
-        </div>
-        <div className="mt-1.5 flex gap-1.5">
-          {FAMILLES.map((f) => {
-            const eteinte = eteintes.has(f);
-            return (
-              <button
+          {/* Le reglage des domaines : trois points, et c est tout. */}
+          <button
+            type="button"
+            onClick={() => { toucher(); setFiltresOuverts((v) => !v); }}
+            aria-expanded={filtresOuverts}
+            aria-label={t("resume.branche_filtres", locale)}
+            className="relative flex h-7 items-center gap-[3px] rounded-full px-2 before:absolute before:-inset-2.5 before:content-['']"
+            style={VERRE}
+          >
+            {FAMILLES.map((f) => (
+              <span
                 key={f}
+                aria-hidden
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ background: `var(${JETON_FAMILLE[f]})`, opacity: eteintes.has(f) ? 0.28 : 1 }}
+              />
+            ))}
+          </button>
+
+          {/* Les trois vues : un segment mince, la vue tenue est la seule pleine. */}
+          <div role="tablist" aria-label={t("resume.branche_ech_vie", locale)} className="mx-auto flex h-7 items-center rounded-full p-0.5" style={VERRE}>
+            {NIVEAUX.map((n) => (
+              <button
+                key={n.id}
+                role="tab"
                 type="button"
-                aria-pressed={!eteinte}
-                onClick={() => basculer(f)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 text-[11px] font-medium transition-opacity"
-                style={{ background: "var(--bg-tertiary)", color: "var(--text-heading)", opacity: eteinte ? 0.4 : 1 }}
+                aria-selected={echelle === n.id}
+                onClick={() => { toucher(); setChoix(null); setEchelle(n.id); }}
+                className="relative flex h-6 items-center rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider transition-colors before:absolute before:-inset-y-3 before:inset-x-0 before:content-['']"
+                style={
+                  echelle === n.id
+                    ? { background: "var(--bg-brand)", color: "var(--text-on-brand)" }
+                    : { color: "var(--text-brand)", opacity: 0.55 }
+                }
               >
-                <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[f]})` }} />
-                {t(CLEF_FAMILLE[f], locale)}
+                {t(n.clef, locale)}
               </button>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Le pas a pas, d une graine a l autre : empilees a droite, comme
+              la frise les pose sous le pouce. */}
+          <div className="flex flex-col gap-1">
+            <button
+              type="button"
+              onClick={() => versGraine(-1)}
+              className="relative flex h-7 w-7 items-center justify-center rounded-full before:absolute before:-inset-2 before:content-['']"
+              style={VERRE}
+              aria-label={t("resume.branche_graine_avant", locale)}
+            >
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => versGraine(1)}
+              className="relative flex h-7 w-7 items-center justify-center rounded-full before:absolute before:-inset-2 before:content-['']"
+              style={VERRE}
+              aria-label={t("resume.branche_graine_apres", locale)}
+            >
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
