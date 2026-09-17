@@ -937,7 +937,10 @@ export function BrancheDeVie({
     const pal = palette();
     const sig = JSON.stringify([echelle, [...eteintes], pal.encre, pal.familles, plan.paires.length, cle]);
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const largeurCss = hoteEl.clientWidth || L;
+    // La largeur du DESSIN, pas celle de la page : le cadre de l oeuvre sort
+    // des marges du conteneur qui defile (`-mx-5`), donc on mesure ce cadre-la
+    // et jamais la racine du composant, qui reste dans les marges du texte.
+    const largeurCss = encreEl.parentElement?.clientWidth || hoteEl.clientWidth || L;
     const s = largeurCss / L;
     const hauteurCss = H * s;
     // Redimensionner une toile l efface et remet sa regle a zero : on ne le
@@ -1341,7 +1344,7 @@ export function BrancheDeVie({
 
       {/* ═══ 2. LE SOL ═════════════════════════════════════════════════════
           On arrive au niveau du sol : en dessous, cent ans de papier. */}
-      <div className="mt-10 px-5">
+      <div className="mt-10 -mx-5 px-5">
         <div className="flex items-baseline gap-3">
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body-subtle">{t("resume.branche_naissance", locale)}</span>
           <span aria-hidden className="h-px flex-1" style={{ background: "var(--encre-diluee)", opacity: 0.45 }} />
@@ -1350,7 +1353,7 @@ export function BrancheDeVie({
       </div>
 
       {/* ═══ 3. L ARBRE, DE ZERO A CENT ANS ════════════════════════════════ */}
-      <div className="relative w-full" style={{ aspectRatio: `${L} / ${H}` }}>
+      <div className="relative -mx-5 w-[calc(100%+2.5rem)]" style={{ aspectRatio: `${L} / ${H}` }}>
         <canvas ref={encreRef} aria-hidden className="encre-multiplie absolute left-0 top-0" />
         <canvas
           ref={vifRef}
@@ -1397,7 +1400,7 @@ export function BrancheDeVie({
           minimaliste, fin et finement integre ». Donc : aucun aplat, que des
           pastilles de verre ; les trois domaines allumes d office et le reglage
           range ; les trois vues en un segment compact, pas trois gros boutons. */}
-      <div className="sticky z-20 px-3" style={{ bottom: "var(--barre-onglets)" }}>
+      <div className="sticky z-20 -mx-5 px-4" style={{ bottom: "var(--barre-onglets)" }}>
         <div aria-live="polite">
           {choisie ? (
             <div className="mb-2 rounded-2xl p-3.5 shadow-lg" style={{ background: "var(--bg-secondary)", border: "1px solid var(--bg-tertiary)" }}>
