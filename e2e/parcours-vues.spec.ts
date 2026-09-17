@@ -187,6 +187,138 @@ test.describe("bascule timeline / liste", () => {
     expect(apresHaut, `haut : ${apresBas} -> ${apresHaut}, ce n est pas une annee`).toBe(depart);
   });
 
+  test("la feuille d un signal se lit, et ne dit aucun nom de technique", async ({ page }) => {
+    /**
+     * Christophe, le 17/09, capture a l appui : « il y a encore de graves
+     * problemes de contraste, le "en cours" est illisible, le vert fluo sur le
+     * fond mauve clair passe pas du tout ». Et sur la meme image, en clair :
+     * « Cycle de vie Fortune+Spirit L2 Scorpio ».
+     *
+     * DEUX DEFAUTS, UNE SEULE CAUSE DE FOND : personne ne mesurait cet ecran.
+     * Le controle de contraste du depot ne l ouvre pas, et le garde-jargon ne
+     * regarde pas les libelles traduits a la volee.
+     *
+     * Six textes sous le seuil en theme clair, zero en sombre. Tous peints dans
+     * une couleur de DOMAINE ou de PLANETE — des teintes faites pour des
+     * pastilles sur fond sombre, illisibles en lettres de 11 px sur du mauve
+     * clair. C est le deuxieme motif recurrent du depot.
+     *
+     * Ce test ouvre la feuille et mesure chaque texte contre son fond reel,
+     * dans les deux themes. Il verifie aussi qu aucun nom de lot, de niveau ou
+     * de signe n atteint l ecran.
+     */
+    for (const theme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: theme });
+      await ouvrirTimeline(page);
+      await page.waitForTimeout(1600);
+      await page.locator("[data-guide-courant='1']").first().click();
+      await page.waitForTimeout(1800);
+
+      const bilan = await page.evaluate(() => {
+        // `color(srgb r g b)` donne des composantes de 0 a 1, `rgb()` de 0 a
+        // 255. Les confondre fait lire un lavande clair comme du noir, et
+        // fabrique des defauts qui n existent pas : le premier instrument de
+        // mesure ecrit pour cet ecran s est trompe exactement ainsi.
+        const comp = (c: string): number[] | null => {
+          const m = c.match(/[-\d.]+/g);
+          if (!m) return null;
+          const v = m.slice(0, 3).map(Number);
+          const a = m.length > 3 ? Number(m[3]) : 1;
+          if (a < 0.85) return null;
+          return c.startsWith("color(") ? v.map((x) => x * 255) : v;
+        };
+        const lum = (c: string) => {
+          const v = comp(c);
+          if (!v) return null;
+          const f = (x: number) => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+          return 0.2126 * f(v[0]) + 0.7152 * f(v[1]) + 0.0722 * f(v[2]);
+        };
+        const fond = (el: Element): string => {
+          let e: Element | null = el;
+          while (e) {
+            const bg = getComputedStyle(e).backgroundColor;
+            if (bg && !/rgba?\((0, ){3}0\)|transparent/.test(bg) && comp(bg)) return bg;
+            e = e.parentElement;
+          }
+          return "rgb(255, 255, 255)";
+        };
+        const feuille = [...document.querySelectorAll("div")].find((d) =>
+          d.className.toString().includes("z-[60]"),
+        );
+        if (!feuille) return null;
+        const faibles: string[] = [];
+        for (const el of feuille.querySelectorAll("*")) {
+          const txt = (el as HTMLElement).innerText?.trim() ?? "";
+          if (!txt || txt.length > 60 || el.children.length > 0) continue;
+          const st = getComputedStyle(el as HTMLElement);
+          const lt = lum(st.color);
+          const lf = lum(fond(el));
+          if (lt === null || lf === null) continue;
+          const c = (Math.max(lt, lf) + 0.05) / (Math.min(lt, lf) + 0.05);
+          if (c < 4.5) faibles.push(`${c.toFixed(2)} ${st.fontSize} « ${txt.slice(0, 30)} »`);
+        }
+        const plein = (feuille as HTMLElement).innerText;
+        const jargon = ["Fortune", "Spirit", "Scorpio", "Capricorn", "Aquarius", "Sagittarius", "L1", "L2", "L3"]
+          .filter((j) => plein.includes(j));
+        return { faibles, jargon };
+      });
+
+      expect(bilan, `${theme} : la feuille ne s est pas ouverte`).not.toBeNull();
+      expect(
+        bilan!.faibles,
+        `${theme} : ${bilan!.faibles.length} texte(s) sous 4,5 —\n      ${bilan!.faibles.join("\n      ")}`,
+      ).toEqual([]);
+      expect(
+        bilan!.jargon,
+        `${theme} : nom de technique a l ecran : ${bilan!.jargon.join(", ")}`,
+      ).toEqual([]);
+
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(500);
+    }
+
+    /**
+     * Et maintenant une AUTRE periode, parce que celle en cours ne suffit pas.
+     *
+     * La fixture porte deux libelles bruts du type « ZR L2 — Virgo (fortune) »,
+     * qui sont exactement ceux qui produisaient « Cycle de vie Fortune+Spirit
+     * L2 Scorpio » a l ecran. Mais la periode EN COURS du jeu de test est un
+     * transit, dont le libelle ne contient aucun de ces mots : retirer le
+     * garde-fou ne changeait donc rien, et le sabotage passait.
+     *
+     * Une fixture qui n atteint pas le code teste rend le test decoratif. On
+     * ouvre donc aussi les autres periodes.
+     */
+    await page.emulateMedia({ colorScheme: "light" });
+    await ouvrirTimeline(page);
+    await page.waitForTimeout(1600);
+
+    const capsules = page.locator("[data-guide='capsule']");
+    const total = Math.min(await capsules.count(), 6);
+    expect(total, "aucune periode a ouvrir").toBeGreaterThan(1);
+
+    const vus: string[] = [];
+    for (let i = 0; i < total; i++) {
+      await capsules.nth(i).click();
+      await page.waitForTimeout(900);
+      const texte = await page.evaluate(() => {
+        const f = [...document.querySelectorAll("div")].find((d) =>
+          d.className.toString().includes("z-[60]"),
+        );
+        return f ? (f as HTMLElement).innerText : "";
+      });
+      if (texte) vus.push(texte);
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(400);
+    }
+
+    const MOTS = ["Fortune", "Spirit", "Scorpio", "Virgo", "Leo", "Capricorn", "Aquarius", "L1", "L2", "L3"];
+    for (const texte of vus) {
+      const fautifs = MOTS.filter((m) => texte.includes(m));
+      expect(fautifs, `nom de technique dans une feuille : ${fautifs.join(", ")}`).toEqual([]);
+    }
+  });
+
   test("la periode en cours se distingue par la NETTETE, pas par la lueur", async ({ page }) => {
     /**
      * Christophe, le 17/09 : « le halo lumineux des cercles actifs, on les

@@ -207,3 +207,86 @@ autour.
 - **Le seuil de 3:1 d un controle** se lit sur le composant ENTIER — matiere,
   teinte, elevation comprises — jamais sur l epaisseur d un trait. Voir la
   section sur les seuils plus haut.
+
+---
+
+## Mesurer un contraste : l instrument ment plus souvent que le code
+
+**Ajoute le 17/09/2026, apres avoir fabrique six faux defauts en une mesure.**
+
+Le navigateur rend les couleurs sous deux formes, et elles ne se lisent pas
+pareil :
+
+```
+rgb(236, 231, 245)                     composantes de 0 a 255
+color(srgb 0.846274 0.818431 0.914902) composantes de 0 a 1
+```
+
+Un script qui extrait les nombres avec `match(/[\d.]+/g)` et les traite comme du
+0-255 lit `color(srgb 0.84 …)` comme du **noir**. Resultat : un lavande clair
+passe pour un fond sombre, et l instrument signale des textes illisibles qui se
+lisent tres bien.
+
+```js
+// Juste :
+const comp = (c) => {
+  const m = c.match(/[-\d.]+/g); if (!m) return null;
+  const v = m.slice(0, 3).map(Number);
+  const a = m.length > 3 ? Number(m[3]) : 1;
+  if (a < 0.85) return null;             // translucide : le fond compte, pas la couleur
+  return c.startsWith("color(") ? v.map((x) => x * 255) : v;
+};
+```
+
+**La lecon depasse la couleur : avant de corriger ce qu un instrument signale,
+verifier l instrument sur un cas dont on connait la reponse.** Ici, trois des
+six « defauts » n existaient pas, et corriger l un d eux en a casse un vrai.
+
+## La couleur d un domaine n est pas une couleur de texte
+
+Mesure du 17/09, feuille d un signal, theme clair :
+
+| contraste | ce que c etait |
+|---|---|
+| 1,86 | l or du Soleil, en lettres de 11 px |
+| 2,04 | la teinte d une maison, sur le fond de la feuille |
+| 2,41 | l or de Saturne |
+
+Ces teintes sont dessinees pour des **pastilles, des points et des traits sur
+fond sombre**. En lettres, sur du mauve clair, elles disparaissent. C est le
+deuxieme motif recurrent du depot sous une autre forme : le texte peint dans la
+couleur qui teinte son propre fond.
+
+**La correction est structurelle, pas chromatique.** La pastille porte deja un
+point de couleur et un fond teinte : la couleur reste la, le TEXTE passe a un
+jeton lisible. On ne perd rien du langage visuel, on deplace la couleur la ou
+elle se lit.
+
+## Les jetons de texte, mesures sur le fond d une feuille en theme clair
+
+| jeton | contraste | verdict |
+|---|---|---|
+| `--text-heading` | 15,27 | ok |
+| `--text-body` | 5,91 | ok |
+| `--text-brand` | 5,90 | ok, c est LE jeton des libelles de marque |
+| `--text-body-subtle` | **4,16** | sous le seuil |
+| `--accent-purple` | **3,67** | sous le seuil — fonds et traits seulement |
+
+`--accent-purple` en couleur de texte est une faute, partout. `--text-brand`
+existe exactement pour ca.
+
+**A remonter a Christophe, pas a decider seul :** `--text-body-subtle` echoue en
+theme clair sur tous les fonds testes. Le corriger a la racine retypographierait
+l app entiere, et le langage visuel lui appartient.
+
+## Un commentaire JSX mal ferme s affiche a l ecran
+
+```jsx
+/* ceci s affiche */        {/* ceci est un commentaire */}
+```
+
+Pose comme enfant d un element, `/* … */` est du TEXTE. Trois lignes de
+commentaire technique se sont retrouvees dans la feuille d un signal le
+17/09. Rien ne le signale : ni le compilateur, ni le linter, ni les types.
+
+**Seul le regard le voit.** C est une raison de plus de finir par une capture.

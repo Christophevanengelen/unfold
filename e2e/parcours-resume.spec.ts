@@ -184,6 +184,39 @@ test.describe("le resume d une vie", () => {
     await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
   });
 
+  test("les mouvements ne sont demandes au moteur QU UNE FOIS", async ({ page }) => {
+    /**
+     * Christophe, le 17/09 : « quand on donne une date, une heure, un lieu, ca
+     * doit telecharger toute la vie entiere, la mettre en cache, et normalement
+     * on n a plus besoin d aller reinterroger l API ».
+     *
+     * C est le contrat de toute l app — `lib/momentum-store.tsx` le tient
+     * depuis toujours, avec une clef portant l empreinte de la naissance. La
+     * route des chapitres, ecrite le meme jour, ne le tenait PAS : elle
+     * rappelait le moteur a chaque ouverture de l ecran.
+     *
+     * Ce test compte les appels. Il ne regarde pas le code, il regarde le
+     * reseau : c est la seule preuve qui tienne.
+     */
+    let appels = 0;
+    await page.route(/\/api\/chapitres/, async (route) => {
+      appels += 1;
+      await route.fallback();
+    });
+
+    await aller(page, "/app/vie");
+    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
+    expect(appels, "le premier affichage doit appeler le moteur une fois").toBe(1);
+
+    // On quitte l ecran et on y revient : le cache doit suffire.
+    await aller(page, "/app/timeline");
+    await page.waitForTimeout(600);
+    await aller(page, "/app/vie");
+    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
+
+    expect(appels, `le moteur a ete rappele ${appels} fois : le cache ne sert a rien`).toBe(1);
+  });
+
   test("l arc dessine les mouvements a l echelle de leur duree", async ({ page }) => {
     await aller(page, "/app/vie");
 

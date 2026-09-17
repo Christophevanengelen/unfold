@@ -1,5 +1,42 @@
 "use client";
 
+/**
+ * ─── LES COULEURS DE TEXTE, CORRIGEES LE 17/09/2026 ─────────────────────────
+ *
+ * Christophe, apres avoir ouvert la feuille sur son telephone : « il y a encore
+ * de graves problemes de contraste, le "en cours" est illisible, le vert fluo
+ * sur le fond mauve clair passe pas du tout ».
+ *
+ * Mesure du meme jour, sur la feuille ouverte, en THEME CLAIR — neuf textes
+ * sous le seuil de 4,5, et zero en theme sombre. Le pire a 2,04 :
+ *
+ *     2,04   accent-purple sur le fond de la feuille, 9 et 11 px
+ *     2,92   text-body sur surface-light
+ *     3,67   accent-purple, les libelles en capitales
+ *     4,16   text-body-subtle, les dates et le corps
+ *
+ * La cause n est pas un reglage : ce sont les JETONS eux-memes qui ne portent
+ * pas en theme clair. Mesure des paires, sur le fond de la feuille :
+ *
+ *     --text-heading      15,27   ok
+ *     --text-body          5,91   ok
+ *     --text-brand         5,90   ok
+ *     --text-body-subtle   4,16   SOUS LE SEUIL
+ *     --accent-purple      3,67   SOUS LE SEUIL
+ *
+ * Donc : tout texte en `--accent-purple` passe en `--text-brand`, tout texte en
+ * `--text-body-subtle` passe en `--text-body`. Le langage visuel ne change pas
+ * — c est la meme famille de violets — seule la valeur monte assez pour etre
+ * lue. `--accent-purple` reste pour les FONDS et les traits, ou le seuil ne
+ * s applique pas.
+ *
+ * A REMONTER, parce que ca depasse cet ecran : `--text-body-subtle` vaut 4,16
+ * sur le fond principal et 4,15 sur les surfaces claires. Il echoue partout en
+ * theme clair, pas seulement ici. Le corriger a la racine retypographierait
+ * toute l app, et le langage visuel appartient a Christophe : on signale, on ne
+ * decide pas.
+ */
+
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, Fire, CalendarMonth, Lightbulb, ChevronDown, ArrowRight, ShareNodes } from "flowbite-react-icons/outline";
@@ -386,7 +423,7 @@ export function CapsuleDetailSheet({
           <div style={{ color: houseColor }}>
             <BannerIcon icon={tc.bannerIcon} size={12} />
           </div>
-          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: houseColor }}>
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-heading)" }}>
             {tc.bannerLabel}
           </span>
           {tc.context === "current" && (
@@ -421,7 +458,7 @@ export function CapsuleDetailSheet({
           <div className="flex items-center gap-2">
             <span
               className="text-[10px] font-semibold uppercase tracking-[0.15em]"
-              style={{ color: "var(--accent-purple)" }}
+              style={{ color: "var(--text-brand)" }}
             >
               {tierLabel}
             </span>
@@ -450,23 +487,23 @@ export function CapsuleDetailSheet({
                 style={{ color: "var(--text-heading)" }}
               >
                 {displayLifetimeNum}
-                <span className="text-sm font-normal align-super" style={{ color: "var(--text-body-subtle)" }}>e</span>
+                <span className="text-sm font-normal align-super" style={{ color: "var(--text-body)" }}>e</span>
               </span>
-              <span className="text-xs" style={{ color: "var(--text-body-subtle)" }}>
+              <span className="text-xs" style={{ color: "var(--text-body)" }}>
                 {rarityText}
               </span>
             </div>
           )}
 
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-[11px] tabular-nums" style={{ color: "var(--text-body-subtle)" }}>
+            <span className="text-[11px] tabular-nums" style={{ color: "var(--text-body)" }}>
               {dateLabel}
             </span>
             <span
               className="rounded-full px-2 py-0.5 text-[9px] font-medium"
               style={{
                 background: "color-mix(in srgb, var(--accent-purple) 10%, transparent)",
-                color: "var(--accent-purple)",
+                color: "var(--text-brand)",
               }}
             >
               {duration}
@@ -489,13 +526,21 @@ export function CapsuleDetailSheet({
                       // trait redisait la meme separation en plus dur.
                       background: `color-mix(in srgb, ${topic.color} 10%, transparent)`,
                     }}>
+                    {/* La couleur vit sur le POINT et sur le fond, pas dans les lettres.
+                       Mesure du 17/09 en theme clair : le nom du domaine peint
+                       dans la couleur du domaine tombait a 2,04, celui d une
+                       planete a 1,86. Ces teintes sont faites pour des pastilles
+                       et des traits sur fond sombre — en lettres de 11 px sur du
+                       mauve clair, elles disparaissent. C est le deuxieme motif
+                       recurrent du depot : le texte peint dans la couleur qui
+                       teinte son propre fond. */}
                     <div className="h-2 w-2 rounded-full" style={{ background: topic.color }} />
-                    <span className="text-[11px] font-medium" style={{ color: topic.color }}>{hm.label}</span>
+                    <span className="text-[11px] font-medium" style={{ color: "var(--text-heading)" }}>{hm.label}</span>
                   </div>
                 ) : null;
               })}
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-body-subtle)" }}>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-body)" }}>
               {topicsNarrative}
             </p>
           </div>
@@ -510,9 +555,9 @@ export function CapsuleDetailSheet({
                 background: `color-mix(in srgb, ${houseColor} 10%, transparent)`,
               }}>
               <div className="h-2 w-2 rounded-full" style={{ background: houseColor }} />
-              <span className="text-[11px] font-medium" style={{ color: houseColor }}>{houseMeta.label}</span>
+              <span className="text-[11px] font-medium" style={{ color: "var(--text-heading)" }}>{houseMeta.label}</span>
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-body-subtle)" }}>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-body)" }}>
               {domainNarrative}
             </p>
           </div>
@@ -550,7 +595,7 @@ export function CapsuleDetailSheet({
                         : `0 0 6px ${pc.color}`,
                     }}
                   />
-                  <span className="text-[11px] font-medium" style={{ color: pc.color }}>
+                  <span className="text-[11px] font-medium" style={{ color: "var(--text-heading)" }}>
                     {pc.label}
                   </span>
                 </motion.div>
@@ -559,7 +604,7 @@ export function CapsuleDetailSheet({
           </div>
           {/* Hide static ZR description once AI story is loaded — AI corps already covers it */}
           {planetNarrative && !(phase?.apiCategory === "zr" && aiText) && (
-            <p className="mt-3 text-[12px] leading-relaxed italic" style={{ color: "var(--text-body-subtle)" }}>
+            <p className="mt-3 text-[12px] leading-relaxed italic" style={{ color: "var(--text-body)" }}>
               {planetNarrative}
             </p>
           )}
@@ -572,7 +617,7 @@ export function CapsuleDetailSheet({
               <div className="px-1 py-2">
                 <span
                   className="text-[9px] font-semibold uppercase tracking-wider"
-                  style={{ color: "var(--accent-purple)" }}
+                  style={{ color: "var(--text-brand)" }}
                 >
                   {tc.storyLabel}
                 </span>
@@ -589,13 +634,13 @@ export function CapsuleDetailSheet({
           <div className="mb-5">
             <span
               className="text-[9px] font-semibold uppercase tracking-wider"
-              style={{ color: "var(--accent-purple)" }}
+              style={{ color: "var(--text-brand)" }}
             >
               {tc.storyLabel}
             </span>
             {/* Show translated API label — the real transit name */}
             {phase.apiLabel && (
-              <p className="mt-1 text-[11px] font-medium" style={{ color: houseColor, opacity: 0.8 }}>
+              <p className="mt-1 text-[11px] font-medium" style={{ color: "var(--text-body)" }}>
                 {translateApiLabel(phase.apiLabel, locale)}
               </p>
             )}
@@ -632,8 +677,8 @@ export function CapsuleDetailSheet({
             }}
           >
             <div className="flex items-center gap-1.5 mb-1.5">
-              <Lightbulb size={12} style={{ color: "var(--accent-purple)" }} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+              <Lightbulb size={12} style={{ color: "var(--text-brand)" }} />
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
                 {tc.insightLabel}
               </span>
             </div>
@@ -656,8 +701,8 @@ export function CapsuleDetailSheet({
                 style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
               >
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <Lightbulb size={12} style={{ color: "var(--accent-purple)" }} />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                  <Lightbulb size={12} style={{ color: "var(--text-brand)" }} />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
                     {tc.insightLabel}
                   </span>
                 </div>
@@ -677,7 +722,7 @@ export function CapsuleDetailSheet({
             }}
           >
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
                 Cycle
               </span>
             </div>
@@ -690,11 +735,11 @@ export function CapsuleDetailSheet({
         {/* ── Section 6b: Cycle passes (D-R-D multi-hit dates) ── */}
         {cyclePasses?.allHits && cyclePasses.allHits.length > 1 && (
           <div className="mb-4">
-            <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+            <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
               Passes du cycle ({cyclePasses.totalHits ?? cyclePasses.allHits.length})
             </span>
             {cyclePasses.pattern && (
-              <p className="mt-1 text-[10px]" style={{ color: "var(--text-body-subtle)" }}>
+              <p className="mt-1 text-[10px]" style={{ color: "var(--text-body)" }}>
                 {cyclePasses.pattern}
               </p>
             )}
@@ -741,7 +786,7 @@ export function CapsuleDetailSheet({
                         className="text-[9px] font-semibold rounded px-1 py-0.5"
                         style={{
                           background: "color-mix(in srgb, var(--text-body-subtle) 12%, transparent)",
-                          color: "var(--text-body-subtle)",
+                          color: "var(--text-body)",
                         }}
                       >
                         {perso("fiche.passe", locale)}
@@ -778,8 +823,8 @@ export function CapsuleDetailSheet({
                 style={{ background: "color-mix(in srgb, var(--accent-purple) 6%, var(--bg-tertiary))" }}
               >
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                  <ArrowRight size={12} style={{ color: "var(--text-brand)" }} />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
                     {perso("fiche.preparer", locale)}
                   </span>
                 </div>
@@ -797,8 +842,8 @@ export function CapsuleDetailSheet({
             }}
           >
             <div className="flex items-center gap-1.5 mb-1.5">
-              <ArrowRight size={12} style={{ color: "var(--accent-purple)" }} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+              <ArrowRight size={12} style={{ color: "var(--text-brand)" }} />
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
                 {tc.context === "past" ? "Avec le recul" : tc.context === "current" ? "En pratique" : perso("fiche.preparer", locale)}
               </span>
             </div>
@@ -823,7 +868,7 @@ export function CapsuleDetailSheet({
             }}
           >
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
                 {perso("fiche.dans_ta_vie", locale)}
               </span>
             </div>
@@ -841,14 +886,14 @@ export function CapsuleDetailSheet({
                 alors qu il est affiche DANS la fiche : il envoyait le lecteur
                 chercher un ecran qui n existe pas. On dit ce qu on sait — le
                 nombre — et on dit que les dates manquent. */}
-            <p className="text-[11px] italic" style={{ color: "var(--text-body-subtle)" }}>
+            <p className="text-[11px] italic" style={{ color: "var(--text-body)" }}>
               Ce signal se produit {displayLifetimeTotal} fois dans ta vie. Les dates ne sont pas disponibles.
             </p>
           </div>
         )}
         {lifetimePeriods && lifetimePeriods.length >= 1 && (displayLifetimeTotal ?? 99) <= 10 && (
           <div className="mb-4">
-            <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+            <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
               {phase?.apiLabel ? translateApiLabel(phase.apiLabel, locale) : perso("fiche.ce_signal", locale)} ({lifetimePeriods.length})
             </span>
             <div className="mt-2 space-y-1.5">
@@ -889,14 +934,14 @@ export function CapsuleDetailSheet({
                         className="text-[10px] font-semibold rounded px-1"
                         style={{
                           background: "color-mix(in srgb, var(--accent-purple) 12%, transparent)",
-                          color: "var(--accent-purple)",
+                          color: "var(--text-brand)",
                         }}
                       >
                         ×{p.totalHits}
                       </span>
                     )}
                     {canNavigate && (
-                      <ArrowRight size={10} style={{ color: "var(--accent-purple)", opacity: 0.5, flexShrink: 0 }} />
+                      <ArrowRight size={10} style={{ color: "var(--text-brand)", opacity: 0.5, flexShrink: 0 }} />
                     )}
                   </div>
                 );
@@ -914,7 +959,7 @@ export function CapsuleDetailSheet({
             }}
           >
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
                 Convergence
               </span>
             </div>
@@ -948,10 +993,14 @@ export function CapsuleDetailSheet({
             )}
           </div>
           <div className="flex justify-between mt-1.5">
-            <span className="text-[9px] tabular-nums" style={{ color: "var(--text-body-subtle)" }}>
+            <span className="text-[9px] tabular-nums" style={{ color: "var(--text-body)" }}>
               {startLabel}
             </span>
-            <span className="text-[9px] tabular-nums" style={{ color: tc.context === "current" ? houseColor : "var(--text-body-subtle)" }}>
+            {/* « maintenant », au bout de la barre de progression. Peint dans
+                la couleur de maison, il tombait a 2,04 en theme clair — c est le
+                mot qui compte le plus de cette ligne, et c etait le moins
+                lisible. La barre, elle, garde la couleur : c est sa place. */}
+            <span className="text-[9px] tabular-nums" style={{ color: tc.context === "current" ? "var(--text-heading)" : "var(--text-body)" }}>
               {endLabel}
             </span>
           </div>
@@ -970,7 +1019,7 @@ export function CapsuleDetailSheet({
                 // ZONE DE TOUCHE qui s etend, pas le dessin.
                 className="flex items-center justify-center h-11 w-11 rounded-full transition-opacity duration-200"
                 style={{
-                  color: "var(--text-body-subtle)",
+                  color: "var(--text-body)",
                   opacity: 0.3,
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
@@ -1004,9 +1053,9 @@ export function CapsuleDetailSheet({
           className="flex items-center gap-1.5 w-full py-2"
         >
           <motion.div animate={{ rotate: showMore ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={14} style={{ color: "var(--text-body-subtle)" }} />
+            <ChevronDown size={14} style={{ color: "var(--text-body)" }} />
           </motion.div>
-          <span className="text-[10px] font-medium" style={{ color: "var(--text-body-subtle)" }}>
+          <span className="text-[10px] font-medium" style={{ color: "var(--text-body)" }}>
             {perso("fiche.plus", locale)}
           </span>
         </button>
@@ -1079,11 +1128,11 @@ export function CapsuleDetailSheet({
                 )}
                 {capsule.phases.length > 1 && (
                   <div className="mt-3">
-                    <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-purple)" }}>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-brand)" }}>
                       {perso("fiche.combines", locale)}
                     </span>
                     {capsule.phases.map((p, i) => (
-                      <p key={i} className="text-[11px] mt-1" style={{ color: "var(--text-body-subtle)" }}>
+                      <p key={i} className="text-[11px] mt-1" style={{ color: "var(--text-body)" }}>
                         {translateApiLabel(p.apiLabel, locale) || p.title}
                       </p>
                     ))}
@@ -1109,7 +1158,7 @@ export function CapsuleDetailSheet({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
-      <span className="text-[10px]" style={{ color: "var(--text-body-subtle)" }}>{label}</span>
+      <span className="text-[10px]" style={{ color: "var(--text-body)" }}>{label}</span>
       <span className="text-[10px] tabular-nums font-medium" style={{ color: "var(--text-body)" }}>{value}</span>
     </div>
   );

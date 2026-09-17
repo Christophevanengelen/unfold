@@ -26,6 +26,7 @@
  * sujet, elle perd seulement son entree.
  */
 
+import type { CSSProperties } from "react";
 import { useMemo } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { construireEmpreinte, type ParametresEmpreinte } from "@/lib/empreinte";
@@ -36,7 +37,9 @@ export function Empreinte({
   taille = 320,
   opacite = 1,
   aura = false,
+  teinte,
   className,
+  style,
 }: {
   parametres: ParametresEmpreinte;
   taille?: number;
@@ -53,7 +56,21 @@ export function Empreinte({
    * n est pas le sujet.
    */
   aura?: boolean;
+  /**
+   * Force la couleur des deux traits.
+   *
+   * Sert a une seule chose, et elle vaut la peine : montrer LA MEME courbe deux
+   * fois, dans deux teintes, de part et d autre du bord d un disque. C est
+   * ainsi que l ecran d accueil du Match demontre « ca se lit dans les deux
+   * sens » avec une seule naissance, sans inventer une seconde personne.
+   *
+   * Laissee vide, la couleur reste celle que `lib/empreinte.ts` derive des
+   * chiffres — c est le cas normal, et le seul dans le rapport.
+   */
+  teinte?: string;
   className?: string;
+  /** Position et transformations posees par l appelant. */
+  style?: CSSProperties;
 }) {
   const fige = useReducedMotion();
   // Le calcul est pur et deterministe : on ne le refait que si les chiffres
@@ -66,7 +83,7 @@ export function Empreinte({
     // l espace de TRAVAIL — c est lui qui garde la luminosite percue constante
     // quand la teinte suit le score — mais la valeur rendue est du `rgb()`,
     // pour les raisons expliquees dans `oklchVersRgb`.
-    stroke: e.couleurs[i],
+    stroke: teinte ?? e.couleurs[i],
     strokeWidth: aura ? (i === 0 ? 0.3 : 0.26) : i === 0 ? 0.55 : 0.5,
     opacity: i === 0 ? 0.95 : 0.66,
   });
@@ -78,6 +95,7 @@ export function Empreinte({
       height={taille}
       className={className}
       style={{
+        ...style,
         opacity: opacite,
         overflow: "visible",
         /**
