@@ -69,7 +69,13 @@ const SECTIONS: {
   id: string;
   label: string;
   Icone: typeof Clock;
-  capture: string;
+  /**
+   * Le PARCOURS complet de l'ecran, pas un seul instantane — demande par
+   * Christophe le 18/09/2026 : "il faut qu'on voit le flow user complet pour
+   * chaque section pour bien identifier le parcours". Captures reelles,
+   * prises sur le couple de test Christophe/Patricia (voir public/interne/).
+   */
+  captures: { src: string; etape: string }[];
   valeur: string;
   etat: string;
   /** null pour Profil : aucun endpoint du moteur de Marie-Ange n'y est implique. */
@@ -86,7 +92,10 @@ const SECTIONS: {
     id: "timeline",
     label: "Timeline",
     Icone: Clock,
-    capture: "/interne/timeline.png",
+    captures: [
+      { src: "/interne/timeline-1-vue.png", etape: "1. La liste des capsules" },
+      { src: "/interne/timeline-2-detail.png", etape: "2. Le détail d'une capsule (tap dessus)" },
+    ],
     valeur: "Deep digging — l'exploration en détail de tout ce qui se passe dans une vie, catégorie par catégorie. Pas un résumé.",
     etat: "Stable, pas touché récemment.",
     endpoint: "toctoc-year.php (liste) et toctoc-boudin-detail.php (détail d'une capsule) — via /api/toctoc et /api/openai/personalize",
@@ -103,7 +112,10 @@ const SECTIONS: {
     id: "ma_vie",
     label: "Ma vie",
     Icone: ChartMixed,
-    capture: "/interne/ma-vie.png",
+    captures: [
+      { src: "/interne/ma-vie-1-vue.png", etape: "1. Vue d'ensemble, échelle \"Vie\"" },
+      { src: "/interne/ma-vie-2-echelle-annee.png", etape: "2. Bascule sur l'échelle \"Année\"" },
+    ],
     valeur: "L'inverse de Timeline — une vue d'ensemble rapide, lisible en quelques secondes, d'une identité astrologique entière.",
     etat: "Vient d'être refaite (17/09) — la nouvelle branche plein écran est en ligne, encore fraîche.",
     endpoint: "zodiacal-releasing.php — relayé par /api/chapitres",
@@ -120,9 +132,11 @@ const SECTIONS: {
     id: "match",
     label: "Match",
     Icone: Heart,
-    capture: "/interne/match.png",
+    captures: [
+      { src: "/interne/match-1-connexions.png", etape: "1. La liste des connexions" },
+    ],
     valeur: "Pas une fonction de rencontre : un levier de croissance interne. Elle transforme quelqu'un qui a déjà téléchargé l'app en quelqu'un qui en fait télécharger d'autres. Se juge sur les invitations générées, pas sur la richesse du contenu.",
-    etat: "C'est très probablement là-dessus qu'on a besoin de toi : le moteur de matching vient d'être corrigé et branché (17-18/09). Un bug connu et non lié à ton moteur : l'ouverture d'un rapport précis renvoie parfois une erreur serveur (digest DYNAMIC_SERVER_USAGE) — à corriger côté app, pas côté API.",
+    etat: "C'est très probablement là-dessus qu'on a besoin de toi : le moteur de matching vient d'être corrigé et branché (17-18/09). Un bug connu et non lié à ton moteur : l'ouverture d'un rapport précis renvoie une erreur serveur (digest DYNAMIC_SERVER_USAGE) — à corriger côté app, pas côté API. C'est aussi pour ça que tu ne vois qu'un seul écran ci-dessus : le rapport lui-même ne charge plus en ce moment.",
     endpoint: "POST /api/match — documenté dans API-MATCHING.md et match.md",
     story: "En tant qu'utilisateur, je veux comparer mon thème à celui d'un proche pour comprendre ce qui se joue entre nous — et je suis naturellement incité à l'inviter sur l'app pour le faire.",
     fonctionnalites: [
@@ -137,7 +151,10 @@ const SECTIONS: {
     id: "vela",
     label: "Vela",
     Icone: MessageDots,
-    capture: "/interne/vela.png",
+    captures: [
+      { src: "/interne/vela-1-vide.png", etape: "1. Le chat vide" },
+      { src: "/interne/vela-2-reponse.png", etape: "2. Une vraie réponse en 4 temps" },
+    ],
     valeur: "Le substitut à une consultation d'astrologue payante (~80 €). Se juge sur la vitesse et la justesse d'une conversation, pas sur un rapport à lire.",
     etat: "Stable, pas touché récemment.",
     endpoint: "jusqu'à 8 endpoints selon la question (toctoc-year.php, daily-briefing-context.php, connection-brief.php, + 5 endpoints d'un calculateur dédié) — via lib/astrologue-routeur.ts",
@@ -154,7 +171,9 @@ const SECTIONS: {
     id: "profil",
     label: "Profil",
     Icone: User,
-    capture: "/interne/profil.png",
+    captures: [
+      { src: "/interne/profil-1-vue.png", etape: "1. Le tiroir de réglages" },
+    ],
     valeur: "Des réglages, dont un seul compte vraiment côté business : les notifications push (le levier de rétention).",
     etat: "Stable, pas touché récemment.",
     endpoint: null,
@@ -186,7 +205,7 @@ export default function LiaisonMarieAngePage() {
   const [completude, setCompletude] = useState(0);
   // Plein ecran de la capture au clic — demande par Christophe le 18/09/2026
   // pour qu'elle comprenne bien dans quel environnement elle se trouve.
-  const [captureAgrandie, setCaptureAgrandie] = useState(false);
+  const [captureAgrandie, setCaptureAgrandie] = useState<number | null>(null);
   // La zone precise de l'ecran visee — demande par Christophe le 18/09/2026 :
   // remise a zero a chaque changement de section, envoyee avec chaque message.
   const [zone, setZone] = useState<string | null>(null);
@@ -211,7 +230,7 @@ export default function LiaisonMarieAngePage() {
     if (!s) return;
     setSection(id);
     setCompletude(0);
-    setCaptureAgrandie(false);
+    setCaptureAgrandie(null);
     setZone(null);
     setErreur(null);
     setDernierEchec(null);
@@ -401,21 +420,28 @@ export default function LiaisonMarieAngePage() {
 
         {section ? (
           <div style={{ marginBottom: 4 }}>
-            <button
-              type="button"
-              onClick={() => setCaptureAgrandie(true)}
-              style={{ background: "none", border: "none", padding: 0, cursor: "zoom-in", display: "block" }}
-              aria-label={`Agrandir l'écran ${sectionActuelle!.label}`}
-            >
-              <img
-                src={sectionActuelle!.capture}
-                alt={`Écran ${sectionActuelle!.label}`}
-                style={{ width: 260, borderRadius: 16, border: "1px solid var(--border-light)" }}
-              />
-            </button>
-            <p style={{ marginTop: 6, fontSize: 11, color: "var(--text-body-subtle)" }}>
-              Touche l&apos;écran pour l&apos;agrandir.
+            <p style={{ fontSize: 11, color: "var(--text-body-subtle)", marginBottom: 8 }}>
+              Le parcours complet de cet écran — touche une capture pour l&apos;agrandir :
             </p>
+            <div style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 4 }}>
+              {sectionActuelle!.captures.map((c, i) => (
+                <div key={c.src} style={{ flex: "0 0 auto", width: 220 }}>
+                  <button
+                    type="button"
+                    onClick={() => setCaptureAgrandie(i)}
+                    style={{ background: "none", border: "none", padding: 0, cursor: "zoom-in", display: "block", width: "100%" }}
+                    aria-label={`Agrandir l'écran ${sectionActuelle!.label} — ${c.etape}`}
+                  >
+                    <img
+                      src={c.src}
+                      alt={`Écran ${sectionActuelle!.label} — ${c.etape}`}
+                      style={{ width: "100%", borderRadius: 16, border: "1px solid var(--border-light)" }}
+                    />
+                  </button>
+                  <p style={{ marginTop: 6, fontSize: 11, color: "var(--text-body-subtle)" }}>{c.etape}</p>
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -679,12 +705,12 @@ export default function LiaisonMarieAngePage() {
         })}
       </div>
 
-      {/* Plein ecran de la capture — pour qu'elle comprenne bien dans quel
-          environnement elle se trouve avant de parler de l'API. */}
-      {captureAgrandie && sectionActuelle ? (
+      {/* Plein ecran d'une capture du parcours — pour qu'elle comprenne bien
+          dans quel environnement elle se trouve avant de parler de l'API. */}
+      {captureAgrandie !== null && sectionActuelle?.captures[captureAgrandie] ? (
         <button
           type="button"
-          onClick={() => setCaptureAgrandie(false)}
+          onClick={() => setCaptureAgrandie(null)}
           aria-label="Fermer l'écran agrandi"
           style={{
             position: "fixed",
@@ -701,12 +727,12 @@ export default function LiaisonMarieAngePage() {
           }}
         >
           <img
-            src={sectionActuelle.capture}
-            alt={`Écran ${sectionActuelle.label} en plein écran`}
+            src={sectionActuelle.captures[captureAgrandie].src}
+            alt={`Écran ${sectionActuelle.label} — ${sectionActuelle.captures[captureAgrandie].etape}`}
             style={{ maxWidth: "min(90vw, 480px)", maxHeight: "80vh", borderRadius: 20, border: "1px solid var(--border-light)" }}
           />
           <p style={{ marginTop: 16, fontSize: 13, color: "var(--text-on-brand)" }}>
-            Touche n&apos;importe où pour refermer.
+            {sectionActuelle.captures[captureAgrandie].etape} — touche n&apos;importe où pour refermer.
           </p>
         </button>
       ) : null}
