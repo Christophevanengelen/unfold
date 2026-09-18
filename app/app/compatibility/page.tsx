@@ -173,6 +173,7 @@ export default function ConnectionsPage() {
         myBirthData={myBirthData}
         onDeleted={handleDeleted}
         onCodeRecu={() => setShowCodeInput(true)}
+        onAjouter={() => setMatchSheetOuvert(true)}
       />
 
       {/* Le conseil d appui long occupait la place la plus chere de l ecran :

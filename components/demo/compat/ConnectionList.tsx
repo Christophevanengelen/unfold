@@ -33,6 +33,15 @@ interface ConnectionListProps {
    * une connexion. Premier utilisateur, cercle vicieux garanti.
    */
   onCodeRecu?: () => void;
+  /**
+   * Ouvre AjouterMatchSheet (code OU saisie manuelle), tenue par la page.
+   *
+   * BUG DU 19/09 : le bouton principal de la vitrine (zero connexion)
+   * pointait en direct vers /app/invite/share, contournant entierement la
+   * feuille a deux voies ajoutee le 18/09 — donc invisible sur le tout
+   * premier ecran que quelqu un voit. Voir VitrineBase.tsx.
+   */
+  onAjouter?: () => void;
 }
 
 /**
@@ -42,7 +51,7 @@ interface ConnectionListProps {
  * Empty state & share CTAs are rendered by the parent page — this component
  * only owns the list itself.
  */
-export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu }: ConnectionListProps) {
+export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu, onAjouter }: ConnectionListProps) {
   const locale = detectLocale();
   // La feuille garde la connexion ET la vue de depart : un balayage vers la
   // gauche puis "Supprimer" ouvre directement l ecran de confirmation — un
@@ -189,7 +198,9 @@ export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu
           « Partagez votre code ou entrez celui d un proche » — c est-a-dire
           exactement ce que disent les deux boutons places juste dessous. Il
           occupait la moitie de l ecran pour repeter la page. */}
-      {connections.length === 0 && <VitrineBase locale={locale} naissance={myBirthData} onCodeRecu={onCodeRecu} />}
+      {connections.length === 0 && (
+        <VitrineBase locale={locale} naissance={myBirthData} onCodeRecu={onCodeRecu} onAjouter={onAjouter} />
+      )}
     </>
   );
 }

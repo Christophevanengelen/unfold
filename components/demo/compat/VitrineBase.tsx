@@ -105,12 +105,24 @@ export function VitrineBase({
   locale,
   naissance,
   onCodeRecu,
+  onAjouter,
 }: {
   locale: Locale;
   /** La naissance de la personne. Sans elle, pas d empreinte a montrer. */
   naissance: BirthData | null;
   /** Ouvre le vrai formulaire de saisie de code, tenu par la page. */
   onCodeRecu?: () => void;
+  /**
+   * Ouvre AjouterMatchSheet — meme feuille que le bouton « + » en haut de la
+   * page. Christophe, le 19/09, en revoyant l ecran a zero connexion :
+   * « c est toujours ce qu il y avait avant ». Il avait raison — CE geste
+   * precis pointait encore en direct vers /app/invite/share, en contournant
+   * completement la feuille a deux voies (code ou saisie manuelle) ajoutee
+   * le 18/09. Le bouton « + » l ouvrait deja correctement ; c etait donc
+   * invisible en un coup d oeil sur l ecran que tout le monde voit en
+   * premier — celui-ci, avant la toute premiere connexion.
+   */
+  onAjouter?: () => void;
 }) {
   const fige = useReducedMotion();
 
@@ -211,14 +223,18 @@ export function VitrineBase({
       </p>
 
       {/* Un seul geste mis en avant. « J ai recu un code » est l etat d une
-          minorite : il redescend au rang de lien. */}
-      <Link
-        href="/app/invite/share"
+          minorite : il redescend au rang de lien.
+
+          Un bouton qui ouvre AjouterMatchSheet, pas un lien direct vers
+          /app/invite/share : voir le commentaire sur `onAjouter` ci-dessus. */}
+      <button
+        type="button"
+        onClick={onAjouter}
         className="mt-7 flex h-[52px] w-full max-w-[320px] items-center justify-center rounded-full text-[16px] font-semibold"
         style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
       >
         {t("vitrine.inviter", locale)}
-      </Link>
+      </button>
 
       {/* CORRIGE LE 17/09 AU SOIR. Ce lien pointait vers `/app/invite/join`,
           qui n attend que des parametres d URL et redirige silencieusement
