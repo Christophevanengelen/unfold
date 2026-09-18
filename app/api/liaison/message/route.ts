@@ -22,9 +22,11 @@
  *
  * AUTHENTIFICATION
  *
- * /interne/* est protege par le middleware (Basic Auth, meme garde que
- * /admin), mais le middleware ne couvre PAS /api (voir middleware.ts,
- * matcher). Cette route revalide donc le meme mot de passe elle-meme.
+ * Un seul mot de passe, sur la page (`/interne/*`, Basic Auth via le
+ * middleware — meme garde que `/admin`). Cette route elle-meme n'en
+ * redemande pas un second : essaye le 18/09/2026 (Basic Auth revalidee ici
+ * aussi), Christophe a tranche — « pas de protection, on n'est pas une
+ * banque ». Le seul filtre reste le mot de passe de la page.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -60,27 +62,7 @@ interface HistoriqueMessage {
   content: string;
 }
 
-function motDePasseValide(request: NextRequest): boolean {
-  const attendu = process.env.LIAISON_PASSWORD;
-  if (!attendu) return false;
-  const header = request.headers.get("authorization");
-  if (!header) return false;
-  const [scheme, encoded] = header.split(" ");
-  if (scheme !== "Basic" || !encoded) return false;
-  try {
-    const decoded = atob(encoded);
-    const [, pwd] = decoded.split(":");
-    return pwd === attendu;
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: NextRequest) {
-  if (!motDePasseValide(request)) {
-    return NextResponse.json({ ok: false, raison: "acces_refuse" }, { status: 401 });
-  }
-
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ ok: false, raison: "configuration" }, { status: 500 });
