@@ -516,6 +516,13 @@ type Paire = {
   graine: number;
   /** Encore a venir : la fleur n est pas eclose, on ne la dessine pas ouverte. */
   aVenir: boolean;
+  /**
+   * Periode "peak" au sens du moteur (isPeakPeriod, angulaire au Lot de
+   * Fortune — voir api-doc/zr.md). Demande par Christophe le 18/09/2026 :
+   * une rafale de petales se detache quand sa fleur eclot, plutot que le
+   * filet ordinaire d une fleur normale.
+   */
+  pic: boolean;
 };
 type PairePosee = Paire & {
   brindille: Point[];
@@ -661,6 +668,7 @@ export function BrancheDeVie({
         score: x.ph.score ?? 3,
         graine: Math.round(x.d / 3600000) % 100000,
         aVenir: (x.f ?? Infinity) > maintenant,
+        pic: x.ph.isPeakPeriod === true,
       });
     }
     paires.sort((a, b) => a.posGraine - b.posGraine);
@@ -919,6 +927,8 @@ export function BrancheDeVie({
     troncPose: 1, // jusqu ou le tronc est pose (index de point)
     naissances: new Map<string, number>(), // ce qui est en train de naitre : t0
     petales: [] as { x: number; y: number; vx: number; vy: number; ang: number; va: number; vie: number; t: number; col: string; len: number; vrille: number }[],
+    /** Les bouquets "peak" dont la rafale d ouverture est deja partie — une fois chacun. */
+    picsEclos: new Set<string>(),
     dernierPetale: 0,
     dernierSouffle: 0,
     souffle: 0,
@@ -971,6 +981,7 @@ export function BrancheDeVie({
       E.troncPose = 1;
       E.naissances.clear();
       E.petales = [];
+      E.picsEclos.clear();
       E.t0 = performance.now();
     }
     gV.setTransform(dpr * s, 0, 0, dpr * s, 0, 0);
@@ -1034,6 +1045,31 @@ export function BrancheDeVie({
       gE.textBaseline = "middle";
       gE.fillText(rp.libelle, gauche ? L - 14 : 14, y);
       gE.restore();
+    };
+
+    /**
+     * Une rafale de petales, tous d un coup, plutot que le filet au compte-
+     * gouttes de la fleur ordinaire — pour marquer visuellement l ouverture
+     * d une periode "peak". Demande par Christophe le 18/09/2026.
+     */
+    const rafalePetales = (p: PairePosee, col: string, now: number) => {
+      const n = 14 + Math.floor(Math.random() * 6);
+      for (let k = 0; k < n; k++) {
+        const b = p.bouquet[Math.floor(Math.random() * p.bouquet.length)];
+        E.petales.push({
+          x: b.x + (Math.random() - 0.5) * b.D * 0.9,
+          y: b.y + (Math.random() - 0.5) * b.D * 0.6,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: 0.45 + Math.random() * 0.55,
+          ang: Math.random() * 6.28,
+          va: (Math.random() - 0.5) * 0.09,
+          vie: 4200 + Math.random() * 2600,
+          t: now,
+          col,
+          len: b.D * 0.42 * (0.7 + Math.random() * 0.4),
+          vrille: Math.random() * 6.28,
+        });
+      }
     };
 
     const peindrePaire = (p: PairePosee, g: Ctx, partTache: number, partTige: number, partFleur: number, col: string) => {
@@ -1111,14 +1147,22 @@ export function BrancheDeVie({
           // en focus : on la laisse naitre quand meme, mais sur l encre
           E.tamponnes.add(id);
           peindrePaire(p, gE, 1, 1, 1, col);
+          if (p.pic && !p.aVenir && !E.picsEclos.has(id)) {
+            E.picsEclos.add(id);
+            rafalePetales(p, col, now);
+          }
           return;
         }
-        naissance(id, 2600, now, (part, g) => {
+        const eclose = naissance(id, 2600, now, (part, g) => {
           const a = Math.min(1, part / 0.28);
           const b = Math.max(0, Math.min(1, (part - 0.22) / 0.45));
           const c = Math.max(0, Math.min(1, (part - 0.62) / 0.38));
           peindrePaire(p, g, a, b, c, col);
         });
+        if (eclose && p.pic && !p.aVenir && !E.picsEclos.has(id)) {
+          E.picsEclos.add(id);
+          rafalePetales(p, col, now);
+        }
       });
 
       /* 4. les grappes : boutons de fleurs, par trois et par cinq */
