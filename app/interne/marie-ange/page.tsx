@@ -89,7 +89,7 @@ const SECTIONS: {
     capture: "/interne/timeline.png",
     valeur: "Deep digging — l'exploration en détail de tout ce qui se passe dans une vie, catégorie par catégorie. Pas un résumé.",
     etat: "Stable, pas touché récemment.",
-    endpoint: "toctoc-year.php — relayé par /api/toctoc",
+    endpoint: "toctoc-year.php (liste) et toctoc-boudin-detail.php (détail d'une capsule) — via /api/toctoc et /api/openai/personalize",
     story: "En tant qu'utilisateur, je veux voir tout de suite ce qui se passe dans ma vie en ce moment, et pourquoi, sans avoir à chercher.",
     fonctionnalites: [
       "Capsules verticales, une par période, positionnées dans le temps",
@@ -140,7 +140,7 @@ const SECTIONS: {
     capture: "/interne/vela.png",
     valeur: "Le substitut à une consultation d'astrologue payante (~80 €). Se juge sur la vitesse et la justesse d'une conversation, pas sur un rapport à lire.",
     etat: "Stable, pas touché récemment.",
-    endpoint: "toctoc-boudin-detail.php et toctoc-app-short.php — relayés par /api/openai/astrologue/message",
+    endpoint: "jusqu'à 8 endpoints selon la question (toctoc-year.php, daily-briefing-context.php, connection-brief.php, + 5 endpoints d'un calculateur dédié) — via lib/astrologue-routeur.ts",
     story: "En tant qu'utilisateur, je veux poser une question précise sur ma vie et recevoir une réponse humaine, immédiate, comme si je parlais à un astrologue — jamais un rapport à lire.",
     fonctionnalites: [
       "Chat conversationnel en langage courant, jamais de jargon technique",
@@ -175,6 +175,10 @@ export default function LiaisonMarieAngePage() {
   const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  // Le texte du dernier envoi en echec — demande par Christophe le
+  // 18/09/2026 : blinder l'echange, jamais lui faire retaper un message
+  // (ou un briefing .md entier) parce qu'OpenAI a eu un blip.
+  const [dernierEchec, setDernierEchec] = useState<string | null>(null);
   // La jauge de complétude : demandée par Christophe le 18/09/2026 pour que
   // rien ne soit "pris" tant que ce n'est pas 100 — remise à zéro à chaque
   // choix de section, mise à jour par le score que le modèle rend lui-même
@@ -209,6 +213,8 @@ export default function LiaisonMarieAngePage() {
     setCompletude(0);
     setCaptureAgrandie(false);
     setZone(null);
+    setErreur(null);
+    setDernierEchec(null);
     const ligneEndpoint = s.endpoint
       ? `Endpoint de ton moteur concerné : ${s.endpoint}`
       : "Aucun endpoint de ton moteur n'est concerné ici — si ta remarque touche l'API, ce n'est pas la bonne section.";
@@ -235,8 +241,12 @@ export default function LiaisonMarieAngePage() {
     const historique = messages
       .filter((m): m is Message & { role: "user" | "assistant" } => m.role === "user" || m.role === "assistant")
       .map((m) => ({ role: m.role, content: m.content }));
-    const suivant: Message[] = [...messages, { role: "user", content: texte }];
-    setMessages(suivant);
+    // N'ajoute la bulle utilisateur qu'une seule fois : un reessai depuis le
+    // bouton "Reessayer" retrouve deja sa bulle dans `messages`, il ne faut
+    // pas la dupliquer.
+    const dernierMessage = messages[messages.length - 1];
+    const dejaAffiche = dernierMessage?.role === "user" && dernierMessage.content === texte;
+    if (!dejaAffiche) setMessages((m) => [...m, { role: "user", content: texte }]);
     setEnCours(true);
     try {
       const res = await fetch("/api/liaison/message", {
@@ -247,12 +257,15 @@ export default function LiaisonMarieAngePage() {
       const data = (await res.json()) as { ok: boolean; reponse?: string; completude?: number; raison?: string };
       if (!data.ok || !data.reponse) {
         setErreur(data.raison ?? "erreur_inconnue");
+        setDernierEchec(texte);
         return;
       }
       setMessages((m) => [...m, { role: "assistant", content: data.reponse! }]);
       if (typeof data.completude === "number") setCompletude(data.completude);
+      setDernierEchec(null);
     } catch {
       setErreur("reseau");
+      setDernierEchec(texte);
     } finally {
       setEnCours(false);
     }
@@ -262,6 +275,11 @@ export default function LiaisonMarieAngePage() {
     const texte = saisie.trim();
     setSaisie("");
     void envoyerTexte(texte);
+  }
+
+  function reessayer() {
+    if (!dernierEchec) return;
+    void envoyerTexte(dernierEchec);
   }
 
   /**
@@ -275,7 +293,13 @@ export default function LiaisonMarieAngePage() {
     const fichier = e.target.files?.[0];
     e.target.value = "";
     if (!fichier || !section) return;
-    const contenu = await fichier.text();
+    let contenu: string;
+    try {
+      contenu = await fichier.text();
+    } catch {
+      setErreur("lecture_fichier");
+      return;
+    }
     await envoyerTexte(`Briefing importé (fichier ${fichier.name}, préparé avec son IA) :\n\n${contenu}`);
   }
 
@@ -541,8 +565,28 @@ export default function LiaisonMarieAngePage() {
         ) : null}
 
         {erreur ? (
-          <div style={{ marginTop: 16, fontSize: 13, color: "var(--danger)" }}>
-            Ça n&apos;est pas parti ({erreur}). Réessaie.
+          <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--danger)" }}>
+            <span>Ça n&apos;est pas parti ({erreur}).</span>
+            {dernierEchec ? (
+              <button
+                type="button"
+                onClick={reessayer}
+                disabled={enCours}
+                style={{
+                  borderRadius: 8,
+                  border: "1px solid var(--danger)",
+                  background: "none",
+                  color: "var(--danger)",
+                  padding: "4px 10px",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: enCours ? "not-allowed" : "pointer",
+                  opacity: enCours ? 0.6 : 1,
+                }}
+              >
+                Réessayer
+              </button>
+            ) : null}
           </div>
         ) : null}
 
