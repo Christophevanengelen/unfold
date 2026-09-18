@@ -101,15 +101,20 @@ export default function LiaisonMarieAngePage() {
     finRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, enCours, section]);
 
+  /**
+   * Changer de section REMPLACE la conversation, elle ne s'y ajoute pas —
+   * bug trouve par Christophe le 18/09/2026 : Timeline puis Ma vie puis
+   * Match empilaient les trois blocs au lieu de montrer un seul ecran a la
+   * fois. Cote API, un changement de section a aussi le meme effet : les
+   * anciens messages ne partent plus dans l'historique du nouveau sujet,
+   * puisque `messages` (donc `historique`, derive dessus) repart a zero.
+   */
   function choisirSection(id: string) {
     const s = SECTIONS.find((s) => s.id === id);
     if (!s) return;
     setSection(id);
     setCompletude(0);
-    setMessages((m) => [
-      ...m,
-      { role: "systeme", content: `${s.label} — ${s.valeur}\n\nÉtat actuel : ${s.etat}` },
-    ]);
+    setMessages([{ role: "systeme", content: `${s.label} — ${s.valeur}\n\nÉtat actuel : ${s.etat}` }]);
   }
 
   async function envoyer() {
