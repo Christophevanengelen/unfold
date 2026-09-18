@@ -2,6 +2,8 @@
 
 import { getTier as getTierCapsules } from "@/lib/capsules";
 import { TierPulse } from "@/components/demo/compat/TierPulse";
+import { BasculeSegmentee, BoutonFleche, BoutonMaintenant } from "@/components/demo/primitives";
+import { VERRE_PILULE } from "@/components/demo/primitives/verre";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, startTransition } from "react";
 
 /**
@@ -268,12 +270,10 @@ function VoileBas() {
 // d un cran plus dense et plus opaque que --glass-pill. On monte d un cran de
 // fond au lieu de garder un trait — pas d ombre ajoutee, ce serait la couche
 // de trop.
-const PILL_STYLE: React.CSSProperties = {
-  background: "var(--glass-pill-strong)",
-  color: "var(--text-brand)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-};
+// Vivait ici sous son propre nom, identique au caractere pres a `VERRE` dans
+// BrancheDeVie.tsx (Ma vie) — une seule definition maintenant, voir
+// components/demo/primitives/verre.ts.
+const PILL_STYLE = VERRE_PILULE;
 
 // ─── Date helpers ───────────────────────────────────────────
 // These are now computed inside the component from the hook's birthDateStr.
@@ -913,45 +913,21 @@ function OverviewView({
         </div>
       </div>
 
-      {/* NOW button — center bottom */}
-      <AnimatePresence>
-        {isAwayFromNow && (
-          <motion.button
-            type="button"
-            onClick={scrollToNow}
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.6 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute left-2 z-30 flex h-[var(--taille-tactile-min)] items-center justify-center rounded-full px-4"
-            style={{ ...PILL_STYLE, bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="text-[10px] font-semibold uppercase tracking-wider">{perso("timeline.maintenant", detectLocale())}</span>
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {/* NOW button — center bottom. Composant partage avec Ma vie, voir
+          components/demo/primitives/BoutonMaintenant.tsx. */}
+      <BoutonMaintenant
+        flottant
+        visible={isAwayFromNow}
+        onClick={scrollToNow}
+        className="absolute left-2 z-30"
+        style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
+      />
 
-      {/* Up/Down — right side, stacked vertically, thumb zone */}
+      {/* Up/Down — right side, stacked vertically, thumb zone. Composant
+          partage avec Ma vie, voir components/demo/primitives/BoutonFleche.tsx. */}
       <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}>
-        <motion.button
-          type="button"
-          onClick={() => jumpByYear("future")}
-          className="flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center rounded-full"
-          style={PILL_STYLE}
-          whileTap={{ scale: 0.9 }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </motion.button>
-        <motion.button
-          type="button"
-          onClick={() => jumpByYear("past")}
-          className="flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center rounded-full"
-          style={PILL_STYLE}
-          whileTap={{ scale: 0.9 }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </motion.button>
+        <BoutonFleche sens="haut" onClick={() => jumpByYear("future")} ariaLabel="Timeline: next year" />
+        <BoutonFleche sens="bas" onClick={() => jumpByYear("past")} ariaLabel="Timeline: previous year" />
       </div>
     </div>
   );
@@ -1138,26 +1114,21 @@ function ListView({
   return (
     <div className="relative h-full">
       <VoileBas />
-      {/* NOW button — absolute, centered bottom */}
-      {isAwayFromNow && (
-        <button
-          type="button"
-          onClick={scrollToNow}
-          className="absolute left-2 z-30 flex h-[var(--taille-tactile-min)] items-center justify-center rounded-full px-4"
-          style={{ ...PILL_STYLE, bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
-        >
-          <span className="text-[10px] font-semibold uppercase tracking-wider">{perso("timeline.maintenant", detectLocale())}</span>
-        </button>
-      )}
+      {/* NOW button — absolute, centered bottom. Composant partage avec Ma
+          vie, voir components/demo/primitives/BoutonMaintenant.tsx. */}
+      <BoutonMaintenant
+        flottant
+        visible={isAwayFromNow}
+        onClick={scrollToNow}
+        className="absolute left-2 z-30"
+        style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
+      />
 
-      {/* Up/Down — absolute right, jump by year like overview */}
+      {/* Up/Down — absolute right, jump by year like overview. Composant
+          partage avec Ma vie, voir components/demo/primitives/BoutonFleche.tsx. */}
       <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}>
-        <button type="button" onClick={() => jumpByYear("future")} className="flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center rounded-full" style={PILL_STYLE}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
-        <button type="button" onClick={() => jumpByYear("past")} className="flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center rounded-full" style={PILL_STYLE}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
+        <BoutonFleche sens="haut" onClick={() => jumpByYear("future")} ariaLabel="Timeline: next year" />
+        <BoutonFleche sens="bas" onClick={() => jumpByYear("past")} ariaLabel="Timeline: previous year" />
       </div>
 
       <div
@@ -1679,51 +1650,44 @@ export function MomentumTimelineV2() {
           
           Les deux autres conteneurs pleine largeur de ce fichier (lignes 232 et
           1791) portent deja `pointer-events-none`. Celui-ci avait ete oublie. */}
+      {/* Composant partage avec le tablist VIE/ANNEE/MOIS de Ma vie, voir
+          components/demo/primitives/BasculeSegmentee.tsx — meme anneau,
+          meme echelon de taille (44px, l'icone seule n'a pas de texte pour
+          se faire reconnaitre plus petite). */}
       {!showWelcome && !showGuide && <div className="pointer-events-none absolute left-0 right-0 z-20 flex items-center justify-center" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)", paddingInline: S.px }}>
-        <div
-          className="pointer-events-auto flex items-center gap-0.5 rounded-full p-0.5"
-          style={PILL_STYLE}
-        >
-          {(["overview", "list"] as ViewMode[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setViewMode(mode)}
-              className="relative flex items-center justify-center rounded-full transition-all duration-200"
-              style={{
-                // La paire jeton de marque plutot que blanc sur accent-purple :
-                // celle-ci tombait a 3,23 en theme sombre. --text-on-brand et
-                // --bg-brand sont faits pour aller ensemble et sont verifies.
-                // L icone de la vue INACTIVE reste touchable : c est le bouton
-                // qui sert a changer de vue. La peindre en « desactive » la
-                // rendait invisible alors qu elle est la seule facon de basculer.
-                color: viewMode === mode ? "var(--text-on-brand)" : "var(--text-body-subtle)",
-                background: viewMode === mode ? "var(--bg-brand)" : "transparent",
-                // 44 points, le minimum qu Apple demande pour une cible tactile.
-                // On etait a 28.
-                width: "var(--taille-tactile-min)",
-                height: "var(--taille-tactile-min)",
-              }}
-              aria-label={mode === "overview" ? "Timeline view" : "List view"}
-            >
-              {mode === "overview" ? (
-                <svg width="14" height="14" viewBox="0 0 14 14">
-                  <rect x="1" y="1" width="3" height="12" rx="1.5" fill="currentColor" />
-                  <rect x="5.5" y="4" width="3" height="9" rx="1.5" fill="currentColor" />
-                  <rect x="10" y="2" width="3" height="11" rx="1.5" fill="currentColor" />
-                </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 14 14">
-                  <rect x="4" y="2" width="9" height="2" rx="1" fill="currentColor" />
-                  <rect x="4" y="6" width="9" height="2" rx="1" fill="currentColor" />
-                  <rect x="4" y="10" width="9" height="2" rx="1" fill="currentColor" />
-                  <circle cx="1.5" cy="3" r="1.5" fill="currentColor" />
-                  <circle cx="1.5" cy="7" r="1.5" fill="currentColor" />
-                  <circle cx="1.5" cy="11" r="1.5" fill="currentColor" />
-                </svg>
-              )}
-            </button>
-          ))}
+        <div className="pointer-events-auto">
+          <BasculeSegmentee<ViewMode>
+            taille="tactile"
+            valeur={viewMode}
+            onChange={setViewMode}
+            options={[
+              {
+                valeur: "overview",
+                libelle: "Timeline view",
+                contenu: (
+                  <svg width="14" height="14" viewBox="0 0 14 14">
+                    <rect x="1" y="1" width="3" height="12" rx="1.5" fill="currentColor" />
+                    <rect x="5.5" y="4" width="3" height="9" rx="1.5" fill="currentColor" />
+                    <rect x="10" y="2" width="3" height="11" rx="1.5" fill="currentColor" />
+                  </svg>
+                ),
+              },
+              {
+                valeur: "list",
+                libelle: "List view",
+                contenu: (
+                  <svg width="14" height="14" viewBox="0 0 14 14">
+                    <rect x="4" y="2" width="9" height="2" rx="1" fill="currentColor" />
+                    <rect x="4" y="6" width="9" height="2" rx="1" fill="currentColor" />
+                    <rect x="4" y="10" width="9" height="2" rx="1" fill="currentColor" />
+                    <circle cx="1.5" cy="3" r="1.5" fill="currentColor" />
+                    <circle cx="1.5" cy="7" r="1.5" fill="currentColor" />
+                    <circle cx="1.5" cy="11" r="1.5" fill="currentColor" />
+                  </svg>
+                ),
+              },
+            ]}
+          />
         </div>
       </div>}
 

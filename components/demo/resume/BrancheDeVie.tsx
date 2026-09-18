@@ -49,6 +49,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
+import { BasculeSegmentee, BoutonFleche } from "@/components/demo/primitives";
+import { VERRE_PILULE } from "@/components/demo/primitives/verre";
 import { STRINGS_MATCH_DOMAINES, t, type Locale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 import { toucher } from "@/lib/haptique";
@@ -286,13 +288,10 @@ function entrelacer<T>(a: T[], b: T[], partA: number): T[] {
   return resultat;
 }
 
-/** Les pastilles de navigation : le meme verre que la frise (MomentumTimelineV2). */
-const VERRE: React.CSSProperties = {
-  background: "var(--glass-pill-strong)",
-  color: "var(--text-brand)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-};
+// Vivait ici sous son propre nom, identique au caractere pres a `PILL_STYLE`
+// dans MomentumTimelineV2.tsx (Timeline) — une seule definition maintenant,
+// voir components/demo/primitives/verre.ts.
+const VERRE = VERRE_PILULE;
 
 /** Le conteneur qui defile vraiment : l app fait defiler une div, pas la fenetre. */
 function conteneurDefilant(el: HTMLElement | null): HTMLElement | null {
@@ -1365,7 +1364,6 @@ export function BrancheDeVie({
   const libelleOu = echelle === "vie"
     ? t("resume.vie_ans", locale).replace("{n}", String(Math.round(ou * ANS_DE_VIE)))
     : fen.libelleDe(ou);
-  const loinDAujourdhui = Math.abs(ou - fen.posMaintenant) > 0.04;
   const NIVEAUX: { id: typeof echelle; clef: string }[] = [
     { id: "vie", clef: "resume.branche_ech_vie" },
     { id: "annee", clef: "resume.branche_ech_annee" },
@@ -1535,16 +1533,14 @@ export function BrancheDeVie({
             juste au-dessus, a droite, comme sur la frise. Les zones tactiles
             font 44 points par `before:-inset-*` : le dessin reste mince. */}
         <div className="flex items-end gap-1.5 pb-2">
-          {loinDAujourdhui ? (
-            <button
-              type="button"
-              onClick={() => { toucher(); allerA(fen.posMaintenant); }}
-              className="relative flex h-[var(--taille-pastille)] items-center rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
-              style={VERRE}
-            >
-              {perso("timeline.maintenant", locale)}
-            </button>
-          ) : null}
+          {/* Le bouton "Maintenant" a ete retire ici le 18/09 : Christophe —
+              « il est inutile parce que quand on clique plus haut ou plus
+              bas, on saute d'une graine ou d'une fleur a l'autre, pas d'une
+              annee a l'autre ». Contrairement a Timeline, ou les fleches
+              haut/bas sautent par ANNEE et s eloignent vraiment d aujourd hui,
+              ici elles sautent de graine en graine : le bouton ne ramenait
+              nulle part d utile. Le composant BoutonMaintenant reste utilise
+              par Timeline, voir components/demo/primitives/BoutonMaintenant.tsx. */}
 
           {/* Le reglage des domaines : trois points, et c est tout. */}
           <button
@@ -1565,48 +1561,29 @@ export function BrancheDeVie({
             ))}
           </button>
 
-          {/* Les trois vues : un segment mince, la vue tenue est la seule pleine. */}
-          <div role="tablist" aria-label={t("resume.branche_ech_vie", locale)} className="mx-auto flex h-[var(--taille-pastille)] items-center rounded-full p-0.5" style={VERRE}>
-            {NIVEAUX.map((n) => (
-              <button
-                key={n.id}
-                role="tab"
-                type="button"
-                aria-selected={echelle === n.id}
-                onClick={() => { toucher(); setChoix(null); setEchelle(n.id); }}
-                className="relative flex h-[var(--taille-pastille)] items-center rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider transition-colors before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
-                style={
-                  echelle === n.id
-                    ? { background: "var(--bg-brand)", color: "var(--text-on-brand)" }
-                    : { color: "var(--text-brand)", opacity: 0.55 }
-                }
-              >
-                {t(n.clef, locale)}
-              </button>
-            ))}
+          {/* Les trois vues : un segment mince, la vue tenue est la seule
+              pleine. Composant partage avec le switcher vue d'ensemble/liste
+              de Timeline, voir
+              components/demo/primitives/BasculeSegmentee.tsx. */}
+          <div className="mx-auto">
+            <BasculeSegmentee
+              role="tablist"
+              ariaLabel={t("resume.branche_ech_vie", locale)}
+              taille="pastille"
+              valeur={echelle}
+              onChange={(v) => { toucher(); setChoix(null); setEchelle(v); }}
+              options={NIVEAUX.map((n) => ({ valeur: n.id, contenu: t(n.clef, locale) }))}
+            />
           </div>
 
           {/* Le pas a pas, d une graine a l autre : empilees a droite, comme
-              la frise les pose sous le pouce. */}
+              la frise les pose sous le pouce. Composant partage avec
+              Timeline, voir components/demo/primitives/BoutonFleche.tsx —
+              Christophe, le 18/09 : « ils etaient adaptes au pouce », meme
+              taille partout. */}
           <div className="flex flex-col gap-1">
-            <button
-              type="button"
-              onClick={() => versGraine(-1)}
-              className="relative flex h-[var(--taille-icone-secondaire)] w-[var(--taille-icone-secondaire)] items-center justify-center rounded-full before:absolute before:-inset-2 before:content-['']"
-              style={VERRE}
-              aria-label={t("resume.branche_graine_avant", locale)}
-            >
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => versGraine(1)}
-              className="relative flex h-[var(--taille-icone-secondaire)] w-[var(--taille-icone-secondaire)] items-center justify-center rounded-full before:absolute before:-inset-2 before:content-['']"
-              style={VERRE}
-              aria-label={t("resume.branche_graine_apres", locale)}
-            >
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </button>
+            <BoutonFleche sens="haut" onClick={() => versGraine(-1)} ariaLabel={t("resume.branche_graine_avant", locale)} />
+            <BoutonFleche sens="bas" onClick={() => versGraine(1)} ariaLabel={t("resume.branche_graine_apres", locale)} />
           </div>
         </div>
       </div>

@@ -639,3 +639,92 @@ ouvertes et lues :
       non divulgué, contredit Pew d'un ordre de grandeur) ; l'article arXiv de
       mars 2026 sur l'astrologie et l'apprentissage automatique (canular d'avril,
       *Acta Prima Aprilia*, données synthétiques).
+
+# 18 septembre 2026 — design system et réparation Match
+
+Christophe, en fin de journée : « pour ne pas perdre toutes les informations
+et le travail qu'on fait, tu fais un playbook ». Ce registre existait déjà —
+il avait cessé d'être tenu depuis le 2 septembre. Reprise ici plutôt qu'un
+nouveau fichier : le dépôt en a déjà trente et un à la racine, en ajouter un
+de plus est exactement la façon de perdre une information.
+
+## Le design system des tailles interactives — posé aujourd'hui
+
+Avant ce jour, chaque écran choisissait sa propre hauteur de bouton en
+Tailwind brut (`h-6`, `h-7`, `h-11`…) sans référence commune. Deux couches de
+correctif, dans cet ordre :
+
+- [x] **Les jetons de taille**, `app/globals.css`, section « TAILLES
+      INTERACTIVES ». Deux primitives seulement, tout le reste en est un
+      alias — ne pas en ajouter un troisième pour un cas particulier :
+      - `--taille-tactile-min: 44px` — la zone tactile minimale Apple.
+      - `--taille-icone-secondaire: 28px` — le rond ou la pastille compacts,
+        qui atteignent 44px de zone tactile via `before:-inset-*`, jamais en
+        agrandissant le dessin.
+      - `--taille-pastille` et `--taille-cta` sont des alias des deux
+        primitives ci-dessus.
+- [x] **Les composants partagés**, `components/demo/primitives/` — appliquer
+      le même jeton dans deux fichiers ne suffit pas si c'est deux boutons
+      codés séparément : `PILL_STYLE` (Timeline) et `VERRE` (Ma vie) étaient
+      identiques au caractère près, et le bouton « Maintenant » existait deux
+      fois à deux tailles différentes (44px flottant sur Timeline, 28px
+      inline sur Ma vie) malgré le même jeton. Christophe : « réutiliser les
+      mêmes composants dans ma vie et partout dans l'application. »
+      - `verre.ts` — `VERRE_PILULE`, le style de verre dépoli, une seule
+        définition.
+      - `BoutonMaintenant.tsx` — le bouton « Maintenant », utilisé par
+        `MomentumTimelineV2.tsx` (Timeline, montage flottant/animé) et
+        `resume/BrancheDeVie.tsx` (Ma vie, montage inline) : même corps,
+        même taille, seul le montage change parce que c'est un fait de mise
+        en page.
+      - `BasculeSegmentee.tsx` — la pilule à plusieurs positions, utilisée par
+        le switcher Vue d'ensemble/Liste de Timeline (2 icônes, taille
+        `"tactile"`) et le tablist Vie/Année/Mois de Ma vie (3 libellés,
+        taille `"pastille"`).
+- [ ] **Reste à auditer** : les autres écrans de l'app (Vela, Match,
+      onboarding, profil) n'ont pas été passés en revue pour des boutons qui
+      réinventeraient encore une taille ou dupliqueraient un composant. Ne
+      pas supposer que Timeline et Ma vie étaient les deux seuls fichiers
+      concernés — c'est juste là où Christophe a regardé en premier.
+
+## Match — l'écart avec ce que Marie-Ange a livré, audité aujourd'hui
+
+Christophe : « Marie-Ange me dit que ce qu'on a fait pour match ne correspond
+pas du tout à ce qu'elle a fait. » Deux écarts confirmés en comparant le code
+à `match.md`/`API-MATCHING.md` (racine du dépôt, sa source de vérité — LIRE
+CES DEUX FICHIERS avant de retoucher quoi que ce soit au match) :
+
+- **`similarityRadar` n'a jamais été lu.** Le radar « à quel point vous vous
+  ressemblez », pendant symétrique de `compatibilityRadar` (déjà affiché),
+  n'apparaît nulle part dans `lib/match-lecture.ts` ni
+  `components/demo/compat/RapportMatch.tsx` — confirmé par recherche
+  exhaustive dans le dépôt.
+- **Le moteur d'étincelle reconstruit le 17/09 à 23h14** (commit `358d78b`,
+  côté Marie-Ange) est arrivé APRÈS notre branchement du 17/09 à 19h58
+  (commit `6165af6`) et n'a jamais été intégré : `sparkHits[]` classés par
+  priorité avec un texte "gloss" par hit, `idealizationFlags` /
+  `obsessionFlags` / `electricUnstableFlags`, `longevityHits[]`,
+  `qualityNotes[]`. Notre carte Étincelle affiche encore une seule phrase
+  avec un chiffre (`lecture.etincelle.compte`).
+
+**Plan lancé le 18/09** (workflow `wf_c910b946-76e`, cinq chantiers) :
+diagnostic + correction du partage par lien d'invitation (hypothèse
+confirmée à vérifier : aucun fichier `apple-app-site-association`, aucun
+`associatedDomains` dans `capacitor.config.ts` — un lien `https://` ouvre
+donc Safari plutôt que l'app, qui ne voit pas le profil déjà onboardé) ;
+recherche concurrentielle sur la création de match sans invitation et la
+gestion d'une liste de connexions ; synchronisation des deux écarts moteur
+ci-dessus ; conception + construction d'un « match solo » (naissance
+encodée à la main, sans code ni app installée côté tiers) ; refonte de la
+gestion des matchs (ajout, suppression, tri par catégorie amour/travail/
+famille, déjà en partie dans `relationshipConfig.ts`).
+
+- [ ] **À la fin du workflow** : lire les cinq rapports, vérifier
+      (`tsc --noEmit`, `node scripts/verifier-tout.mjs`), tester en direct
+      dans le navigateur, puis un seul commit + déploiement groupé — pas cinq
+      séparés.
+- [ ] **Ne pas relancer une recherche ou un audit déjà fait** : si ce
+      registre dit qu'un champ est lu ou qu'un écart est confirmé, vérifier
+      l'état actuel du code avant de le remettre en doute — ce document peut
+      lui-même dater, contrairement à `match.md` qui est la source de vérité
+      vivante de Marie-Ange.

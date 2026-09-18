@@ -1,4 +1,8 @@
+export { BasculeSegmentee } from "./BasculeSegmentee";
+export type { SegmentBascule } from "./BasculeSegmentee";
 export { BottomSheet } from "./BottomSheet";
+export { BoutonFleche } from "./BoutonFleche";
+export { BoutonMaintenant } from "./BoutonMaintenant";
 export { EyebrowLabel } from "./EyebrowLabel";
 export { PageHeader } from "./PageHeader";
 export { PlanetPill } from "./PlanetPill";
