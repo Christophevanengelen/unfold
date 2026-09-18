@@ -64,6 +64,10 @@ CHEMINS=(
   "app/app/boudin"
   "public/boudin-sausage.html"
   "public/boudin-timeline.html"
+  # Fichier AASA des Universal Links iOS : ne repond que depuis le vrai
+  # domaine favorable.day servi par Vercel, iOS ne le demande jamais a
+  # capacitor://localhost. Aucune raison de l embarquer dans le binaire.
+  "app/.well-known"
 )
 
 ecarter() {

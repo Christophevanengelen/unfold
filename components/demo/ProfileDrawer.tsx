@@ -274,7 +274,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                 setEditionOuverte(true);
               } else {
                 onClose();
-                router.push("/app/onboarding");
+                // Meme course qu ailleurs dans ce fichier : le history.back()
+                // de fermeture de BottomSheet annulerait un router.push()
+                // appele dans la meme frappe.
+                setTimeout(() => router.push("/app/onboarding"), 300);
               }
             }}
             className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
@@ -292,7 +295,13 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           {billing.isPremium && (
             <button
               type="button"
-              onClick={() => { onClose(); router.push("/app/lifetime-chart"); }}
+              onClick={() => {
+                onClose();
+                // Meme course que AjouterMatchSheet.tsx (18/09) : BottomSheet
+                // fait un history.back() a sa fermeture, qui annule en silence
+                // un router.push() appele dans la meme frappe.
+                setTimeout(() => router.push("/app/lifetime-chart"), 300);
+              }}
               className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
             >
               <span className="flex items-center gap-2.5">
@@ -512,7 +521,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             onClick={() => {
               rejouerGuide();
               onClose();
-              router.push("/app/timeline");
+              // Meme course qu ailleurs dans ce fichier : le history.back()
+              // de fermeture de BottomSheet annulerait un router.push()
+              // appele dans la meme frappe.
+              setTimeout(() => router.push("/app/timeline"), 300);
             }}
             className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
           >
@@ -636,7 +648,10 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   await signOut();
                   clearBirthData();
                   onClose();
-                  router.push("/app/onboarding");
+                  // Meme course qu ailleurs dans ce fichier : le history.back()
+                  // de fermeture de BottomSheet annulerait un router.push()
+                  // appele dans la meme frappe.
+                  setTimeout(() => router.push("/app/onboarding"), 300);
                 }}
                 className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-heading transition-colors hover:bg-bg-secondary"
               >

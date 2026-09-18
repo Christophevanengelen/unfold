@@ -42,6 +42,38 @@
  * les noms de planète des `hits`) restent en anglais et nomment la technique —
  * elles ne passent jamais telles quelles à l'écran (voir décision n° 1). On en
  * tire une clef de traduction par palier connu, jamais le texte du moteur.
+ *
+ * ─── LE RATTRAPAGE DU 18/09 (commit 358d78b, poussé le 17/09 à 23h14) ───────
+ *
+ * Marie-Ange a poussé une deuxième correction le soir même du 17/09, après
+ * qu'on ait branché la première (19h58) : on ne l'avait jamais tirée. Deux
+ * champs concernés, tous les deux déjà dans la réponse mesurée mais jamais
+ * lus ici.
+ *
+ * 1. **`similarityRadar`** — le jumeau symétrique de `compatibilityRadar` :
+ *    même forme (`{ planet, pointsperc, pointsperc2 }[]`), mais les deux
+ *    pourcentages viennent du Perso de chacun (« à quel point vous vous
+ *    ressemblez ») plutôt que du Recherchées de l'un contre le Perso de
+ *    l'autre (« ce que vous apportez »). Même lecture (`lireRadar`), même
+ *    clef d'axe (`AXE_CLEF` ne distingue pas la question posée, seulement le
+ *    domaine) — mais un champ séparé (`porteursRessemblance`), jamais mélangé
+ *    à `porteurs` : ce sont deux questions, pas deux vues d'une même donnée.
+ *
+ * 2. **`attraction.sparkHits[]`** — le moteur d'étincelle complet
+ *    (`API-MATCHING.md` §5) : une liste classée par priorité, chacune avec un
+ *    `gloss` déjà rédigé côté moteur. Vérifié sur `match-attraction-spec.md`
+ *    §2.5 : ce `gloss` nomme encore des planètes et des maisons brutes
+ *    (« needs Saturn or earth », « Their [planet] lands in your 5th/7th ») —
+ *    il ne passe donc PAS le garde-jargon tel quel. On ignore le texte du
+ *    moteur et on retraduit chaque `type` de signal en clef produit
+ *    (`clefEtincelleHit`), exactement comme `clefLien`/`clefEntente` le font
+ *    déjà pour les `headline`. Les trois familles de drapeaux
+ *    (`idealizationFlags`/`obsessionFlags`/`electricUnstableFlags`, Neptune/
+ *    Pluton/Uranus) deviennent trois catégories lisibles (`reve`/`intensite`/
+ *    `instable`), jamais le nom de la planète. `longevityHits` (Saturne)
+ *    reste délibérément hors de l'étincelle — le moteur l'exclut déjà de
+ *    `sparkHits`, et le contrat du 17/09 le dit explicitement : « Saturn is
+ *    gravity, not spark ».
  */
 
 /** Les dix axes du moteur, dans l'ordre où il les rend. */
@@ -112,9 +144,34 @@ export interface Entente {
   clef: string;
 }
 
+/**
+ * Un signal d'étincelle traduit — jamais le `gloss` du moteur (voir la note
+ * du 18/09 en tête de fichier : il nomme encore des planètes et des maisons).
+ * `clef` pointe vers une phrase produit fixe par type de signal.
+ */
+export interface EtincelleHit {
+  clef: string;
+}
+
+/**
+ * Les trois familles de nuance que le moteur isole en drapeaux
+ * (`idealizationFlags`/`obsessionFlags`/`electricUnstableFlags`) — jamais le
+ * nom de la planète (Neptune/Pluton/Uranus) qui les produit.
+ */
+export type DrapeauEtincelle = "reve" | "intensite" | "instable";
+
 /** « Y a-t-il une étincelle ? » — attraction, depuis le 17/09 une liste, plus un %. */
 export interface Etincelle {
   compte: number;
+  /**
+   * Les signaux les plus prioritaires (2 à 3), déjà classés par le moteur
+   * (`priority`, puis `orbe`) — jamais le `gloss` moteur, toujours une clef
+   * de traduction. Vide si le moteur ne rend pas `sparkHits` (reponse mise
+   * en cache avant le 18/09, par exemple).
+   */
+  hits: EtincelleHit[];
+  /** Quelles familles de nuance sont presentes, sans dire lesquelles planetes. */
+  drapeaux: DrapeauEtincelle[];
 }
 
 export interface AxePorteur {
@@ -145,6 +202,15 @@ export interface LectureMatch {
   porteurs: AxePorteur[];
   /** Combien d'axes sont restés muets des deux côtés — on le dit, on ne le cache pas. */
   axesMuets: number;
+  /**
+   * Le jumeau symétrique de `porteurs` — similarityRadar, jamais lu avant le
+   * 18/09 (voir la note en tête de fichier). Même forme, même tri, mais
+   * répond à « à quel point vous vous ressemblez » et non « ce que vous
+   * apportez » : deux questions, jamais mélangées dans un seul champ.
+   */
+  porteursRessemblance: AxePorteur[];
+  /** Combien d'axes de ressemblance sont restés muets des deux côtés. */
+  axesMuetsRessemblance: number;
   /** Ce que chacun apporte le plus : la clef de son axe dominant. */
   dominantLui: string | null;
   dominantElle: string | null;
@@ -184,6 +250,20 @@ interface BrutLienDuo {
   element2Pct?: number;
 }
 
+/**
+ * Un signal du moteur d'étincelle (`API-MATCHING.md` §5, ajouté le 17/09 au
+ * soir, jamais lu avant le 18/09). `gloss` est déjà rédigé côté moteur, mais
+ * nomme encore des planètes et des maisons brutes (`match-attraction-spec.md`
+ * §2.5, ex. « needs Saturn or earth ») : on le lit ici pour choisir une clef
+ * (`clefEtincelleHit`), jamais pour l'afficher.
+ */
+interface BrutSparkHit {
+  type?: string;
+  priority?: number;
+  aspect?: string;
+  gloss?: string;
+}
+
 interface BrutMatch {
   compatibility?: BrutScore;
   resemblance?: BrutScore;
@@ -193,8 +273,23 @@ interface BrutMatch {
    * (`aToB`/`bToA`), mais une liste d'aspects tendus (≤3°) mesurés entre les
    * deux themes. `count` est ce qu'on affiche ; `hits` porte des noms de
    * planete et ne passe jamais a l'ecran.
+   *
+   * Le rattrapage du 18/09 (commit 358d78b) ajoute le moteur complet :
+   * `sparkHits` (classe par priorite), et trois drapeaux qui filtrent
+   * `sparkHits` par planete (Neptune/Pluton/Uranus) — jamais nommee a
+   * l'ecran, voir `DrapeauEtincelle`. `longevityHits` (Saturne) existe cote
+   * moteur mais n'est PAS lu ici : le contrat du 17/09 l'exclut
+   * explicitement de l'etincelle.
    */
-  attraction?: { hits?: unknown[]; count?: number; desc?: string };
+  attraction?: {
+    hits?: unknown[];
+    count?: number;
+    desc?: string;
+    sparkHits?: BrutSparkHit[];
+    idealizationFlags?: unknown[];
+    obsessionFlags?: unknown[];
+    electricUnstableFlags?: unknown[];
+  };
   bond?: BrutLienDuo;
   boss?: { who?: string; confidence?: number };
   exclusive?: BrutScore;
@@ -222,6 +317,13 @@ interface BrutMatch {
   /** « Comment vous entendez-vous ? » — arrive avec la mise a jour du 17/09. */
   mutualUnderstanding?: { score?: number; label?: string; headline?: string; hits?: unknown[] };
   compatibilityRadar?: { planet?: string; pointsperc?: number; pointsperc2?: number }[];
+  /**
+   * Le jumeau symetrique de `compatibilityRadar` — meme forme, jamais lu
+   * avant le 18/09 (voir la note en tete de fichier). Les deux pourcentages
+   * viennent du Perso de chacun : ce n'est pas « ce que vous apportez », mais
+   * « a quel point vous vous ressemblez ».
+   */
+  similarityRadar?: { planet?: string; pointsperc?: number; pointsperc2?: number }[];
   person1?: { dominantPlanet?: { planet?: string } };
   person2?: { dominantPlanet?: { planet?: string } };
 }
@@ -318,6 +420,81 @@ function lireLienDuo(b?: BrutLienDuo): LienDuo | null {
 }
 
 /**
+ * Lit un radar par axes (`compatibilityRadar` ou `similarityRadar`, meme
+ * forme) : classe les axes qui portent quelque chose, compte ceux qui sont
+ * restes muets des deux cotes. Partagee entre les deux radars — voir la note
+ * du 18/09 en tete de fichier sur pourquoi ils restent deux champs separes
+ * malgre cette lecture commune.
+ */
+function lireRadar(
+  radar: { planet?: string; pointsperc?: number; pointsperc2?: number }[] | undefined
+): { porteurs: AxePorteur[]; muets: number } {
+  const tous: AxePorteur[] = [];
+  let muets = 0;
+  for (const e of Array.isArray(radar) ? radar : []) {
+    const axe = axeDe(e?.planet);
+    if (!axe) continue;
+    const lui = borne(e?.pointsperc);
+    const elle = borne(e?.pointsperc2);
+    if (lui === 0 && elle === 0) {
+      muets += 1;
+      continue;
+    }
+    tous.push({ axe, clef: AXE_CLEF[axe], lui, elle });
+  }
+  tous.sort((a, b) => Math.max(b.lui, b.elle) - Math.max(a.lui, a.elle));
+  return { porteurs: tous, muets };
+}
+
+const ASPECTS_DURS = new Set(["square", "opposition"]);
+
+/** Carré ou opposition — encore de la chimie au sens KS, mais qui chauffe et refroidit. */
+function estAspectDur(aspect: unknown): boolean {
+  const a = typeof aspect === "string" ? aspect.toLowerCase() : "";
+  return ASPECTS_DURS.has(a);
+}
+
+/**
+ * Traduit le TYPE d'un signal d'etincelle (`sparkHits[].type`,
+ * `API-MATCHING.md` §5) en clef produit — jamais le `gloss` du moteur, qui
+ * nomme encore des planetes et des maisons brutes (verifie sur
+ * `match-attraction-spec.md` §2.5 : « needs Saturn or earth », « Their
+ * [planet] lands in your 5th/7th »). `venus_mars` se decline selon la tension
+ * de l'aspect ; `uranus_personal` selon le mot « grounded » que le moteur
+ * ecrit dans SON PROPRE texte quand Saturne ou la terre stabilise Uranus
+ * (§3.5) — on lit ce mot pour choisir la clef, jamais pour l'afficher. Un
+ * type qu'on ne reconnait pas rend `null` plutot qu'une traduction devinee.
+ */
+function clefEtincelleHit(hit: BrutSparkHit): string | null {
+  switch (hit.type) {
+    case "planet_angle":
+      return "rapport.etincelle_hit_immediat";
+    case "venus_mars":
+      return estAspectDur(hit.aspect)
+        ? "rapport.etincelle_hit_alchimie_tendue"
+        : "rapport.etincelle_hit_alchimie_facile";
+    case "pluto_personal":
+      return "rapport.etincelle_hit_intense";
+    case "neptune_personal":
+      return "rapport.etincelle_hit_reve";
+    case "uranus_personal": {
+      const g = typeof hit.gloss === "string" ? hit.gloss.toLowerCase() : "";
+      return g.includes("grounded")
+        ? "rapport.etincelle_hit_electrique_stable"
+        : "rapport.etincelle_hit_electrique";
+    }
+    case "node_personal":
+      return "rapport.etincelle_hit_familier";
+    case "overlay_7_or_5":
+      return "rapport.etincelle_hit_place";
+    case "asc_dsc_reversal":
+      return "rapport.etincelle_hit_miroir";
+    default:
+      return null;
+  }
+}
+
+/**
  * Range la réponse du moteur. Rend `null` si la compatibilité manque : sans
  * elle il n'y a pas de rapport, et un rapport sans son chiffre de tête serait
  * un rapport sur rien.
@@ -375,21 +552,10 @@ export function lireMatch(brut: unknown): LectureMatch | null {
     dimensionSiChiffre("rapport.d_chaleur", m.hugs?.score),
   ].filter((d): d is Dimension => d !== null);
 
-  const radar = Array.isArray(m.compatibilityRadar) ? m.compatibilityRadar : [];
-  const tous: AxePorteur[] = [];
-  let axesMuets = 0;
-  for (const e of radar) {
-    const axe = axeDe(e?.planet);
-    if (!axe) continue;
-    const lui = borne(e?.pointsperc);
-    const elle = borne(e?.pointsperc2);
-    if (lui === 0 && elle === 0) {
-      axesMuets += 1;
-      continue;
-    }
-    tous.push({ axe, clef: AXE_CLEF[axe], lui, elle });
-  }
-  tous.sort((a, b) => Math.max(b.lui, b.elle) - Math.max(a.lui, a.elle));
+  const { porteurs: tous, muets: axesMuets } = lireRadar(m.compatibilityRadar);
+  const { porteurs: porteursRessemblance, muets: axesMuetsRessemblance } = lireRadar(
+    m.similarityRadar
+  );
 
   const dominant = (p?: { dominantPlanet?: { planet?: string } }) => {
     const a = axeDe(p?.dominantPlanet?.planet);
@@ -425,9 +591,33 @@ export function lireMatch(brut: unknown): LectureMatch | null {
         }
       : null;
 
+  // Les 2-3 signaux les plus prioritaires — le moteur rend deja sparkHits
+  // classe par (priority, orbe) : on ne retrie pas, on traduit et on coupe.
+  const sparkHitsBruts = Array.isArray(m.attraction?.sparkHits) ? m.attraction.sparkHits : [];
+  const etincelleHits: EtincelleHit[] = sparkHitsBruts
+    .map((h) => clefEtincelleHit(h ?? {}))
+    .filter((clef): clef is string => clef !== null)
+    .slice(0, 3)
+    .map((clef) => ({ clef }));
+
+  // Trois familles de nuance, jamais le nom de la planete qui les produit.
+  const drapeaux: DrapeauEtincelle[] = [];
+  if (Array.isArray(m.attraction?.idealizationFlags) && m.attraction.idealizationFlags.length > 0) {
+    drapeaux.push("reve");
+  }
+  if (Array.isArray(m.attraction?.obsessionFlags) && m.attraction.obsessionFlags.length > 0) {
+    drapeaux.push("intensite");
+  }
+  if (
+    Array.isArray(m.attraction?.electricUnstableFlags) &&
+    m.attraction.electricUnstableFlags.length > 0
+  ) {
+    drapeaux.push("instable");
+  }
+
   const etincelle: Etincelle | null =
     typeof m.attraction?.count === "number"
-      ? { compte: Math.max(0, Math.round(m.attraction.count)) }
+      ? { compte: Math.max(0, Math.round(m.attraction.count)), hits: etincelleHits, drapeaux }
       : null;
 
   return {
@@ -442,6 +632,8 @@ export function lireMatch(brut: unknown): LectureMatch | null {
     nuances,
     porteurs: tous,
     axesMuets,
+    porteursRessemblance,
+    axesMuetsRessemblance,
     dominantLui: dominant(m.person1),
     dominantElle: dominant(m.person2),
     ascendant,

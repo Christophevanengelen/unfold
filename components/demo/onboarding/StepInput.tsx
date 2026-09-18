@@ -126,8 +126,12 @@ export function StepInput({
   // troisieme copie du champ ville — il en existait deja deux, dont une bien
   // meilleure que l autre, et c est precisement ce qui avait laisse la version
   // d onboarding se degrader.
+  //
+  // « solo » sert au MATCH SOLO (18/09) : la meme saisie nom + naissance,
+  // pour la naissance de quelqu un d autre que l on encode soi-meme, sans
+  // invitation ni code. Seuls les libelles changent, comme pour « edition ».
   mode = "onboarding",
-}: StepInputProps & { mode?: "onboarding" | "edition" }) {
+}: StepInputProps & { mode?: "onboarding" | "edition" | "solo" }) {
   const locale = detectLocale();
   const fields = champs(locale);
   const clavier = useClavier();
@@ -339,7 +343,11 @@ export function StepInput({
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="-mt-0.5">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        {mode === "edition" ? perso("edit.annuler", locale) : t("onboarding.back", locale)}
+        {mode === "solo"
+          ? perso("compat.retour", locale)
+          : mode === "edition"
+            ? perso("edit.annuler", locale)
+            : t("onboarding.back", locale)}
       </motion.button>
 
       {/* Headline */}
@@ -350,7 +358,11 @@ export function StepInput({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        {mode === "edition" ? perso("edit.titre", locale) : t("onboarding.p5_headline", locale)}
+        {mode === "solo"
+          ? perso("solo.titre", locale)
+          : mode === "edition"
+            ? perso("edit.titre", locale)
+            : t("onboarding.p5_headline", locale)}
       </motion.h1>
       <motion.p
         className="mt-1.5 text-sm"
@@ -359,7 +371,11 @@ export function StepInput({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       >
-        {mode === "edition" ? perso("edit.sous", locale) : t("onboarding.p5_sub", locale)}
+        {mode === "solo"
+          ? perso("solo.sous", locale)
+          : mode === "edition"
+            ? perso("edit.sous", locale)
+            : t("onboarding.p5_sub", locale)}
       </motion.p>
 
       {/* Form fields */}
@@ -701,7 +717,11 @@ export function StepInput({
               : "cursor-not-allowed bg-brand-4 text-text-body"
           }`}
         >
-          {mode === "edition" ? perso("edit.cta", locale) : t("onboarding.p5_cta", locale)}
+          {mode === "solo"
+            ? perso("solo.cta", locale)
+            : mode === "edition"
+              ? perso("edit.cta", locale)
+              : t("onboarding.p5_cta", locale)}
         </button>
       </motion.div>
     </motion.div>

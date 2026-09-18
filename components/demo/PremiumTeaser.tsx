@@ -199,7 +199,10 @@ export function PremiumTeaser({ open, onClose }: PremiumTeaserProps) {
     // all 10 languages via lib/i18n-demo.ts. It will prompt sign-in if needed.
     setLoading(true);
     onClose();
-    router.push("/app/pricing");
+    // BottomSheet fait un history.back() a sa fermeture (voir BottomSheet.tsx,
+    // "RETOUR ARRIERE"), qui annulerait en silence un router.push() appele
+    // dans la meme frappe — trouve et corrige partout le 18/09.
+    setTimeout(() => router.push("/app/pricing"), 300);
   };
 
   return (

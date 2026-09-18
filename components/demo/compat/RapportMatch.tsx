@@ -431,6 +431,7 @@ function Corps({
       <Entente lecture={lecture} locale={locale} />
       <Etincelle lecture={lecture} locale={locale} />
       <Apports lecture={lecture} locale={locale} nomAutre={nomAutre} />
+      <Ressemblance lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Tempo lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Cadeaux lecture={lecture} locale={locale} nomAutre={nomAutre} />
       <Commun lecture={lecture} locale={locale} nomAutre={nomAutre} nomMoi={nomMoi} empreinte={empreinte} />
@@ -584,16 +585,28 @@ function Entente({ lecture, locale }: { lecture: LectureMatch; locale: Locale })
 }
 
 /**
- * L etincelle — attraction, changee de forme le 17/09.
+ * L etincelle — attraction, changee de forme le 17/09, enrichie le 18/09.
  *
  * Ce n est plus un pourcentage dans les deux sens : une liste d aspects
- * tendus (<= 3°, Soleil/Lune/Venus/Mars) mesures entre les deux themes. On dit
- * combien ont ete mesures ; les noms de planete vivent dans `hits` et ne
- * passent jamais a l ecran (regle n° 1 de `match-lecture.ts`).
+ * mesures entre les deux themes. On garde le compte (`compte`, tel quel
+ * depuis le 17/09) et on ajoute deux niveaux de detail que le moteur rend
+ * depuis le rattrapage du 18/09 (commit 358d78b, voir la note en tete de
+ * `match-lecture.ts`) :
+ *
+ * 1. Les 2-3 signaux les plus marquants (`hits`), deja tries par le moteur
+ *    (priorite puis orbe) et deja traduits en clef produit — jamais le
+ *    `gloss` moteur, qui nomme encore des planetes et des maisons brutes.
+ * 2. Un signal discret pour les nuances (`drapeaux` : une part de reve, une
+ *    intensite, une instabilite electrique) — sans jamais dire de quelle
+ *    planete elles viennent, et sans jugement : ce sont des nuances, pas un
+ *    verdict.
+ *
+ * Le ton reste celui du reste du fichier : aucun mot « verdict », jamais
+ * « incompatible ».
  */
 function Etincelle({ lecture, locale }: { lecture: LectureMatch; locale: Locale }) {
   if (!lecture.etincelle) return null;
-  const { compte } = lecture.etincelle;
+  const { compte, hits, drapeaux } = lecture.etincelle;
   const texte =
     compte === 0
       ? t("rapport.etincelle_aucune", locale)
@@ -607,6 +620,35 @@ function Etincelle({ lecture, locale }: { lecture: LectureMatch; locale: Locale 
       <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">
         {t("rapport.etincelle_aide", locale)}
       </p>
+
+      {hits.length > 0 ? (
+        <ul className="mt-3 space-y-1.5">
+          {hits.map((h, i) => (
+            <li key={i} className="flex items-start gap-2 text-[13px] leading-snug text-text-body">
+              <span
+                aria-hidden="true"
+                className="mt-[7px] h-1 w-1 shrink-0 rounded-full"
+                style={{ background: "var(--accent-purple)" }}
+              />
+              <span>{t(h.clef, locale)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {drapeaux.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {drapeaux.map((d) => (
+            <span
+              key={d}
+              className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+              style={{ background: "var(--surface-light)", color: "var(--text-body)" }}
+            >
+              {t(`rapport.etincelle_drapeau_${d}`, locale)}
+            </span>
+          ))}
+        </div>
+      ) : null}
     </Section>
   );
 }
@@ -654,6 +696,70 @@ function Apports({
 
       <div className="mt-2 space-y-4">
         {lecture.porteurs.map((p, i) => (
+          <Paire
+            key={p.axe}
+            titre={t(p.clef, locale)}
+            aide={t(`${p.clef}_aide`, locale)}
+            gauche={p.lui}
+            droite={p.elle}
+            delai={CASCADE * i}
+            etiquetteGauche={t("rapport.apports_toi", locale)}
+            etiquetteDroite={nomAutre}
+          />
+        ))}
+      </div>
+
+      {muets ? <p className="mt-4 text-[11px] leading-snug text-text-body-subtle">{muets}</p> : null}
+    </Section>
+  );
+}
+
+/**
+ * Le jumeau symetrique du radar precedent : « a quel point vous vous
+ * ressemblez » — similarityRadar, jamais lu avant le 18/09 (commit 358d78b,
+ * voir la note en tete de `match-lecture.ts`). Meme lecture, meme vignette
+ * (`Paire`, pas de radar a dix branches — meme raison qu au-dessus), mais une
+ * question differente : ici les deux pourcentages viennent du Perso de
+ * chacun, pas de ce que l un cherche chez l autre. Empile sous « ce que vous
+ * apportez », jamais fusionne avec lui — deux radars, deux intitules, pour
+ * deux questions qu on ne confond pas.
+ */
+function Ressemblance({
+  lecture,
+  locale,
+  nomAutre,
+}: {
+  lecture: LectureMatch;
+  locale: Locale;
+  nomAutre: string;
+}) {
+  if (lecture.porteursRessemblance.length === 0) return null;
+  const muets =
+    lecture.axesMuetsRessemblance === 0
+      ? null
+      : remplir(
+          t(lecture.axesMuetsRessemblance === 1 ? "rapport.muets_un" : "rapport.muets_n", locale),
+          { n: lecture.axesMuetsRessemblance, nom: nomAutre }
+        );
+  return (
+    <Section className="pb-8" delai={0.05}>
+      <h3
+        className="text-[21px] leading-tight text-text-heading"
+        style={{ fontFamily: "var(--font-titre)", fontWeight: 300, letterSpacing: "-0.015em" }}
+      >
+        {t("rapport.ressemblance_radar_titre", locale)}
+      </h3>
+      <p className="mt-0.5 text-[12px] leading-snug text-text-body-subtle">
+        {t("rapport.ressemblance_radar_aide", locale)}
+      </p>
+
+      <div className="mt-3 flex items-center justify-between text-[11px] font-semibold text-text-body-subtle">
+        <span>{t("rapport.apports_toi", locale)}</span>
+        <span>{remplir(t("rapport.apports_autre", locale), { nom: nomAutre })}</span>
+      </div>
+
+      <div className="mt-2 space-y-4">
+        {lecture.porteursRessemblance.map((p, i) => (
           <Paire
             key={p.axe}
             titre={t(p.clef, locale)}

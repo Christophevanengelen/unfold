@@ -62,7 +62,14 @@ export function ConnectionDetail({ connectionId }: { connectionId: string }) {
       <PageHeader
         backHref="/app/compatibility"
         title={`Vous & ${current.name}`}
-        subtitle={perso(rel.cleLabel, locale)}
+        // Solo vs connecte, redit ici sans jugement — meme badge discret que
+        // dans la liste (ConnectionRow), meme raison : une fiche solo n a
+        // jamais eu de reciprocite reelle, voir isSolo dans connections-store.
+        subtitle={
+          current.isSolo
+            ? `${perso(rel.cleLabel, locale)} · ${perso("compat.solo_badge", locale)}`
+            : perso(rel.cleLabel, locale)
+        }
         leadingSlot={
           <div
             className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"

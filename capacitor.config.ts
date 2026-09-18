@@ -35,6 +35,14 @@ const config: CapacitorConfig = {
   plugins: {
     // App plugin handles deep links (magic-link callbacks)
     // Pattern: unfold://auth/callback?code=...
+    //
+    // Les liens d invitation, eux, ne passent PAS par ce schema : buildInviteUrl()
+    // (lib/connections-store.ts) genere une URL https://favorable.day/app/invite/join.
+    // C est un Universal Link, pas un lien profond personnalise — sa config ne vit
+    // pas ici. CapacitorConfig["ios"] n a pas de cle "associatedDomains" : la
+    // capacite s active dans ios/App/App/App.entitlements
+    // (com.apple.developer.associated-domains) et cote serveur via
+    // app/.well-known/apple-app-site-association/route.ts.
     App: {},
     SplashScreen: {
       // Keep splash up until React renders — hide programmatically in demo/layout.tsx

@@ -16,6 +16,7 @@ import { relationshipConfig, relationshipOrder } from "./relationshipConfig";
 import { texteLisible } from "@/lib/contraste";
 import { detectLocale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
+import { isNative } from "@/lib/platform";
 
 interface ConnectionActionSheetProps {
   open: boolean;
@@ -23,6 +24,13 @@ interface ConnectionActionSheetProps {
   connection: RealConnection | null;
   /** Called after a destructive action (delete) so the parent can remove from view. */
   onDeleted?: (id: string) => void;
+  /**
+   * Vue de depart, "menu" par defaut. Le balayage vers la gauche d une
+   * ConnectionRow ouvre directement "confirmDelete" — un geste deja explicite
+   * (l action tapee est rouge et nommee « Supprimer ») n a pas besoin d un
+   * detour par le menu general pour y arriver une deuxieme fois.
+   */
+  initialView?: View;
 }
 
 type View = "menu" | "rename" | "relationship" | "confirmDelete";
@@ -31,7 +39,9 @@ type View = "menu" | "rename" | "relationship" | "confirmDelete";
  * Bottom sheet that surfaces connection-level actions:
  *   Rename / Change relationship / Share / Delete.
  *
- * Reached via long-press on a ConnectionRow (400ms hold — matches WhatsApp).
+ * Reached via long-press on a ConnectionRow (400ms hold — matches WhatsApp),
+ * via le bouton "..." revele par le balayage, ou directement sur l ecran de
+ * confirmation via le bouton rouge "Supprimer" du meme balayage.
  * Hold-to-confirm (1s) on Delete prevents accidental taps.
  */
 export function ConnectionActionSheet({
@@ -39,6 +49,7 @@ export function ConnectionActionSheet({
   onClose,
   connection,
   onDeleted,
+  initialView,
 }: ConnectionActionSheetProps) {
   const locale = detectLocale();
   const { resolvedTheme } = useTheme();
@@ -71,7 +82,7 @@ export function ConnectionActionSheet({
     if (connexionInitialisee !== null) setConnexionInitialisee(null);
   } else if (connection && connexionInitialisee !== connection.id) {
     setConnexionInitialisee(connection.id);
-    setView("menu");
+    setView(initialView ?? "menu");
     setNameDraft(connection.name);
     setDeleteHoldProgress(0);
   }
@@ -98,7 +109,12 @@ export function ConnectionActionSheet({
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/app/compatibility/${connection.id}`;
+    // Meme piege que buildInviteUrl (lib/connections-store.ts) :
+    // window.location.origin vaut l origine native dans la coque Capacitor,
+    // jamais https://favorable.day. Un lien partage depuis l app doit rester
+    // ouvrable par quelqu un qui n a pas l app.
+    const origin = isNative() ? "https://favorable.day" : window.location.origin;
+    const url = `${origin}/app/compatibility/${connection.id}`;
     try {
       if (navigator.share) {
         await navigator.share({
@@ -277,7 +293,7 @@ export function ConnectionActionSheet({
         {view === "confirmDelete" && (
           <div className="text-center">
             <p className="text-sm font-semibold text-text-heading">
-              Supprimer {connection.name} ?
+              {perso("compat.supprimer_qui", locale).replace("{n}", connection.name)}
             </p>
             <p className="mt-1 text-[11px] text-text-body-subtle">
               {perso("compat.irreversible", locale)}

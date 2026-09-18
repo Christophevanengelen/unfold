@@ -11,5 +11,17 @@
 	<array>
 		<string>group.day.favorable.app</string>
 	</array>
+	<!-- Universal Links : sans cette cle, un lien https://favorable.day/app/invite/join
+	     ouvre Safari au lieu de l app, meme avec le fichier AASA en place cote
+	     serveur (app/.well-known/apple-app-site-association/route.ts). Ajoutee
+	     ici a la main ; Xcode doit encore la reprendre dans Signing &
+	     Capabilities ("Associated Domains") pour qu elle entre dans le profil
+	     de provisionnement — geste reserve au compte developpeur Apple de
+	     Christophe, aucune valeur reservee ici : "favorable.day" est le vrai
+	     domaine de production. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:favorable.day</string>
+	</array>
 </dict>
 </plist>

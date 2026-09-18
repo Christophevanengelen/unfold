@@ -9,6 +9,7 @@ import type { BirthData } from "@/lib/birth-data";
 import { ConnectionRow } from "./ConnectionRow";
 import { ConnectionListSection } from "./ConnectionListSection";
 import { ConnectionActionSheet } from "./ConnectionActionSheet";
+import { ConnectionFilterBar, type FiltreCategorie } from "./ConnectionFilterBar";
 import { VitrineBase } from "./VitrineBase";
 import { detectLocale, type Locale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
@@ -43,9 +44,29 @@ interface ConnectionListProps {
  */
 export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu }: ConnectionListProps) {
   const locale = detectLocale();
-  const [sheetConn, setSheetConn] = useState<RealConnection | null>(null);
+  // La feuille garde la connexion ET la vue de depart : un balayage vers la
+  // gauche puis "Supprimer" ouvre directement l ecran de confirmation — un
+  // geste deja explicite n a pas besoin d un detour par le menu general.
+  const [sheet, setSheet] = useState<{ conn: RealConnection; vue: "menu" | "confirmDelete" } | null>(null);
 
-  // Group summaries by status once they're loaded.
+  // Filtre par categorie de relation — la demande de Christophe : « les trier
+  // par amour, travail, famille, etc. ». Les compteurs viennent de la liste
+  // COMPLETE, pas du filtre courant, pour que "Famille (2)" reste visible
+  // pendant qu on regarde "Amis".
+  const [filtre, setFiltre] = useState<FiltreCategorie>("tous");
+  const comptes = useMemo(() => {
+    const c: Record<FiltreCategorie, number> = { tous: connections.length, partner: 0, friend: 0, family: 0, colleague: 0 };
+    for (const conn of connections) c[conn.relationship]++;
+    return c;
+  }, [connections]);
+  const connectionsFiltrees = useMemo(
+    () => (filtre === "tous" ? connections : connections.filter((c) => c.relationship === filtre)),
+    [connections, filtre],
+  );
+
+  // Group summaries by status once they're loaded. Le calcul part de la liste
+  // COMPLETE : changer de filtre ne doit pas relancer les requetes SWR de
+  // connexions deja chargees, seulement changer ce qu on en montre.
   const summaries = useConnectionSummaries(connections, myBirthData, locale);
 
   const groups = useMemo(() => {
@@ -55,7 +76,7 @@ export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu
       calm: [],
       unknown: [],
     };
-    for (const conn of connections) {
+    for (const conn of connectionsFiltrees) {
       const s = summaries[conn.id];
       if (!s || s.loading) {
         buckets.unknown.push({ conn, summary: undefined, loading: true });
@@ -68,10 +89,26 @@ export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu
       buckets[k].sort((a, b) => (b.summary?.sortScore ?? 0) - (a.summary?.sortScore ?? 0));
     }
     return buckets;
-  }, [connections, summaries]);
+  }, [connectionsFiltrees, summaries]);
+
+  const rienDansCetteCategorie =
+    connections.length > 0 && filtre !== "tous" && connectionsFiltrees.length === 0;
 
   return (
     <>
+      {/* Puces de filtre — masquees tant qu il n y a rien a filtrer. */}
+      {connections.length > 0 && (
+        <div className="mt-4">
+          <ConnectionFilterBar valeur={filtre} onChange={setFiltre} comptes={comptes} />
+        </div>
+      )}
+
+      {rienDansCetteCategorie && (
+        <p className="mt-8 text-center text-[13px] text-text-body-subtle">
+          {perso("compat.categorie_vide", locale)}
+        </p>
+      )}
+
       {/* Still-loading rows first — prevents layout jump as summaries resolve */}
       {groups.unknown.length > 0 && (
         <div className="mt-4 space-y-2">
@@ -81,7 +118,8 @@ export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu
               connection={conn}
               summary={undefined}
               loading
-              onLongPress={() => setSheetConn(conn)}
+              onLongPress={() => setSheet({ conn, vue: "menu" })}
+              onSupprimer={() => setSheet({ conn, vue: "confirmDelete" })}
             />
           ))}
         </div>
@@ -93,7 +131,8 @@ export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu
             key={conn.id}
             connection={conn}
             summary={summary}
-            onLongPress={() => setSheetConn(conn)}
+            onLongPress={() => setSheet({ conn, vue: "menu" })}
+            onSupprimer={() => setSheet({ conn, vue: "confirmDelete" })}
           />
         ))}
       </ConnectionListSection>
@@ -104,7 +143,8 @@ export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu
             key={conn.id}
             connection={conn}
             summary={summary}
-            onLongPress={() => setSheetConn(conn)}
+            onLongPress={() => setSheet({ conn, vue: "menu" })}
+            onSupprimer={() => setSheet({ conn, vue: "confirmDelete" })}
           />
         ))}
       </ConnectionListSection>
@@ -115,7 +155,8 @@ export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu
             key={conn.id}
             connection={conn}
             summary={summary}
-            onLongPress={() => setSheetConn(conn)}
+            onLongPress={() => setSheet({ conn, vue: "menu" })}
+            onSupprimer={() => setSheet({ conn, vue: "confirmDelete" })}
           />
         ))}
       </ConnectionListSection>
@@ -126,10 +167,11 @@ export function ConnectionList({ connections, myBirthData, onDeleted, onCodeRecu
         // appui en cours — repart de zero au lieu d etre reinitialise par un
         // effet. C est ce qui permet de retirer la remise a zero qui se
         // declenchait a chaque rafraichissement SWR et effacait la saisie.
-        key={sheetConn?.id ?? "aucune"}
-        open={sheetConn !== null}
-        onClose={() => setSheetConn(null)}
-        connection={sheetConn}
+        key={sheet?.conn.id ?? "aucune"}
+        open={sheet !== null}
+        onClose={() => setSheet(null)}
+        connection={sheet?.conn ?? null}
+        initialView={sheet?.vue}
         onDeleted={(id) => {
           onDeleted?.(id);
         }}

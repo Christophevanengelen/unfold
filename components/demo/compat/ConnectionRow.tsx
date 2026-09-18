@@ -189,6 +189,15 @@ export function ConnectionRow({ connection, summary, loading, onLongPress, onSup
             {perso(rel.cleLabel, locale)}
           </span>
         </div>
+        {/* Solo vs connecte, dit sans jugement — jamais "faux" ni "incomplet".
+            Une fiche solo n a ni inviteCode ni connectedSince reels (voir
+            RealConnection dans lib/connections-store.ts) : ce badge est la
+            seule trace visible de cette difference, discrete et non alarmante. */}
+        {connection.isSolo && (
+          <p className="mt-0.5 text-[10px] text-text-body-subtle">
+            {perso("compat.solo_badge", locale)}
+          </p>
+        )}
         <div className="mt-1 min-w-0">
           <WindowMicroPreview summary={summary} loading={loading} />
         </div>

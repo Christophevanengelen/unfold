@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShareNodes } from "flowbite-react-icons/outline";
+import { ShareNodes, Plus } from "flowbite-react-icons/outline";
 import {
   getConnections,
   getMyInviteCode,
@@ -13,6 +13,7 @@ import {
 } from "@/lib/connections-store";
 import { getBirthDataSync, type BirthData } from "@/lib/birth-data";
 import { ConnectionList } from "@/components/demo/compat/ConnectionList";
+import { AjouterMatchSheet } from "@/components/demo/compat/AjouterMatchSheet";
 import { apiFetch } from "@/lib/api-client";
 import { connectionHref } from "@/lib/connection-href";
 import { detectLocale, t } from "@/lib/i18n-demo";
@@ -31,6 +32,8 @@ export default function ConnectionsPage() {
   const [showHint, setShowHint] = useState(false);
   const [codeSubmitting, setCodeSubmitting] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
+  // Le choix entre les deux facons d avoir un match (voir AjouterMatchSheet).
+  const [matchSheetOuvert, setMatchSheetOuvert] = useState(false);
 
   useEffect(() => {
     const list = getConnections();
@@ -117,8 +120,17 @@ export default function ConnectionsPage() {
     // rend longue, et la derniere phrase passait sous « Match ».
     <div className="pb-36">
       {/* Header */}
-      <div className="mb-1 text-center">
-        <h1 className="font-display text-2xl font-bold text-text-heading">{t("connexions.titre", locale)}</h1>
+      <div className="relative mb-1 px-14 text-center">
+        {/* Goodly, pas Uniform Rounded (font-display) : c est la police
+            "magazine" de la marque, deja posee sur les gros titres de
+            app/app/vie/page.tsx. Un ecran de gestion reste un ecran de la
+            marque, pas un simple panneau d administration. */}
+        <h1
+          className="text-[26px] leading-[1.1] text-text-heading"
+          style={{ fontFamily: "var(--font-titre)", fontWeight: 300, letterSpacing: "-0.02em", textWrap: "balance" }}
+        >
+          {t("connexions.titre", locale)}
+        </h1>
         {/* Rien sous le titre quand la liste est vide : la vitrine porte sa
             propre phrase, et « Invitez quelqu un pour commencer » la doublait
             en vouvoyant, alors que tout le reste de l app tutoie. */}
@@ -127,7 +139,33 @@ export default function ConnectionsPage() {
             {t("connexions.compte", locale).replace("{n}", String(connections.length))}
           </p>
         ) : null}
+
+        {/* Point d entree UNIQUE des deux facons d avoir un match — code ou
+            saisie manuelle, posees a egalite dans la feuille qu il ouvre. Voir
+            AjouterMatchSheet. Visible que la liste soit vide ou non : la
+            vitrine garde son propre appel a inviter, celui-ci est le geste
+            constant, toujours au meme endroit. */}
+        <button
+          type="button"
+          onClick={() => setMatchSheetOuvert(true)}
+          aria-label={perso("compat.ajouter_match", locale)}
+          className="absolute right-0 top-0 flex items-center justify-center rounded-full"
+          style={{
+            width: "var(--taille-tactile-min)",
+            height: "var(--taille-tactile-min)",
+            background: "var(--surface-light)",
+            color: "var(--accent-purple)",
+          }}
+        >
+          <Plus size={18} />
+        </button>
       </div>
+
+      <AjouterMatchSheet
+        open={matchSheetOuvert}
+        onClose={() => setMatchSheetOuvert(false)}
+        onCode={() => setShowCodeInput(true)}
+      />
 
       {/* Rhythm inbox */}
       <ConnectionList
