@@ -21,14 +21,11 @@ import { useMomentum } from "@/lib/momentum-store";
 import { useLocale } from "@/lib/use-locale";
 import { t } from "@/lib/i18n-demo";
 import { lireLaVie } from "@/lib/resume-vie";
-import { ResumeVie } from "@/components/demo/resume/ResumeVie";
 import { BrancheDeVie } from "@/components/demo/resume/BrancheDeVie";
 import { afficheDisponible, dessinerAfficheDeVie } from "@/lib/carte-vie";
 import { STRINGS_MATCH_DOMAINES } from "@/lib/i18n-demo";
 import { DOMAINE } from "@/lib/score-match";
 import { reussi, toucher } from "@/lib/haptique";
-import { lireLesChapitres, type ChapitreDeVie } from "@/lib/chapitres-vie";
-import { chargerChapitres } from "@/lib/chapitres-api";
 
 export default function ViePage() {
   const locale = useLocale();
@@ -50,41 +47,6 @@ export default function ViePage() {
   const naissance = birthData?.birthDate
     ? `${birthData.birthDate}T${birthData.birthTime || "00:00"}`
     : null;
-
-  /**
-   * Les grands mouvements, charges a part.
-   *
-   * A part, et pas avec le reste de l ecran, pour une raison simple : le
-   * moteur met plusieurs secondes a les calculer. Les attendre retarderait
-   * tout ce qui est deja pret. L arc apparait quand il arrive ; s il n arrive
-   * jamais, l ecran reste exactement ce qu il etait avant le 17/09.
-   *
-   * Aucun etat d attente n est affiche. Un squelette a cet endroit annoncerait
-   * quelque chose qui peut ne pas venir, ce qui est pire que de ne rien
-   * annoncer.
-   */
-  const [chapitresDeVie, setChapitresDeVie] = useState<ChapitreDeVie[] | null>(null);
-
-  useEffect(() => {
-    if (!birthData?.birthDate || !naissanceIso) return;
-    let abandonne = false;
-
-    // `chargerChapitres` rend le cache s il existe, et n appelle le moteur que
-    // la premiere fois pour une naissance donnee — le meme contrat que le reste
-    // de l app : une naissance, un calcul, puis plus rien sur le reseau.
-    chargerChapitres(birthData)
-      .then((periodes) => {
-        if (abandonne || !periodes) return;
-        setChapitresDeVie(lireLesChapitres(periodes, naissanceIso, maintenant, locale));
-      })
-      .catch(() => {
-        /* Le moteur n a pas repondu : l ecran se passe de l arc. */
-      });
-
-    return () => {
-      abandonne = true;
-    };
-  }, [birthData, naissanceIso, maintenant, locale]);
 
   const [preparation, setPreparation] = useState(false);
   const [partage, setPartage] = useState(false);
@@ -189,8 +151,6 @@ export default function ViePage() {
       <div className="mx-auto w-full max-w-[560px] px-3 pt-6">
         {resume && !resume.vide && naissance ? (
           <>
-            <ResumeVie resume={resume} naissance={naissance} locale={locale} maintenant={maintenant} chapitresDeVie={chapitresDeVie ?? undefined} />
-
             {/* Le bouton n apparait que s il y a de quoi faire une affiche.
                 En dessous de huit annees documentees, la frise ne ressemble a
                 rien et l objet ne tient pas sa promesse — mieux vaut ne rien

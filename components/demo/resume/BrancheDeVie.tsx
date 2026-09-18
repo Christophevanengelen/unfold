@@ -265,6 +265,27 @@ function duree(jours: number, locale: string): string {
   return dit(j, "day");
 }
 
+/**
+ * Fusionne deux listes deja triees (fortes d abord) en respectant la part
+ * `partA` que la premiere doit occuper dans le resultat — pour qu'un
+ * plafond applique plus tard sur le total n'ecrase pas systematiquement
+ * l'une des deux au profit de l'autre. Voir l'appel dans `donnees`
+ * (selection des paires "vie") pour le pourquoi.
+ */
+function entrelacer<T>(a: T[], b: T[], partA: number): T[] {
+  const resultat: T[] = [];
+  let ia = 0, ib = 0;
+  while (ia < a.length || ib < b.length) {
+    const cibleA = (ia + ib + 1) * partA;
+    if (ib >= b.length || (ia < a.length && ia < cibleA)) {
+      resultat.push(a[ia++]);
+    } else {
+      resultat.push(b[ib++]);
+    }
+  }
+  return resultat;
+}
+
 /** Les pastilles de navigation : le meme verre que la frise (MomentumTimelineV2). */
 const VERRE: React.CSSProperties = {
   background: "var(--glass-pill-strong)",
@@ -644,9 +665,23 @@ export function BrancheDeVie({
     // Les paires : une par periode majeure, les plus fortes d abord, espacees.
     // Le moteur en marque 511 sur une vie : on garde ce que l oeil peut lire.
     const maxPaires = echelle === "vie" ? 9 : echelle === "annee" ? 8 : 6;
-    const majeures = per
-      .filter((x) => (x.ph.score ?? 0) >= 3 && x.d >= fen.t0)
-      .sort((a, b) => (b.ph.score ?? 0) - (a.ph.score ?? 0) || (b.ph.intensity ?? 0) - (a.ph.intensity ?? 0));
+    // Trier tout par force et prendre les N premieres favorise systematiquement
+    // le passe : la plupart des periodes sont a egalite de score (mesure du
+    // 18/09/2026 : 463 a 3, seulement 35 a 4, sur toute une vie), et un tri
+    // stable garde alors l'ordre chronologique d'origine — les plus
+    // anciennes gagnaient toujours, la branche s'arretait visuellement a
+    // aujourd'hui meme quand le moteur avait deja des periodes futures tout
+    // aussi fortes. Demande de Christophe le 18/09/2026 : "que ca aille
+    // jusqu'au bout de sa vie". On trie donc le vecu et l'a-venir separement,
+    // puis on les entrelace dans la proportion du temps deja vecu — la
+    // boucle plus bas garde sa propre deduplication par position et son
+    // plafond a maxPaires, inchanges.
+    const dejaVecues = per.filter((x) => (x.ph.score ?? 0) >= 3 && x.d >= fen.t0 && x.d <= maintenant);
+    const aVenirBrutes = per.filter((x) => (x.ph.score ?? 0) >= 3 && x.d > maintenant);
+    const parForce = (a: typeof per[number], b: typeof per[number]) =>
+      (b.ph.score ?? 0) - (a.ph.score ?? 0) || (b.ph.intensity ?? 0) - (a.ph.intensity ?? 0);
+    const partVecue = Math.max(0, Math.min(1, fen.posMaintenant));
+    const majeures = entrelacer([...dejaVecues].sort(parForce), [...aVenirBrutes].sort(parForce), partVecue);
     const paires: Paire[] = [];
     for (const x of majeures) {
       const fam = familleDe(x.ph);
@@ -1001,9 +1036,12 @@ export function BrancheDeVie({
       const r = vifEl.getBoundingClientRect();
       const basVisible = window.innerHeight - r.top - 110;
       E.brut = Math.max(0, Math.min(1, basVisible / hauteurCss));
-      // La pousse s arrete a AUJOURD HUI. On peut descendre dans les annees
-      // qui restent : il n y pousse rien, et c est exact.
-      E.cible = Math.min(E.brut, fen.posMaintenant);
+      // La pousse va jusqu'au bout de la vie, pas seulement jusqu'a
+      // aujourd'hui — demande de Christophe le 18/09/2026 : "que ca aille
+      // jusqu'au bout de sa vie". Les periodes a venir se peignent en
+      // bouquets a demi ouverts (voir `aVenir` dans `peindrePaire`), jamais
+      // pleinement ecloses.
+      E.cible = E.brut;
       // Ou le regard se trouve : le milieu de l ecran, ramene dans le papier.
       const centre = Math.max(0, Math.min(1, (window.innerHeight / 2 - r.top) / hauteurCss));
       const cran = Math.round(centre * ANS_DE_VIE) / ANS_DE_VIE;
@@ -1438,9 +1476,6 @@ export function BrancheDeVie({
           <span className="text-[11px] text-text-body-subtle">{t("resume.branche_ici", locale)}</span>
           <span aria-hidden className="h-px flex-1" style={{ background: "var(--encre-diluee)", opacity: 0.5 }} />
         </div>
-        <p className="pointer-events-none absolute left-0 right-0 px-12 text-center text-[11.5px] leading-snug text-text-body-subtle" style={{ top: `calc(${fen.posMaintenant * 100}% + 44px)` }}>
-          {t("resume.branche_avenir", locale)}
-        </p>
       </div>
 
       {/* ═══ 4. LES AIDES, FLOTTANTES ET COLLEES EN BAS ════════════════════

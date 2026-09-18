@@ -1,7 +1,7 @@
 /**
- * PARCOURS 8 — les deux resumes : le jour, et la vie entiere.
+ * PARCOURS 8 — le resume du jour.
  *
- * ─── CE QU ILS REMPLACENT ──────────────────────────────────────────────────
+ * ─── CE QU IL REMPLACE ──────────────────────────────────────────────────────
  *
  * Christophe, le 17/09 : « pour le daily briefing, sers-toi des boudins actifs
  * pour en faire un resume important en UNE SEULE communication ». La boite en
@@ -21,10 +21,15 @@
  *    que l annee en cours, elle affichait quarante colonnes vides — donc
  *    quarante annees ou « il ne s est rien passe ». C est une donnee fabriquee
  *    par omission.
+ *
+ * Le resume de la vie entiere (la frise/l arc "grands mouvements") avait ses
+ * tests ici aussi — retires le 18/09/2026 avec le composant ResumeVie
+ * lui-meme (Christophe : « Elimine ce truc [...] ca colle pas avec ce qu on
+ * montre au-dessus » — la branche de prunier, BrancheDeVie, l a remplace).
  */
 
 import { test, expect } from "@playwright/test";
-import { brancherReseau, semer, aller, ouvrirTimeline } from "./aide/app";
+import { brancherReseau, semer, ouvrirTimeline } from "./aide/app";
 
 async function ouvrirLaBoite(page: import("@playwright/test").Page) {
   await ouvrirTimeline(page);
@@ -126,200 +131,5 @@ test.describe("le resume du jour", () => {
         }).length,
     );
     expect(reperes, "aucun repere d aujourd hui sur les barres").toBeGreaterThan(0);
-  });
-});
-
-test.describe("le resume d une vie", () => {
-  test.beforeEach(async ({ page }) => {
-    await brancherReseau(page);
-    await semer(page);
-  });
-
-  test("la frise se dessine, et ne montre que ce qui est documente", async ({ page }) => {
-    await aller(page, "/app/vie");
-    await expect(page.getByText(/periods, across|period, across/i)).toBeVisible({ timeout: 20_000 });
-
-    // On compte les colonnes NOMMEES, pas tous les `span` de la page. La
-    // premiere version en attrapait d autres et diluait le rapport au point de
-    // passer alors que la frise s etendait bien au-dela des donnees.
-    const frise = await page.evaluate(() => {
-      const barres = [...document.querySelectorAll("[data-frise]")];
-      return {
-        colonnes: barres.length,
-        portantes: barres.filter((e) => Number(e.getAttribute("data-frise")) > 0).length,
-      };
-    });
-
-    expect(frise.colonnes, "aucune colonne dans la frise").toBeGreaterThan(0);
-    // Le garde-fou qui compte : si presque tout est vide, la frise ment par
-    // omission au lieu de se borner aux annees que le calcul couvre.
-    expect(
-      frise.portantes / frise.colonnes,
-      `${frise.portantes} colonnes portantes sur ${frise.colonnes} : la frise s etend au-dela des donnees`,
-    ).toBeGreaterThan(0.25);
-  });
-
-  test("on y arrive par la barre du bas, et le clic navigue vraiment", async ({ page }) => {
-    await ouvrirTimeline(page);
-
-    /**
-     * Le defaut du 17/09, signale par Christophe : « quand on clique sur Ta
-     * vie entiere, ca ne marche pas ».
-     *
-     * L ecran vivait dans le tiroir profil, derriere un <Link> dont le onClick
-     * fermait le tiroir. La feuille se demontait AVANT que le routeur traite le
-     * clic, donc l ancre disparaissait et la navigation etait annulee — sans
-     * une erreur nulle part, l URL restait simplement la meme.
-     *
-     * Ce test verifie les deux choses d un coup : que l entree est dans la
-     * barre du bas, et que le clic change VRAIMENT d ecran. Verifier la
-     * presence du lien n aurait rien prouve : il etait bien present, et bien
-     * visible, et il ne faisait rien.
-     */
-    const onglet = page.getByRole("link", { name: /my life|ma vie/i });
-    await expect(onglet, "l entree « Ma vie » manque dans la barre du bas").toHaveCount(1);
-
-    await onglet.first().click();
-    await expect(page, "le clic n a pas change d ecran").toHaveURL(/\/app\/vie/);
-    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
-  });
-
-  test("les mouvements ne sont demandes au moteur QU UNE FOIS", async ({ page }) => {
-    /**
-     * Christophe, le 17/09 : « quand on donne une date, une heure, un lieu, ca
-     * doit telecharger toute la vie entiere, la mettre en cache, et normalement
-     * on n a plus besoin d aller reinterroger l API ».
-     *
-     * C est le contrat de toute l app — `lib/momentum-store.tsx` le tient
-     * depuis toujours, avec une clef portant l empreinte de la naissance. La
-     * route des chapitres, ecrite le meme jour, ne le tenait PAS : elle
-     * rappelait le moteur a chaque ouverture de l ecran.
-     *
-     * Ce test compte les appels. Il ne regarde pas le code, il regarde le
-     * reseau : c est la seule preuve qui tienne.
-     */
-    let appels = 0;
-    await page.route(/\/api\/chapitres/, async (route) => {
-      appels += 1;
-      await route.fallback();
-    });
-
-    await aller(page, "/app/vie");
-    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
-    expect(appels, "le premier affichage doit appeler le moteur une fois").toBe(1);
-
-    // On quitte l ecran et on y revient : le cache doit suffire.
-    await aller(page, "/app/timeline");
-    await page.waitForTimeout(600);
-    await aller(page, "/app/vie");
-    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
-
-    expect(appels, `le moteur a ete rappele ${appels} fois : le cache ne sert a rien`).toBe(1);
-  });
-
-  test("l arc dessine les mouvements a l echelle de leur duree", async ({ page }) => {
-    await aller(page, "/app/vie");
-
-    // L arc arrive apres le reste : il attend le moteur.
-    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
-
-    const arc = await page.evaluate(() => {
-      const barre = document.querySelector("[data-arc-total]") as HTMLElement | null;
-      if (!barre) return null;
-      // `offsetWidth` et non `getBoundingClientRect()` : les segments entrent
-      // en `scaleX`, et le rectangle client rend la boite APRES transformation.
-      // Mesure prise pendant l animation : 0,1 % au lieu de 32 %. La largeur de
-      // mise en page, elle, porte le fait qu on teste et ignore la transition.
-      const large = barre.offsetWidth;
-      const segments = [...barre.querySelectorAll("[data-arc-segment]")].map((e) => ({
-        maison: Number(e.getAttribute("data-arc-segment")),
-        part: (e as HTMLElement).offsetWidth / large,
-      }));
-      return { total: Number(barre.getAttribute("data-arc-total")), segments };
-    });
-
-    expect(arc, "l arc ne s est pas dessine").not.toBeNull();
-    // 27 + 30 + 12 + 15 dans la fixture : la DUREE annoncee, pas la
-    // soustraction des dates, qui donnerait 27 + 30 + 12 + 1.
-    expect(arc!.total, "la duree totale ne vient pas de duration").toBe(84);
-    expect(arc!.segments.map((s) => s.maison)).toEqual([7, 8, 9, 10]);
-
-    // Chaque segment large comme sa duree : c est ce qui fait que la barre est
-    // une vie a l echelle et pas quatre cases egales. Une tolerance d un point
-    // absorbe les bordures d un pixel et demi entre les blocs.
-    const attendu = [27 / 84, 30 / 84, 12 / 84, 15 / 84];
-    arc!.segments.forEach((seg, i) => {
-      expect(
-        Math.abs(seg.part - attendu[i]),
-        `segment ${i} : ${(seg.part * 100).toFixed(1)} % au lieu de ${(attendu[i] * 100).toFixed(1)} %`,
-      ).toBeLessThan(0.02);
-    });
-  });
-
-  test("le dernier mouvement ne se ferme pas sur l horizon du moteur", async ({ page }) => {
-    await aller(page, "/app/vie");
-    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
-
-    // La quatrieme ligne porte la maison 10. Sa date de fin dans le paquet est
-    // l horizon de calcul, pas la fin du chapitre : l ecran doit ecrire « a
-    // partir de », jamais une fourchette fermee qui serait fausse de 14 ans.
-    const ligne = page.locator("[data-arc-ligne='10']");
-    await expect(ligne).toBeVisible();
-    await expect(ligne).toContainText(/from \d+ onwards/i);
-
-    // Les trois autres sont fermes pour de bon.
-    for (const maison of [7, 8, 9]) {
-      await expect(page.locator(`[data-arc-ligne='${maison}']`)).toContainText(/\d+ to \d+/);
-    }
-  });
-
-  test("aucun age negatif dans les mouvements", async ({ page }) => {
-    await aller(page, "/app/vie");
-    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
-
-    /**
-     * Une vie commence a zero.
-     *
-     * Le premier chapitre demarre a la naissance, mais pas a la meme seconde
-     * que la date qu on a en magasin : le moteur l ecrit en UTC, on la lit en
-     * heure locale. Quelques heures d ecart suffisent a faire basculer
-     * l arrondi et a afficher « -1 a 26 ans ». Vu a l ecran le 17/09.
-     *
-     * On lit les nombres de chaque ligne plutot que la mise en forme : le
-     * signe moins reste un signe moins dans les dix langues.
-     */
-    const lignes = await page.evaluate(() =>
-      [...document.querySelectorAll("[data-arc-ligne]")].map((e) => (e as HTMLElement).innerText),
-    );
-
-    expect(lignes.length, "aucune ligne de mouvement").toBeGreaterThan(0);
-    for (const ligne of lignes) {
-      expect(ligne, `age negatif a l ecran : ${ligne}`).not.toMatch(/-\s*\d/);
-    }
-  });
-
-  test("aucun nom de technique dans les mouvements", async ({ page }) => {
-    await aller(page, "/app/vie");
-    await expect(page.locator("[data-arc-total]")).toBeVisible({ timeout: 20_000 });
-
-    // La regle de silence du produit. Le paquet du moteur porte tous ces mots ;
-    // la route les jette avant qu ils partent, et ce test le prouve a l ecran.
-    const texte = await page.evaluate(() => document.body.innerText);
-    for (const jargon of [/zodiacal/i, /releasing/i, /\blot of\b/i, /fortune/i, /capricorn/i, /aquarius/i, /\bruler\b/i]) {
-      expect(texte, `nom de technique a l ecran : ${jargon}`).not.toMatch(jargon);
-    }
-  });
-
-  test("aucun jugement sur une vie", async ({ page }) => {
-    await aller(page, "/app/vie");
-    await expect(page.getByText(/periods, across|period, across/i)).toBeVisible({ timeout: 20_000 });
-
-    // On compte, on ne juge pas. « L annee la plus chargee » est un compte ;
-    // « la plus dure », « la meilleure » seraient des jugements qu aucune
-    // mesure ne porte.
-    const texte = await page.evaluate(() => document.body.innerText);
-    for (const interdit of [/hardest/i, /best year/i, /worst/i, /difficult year/i, /lucky/i]) {
-      expect(texte, `jugement a l ecran : ${interdit}`).not.toMatch(interdit);
-    }
   });
 });
