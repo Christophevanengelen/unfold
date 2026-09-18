@@ -44,6 +44,24 @@ const ZONES: Record<string, string[]> = {
 };
 
 /**
+ * Le decompte de pression — demande par Christophe le 18/09/2026 : ce
+ * playbook se remplit progressivement (la jauge de completude), et il veut
+ * une echeance visible pour que ca avance. 30 jours a partir du lancement du
+ * canal, pas de blocage d'acces derriere — juste une urgence croissante a
+ * l'ecran, dans le meme esprit que "pas de protection, on n'est pas une
+ * banque".
+ */
+const DATE_LANCEMENT = new Date("2026-09-18T00:00:00");
+const JOURS_ALLOUES = 30;
+
+function joursRestants(): number {
+  const echeance = new Date(DATE_LANCEMENT);
+  echeance.setDate(echeance.getDate() + JOURS_ALLOUES);
+  const diffMs = echeance.getTime() - Date.now();
+  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+}
+
+/**
  * Memes textes que SECTIONS dans app/api/liaison/message/route.ts et que
  * CADRAGE-MARIE-ANGE.md. Garder les trois synchronises.
  */
@@ -170,6 +188,7 @@ export default function LiaisonMarieAngePage() {
   const [zone, setZone] = useState<string | null>(null);
   const finRef = useRef<HTMLDivElement>(null);
   const fichierRef = useRef<HTMLInputElement>(null);
+  const jours = joursRestants();
 
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -313,6 +332,19 @@ export default function LiaisonMarieAngePage() {
           Favorable · interne
         </div>
         <div style={{ fontSize: 18, fontWeight: 600, marginTop: 2 }}>Cadrage avec Marie-Ange</div>
+
+        <div
+          style={{
+            marginTop: 10,
+            fontSize: 12,
+            fontWeight: 700,
+            color: jours <= 7 ? "var(--danger)" : jours <= 14 ? "var(--warning)" : "var(--text-body-subtle)",
+          }}
+        >
+          {jours > 0
+            ? `Ce playbook se remplit au fur et à mesure — il reste ${jours} jour${jours > 1 ? "s" : ""} pour le finaliser.`
+            : "Le délai des 30 jours est dépassé — ce cadrage doit se finaliser maintenant."}
+        </div>
 
         {section ? (
           <div style={{ marginTop: 12 }}>
