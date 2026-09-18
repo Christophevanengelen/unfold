@@ -184,11 +184,34 @@ export interface AxePorteur {
 
 /** Ce qu une personne apporte a l autre, tel que le moteur le nomme. */
 export interface Cadeau {
-  /** Le domaine, en clair : « finance », « family ». Traduit par l ecran. */
-  domaine: string;
-  /** La phrase du moteur. En anglais aujourd hui — voir la note a Marie-Ange. */
-  texte: string;
+  /** Clef de traduction du domaine — jamais le texte moteur, voir CADEAU_CLEF. */
+  clef: string;
 }
+
+/**
+ * `gift.person1GivesPerson2.domain` / `person2GivesPerson1.domain` — le
+ * domaine ou tombe le Soleil de l un dans le theme de l autre. Sonde le
+ * 18/09/2026 sur 14 paires de naissances arbitraires (pas un theme) : les
+ * douze maisons sont toutes sorties, chaque domaine et chaque `desc` sont
+ * revenus MOT POUR MOT a chaque repetition d une meme maison. C est une table
+ * fixe de douze entrees cote moteur, pas du texte libre — exactement le cas ou
+ * une clef de traduction s applique, comme `AXE_CLEF`. Un domaine absent de
+ * cette liste rend `null` plutot qu une traduction devinee.
+ */
+const CADEAU_CLEF: Record<string, string> = {
+  confidence: "rapport.cadeau_confiance",
+  finance: "rapport.cadeau_finance",
+  siblings: "rapport.cadeau_fratrie",
+  family: "rapport.cadeau_famille",
+  creativity: "rapport.cadeau_creativite",
+  work: "rapport.cadeau_travail",
+  love: "rapport.cadeau_amour",
+  evolution: "rapport.cadeau_transformation",
+  travel: "rapport.cadeau_voyage",
+  career: "rapport.cadeau_carriere",
+  friendship: "rapport.cadeau_amitie",
+  introspection: "rapport.cadeau_introspection",
+};
 
 export interface LectureMatch {
   /** Le chiffre de tête. */
@@ -572,10 +595,10 @@ export function lireMatch(brut: unknown): LectureMatch | null {
         : null
       : null;
 
-  const lireCadeau = (c?: { domain?: string; desc?: string }): Cadeau | null =>
-    c && typeof c.domain === "string" && typeof c.desc === "string"
-      ? { domaine: c.domain, texte: c.desc }
-      : null;
+  const lireCadeau = (c?: { domain?: string }): Cadeau | null => {
+    const clef = typeof c?.domain === "string" ? CADEAU_CLEF[c.domain] : undefined;
+    return clef ? { clef } : null;
+  };
   const cadeauVersElle = lireCadeau(m.gift?.person1GivesPerson2);
   const cadeauVersLui = lireCadeau(m.gift?.person2GivesPerson1);
 

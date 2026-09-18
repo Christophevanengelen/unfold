@@ -799,13 +799,14 @@ function Ressemblance({
  * simplement pas recu. C est la meme regle que partout : on ne comble pas un
  * manque, on se tait.
  *
- * ─── LE TEXTE EST CELUI DU MOTEUR, ET IL EST EN ANGLAIS ─────────────────────
+ * ─── LE DOMAINE, PAS LA PHRASE DU MOTEUR ────────────────────────────────────
  *
- * `desc` arrive en anglais aujourd hui, et c est un des points de la note a
- * Marie-Ange. On l affiche quand meme : la phrase decrit un vecu — « un soutien
- * financier », « de la stabilite et un sens de la famille » — sans aucun nom de
- * technique. Elle passe donc la regle de silence, et une phrase juste dans la
- * mauvaise langue vaut mieux qu une case vide.
+ * `gift.person1GivesPerson2.domain` est une table fixe de douze entrees cote
+ * moteur (une par maison, sondee le 18/09/2026 — voir `CADEAU_CLEF` dans
+ * `lib/match-lecture.ts`). L ecran ne lit donc jamais `desc`, qui arrive en
+ * anglais brut : `lireCadeau` traduit le domaine en clef produit, dans les dix
+ * langues, comme le reste du rapport. Un domaine que la table ne reconnait pas
+ * rend `null` et efface les deux sens plutot que de laisser passer l anglais.
  */
 function Cadeaux({
   lecture,
@@ -845,7 +846,7 @@ function Cadeaux({
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-body">
               {l.qui}
             </p>
-            <p className="mt-1 text-[15px] leading-[1.45] text-text-heading">{l.cadeau.texte}</p>
+            <p className="mt-1 text-[15px] leading-[1.45] text-text-heading">{t(l.cadeau.clef, locale)}</p>
           </div>
         ))}
       </div>
