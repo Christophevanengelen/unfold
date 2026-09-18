@@ -87,12 +87,10 @@ function angleDe(longitude: number): number {
 export function CielDuSignal({
   positions,
   locale,
-  dateLisible,
   initiale,
 }: {
   positions: Position[] | null;
   locale: Locale;
-  dateLisible: string;
   /**
    * L initiale de la personne, au centre.
    *
@@ -304,17 +302,14 @@ export function CielDuSignal({
         ))}
       </div>
 
-      {/*
-        La provenance. C est elle, plus que le dessin, qui fait la credibilite :
-        la quasi-totalite des visualisations jugees fiables citent leur source.
-      */}
-      <figcaption
-        className="mt-1 text-[11px] font-semibold uppercase"
-        style={{ color: "var(--text-body)", letterSpacing: "0.14em" }}
-        data-ciel-provenance
-      >
-        {dateLisible}
-      </figcaption>
+      {/* La date vivait ici en `<figcaption>`, sous le dessin — ET une seconde
+          fois juste en dessous dans CapsuleDetailSheet.tsx (`{dateLabel} ·
+          {duration}`), correctement localisee celle-la. Celle du figcaption
+          venait de `formatEuropeanDisplayDate`, qui rend le mois en ANGLAIS
+          quelle que soit la langue de lecture ("31 AUGUST 2025") : deux
+          fautes en une, trouvees le 18/09/2026 en auditant les doublons de la
+          fiche. La date correcte existe deja plus bas ; elle ne se repete
+          plus ici. */}
     </figure>
   );
 }

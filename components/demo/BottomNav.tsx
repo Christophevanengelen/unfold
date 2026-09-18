@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { Heart, Clock, User, MessageDots, ChartMixed } from "flowbite-react-icons/outline";
+import { IconeTimeline, IconeMaVie, IconeMatch, IconeVela, IconeProfil } from "@/components/demo/icons/NavIcons";
 import { t } from "@/lib/i18n-demo";
 import { useLocale } from "@/lib/use-locale";
 import { useConnexions } from "@/components/demo/use-connexions";
@@ -89,7 +89,7 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
     {
       key: "timeline" as const,
       href: "/app/timeline",
-      icon: Clock,
+      icon: IconeTimeline,
       label: t("nav.timeline", locale),
     },
     // « Ma vie » est une DESTINATION, pas un reglage.
@@ -104,13 +104,13 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
     {
       key: "vie" as const,
       href: "/app/vie",
-      icon: ChartMixed,
+      icon: IconeMaVie,
       label: t("nav.vie", locale),
     },
     {
       key: "match" as const,
       href: "/app/compatibility",
-      icon: Heart,
+      icon: IconeMatch,
       label: t("nav.match", locale),
       badge: connectionCount,
     },
@@ -120,7 +120,7 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
     {
       key: "vela" as const,
       href: "/app/astrologue",
-      icon: MessageDots,
+      icon: IconeVela,
       label: t("vela.titre", locale),
     },
   ];
@@ -188,7 +188,7 @@ export function BottomNav({ onProfile, profileActive = false }: BottomNavProps) 
           aria-label={t("nav.profile", locale)}
         >
           <Onglet actif={profileActive} libelle={t("nav.profile", locale)}>
-            <User
+            <IconeProfil
               size={21}
               className="transition-colors duration-200"
               style={{ color: profileActive ? "var(--accent-purple)" : "var(--text-body-subtle)" }}

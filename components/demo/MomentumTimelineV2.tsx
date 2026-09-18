@@ -923,7 +923,7 @@ function OverviewView({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.6 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute left-2 z-30 flex h-11 items-center justify-center rounded-full px-4"
+            className="absolute left-2 z-30 flex h-[var(--taille-tactile-min)] items-center justify-center rounded-full px-4"
             style={{ ...PILL_STYLE, bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
             whileTap={{ scale: 0.95 }}
           >
@@ -937,7 +937,7 @@ function OverviewView({
         <motion.button
           type="button"
           onClick={() => jumpByYear("future")}
-          className="flex h-11 w-11 items-center justify-center rounded-full"
+          className="flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center rounded-full"
           style={PILL_STYLE}
           whileTap={{ scale: 0.9 }}
         >
@@ -946,7 +946,7 @@ function OverviewView({
         <motion.button
           type="button"
           onClick={() => jumpByYear("past")}
-          className="flex h-11 w-11 items-center justify-center rounded-full"
+          className="flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center rounded-full"
           style={PILL_STYLE}
           whileTap={{ scale: 0.9 }}
         >
@@ -1143,7 +1143,7 @@ function ListView({
         <button
           type="button"
           onClick={scrollToNow}
-          className="absolute left-2 z-30 flex h-11 items-center justify-center rounded-full px-4"
+          className="absolute left-2 z-30 flex h-[var(--taille-tactile-min)] items-center justify-center rounded-full px-4"
           style={{ ...PILL_STYLE, bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}
         >
           <span className="text-[10px] font-semibold uppercase tracking-wider">{perso("timeline.maintenant", detectLocale())}</span>
@@ -1152,10 +1152,10 @@ function ListView({
 
       {/* Up/Down — absolute right, jump by year like overview */}
       <div className="absolute right-2 z-30 flex flex-col items-center gap-2" style={{ bottom: "calc(var(--barre-onglets) + var(--safe-bottom, 0px) + 12px)" }}>
-        <button type="button" onClick={() => jumpByYear("future")} className="flex h-11 w-11 items-center justify-center rounded-full" style={PILL_STYLE}>
+        <button type="button" onClick={() => jumpByYear("future")} className="flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center rounded-full" style={PILL_STYLE}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 7.5L6 3.5L10 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
-        <button type="button" onClick={() => jumpByYear("past")} className="flex h-11 w-11 items-center justify-center rounded-full" style={PILL_STYLE}>
+        <button type="button" onClick={() => jumpByYear("past")} className="flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center rounded-full" style={PILL_STYLE}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
       </div>
@@ -1592,8 +1592,8 @@ export function MomentumTimelineV2() {
         <button
           type="button"
           onClick={reessayer}
-          className="rounded-xl px-5 font-medium transition-opacity active:opacity-80"
-          style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)", minHeight: 48 }}
+          className="min-h-[var(--taille-cta)] rounded-xl px-5 font-medium transition-opacity active:opacity-80"
+          style={{ background: "var(--bg-brand)", color: "var(--text-on-brand)" }}
         >
           {t("common.echec_reessayer", locale)}
         </button>
@@ -1701,8 +1701,8 @@ export function MomentumTimelineV2() {
                 background: viewMode === mode ? "var(--bg-brand)" : "transparent",
                 // 44 points, le minimum qu Apple demande pour une cible tactile.
                 // On etait a 28.
-                width: 44,
-                height: 44,
+                width: "var(--taille-tactile-min)",
+                height: "var(--taille-tactile-min)",
               }}
               aria-label={mode === "overview" ? "Timeline view" : "List view"}
             >

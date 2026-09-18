@@ -348,6 +348,33 @@ button, a, [role="button"], [role="link"],
 }
 
 /* ==============================================
+   TAILLES INTERACTIVES
+   ==============================================
+
+   Christophe, le 18/09 : « la taille des boutons doit etre homogene partout
+   [...] un vrai design system et pas reinventer des nouvelles tailles ».
+   Avant ce jeton, chaque composant choisissait sa propre hauteur en Tailwind
+   brut (h-6, h-7, h-11...) sans reference commune — seul BottomNav.tsx avait
+   un raisonnement ecrit (44pt, le minimum tactile Apple).
+
+   Deux primitives seulement, tout le reste en est un ALIAS :
+     44px — la zone tactile minimale Apple. Les boutons icone visuellement
+            pleins (fermeture, navigation, CTA) la remplissent directement.
+     28px — le rond ou la pastille compacts. Ils restent petits a l ecran et
+            atteignent 44px de zone tactile via `before:-inset-*`, jamais en
+            agrandissant le dessin — c est la technique deja en place partout,
+            ce jeton ne fait que lui donner une valeur commune.
+
+   Ne pas ajouter un troisieme echelon pour un cas particulier : si une taille
+   existante ne correspond a aucun des deux, c est elle qu on corrige.       */
+:root {
+  --taille-tactile-min: 44px;
+  --taille-icone-secondaire: 28px;
+  --taille-pastille: var(--taille-icone-secondaire);
+  --taille-cta: var(--taille-tactile-min);
+}
+
+/* ==============================================
    LIGHT MODE
    ============================================== */
 :root {

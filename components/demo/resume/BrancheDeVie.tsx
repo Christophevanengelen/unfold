@@ -1453,7 +1453,7 @@ export function BrancheDeVie({
           <button
             key={p.graine}
             type="button"
-            className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 focus-visible:opacity-100 focus-visible:ring-2"
+            className="absolute h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 focus-visible:opacity-100 focus-visible:ring-2"
             style={{ left: `${(p.gx / L) * 100}%`, top: `${(p.gy / H) * 100}%` }}
             aria-label={`${t(CLEF_FAMILLE[p.famille], locale)} · ${p.quandGraine} → ${p.quandFleur}`}
             aria-pressed={choix === i}
@@ -1493,7 +1493,7 @@ export function BrancheDeVie({
                 <p className="text-[12px] font-semibold" style={{ color: "var(--text-heading)" }}>
                   {t(CLEF_FAMILLE[choisie.famille], locale)}
                 </p>
-                <button type="button" onClick={() => setChoix(null)} className="ml-auto flex h-11 w-11 items-center justify-center text-[13px] text-text-body-subtle" aria-label={t("resume.branche_fermer", locale)}>
+                <button type="button" onClick={() => setChoix(null)} className="ml-auto flex h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] items-center justify-center text-[13px] text-text-body-subtle" aria-label={t("resume.branche_fermer", locale)}>
                   ✕
                 </button>
               </div>
@@ -1520,7 +1520,7 @@ export function BrancheDeVie({
                   type="button"
                   aria-pressed={!eteinte}
                   onClick={() => basculer(f)}
-                  className="relative flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider transition-opacity before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
+                  className="relative flex h-[var(--taille-pastille)] items-center gap-1.5 rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider transition-opacity before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
                   style={{ ...VERRE, opacity: eteinte ? 0.42 : 1 }}
                 >
                   <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: `var(${JETON_FAMILLE[f]})` }} />
@@ -1539,7 +1539,7 @@ export function BrancheDeVie({
             <button
               type="button"
               onClick={() => { toucher(); allerA(fen.posMaintenant); }}
-              className="relative flex h-7 items-center rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
+              className="relative flex h-[var(--taille-pastille)] items-center rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
               style={VERRE}
             >
               {perso("timeline.maintenant", locale)}
@@ -1552,7 +1552,7 @@ export function BrancheDeVie({
             onClick={() => { toucher(); setFiltresOuverts((v) => !v); }}
             aria-expanded={filtresOuverts}
             aria-label={t("resume.branche_filtres", locale)}
-            className="relative flex h-7 items-center gap-[3px] rounded-full px-2 before:absolute before:-inset-2.5 before:content-['']"
+            className="relative flex h-[var(--taille-icone-secondaire)] items-center gap-[3px] rounded-full px-2 before:absolute before:-inset-2.5 before:content-['']"
             style={VERRE}
           >
             {FAMILLES.map((f) => (
@@ -1566,7 +1566,7 @@ export function BrancheDeVie({
           </button>
 
           {/* Les trois vues : un segment mince, la vue tenue est la seule pleine. */}
-          <div role="tablist" aria-label={t("resume.branche_ech_vie", locale)} className="mx-auto flex h-7 items-center rounded-full p-0.5" style={VERRE}>
+          <div role="tablist" aria-label={t("resume.branche_ech_vie", locale)} className="mx-auto flex h-[var(--taille-pastille)] items-center rounded-full p-0.5" style={VERRE}>
             {NIVEAUX.map((n) => (
               <button
                 key={n.id}
@@ -1574,7 +1574,7 @@ export function BrancheDeVie({
                 type="button"
                 aria-selected={echelle === n.id}
                 onClick={() => { toucher(); setChoix(null); setEchelle(n.id); }}
-                className="relative flex h-6 items-center rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider transition-colors before:absolute before:-inset-y-3 before:inset-x-0 before:content-['']"
+                className="relative flex h-[var(--taille-pastille)] items-center rounded-full px-2.5 text-[9px] font-semibold uppercase tracking-wider transition-colors before:absolute before:-inset-y-2.5 before:inset-x-0 before:content-['']"
                 style={
                   echelle === n.id
                     ? { background: "var(--bg-brand)", color: "var(--text-on-brand)" }
@@ -1592,7 +1592,7 @@ export function BrancheDeVie({
             <button
               type="button"
               onClick={() => versGraine(-1)}
-              className="relative flex h-7 w-7 items-center justify-center rounded-full before:absolute before:-inset-2 before:content-['']"
+              className="relative flex h-[var(--taille-icone-secondaire)] w-[var(--taille-icone-secondaire)] items-center justify-center rounded-full before:absolute before:-inset-2 before:content-['']"
               style={VERRE}
               aria-label={t("resume.branche_graine_avant", locale)}
             >
@@ -1601,7 +1601,7 @@ export function BrancheDeVie({
             <button
               type="button"
               onClick={() => versGraine(1)}
-              className="relative flex h-7 w-7 items-center justify-center rounded-full before:absolute before:-inset-2 before:content-['']"
+              className="relative flex h-[var(--taille-icone-secondaire)] w-[var(--taille-icone-secondaire)] items-center justify-center rounded-full before:absolute before:-inset-2 before:content-['']"
               style={VERRE}
               aria-label={t("resume.branche_graine_apres", locale)}
             >

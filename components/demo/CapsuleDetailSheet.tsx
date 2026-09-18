@@ -52,10 +52,8 @@ import { FeedbackThumb } from "@/components/demo/FeedbackThumb";
 import { CielDuSignal } from "@/components/demo/CielDuSignal";
 import { GrilleDeVie } from "@/components/demo/GrilleDeVie";
 import { RegleDeDuree } from "@/components/demo/RegleDeDuree";
-import { BandeDuJour } from "@/components/demo/BandeDuJour";
-import { heuresDuJour } from "@/lib/soleil";
+import { IllustrationMaison } from "@/components/demo/IllustrationMaison";
 import { chargerPositions, type Position } from "@/lib/positions-api";
-import { formatEuropeanDisplayDate } from "@/lib/european-date";
 import { PremiumBlur } from "@/components/demo/PremiumBlur";
 import { usePremiumStatus } from "@/lib/premium-gate";
 import { MicroRefresh } from "@/components/demo/MicroRefresh";
@@ -328,43 +326,6 @@ export function CapsuleDetailSheet({
    */
   const clefsCiel = capsule.planets.filter((p) => p in planetConfig).slice(0, 5).join(",");
 
-  /**
-   * De quoi dessiner la bande du jour, ou `null`.
-   *
-   * Le lieu est celui de la NAISSANCE — c est la seule ancre geographique de
-   * l app, et c est deja celle que le moteur utilise pour tout le reste. Pour
-   * une periode passee, ou la personne se trouvait vraiment est de toute facon
-   * inconnaissable : on ne le devine pas.
-   */
-  const bandeDuJour = useMemo(() => {
-    const b = getBirthDataSync();
-    if (!b || typeof b.latitude !== "number" || typeof b.longitude !== "number") return null;
-    if (!dateSignal) return null;
-    // Le decalage du lieu ce jour-la. `Intl` connait les regles de chaque
-    // fuseau, y compris l heure d ete — une table figee se tromperait d une
-    // heure entiere la moitie de l annee.
-    let decalage = 0;
-    try {
-      const f = new Intl.DateTimeFormat("en-US", { timeZone: b.timezone, timeZoneName: "longOffset" });
-      const p = f.formatToParts(new Date(`${dateSignal}T12:00:00Z`)).find((x) => x.type === "timeZoneName");
-      const m = p?.value ? /GMT([+-])(\d{2}):(\d{2})/.exec(p.value) : null;
-      if (m) decalage = (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
-    } catch {
-      /* Fuseau inconnu : on reste a UTC plutot que de deviner. */
-    }
-    const h = heuresDuJour(dateSignal, b.latitude, b.longitude, decalage);
-    if (!h || h.lever === null || h.coucher === null) return null;
-    const minutes = Math.max(0, Math.round(h.coucher - h.lever));
-    return {
-      lat: b.latitude,
-      lon: b.longitude,
-      decalage,
-      libelle: t("resume.jour_duree", locale)
-        .replace("{h}", String(Math.floor(minutes / 60)))
-        .replace("{m}", String(minutes % 60).padStart(2, "0")),
-    };
-  }, [dateSignal, locale]);
-
   useEffect(() => {
     if (!dateSignal || !clefsCiel) return;
     let abandonne = false;
@@ -424,6 +385,16 @@ export function CapsuleDetailSheet({
     || planetNarrative
     || null;
   const guidanceText = aiText?.guidance || guidance;
+
+  // DOUBLON TROUVE LE 18/09/2026, EN AUDITANT LA FICHE POUR LES REDITES.
+  //
+  // `insightText` retombe sur `planetNarrative` quand aucun texte IA, cycle
+  // ou vie n existe. Dans ce cas — le plus frequent hors capsule premium —
+  // la carte Insight (section 6) affichait EXACTEMENT la meme phrase que le
+  // paragraphe italique du recit des planetes (section 4), juste au-dessus :
+  // la meme donnee, deux fois, sous deux habillages differents. On ne montre
+  // le paragraphe italique que quand la carte Insight dit autre chose.
+  const planetNarrativeDejaDansInsight = !!planetNarrative && insightText === planetNarrative;
 
   // Lifetime periods list: prefer API/AI payload, fall back to phase data.
   const lifetimePeriods =
@@ -519,40 +490,29 @@ export function CapsuleDetailSheet({
             <CielDuSignal
               positions={ciel}
               locale={locale}
-              dateLisible={formatEuropeanDisplayDate(capsule.startDate)}
               initiale={getBirthDataSync()?.nickname ?? null}
             />
           </div>
-        ) : bandeDuJour ? (
+        ) : houseMeta ? (
           /**
            * TOUTE periode a son illustration, et elle vient AVANT le texte.
            *
            * Christophe, le 17/09 : « les animations ne sont pas sur tous les
-           * boudins, elles doivent venir avant le texte ».
-           *
-           * Il avait raison sur les deux points. Le ciel ne s affiche que si la
-           * periode porte des planetes en transit — les periodes de type cycle
-           * de vie n en ont aucune, et leur fiche s ouvrait donc directement
-           * sur du texte. Un ecran sur deux commencait par une illustration,
-           * l autre par un paragraphe : ce n est pas une mise en page, c est un
-           * hasard.
-           *
-           * La bande du jour, elle, est calculable pour N IMPORTE QUELLE date :
-           * il suffit d une date et d un lieu, et on a les deux. Elle prend donc
-           * la tete quand il n y a pas de ciel a montrer.
-           *
-           * En tete elle est plus haute et pleine largeur — c est l illustration
-           * de l ecran, pas une annexe des metadonnees.
+           * boudins, elles doivent venir avant le texte ». Le ciel ne s affiche
+           * que si la periode porte des planetes en transit — les periodes de
+           * type cycle de vie n en ont aucune, et leur fiche s ouvrait donc
+           * directement sur du texte. Cette illustration prend la tete quand
+           * il n y a pas de ciel a montrer : le meme cadre que CielDuSignal
+           * (l avatar au centre, un anneau), avec l icone du domaine a la
+           * place d une planete — remplace la « bande du jour » le 18/09
+           * (Christophe : « du bruit, on est dans une app astrologique »).
            */
-          <div className="-mx-5 mb-5 px-5">
-            <BandeDuJour
-              date={dateSignal}
-              latitude={bandeDuJour.lat}
-              longitude={bandeDuJour.lon}
-              decalageMinutes={bandeDuJour.decalage}
-              libelle={bandeDuJour.libelle}
-              hauteur={64}
-              dateLisible={formatEuropeanDisplayDate(capsule.startDate)}
+          <div className="-mx-5 mb-5 flex justify-center">
+            <IllustrationMaison
+              iconName={houseMeta.iconName}
+              label={perso(houseMeta.cleLabel, locale)}
+              color={houseColor}
+              initiale={getBirthDataSync()?.nickname ?? null}
             />
           </div>
         ) : null}
@@ -702,28 +662,6 @@ export function CapsuleDetailSheet({
             {dateLabel} · {duration}
           </p>
 
-          {/* LA BANDE DU JOUR — a quoi ressemblait la journee.
-
-              Vingt-quatre heures decoupees aux heures REELLES du soleil au lieu
-              de naissance : nuit, les trois crepuscules, plein jour. Calculees
-              en local, sans un seul appel reseau.
-
-              Une journee de decembre et une de juin ne se ressemblent pas, et
-              ca se voit sans une etiquette. C est la reponse a « trop de texte
-              et pas assez d illustrations » : une image qui se lit en un
-              dixieme de seconde et qui ne dit que des faits. */}
-          {bandeDuJour && ciel && ciel.length > 0 ? (
-            <div className="mt-4 max-w-[300px]">
-              <BandeDuJour
-                date={dateSignal}
-                latitude={bandeDuJour.lat}
-                longitude={bandeDuJour.lon}
-                decalageMinutes={bandeDuJour.decalage}
-                libelle={bandeDuJour.libelle}
-              />
-            </div>
-          ) : null}
-
           {/* LA REGLE — « long » par rapport a quoi.
 
               Le chiffre au-dessus ne dit rien tout seul. Ici le trait plein est
@@ -822,8 +760,11 @@ export function CapsuleDetailSheet({
             Le recit, lui, reste : il dit quelque chose que la figure ne dit
             pas. */}
         <div className="mb-5">
-          {/* Hide static ZR description once AI story is loaded — AI corps already covers it */}
-          {planetNarrative && !(phase?.apiCategory === "zr" && aiText) && (
+          {/* Hide static ZR description once AI story is loaded — AI corps already covers it.
+              Et masque si la carte Insight plus bas dit deja la meme phrase
+              (voir `planetNarrativeDejaDansInsight`) — sinon le lecteur lit le
+              meme recit deux fois avant d avoir fini de descendre l ecran. */}
+          {planetNarrative && !(phase?.apiCategory === "zr" && aiText) && !planetNarrativeDejaDansInsight && (
             <p className="mt-3 text-[12px] leading-relaxed italic" style={{ color: "var(--text-body)" }}>
               {planetNarrative}
             </p>
@@ -835,16 +776,35 @@ export function CapsuleDetailSheet({
           <div className="mb-5">
             <PremiumBlur feature="ai" blurAmount={10} quand={startLabel} capsuleId={capsule.id}>
               <div className="px-1 py-2">
+                {/* Kicker aligne sur l etat / l insight / le conseil : 11 px,
+                    0.16em — c etait le seul surtitre de la fiche encore a
+                    9 px et 0.05em (tracking-wider), donc le seul a rompre le
+                    systeme editorial. */}
                 <span
-                  className="text-[9px] font-semibold uppercase tracking-wider"
-                  style={{ color: "var(--text-brand)" }}
+                  className="text-[11px] font-semibold uppercase"
+                  style={{ color: "var(--text-brand)", letterSpacing: "0.16em" }}
                 >
                   {tc.storyLabel}
                 </span>
-                <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
+                {/* LE GROS TITRE — meme police que le grand chiffre de rang
+                    (`--font-titre`, Goodly Light), a une echelle qui reste la
+                    sienne. 68 px reste l unique element de la fiche a cette
+                    taille ; 30 px donne au recit un vrai titre de magazine
+                    sans lui disputer cette place. */}
+                <h3
+                  className="mt-2"
+                  style={{
+                    fontFamily: "var(--font-titre)",
+                    fontWeight: 300,
+                    fontSize: 30,
+                    lineHeight: 1.08,
+                    letterSpacing: "-0.01em",
+                    color: "var(--text-heading)",
+                  }}
+                >
                   {aiText?.titre || phase.title}
                 </h3>
-                <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
+                <p className="mt-3 text-[16px] leading-[1.55]" style={{ color: "var(--text-body)" }}>
                   {aiText?.story || phase.description}
                 </p>
               </div>
@@ -873,23 +833,37 @@ export function CapsuleDetailSheet({
           return (
           <div className="mb-5">
             <span
-              className="text-[9px] font-semibold uppercase tracking-wider"
-              style={{ color: "var(--text-brand)" }}
+              className="text-[11px] font-semibold uppercase"
+              style={{ color: "var(--text-brand)", letterSpacing: "0.16em" }}
             >
               {tc.storyLabel}
             </span>
-            {libelle && (
-              <p className="mt-1 text-[11px] font-medium" style={{ color: "var(--text-body)" }}>
-                {libelle}
-              </p>
-            )}
             {aiText?.titre && (
-              <h3 className="mt-1.5 text-lg font-semibold leading-tight" style={{ color: "var(--text-heading)" }}>
+              <h3
+                className="mt-2"
+                style={{
+                  fontFamily: "var(--font-titre)",
+                  fontWeight: 300,
+                  fontSize: 30,
+                  lineHeight: 1.08,
+                  letterSpacing: "-0.01em",
+                  color: "var(--text-heading)",
+                }}
+              >
                 {aiText.titre}
               </h3>
             )}
+            {/* Le chapo : le libelle du signal, traduit et sans jargon
+                (`translateApiLabel`), en dek italique sous le titre — la
+                meme donnee qu avant, mais qui se lit maintenant comme
+                l entree du recit plutot que comme une legende technique. */}
+            {libelle && (
+              <p className="mt-1.5 text-[14px] italic leading-[1.4]" style={{ color: "var(--text-body)" }}>
+                {libelle}
+              </p>
+            )}
             {aiText?.story ? (
-              <p className="mt-3 text-[13px] leading-relaxed" style={{ color: "var(--text-body)" }}>
+              <p className="mt-3 text-[16px] leading-[1.55]" style={{ color: "var(--text-body)" }}>
                 <TypewriterText text={aiText.story} speed={50} />
               </p>
             ) : (aiLoading || streamingCorps) ? (
@@ -1270,7 +1244,7 @@ export function CapsuleDetailSheet({
                 // une fiche qu on ouvre a chaque signal, on visait a cote une
                 // fois sur trois. L icone reste de la meme taille — c est la
                 // ZONE DE TOUCHE qui s etend, pas le dessin.
-                className="flex items-center justify-center h-11 w-11 rounded-full transition-opacity duration-200"
+                className="flex items-center justify-center h-[var(--taille-tactile-min)] w-[var(--taille-tactile-min)] rounded-full transition-opacity duration-200"
                 style={{
                   color: "var(--text-body)",
                   opacity: 0.3,
@@ -1303,7 +1277,7 @@ export function CapsuleDetailSheet({
         <button
           type="button"
           onClick={() => setShowMore(!showMore)}
-          className="flex items-center gap-1.5 w-full py-2"
+          className="flex min-h-[var(--taille-tactile-min)] w-full items-center gap-1.5 py-2"
         >
           <motion.div animate={{ rotate: showMore ? 180 : 0 }} transition={{ duration: 0.2 }}>
             <ChevronDown size={14} style={{ color: "var(--text-body)" }} />
