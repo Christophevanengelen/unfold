@@ -644,7 +644,15 @@ export function BrancheDeVie({
     return { t0, t1, unites, reperes, libelleDe, ecartDe, posDe, posMaintenant: posDe(maintenant) };
   }, [echelle, resume, maintenant, locale]);
 
-  /* ── Les periodes majeures -> les paires ; toutes les periodes -> la densite ── */
+  /* ── Les periodes majeures -> les paires ; toutes les periodes -> la densite ──
+     Christophe, le 19/09 : une fleur a chaque PIC de Releasing zodiacal, jamais
+     un top-N par score. Le niveau ZR consulte depend de l echelle regardee —
+     « vie » lit les pics de decennie (L2), « annee » ceux du mois (L3), « mois »
+     ceux du jour (L4) — API-COMPLETE-DOCUMENTATION.md, § Zodiacal Releasing.
+     Seul `phasesVie` (paquet viager, `appDataToPhases`) porte `zrLevel` /
+     `isPeakPeriod` : le paquet annee (`yearDataToPhases`) ne les lit pas encore.
+     Les pics viennent donc TOUJOURS de la, decoupes a la fenetre de l echelle —
+     c est le meme reservoir, jamais un second calcul. */
   const donnees = useMemo(() => {
     const source = echelle === "vie" ? (phasesVie ?? []) : (phasesAnnee ?? []);
     const per = source
@@ -652,7 +660,8 @@ export function BrancheDeVie({
       .filter((x) => Number.isFinite(x.d) && x.d < fen.t1 && (x.f === null || x.f > fen.t0));
     const familleDe = (ph: MomentumPhase): Famille | null => houseToDomain(ph.house) ?? (ph.domain as Famille) ?? null;
 
-    // La densite : combien de periodes ouvertes par unite.
+    // La densite : combien de periodes ouvertes par unite. Inchangee — elle
+    // lit toujours la source rapide de l echelle, pas les pics ZR.
     const comptes: number[] = [];
     const n = Math.max(2, Math.round(fen.unites));
     for (let i = 0; i < n; i++) {
@@ -661,26 +670,27 @@ export function BrancheDeVie({
       comptes.push(per.filter((x) => x.d < b && (x.f === null || x.f > a)).length);
     }
 
-    // Les paires : une par periode majeure, les plus fortes d abord, espacees.
-    // Le moteur en marque 511 sur une vie : on garde ce que l oeil peut lire.
-    const maxPaires = echelle === "vie" ? 9 : echelle === "annee" ? 8 : 6;
-    // Trier tout par force et prendre les N premieres favorise systematiquement
-    // le passe : la plupart des periodes sont a egalite de score (mesure du
-    // 18/09/2026 : 463 a 3, seulement 35 a 4, sur toute une vie), et un tri
-    // stable garde alors l'ordre chronologique d'origine — les plus
-    // anciennes gagnaient toujours, la branche s'arretait visuellement a
-    // aujourd'hui meme quand le moteur avait deja des periodes futures tout
-    // aussi fortes. Demande de Christophe le 18/09/2026 : "que ca aille
-    // jusqu'au bout de sa vie". On trie donc le vecu et l'a-venir separement,
-    // puis on les entrelace dans la proportion du temps deja vecu — la
-    // boucle plus bas garde sa propre deduplication par position et son
-    // plafond a maxPaires, inchanges.
-    const dejaVecues = per.filter((x) => (x.ph.score ?? 0) >= 3 && x.d >= fen.t0 && x.d <= maintenant);
-    const aVenirBrutes = per.filter((x) => (x.ph.score ?? 0) >= 3 && x.d > maintenant);
-    const parForce = (a: typeof per[number], b: typeof per[number]) =>
-      (b.ph.score ?? 0) - (a.ph.score ?? 0) || (b.ph.intensity ?? 0) - (a.ph.intensity ?? 0);
+    const zrNiveau = echelle === "vie" ? 2 : echelle === "annee" ? 3 : 4;
+    const estUnPic = (ph: MomentumPhase) => ph.apiCategory === "zr" && ph.zrLevel === zrNiveau && ph.isPeakPeriod === true;
+
+    // Les paires : une par PIC ZR de ce niveau, jamais un top-N par score —
+    // chaque pic reel doit fleurir. Un plafond genereux reste un garde-fou
+    // contre un doublon de donnees, pas le critere de choix. Meme piege que
+    // le score avant lui (18/09/2026) : trier tout par date et prendre les
+    // N premieres favoriserait systematiquement le passe des qu il y a plus
+    // de pics que le plafond sur une vie entiere. On garde donc le meme
+    // remede — vecu et a-venir tries separement, puis entrelaces dans la
+    // proportion du temps deja vecu — applique cette fois aux pics ZR.
+    const maxPaires = 14;
+    const picsFenetre = (phasesVie ?? [])
+      .map((ph) => ({ ph, d: new Date(ph.startDate).getTime(), f: ph.endDate ? new Date(ph.endDate).getTime() : null }))
+      .filter((x) => Number.isFinite(x.d) && x.d < fen.t1 && (x.f === null || x.f > fen.t0))
+      .filter((x) => estUnPic(x.ph) && x.d >= fen.t0);
+    const dejaVecues = picsFenetre.filter((x) => x.d <= maintenant);
+    const aVenirBrutes = picsFenetre.filter((x) => x.d > maintenant);
+    const parDate = (a: typeof picsFenetre[number], b: typeof picsFenetre[number]) => a.d - b.d;
     const partVecue = Math.max(0, Math.min(1, fen.posMaintenant));
-    const majeures = entrelacer([...dejaVecues].sort(parForce), [...aVenirBrutes].sort(parForce), partVecue);
+    const majeures = entrelacer([...dejaVecues].sort(parDate), [...aVenirBrutes].sort(parDate), partVecue);
     const paires: Paire[] = [];
     for (const x of majeures) {
       const fam = familleDe(x.ph);
@@ -715,11 +725,12 @@ export function BrancheDeVie({
         if (f) ouvertes[f]++;
       }
     });
-    // Les floraisons qui viennent : majeures pas encore ouvertes, les trois prochaines.
-    const aVenir = source
+    // Les floraisons qui viennent : les memes pics ZR que l arbre, pas encore
+    // ouverts, les trois prochains.
+    const aVenir = (phasesVie ?? [])
       .map((ph) => ({ ph, d: new Date(ph.startDate).getTime() }))
       .filter((x) => Number.isFinite(x.d))
-      .filter((x) => (x.ph.score ?? 0) >= 3 && x.d > maintenant)
+      .filter((x) => estUnPic(x.ph) && x.d > maintenant)
       .sort((a, b) => a.d - b.d)
       .slice(0, 3)
       .map((x) => ({ famille: familleDe(x.ph), quand: new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(new Date(x.d)), domaine: x.ph.house ? (noms[DOMAINE[x.ph.house]] ?? null) : null }));
