@@ -52,6 +52,21 @@ export interface PicZR {
   /** Apogee de cycle (culmination). */
   cu: boolean;
   /**
+   * DG (Demetra George) classe les 4 pics par force, pas a egalite : Fortune
+   * elle-meme et sa 10e sont les plus forts ("major", cas eminent de Valens),
+   * la 4e et la 7e restent angulaires mais plus discretes ("moderate"). Pilote
+   * la TAILLE de la fleur — Marie-Ange, 19/09 (docs/zr-doctrine.md, § Peak
+   * Periods). `null` : le moteur n a pas fourni le rang (jamais invente ici).
+   */
+  peakType: "major" | "moderate" | null;
+  /**
+   * DG-specifique, absent de Valens : Spirit qui relache vers Fortune elle-
+   * meme ou sa 10e, bien place et vu par un benefique — la fenetre classique
+   * d eminence. Toujours `false` en relachant depuis Fortune. Le pic le plus
+   * fort du systeme quand il est present.
+   */
+  valensPeak: boolean;
+  /**
    * Uniquement sur une graine (`preLB`) : la date du LB qu elle annonce — le
    * premier LB du meme lot qui suit chronologiquement. La pre-ombre est,
    * par definition, la premiere visite du signe que le LB va occuper ~8 ans
@@ -70,6 +85,8 @@ interface SousPeriodeMoteur {
   isForeshadowing?: unknown;
   markers?: unknown;
   subPeriods?: unknown;
+  peakType?: unknown;
+  valensPeak?: unknown;
 }
 
 function texte(v: unknown): string | undefined {
@@ -119,6 +136,8 @@ export function lireLesPicsDunLot(periodesL1: unknown, lot: LotZR, niveau: 2 | 3
       lb,
       preLB,
       cu: sp.isCulmination === true || marqueurs.includes("Cu"),
+      peakType: sp.peakType === "major" || sp.peakType === "moderate" ? sp.peakType : null,
+      valensPeak: sp.valensPeak === true,
     });
   }
   pics.sort((a, b) => a.startDate.localeCompare(b.startDate));
@@ -144,7 +163,11 @@ const TTL_PICS = 365 * 24 * 60 * 60 * 1000;
  * clef de cache.
  */
 export async function fetchZrPics(birth: BirthData, niveau: 2 | 3 | 4, l4Year?: number): Promise<PicZR[]> {
-  const cacheKey = `unfold_zr_pics_${birthHash(birth)}_${niveau}${niveau === 4 && l4Year ? `_${l4Year}` : ""}`;
+  // v2, 19/09/2026 : l extraction a change plusieurs fois le meme jour
+  // (peak-only -> peak/lb/preLB, puis le dedup cross-lot corrige). Sans ce
+  // suffixe, un cache pose sous une version anterieure resterait servi
+  // jusqu a expiration (365 jours) et cacherait la correction.
+  const cacheKey = `unfold_zr_pics_v2_${birthHash(birth)}_${niveau}${niveau === 4 && l4Year ? `_${l4Year}` : ""}`;
   const frais = await storage.get<PicZR[]>(cacheKey, TTL_PICS);
   if (frais) return frais;
 

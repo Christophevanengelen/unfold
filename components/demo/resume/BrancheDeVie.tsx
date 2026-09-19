@@ -58,9 +58,11 @@ import type { ResumeDeVie } from "@/lib/resume-vie";
 import type { MomentumPhase } from "@/types/momentum";
 import type { BirthData } from "@/lib/birth-data";
 import { fetchZrPics, type LotZR, type PicZR } from "@/lib/zr-pics";
+import { texteDuPic, texteDuPicEncore } from "@/lib/zr-texte";
 
 /** eros = amour, spirit = travail, fortune = sante — Marie-Ange, 19/09. */
 const FAMILLE_DU_LOT: Record<LotZR, Famille> = { eros: "love", spirit: "work", fortune: "health" };
+const LOT_DE_FAMILLE: Record<Famille, LotZR> = { love: "eros", work: "spirit", health: "fortune" };
 
 /* ── Un hasard REPRODUCTIBLE ────────────────────────────────────────────────
    Deux rendus de la meme vie doivent donner la meme image — sinon l affiche
@@ -312,6 +314,19 @@ const SUJET_FAMILLE: Record<Famille, string> = {
   work: "resume.branche_sujet_work",
   health: "resume.branche_sujet_health",
 };
+/**
+ * Marie-Ange, 19/09 : « ta vocation » ne veut rien dire avant 18 ans — et
+ * « ta formation » non plus a 3 ans. Spirit parle de ce qu on poursuit
+ * intentionnellement ; avant 18 ans, ce n est ni une carriere ni une
+ * scolarite mais l identite elle-meme qui se forme, a tout age d enfance
+ * (docs/zr-doctrine.md, avertissement de Demetra : ne jamais assumer
+ * Spirit = carriere). Seul le lot travail (spirit) a une variante ; amour
+ * et sante restent valables a tout age.
+ */
+function sujetClefDe(famille: Famille, ageAns: number | null): string {
+  if (famille === "work" && ageAns !== null && ageAns < 18) return "resume.branche_sujet_work_jeune";
+  return SUJET_FAMILLE[famille];
+}
 /** Majuscule sur la premiere lettre : les sujets sont ecrits en milieu de phrase. */
 function majuscule(s: string): string {
   return s.length ? s[0].toLocaleUpperCase() + s.slice(1) : s;
@@ -605,6 +620,19 @@ type Paire = {
   genre: "fleur" | "graine" | "lotus";
   /** Uniquement sur une graine : la date du LB qu elle annonce (docs/zr-doctrine.md). */
   lbDate: string | null;
+  /** La cle i18n du sujet grammatical — pas juste la famille : avant 18 ans, "ta vocation" ne veut rien dire. */
+  sujetClef: string;
+  /**
+   * Demetra range les 4 pics par force, pas a egalite (docs/zr-doctrine.md,
+   * § Peak Periods) : Fortune elle-meme et sa 10e sont les plus forts
+   * ("major"), la 4e et la 7e restent angulaires mais plus discretes
+   * ("moderate"). Pilote la taille de la fleur — Marie-Ange, 19/09, apres
+   * avoir remarque que la taille ne bougeait jamais malgre des scores
+   * differents (l ancien champ `score` etait fige a 3 partout).
+   */
+  peakType: "major" | "moderate" | null;
+  /** Fenetre d eminence de Valens (Spirit vers Fortune/10e) — le pic le plus fort du systeme. */
+  valensPeak: boolean;
 };
 type PairePosee = Paire & {
   brindille: Point[];
@@ -763,14 +791,26 @@ export function BrancheDeVie({
       .sort((a, b) => a.d - b.d);
 
     const genreDe = (p: PicZR): Paire["genre"] => (p.lb ? "lotus" : p.preLB ? "graine" : "fleur");
+    const naissanceMs = birthData ? new Date(birthData.birthDate).getTime() : null;
 
     const paires: Paire[] = [];
     for (const x of dansLaFenetre) {
       const pG = fen.posDe(x.d);
       const pF = fen.posDe(x.f);
-      if (paires.some((p) => Math.abs(p.posGraine - pG) < 0.045)) continue;
+      const ageAns = naissanceMs !== null ? (x.d - naissanceMs) / (365.2425 * 86400000) : null;
+      // PAS de garde-fou de proximite : mesure du 19/09/2026 sur le theme
+      // reel, un seuil de 4,5 ans (meme restreint au meme lot) en a mange
+      // 20 sur 48 — les pics spirit de 1983/1987/1991/1993 ne sont espaces
+      // que de ~4 ans les uns des autres, un rythme normal du Releasing
+      // (une nouvelle periode L1 peut demarrer pres d un signe deja pic).
+      // Chaque pic reel doit fleurir ; l alternance gauche/droite par index
+      // (plus haut) suffit desormais a les distinguer visuellement, y
+      // compris deux pics du meme lot presque simultanes. Seul un doublon
+      // EXACT de donnees (meme lot, meme instant) est ecarte.
+      const famille = FAMILLE_DU_LOT[x.p.lot];
+      if (paires.some((p) => p.famille === famille && p.posGraine === pG)) continue;
       paires.push({
-        famille: FAMILLE_DU_LOT[x.p.lot],
+        famille,
         posGraine: pG,
         posFleur: Math.max(pG + 0.02, pF),
         quandGraine: fen.libelleDe(pG),
@@ -783,6 +823,9 @@ export function BrancheDeVie({
         pic: true,
         genre: genreDe(x.p),
         lbDate: x.p.lbDate ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(new Date(x.p.lbDate)) : null,
+        sujetClef: sujetClefDe(famille, ageAns),
+        peakType: x.p.peakType,
+        valensPeak: x.p.valensPeak,
       });
     }
 
@@ -888,9 +931,15 @@ export function BrancheDeVie({
     };
 
     // les brindilles : une par paire, de la graine (base) a la fleur (pointe)
+    // `donnees.paires` est deja trie par date (posGraine croissant). Le cote
+    // alterne STRICTEMENT d une paire a la suivante plutot que par bruit —
+    // Marie-Ange, 19/09 : un pic eros et un pic spirit proches dans le temps
+    // (des lots differents, jamais fusionnes depuis la correction du dedup)
+    // sortaient parfois du meme cote et se chevauchaient. L alternance par
+    // index garantit qu ils ne juxtaposent jamais, peu importe l ecart.
     const paires: PairePosee[] = donnees.paires.map((p, i) => {
       const bp = surLeTronc(p.posGraine);
-      const dir = bruit(p.graine + 3) > 0 ? 1 : -1;
+      const dir = i % 2 === 0 ? 1 : -1;
       // La pointe est a la DATE de la fleur : la longueur, c est la duree.
       // Retombante : elle s ecarte du bois en descendant, 30 a 45° du fil.
       // Une periode d un an ferait une brindille aussi longue que le tronc :
@@ -910,7 +959,14 @@ export function BrancheDeVie({
         brindille.push({ x: v * v * bp.x + 2 * v * s * mx + s * s * exC, y: v * v * bp.y + 2 * v * s * my + s * s * ey, u: s });
       }
       const pal = [1, 0.82, 0.62][i % 3 === 0 ? 0 : i % 3 === 1 ? 1 : 2];
-      const D = 38 * pal * (p.score >= 4 ? 1.08 : 1); // ~4 % de la largeur, comme sur l image
+      // La force du pic pilote la taille, pas un score fige a 3 partout
+      // (mesure du 19/09/2026 : l ancien champ ne bougeait jamais). Fortune
+      // elle-meme et sa 10e ("major") sont plus fortes que la 4e/7e
+      // ("moderate") — docs/zr-doctrine.md, § Peak Periods. La fenetre
+      // d eminence de Valens (`valensPeak`) reste le pic le plus fort du
+      // systeme, au-dessus meme d un "major" ordinaire.
+      const ampleur = p.valensPeak ? 1.35 : p.peakType === "major" ? 1.18 : 1;
+      const D = 38 * pal * ampleur; // ~4 % de la largeur, comme sur l image
       const vx = exC - bp.x;
       const vy = ey - bp.y;
       const lv = Math.hypot(vx, vy) || 1;
@@ -1586,16 +1642,13 @@ export function BrancheDeVie({
                     : choisie.genre === "lotus"
                       ? t("resume.branche_texte_lotus", locale)
                       : choisie.aVenir
-                        ? t("resume.branche_texte_fleur_encore", locale)
-                        : t("resume.branche_texte_fleur", locale).replace("{b}", choisie.quandFleur).replace("{n}", choisie.ecart)
+                        ? texteDuPicEncore(LOT_DE_FAMILLE[choisie.famille], locale, choisie.graine)
+                        : texteDuPic(LOT_DE_FAMILLE[choisie.famille], locale, choisie.graine).replace("{b}", choisie.quandFleur).replace("{n}", choisie.ecart)
                   )
                     .replace("{a}", choisie.quandGraine)
-                    .replace("{sujet}", t(SUJET_FAMILLE[choisie.famille], locale))
+                    .replace("{sujet}", t(choisie.sujetClef, locale))
                 )}
               </p>
-              {choisie.genre === "fleur" ? (
-                <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">{t("resume.branche_tache_fleur", locale)}</p>
-              ) : null}
             </div>
           ) : null}
         </div>

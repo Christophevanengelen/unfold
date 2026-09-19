@@ -330,6 +330,8 @@ type Strings = {
     branche_texte_fleur?: string; branche_texte_fleur_encore?: string;
     branche_texte_graine?: string; branche_texte_lotus?: string;
     branche_sujet_love?: string; branche_sujet_work?: string; branche_sujet_health?: string;
+    /** Avant 18 ans, "ta vocation" ne veut rien dire — Spirit parle de formation, pas de carriere. */
+    branche_sujet_work_jeune?: string;
   };
   boudin: {
     titre: string;
@@ -757,6 +759,7 @@ const FR: Strings = {
     branche_texte_lotus: "Le vrai saut : à {a}, {sujet} bascule pour de bon — la trajectoire ne revient pas en arrière.",
     branche_sujet_love: "l'amour",
     branche_sujet_work: "ta vocation",
+    branche_sujet_work_jeune: "ce que tu deviens",
     branche_sujet_health: "ta vie matérielle",
     branche_naissance: "La naissance",
     branche_avenir: "Les années devant toi. Le papier reste nu.",
@@ -1190,6 +1193,7 @@ const EN: Strings = {
     branche_texte_lotus: "The real leap: on {a}, {sujet} shifts for good — the path doesn't return to what it was.",
     branche_sujet_love: "love",
     branche_sujet_work: "your calling",
+    branche_sujet_work_jeune: "who you're becoming",
     branche_sujet_health: "your material life",
     branche_naissance: "Birth",
     branche_avenir: "The years ahead of you. The paper stays bare.",
