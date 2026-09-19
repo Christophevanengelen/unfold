@@ -322,6 +322,14 @@ type Strings = {
     branche_prochaines_rien: string;
     branche_ici: string; branche_fermer: string; branche_ouverte: string; branche_fleurit: string; branche_encore: string; branche_tache_fleur: string;
     branche_naissance: string; branche_avenir: string; branche_graine_avant: string; branche_graine_apres: string; branche_filtres: string;
+    /**
+     * Texte par GENRE de marque (fleur/graine/lotus), {sujet} pris dans
+     * branche_sujet_* — voir docs/zr-doctrine.md. Optionnels : `t()` retombe
+     * sur l anglais si une langue ne les a pas encore.
+     */
+    branche_texte_fleur?: string; branche_texte_fleur_encore?: string;
+    branche_texte_graine?: string; branche_texte_lotus?: string;
+    branche_sujet_love?: string; branche_sujet_work?: string; branche_sujet_health?: string;
   };
   boudin: {
     titre: string;
@@ -743,6 +751,13 @@ const FR: Strings = {
     branche_fleurit: "fleurit {b}, {n} plus tard",
     branche_encore: "encore ouverte — la brindille s'allonge d'un jour par jour",
     branche_tache_fleur: "La tache est l'ouverture, la fleur l'aboutissement ; la brindille entre les deux, c'est la durée.",
+    branche_texte_fleur: "{sujet} est au centre : de {a} à {b} ({n}).",
+    branche_texte_fleur_encore: "{sujet} est au centre depuis {a}, et la période continue encore.",
+    branche_texte_graine: "Une graine se plante ici, à {a} : elle fleurira au vrai saut, le {lb}, quand {sujet} bascule pour de bon.",
+    branche_texte_lotus: "Le vrai saut : à {a}, {sujet} bascule pour de bon — la trajectoire ne revient pas en arrière.",
+    branche_sujet_love: "l'amour",
+    branche_sujet_work: "ta vocation",
+    branche_sujet_health: "ta vie matérielle",
     branche_naissance: "La naissance",
     branche_avenir: "Les années devant toi. Le papier reste nu.",
     branche_graine_avant: "Graine précédente",
@@ -1169,6 +1184,13 @@ const EN: Strings = {
     branche_fleurit: "blooms {b}, {n} later",
     branche_encore: "still open — the twig grows one day at a time",
     branche_tache_fleur: "The stain is the opening, the flower the outcome; the twig between them is the duration.",
+    branche_texte_fleur: "{sujet} takes center stage: from {a} to {b} ({n}).",
+    branche_texte_fleur_encore: "{sujet} has taken center stage since {a}, and the period is still open.",
+    branche_texte_graine: "A seed is planted here, on {a}: it will bloom at the real leap, on {lb}, when {sujet} shifts for good.",
+    branche_texte_lotus: "The real leap: on {a}, {sujet} shifts for good — the path doesn't return to what it was.",
+    branche_sujet_love: "love",
+    branche_sujet_work: "your calling",
+    branche_sujet_health: "your material life",
     branche_naissance: "Birth",
     branche_avenir: "The years ahead of you. The paper stays bare.",
     branche_graine_avant: "Previous seed",

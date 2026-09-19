@@ -51,13 +51,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { BasculeSegmentee, BoutonFleche } from "@/components/demo/primitives";
 import { VERRE_PILULE } from "@/components/demo/primitives/verre";
-import { STRINGS_MATCH_DOMAINES, t, type Locale } from "@/lib/i18n-demo";
+import { t, type Locale } from "@/lib/i18n-demo";
 import { perso } from "@/lib/perso-i18n";
 import { toucher } from "@/lib/haptique";
-import { DOMAINE } from "@/lib/score-match";
-import { houseToDomain } from "@/lib/event-labels";
 import type { ResumeDeVie } from "@/lib/resume-vie";
 import type { MomentumPhase } from "@/types/momentum";
+import type { BirthData } from "@/lib/birth-data";
+import { fetchZrPics, type LotZR, type PicZR } from "@/lib/zr-pics";
+
+/** eros = amour, spirit = travail, fortune = sante — Marie-Ange, 19/09. */
+const FAMILLE_DU_LOT: Record<LotZR, Famille> = { eros: "love", spirit: "work", fortune: "health" };
 
 /* ── Un hasard REPRODUCTIBLE ────────────────────────────────────────────────
    Deux rendus de la meme vie doivent donner la meme image — sinon l affiche
@@ -267,27 +270,6 @@ function duree(jours: number, locale: string): string {
   return dit(j, "day");
 }
 
-/**
- * Fusionne deux listes deja triees (fortes d abord) en respectant la part
- * `partA` que la premiere doit occuper dans le resultat — pour qu'un
- * plafond applique plus tard sur le total n'ecrase pas systematiquement
- * l'une des deux au profit de l'autre. Voir l'appel dans `donnees`
- * (selection des paires "vie") pour le pourquoi.
- */
-function entrelacer<T>(a: T[], b: T[], partA: number): T[] {
-  const resultat: T[] = [];
-  let ia = 0, ib = 0;
-  while (ia < a.length || ib < b.length) {
-    const cibleA = (ia + ib + 1) * partA;
-    if (ib >= b.length || (ia < a.length && ia < cibleA)) {
-      resultat.push(a[ia++]);
-    } else {
-      resultat.push(b[ib++]);
-    }
-  }
-  return resultat;
-}
-
 // Vivait ici sous son propre nom, identique au caractere pres a `PILL_STYLE`
 // dans MomentumTimelineV2.tsx (Timeline) — une seule definition maintenant,
 // voir components/demo/primitives/verre.ts.
@@ -324,6 +306,16 @@ const CLEF_FAMILLE: Record<Famille, string> = {
   work: "resume.branche_dom_work",
   health: "resume.branche_dom_health",
 };
+/** Le sujet grammatical d une famille, pour les phrases branche_texte_* (docs/zr-doctrine.md). */
+const SUJET_FAMILLE: Record<Famille, string> = {
+  love: "resume.branche_sujet_love",
+  work: "resume.branche_sujet_work",
+  health: "resume.branche_sujet_health",
+};
+/** Majuscule sur la premiere lettre : les sujets sont ecrits en milieu de phrase. */
+function majuscule(s: string): string {
+  return s.length ? s[0].toLocaleUpperCase() + s.slice(1) : s;
+}
 
 /* ── Le coup de pinceau : des poils, pas une forme ────────────────────────
    Le contour rempli d une seule valeur faisait « buche ». Ici le trait est
@@ -501,6 +493,63 @@ function fleurDePrunier(g: Ctx, x: number, y: number, D: number, col: string, en
   g.restore();
 }
 
+/* ── La graine : des bourgeons, pas une fleur ──────────────────────────────
+   Pre-ombre d un Loosing of the Bond a venir (~8 ans) : la forme de reference
+   (`branch-seeds-zr.svg`) est une brindille nue portant cinq bourgeons de
+   taille decroissante — jamais une fleur ouverte, la periode n a pas encore
+   fleuri, elle l annonce. Ici, le meme tampon doux que la tache et la fleur
+   (`touche`), pour rester dans l encre plutot que dans l aplat SVG. */
+function graineBourgeons(g: Ctx, x: number, y: number, ang: number, D: number, col: string, graine: number, a: number) {
+  if (a <= 0.01) return;
+  const n = 5;
+  const tailles = [1, 0.84, 0.7, 0.56, 0.42];
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1);
+    const dd = D * 0.55 * t;
+    const bx = x + Math.cos(ang) * dd + bruit(graine + i * 7) * D * 0.05;
+    const by = y + Math.sin(ang) * dd + bruit(graine + i * 11) * D * 0.05;
+    touche(g, bx, by, D * 0.16 * tailles[i], col, a * 0.85);
+  }
+}
+
+/* ── Le lotus : un eclat de rayons, pas des petales ────────────────────────
+   Loosing of the Bond : le pivot majeur de la sequence. La forme de reference
+   (`lotus-zr.svg`) est un eclat de douze rayons fins depuis un seul point —
+   plus fort et plus lu qu une fleur ordinaire. Rendu ici en poils d encre
+   (meme brosse que `coupDePinceau`), pas en aplat, pour rester dans l unite
+   du dessin. */
+function eclatLotus(g: Ctx, x: number, y: number, D: number, col: string, encre: string, graine: number, a: number, part: number) {
+  if (a <= 0.01 || part <= 0.01) return;
+  const nR = 12;
+  const long = D * 0.9 * Math.min(1, part * 1.2);
+  g.save();
+  g.translate(x, y);
+  for (let i = 0; i < nR; i++) {
+    const ang = (i / nR) * 6.2832 + bruit(graine + i * 5) * 0.14 - Math.PI / 2;
+    const lg = long * (0.75 + 0.35 * Math.abs(bruit(graine + i * 9)));
+    const larg = D * 0.05;
+    const ex = Math.cos(ang) * lg;
+    const ey = Math.sin(ang) * lg;
+    const nx = -Math.sin(ang) * larg;
+    const ny = Math.cos(ang) * larg;
+    g.globalAlpha = 0.6 * a;
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.lineTo(nx, ny);
+    g.lineTo(ex, ey);
+    g.lineTo(-nx, -ny);
+    g.closePath();
+    g.fill();
+  }
+  g.globalAlpha = 0.85 * a;
+  g.fillStyle = encre;
+  g.beginPath();
+  g.arc(0, 0, D * 0.09, 0, 6.2832);
+  g.fill();
+  g.restore();
+}
+
 /* ── L anneau qui respire ─────────────────────────────────────────────────
    La ou il faut toucher. Un seul trait fin, jamais un disque : c est un
    repere, pas un bouton. */
@@ -543,6 +592,19 @@ type Paire = {
    * filet ordinaire d une fleur normale.
    */
   pic: boolean;
+  /**
+   * Marie-Ange, 19/09 (`files (7)/zr-page-lotus-branche.patch` + les deux
+   * SVG de reference) : trois genres de marque, jamais confondus.
+   *   — "fleur"  : pic ordinaire, le bouquet de prunier habituel ;
+   *   — "graine" : pre-ombre d un LB a venir — des bourgeons le long de la
+   *     brindille, PAS une fleur ouverte : la periode n a pas encore fleuri,
+   *     elle l annonce ;
+   *   — "lotus"  : Loosing of the Bond — un eclat de rayons depuis la
+   *     pointe, le pivot majeur de la sequence.
+   */
+  genre: "fleur" | "graine" | "lotus";
+  /** Uniquement sur une graine : la date du LB qu elle annonce (docs/zr-doctrine.md). */
+  lbDate: string | null;
 };
 type PairePosee = Paire & {
   brindille: Point[];
@@ -563,15 +625,18 @@ export function BrancheDeVie({
   maintenant,
   phasesAnnee,
   phasesVie,
+  birthData,
 }: {
   resume: ResumeDeVie;
   locale: Locale;
   /** L instant de lecture, fige par l appelant — jamais `Date.now()` ici. */
   maintenant: number;
-  /** Les periodes de l annee, datees : les echelles « Annee » et « Mois ». */
+  /** Les periodes de l annee : la densite du tronc (comptes) a l echelle annee/mois. */
   phasesAnnee?: MomentumPhase[];
-  /** Les periodes de toute la vie, datees : l echelle « Vie ». */
+  /** Les periodes de toute la vie : la densite du tronc a l echelle vie. Les FLEURS, elles, viennent de `/api/zr-pics` (voir `picsZR` plus bas), pas de ce paquet. */
   phasesVie?: MomentumPhase[];
+  /** Le theme : ce qu il faut pour demander les pics ZR au moteur. */
+  birthData?: BirthData | null;
 }) {
   const fige = useReducedMotion();
   const hote = useRef<HTMLDivElement | null>(null);
@@ -586,7 +651,30 @@ export function BrancheDeVie({
   /** Les trois domaines sont allumes d office : le reglage reste range. */
   const [filtresOuverts, setFiltresOuverts] = useState(false);
   const signature = useRef("");
-  const noms = useMemo(() => STRINGS_MATCH_DOMAINES(locale), [locale]);
+
+  /** Le niveau ZR que cette echelle regarde : vie -> L2, annee -> L3, mois -> L4. */
+  const niveauZR: 2 | 3 | 4 = echelle === "vie" ? 2 : echelle === "annee" ? 3 : 4;
+  const l4Year = useMemo(() => new Date(maintenant).getFullYear(), [maintenant]);
+
+  /* ── Les pics reels, demandes au moteur — jamais a toctoc ─────────────────
+     Marie-Ange, 19/09 : `toctoc-app-short.php` ne porte jamais `isPeakPeriod`
+     (mesure sur deux themes reels, 0/642 et 0/884). Les fleurs viennent donc
+     de `/api/zr-pics`, un aller-retour par niveau, jamais par echelle visitee
+     deux fois (garde par ref, `fetchZrPics` porte deja son propre cache
+     disque cote lib/zr-pics.ts). */
+  const clefNiveau = niveauZR === 4 ? `4-${l4Year}` : String(niveauZR);
+  const [picsParNiveau, setPicsParNiveau] = useState<Record<string, PicZR[]>>({});
+  const demandesEnCours = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!birthData || demandesEnCours.current.has(clefNiveau)) return;
+    demandesEnCours.current.add(clefNiveau);
+    let abandonne = false;
+    fetchZrPics(birthData, niveauZR, niveauZR === 4 ? l4Year : undefined)
+      .then((pics) => { if (!abandonne) setPicsParNiveau((prev) => ({ ...prev, [clefNiveau]: pics })); })
+      .catch(() => { demandesEnCours.current.delete(clefNiveau); });
+    return () => { abandonne = true; };
+  }, [birthData, niveauZR, l4Year, clefNiveau]);
+  const picsActuels = picsParNiveau[clefNiveau] ?? [];
 
   /* ── La fenetre de temps ─────────────────────────────────────────────────
      Trois echelles, memes periodes datees : un ZOOM. Tout est ramene a une
@@ -644,24 +732,23 @@ export function BrancheDeVie({
     return { t0, t1, unites, reperes, libelleDe, ecartDe, posDe, posMaintenant: posDe(maintenant) };
   }, [echelle, resume, maintenant, locale]);
 
-  /* ── Les periodes majeures -> les paires ; toutes les periodes -> la densite ──
-     Christophe, le 19/09 : une fleur a chaque PIC de Releasing zodiacal, jamais
-     un top-N par score. Le niveau ZR consulte depend de l echelle regardee —
-     « vie » lit les pics de decennie (L2), « annee » ceux du mois (L3), « mois »
-     ceux du jour (L4) — API-COMPLETE-DOCUMENTATION.md, § Zodiacal Releasing.
-     Seul `phasesVie` (paquet viager, `appDataToPhases`) porte `zrLevel` /
-     `isPeakPeriod` : le paquet annee (`yearDataToPhases`) ne les lit pas encore.
-     Les pics viennent donc TOUJOURS de la, decoupes a la fenetre de l echelle —
-     c est le meme reservoir, jamais un second calcul. */
+  /* ── Les pics ZR -> les paires ; toutes les periodes -> la densite ────────
+     Marie-Ange, 19/09 : « ne pas se soucier du toctoc pour la branche de vie,
+     seulement les donnees ZR ». Toctoc ne sert plus qu a l epaisseur du tronc
+     (`comptes`, une texture generale) — jamais aux fleurs. Chaque fleur vient
+     de `picsActuels` (voir l effet plus haut, `/api/zr-pics`), un pic REEL du
+     Releasing zodiacal, au niveau L2/L3/L4 selon l echelle, pour chacun des
+     trois lots (eros/spirit/fortune -> amour/travail/sante). Aucun plafond,
+     aucun tri par score : chaque pic reel du niveau et de la fenetre visibles
+     doit fleurir. */
   const donnees = useMemo(() => {
     const source = echelle === "vie" ? (phasesVie ?? []) : (phasesAnnee ?? []);
     const per = source
       .map((ph) => ({ ph, d: new Date(ph.startDate).getTime(), f: ph.endDate ? new Date(ph.endDate).getTime() : null }))
       .filter((x) => Number.isFinite(x.d) && x.d < fen.t1 && (x.f === null || x.f > fen.t0));
-    const familleDe = (ph: MomentumPhase): Famille | null => houseToDomain(ph.house) ?? (ph.domain as Famille) ?? null;
 
-    // La densite : combien de periodes ouvertes par unite. Inchangee — elle
-    // lit toujours la source rapide de l echelle, pas les pics ZR.
+    // La densite : combien de periodes ouvertes par unite. Reste sur toctoc —
+    // une texture generale du tronc, pas une affirmation de pic.
     const comptes: number[] = [];
     const n = Math.max(2, Math.round(fen.unites));
     for (let i = 0; i < n; i++) {
@@ -670,72 +757,48 @@ export function BrancheDeVie({
       comptes.push(per.filter((x) => x.d < b && (x.f === null || x.f > a)).length);
     }
 
-    const zrNiveau = echelle === "vie" ? 2 : echelle === "annee" ? 3 : 4;
-    const estUnPic = (ph: MomentumPhase) => ph.apiCategory === "zr" && ph.zrLevel === zrNiveau && ph.isPeakPeriod === true;
+    const dansLaFenetre = picsActuels
+      .map((p) => ({ p, d: new Date(p.startDate).getTime(), f: new Date(p.endDate).getTime() }))
+      .filter((x) => Number.isFinite(x.d) && Number.isFinite(x.f) && x.d < fen.t1 && x.f > fen.t0 && x.d >= fen.t0)
+      .sort((a, b) => a.d - b.d);
 
-    // Les paires : une par PIC ZR de ce niveau, jamais un top-N par score —
-    // chaque pic reel doit fleurir. Un plafond genereux reste un garde-fou
-    // contre un doublon de donnees, pas le critere de choix. Meme piege que
-    // le score avant lui (18/09/2026) : trier tout par date et prendre les
-    // N premieres favoriserait systematiquement le passe des qu il y a plus
-    // de pics que le plafond sur une vie entiere. On garde donc le meme
-    // remede — vecu et a-venir tries separement, puis entrelaces dans la
-    // proportion du temps deja vecu — applique cette fois aux pics ZR.
-    const maxPaires = 14;
-    const picsFenetre = (phasesVie ?? [])
-      .map((ph) => ({ ph, d: new Date(ph.startDate).getTime(), f: ph.endDate ? new Date(ph.endDate).getTime() : null }))
-      .filter((x) => Number.isFinite(x.d) && x.d < fen.t1 && (x.f === null || x.f > fen.t0))
-      .filter((x) => estUnPic(x.ph) && x.d >= fen.t0);
-    const dejaVecues = picsFenetre.filter((x) => x.d <= maintenant);
-    const aVenirBrutes = picsFenetre.filter((x) => x.d > maintenant);
-    const parDate = (a: typeof picsFenetre[number], b: typeof picsFenetre[number]) => a.d - b.d;
-    const partVecue = Math.max(0, Math.min(1, fen.posMaintenant));
-    const majeures = entrelacer([...dejaVecues].sort(parDate), [...aVenirBrutes].sort(parDate), partVecue);
+    const genreDe = (p: PicZR): Paire["genre"] => (p.lb ? "lotus" : p.preLB ? "graine" : "fleur");
+
     const paires: Paire[] = [];
-    for (const x of majeures) {
-      const fam = familleDe(x.ph);
-      if (!fam) continue;
+    for (const x of dansLaFenetre) {
       const pG = fen.posDe(x.d);
-      // La fleur : au terme de la periode, ou a l horizon si elle court encore.
-      const fin = Math.min(fen.t1, x.f ?? x.d + 30 * 86400000);
-      const pF = fen.posDe(fin);
+      const pF = fen.posDe(x.f);
       if (paires.some((p) => Math.abs(p.posGraine - pG) < 0.045)) continue;
-      if (paires.length >= maxPaires) break;
       paires.push({
-        famille: fam,
+        famille: FAMILLE_DU_LOT[x.p.lot],
         posGraine: pG,
         posFleur: Math.max(pG + 0.02, pF),
         quandGraine: fen.libelleDe(pG),
         quandFleur: fen.libelleDe(pF),
         ecart: fen.ecartDe(pG, pF),
-        domaine: x.ph.house ? (noms[DOMAINE[x.ph.house]] ?? null) : null,
-        score: x.ph.score ?? 3,
+        domaine: null,
+        score: 3,
         graine: Math.round(x.d / 3600000) % 100000,
-        aVenir: (x.f ?? Infinity) > maintenant,
-        pic: x.ph.isPeakPeriod === true,
+        aVenir: x.f > maintenant,
+        pic: true,
+        genre: genreDe(x.p),
+        lbDate: x.p.lbDate ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(new Date(x.p.lbDate)) : null,
       });
     }
-    paires.sort((a, b) => a.posGraine - b.posGraine);
 
-    // Aujourd hui : ce qui est ouvert, par famille.
+    // Aujourd hui : ce qui est ouvert, par famille — parmi les pics ZR eux-memes.
     const ouvertes: Record<Famille, number> = { love: 0, work: 0, health: 0 };
-    per.forEach((x) => {
-      if (x.d <= maintenant && (x.f === null || x.f >= maintenant)) {
-        const f = familleDe(x.ph);
-        if (f) ouvertes[f]++;
-      }
+    dansLaFenetre.forEach((x) => {
+      if (x.d <= maintenant && x.f >= maintenant) ouvertes[FAMILLE_DU_LOT[x.p.lot]]++;
     });
-    // Les floraisons qui viennent : les memes pics ZR que l arbre, pas encore
-    // ouverts, les trois prochains.
-    const aVenir = (phasesVie ?? [])
-      .map((ph) => ({ ph, d: new Date(ph.startDate).getTime() }))
-      .filter((x) => Number.isFinite(x.d))
-      .filter((x) => estUnPic(x.ph) && x.d > maintenant)
-      .sort((a, b) => a.d - b.d)
+    // Les floraisons qui viennent : les memes pics, pas encore ouverts, les
+    // trois prochaines.
+    const aVenir = dansLaFenetre
+      .filter((x) => x.d > maintenant)
       .slice(0, 3)
-      .map((x) => ({ famille: familleDe(x.ph), quand: new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(new Date(x.d)), domaine: x.ph.house ? (noms[DOMAINE[x.ph.house]] ?? null) : null }));
+      .map((x) => ({ famille: FAMILLE_DU_LOT[x.p.lot] as Famille | null, quand: new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(new Date(x.d)) }));
     return { comptes, paires, ouvertes, aVenir };
-  }, [echelle, phasesVie, phasesAnnee, fen, noms, maintenant, locale]);
+  }, [echelle, phasesVie, phasesAnnee, picsActuels, fen, maintenant, locale]);
 
   /* ── La geometrie : la branche retombante et ce qui s y pose ─────────────
      Hauteur du dessin selon le nombre d unites : on parcourt, on n entasse pas.
@@ -1126,15 +1189,24 @@ export function BrancheDeVie({
         const n = Math.max(2, Math.round(p.brindille.length * partTige));
         coupDePinceau(g, p.brindille, largeurTige(p), pal.encre, p.graine, n, false);
       }
-      if (partFleur > 0) {
-        // encore ouverte : des boutons, fermes mais bien visibles — ils attendent
-        p.bouquet.forEach((b) => {
-          const partLocale = Math.max(0, Math.min(1, (partFleur - b.retard) / (1 - b.retard)));
-          if (partLocale <= 0) return;
-          const D = p.aVenir ? b.D * 0.8 : b.D;
-          fleurDePrunier(g, b.x, b.y, D, col, pal.encre, b.graine + (p.aVenir ? 1000 : 0), p.aVenir ? Math.min(partLocale, 0.5) : partLocale, p.vx + (b.x - p.fx), p.vy + (b.y - p.fy), !p.aVenir);
-        });
+      if (partFleur <= 0) return;
+      if (p.genre === "graine") {
+        // Pre-ombre d un LB a venir : des bourgeons, jamais une fleur ouverte.
+        graineBourgeons(g, p.fx, p.fy, Math.atan2(p.vy, p.vx), p.D, col, p.graine, partFleur);
+        return;
       }
+      if (p.genre === "lotus") {
+        // Loosing of the Bond : le pivot majeur, plus fort qu un pic ordinaire.
+        eclatLotus(g, p.fx, p.fy, p.D * 1.45, col, pal.encre, p.graine, 1, partFleur);
+        return;
+      }
+      // encore ouverte : des boutons, fermes mais bien visibles — ils attendent
+      p.bouquet.forEach((b) => {
+        const partLocale = Math.max(0, Math.min(1, (partFleur - b.retard) / (1 - b.retard)));
+        if (partLocale <= 0) return;
+        const D = p.aVenir ? b.D * 0.8 : b.D;
+        fleurDePrunier(g, b.x, b.y, D, col, pal.encre, b.graine + (p.aVenir ? 1000 : 0), p.aVenir ? Math.min(partLocale, 0.5) : partLocale, p.vx + (b.x - p.fx), p.vy + (b.y - p.fy), !p.aVenir);
+      });
     };
 
     const image = (now: number) => {
@@ -1195,7 +1267,8 @@ export function BrancheDeVie({
           // en focus : on la laisse naitre quand meme, mais sur l encre
           E.tamponnes.add(id);
           peindrePaire(p, gE, 1, 1, 1, col);
-          if (p.pic && !p.aVenir && !E.picsEclos.has(id)) {
+          // Une graine n a pas encore fleuri : rien ne s en detache.
+          if (p.pic && p.genre !== "graine" && !p.aVenir && !E.picsEclos.has(id)) {
             E.picsEclos.add(id);
             rafalePetales(p, col, now);
           }
@@ -1207,7 +1280,7 @@ export function BrancheDeVie({
           const c = Math.max(0, Math.min(1, (part - 0.62) / 0.38));
           peindrePaire(p, g, a, b, c, col);
         });
-        if (eclose && p.pic && !p.aVenir && !E.picsEclos.has(id)) {
+        if (eclose && p.pic && p.genre !== "graine" && !p.aVenir && !E.picsEclos.has(id)) {
           E.picsEclos.add(id);
           rafalePetales(p, col, now);
         }
@@ -1253,7 +1326,7 @@ export function BrancheDeVie({
 
       /* 7. les petales : une fleur eclose en laisse partir un, parfois */
       if (!fige) {
-        const ecloses = visibles.filter((p) => !p.aVenir && E.tamponnes.has(`p${p.graine}`) && (choix === null || visibles[choix] === p));
+        const ecloses = visibles.filter((p) => p.genre !== "graine" && !p.aVenir && E.tamponnes.has(`p${p.graine}`) && (choix === null || visibles[choix] === p));
         if (now - E.dernierSouffle > 6000 + 6000 * Math.random()) {
           E.dernierSouffle = now;
           E.rafale = 1;
@@ -1507,13 +1580,22 @@ export function BrancheDeVie({
                 </button>
               </div>
               <p className="text-[13px] leading-snug" style={{ color: "var(--text-heading)" }}>
-                {t("resume.branche_ouverte", locale).replace("{a}", choisie.quandGraine)}
-                {" · "}
-                {choisie.aVenir
-                  ? t("resume.branche_encore", locale)
-                  : t("resume.branche_fleurit", locale).replace("{b}", choisie.quandFleur).replace("{n}", choisie.ecart)}
+                {majuscule(
+                  (choisie.genre === "graine"
+                    ? t("resume.branche_texte_graine", locale).replace("{lb}", choisie.lbDate ?? choisie.quandFleur)
+                    : choisie.genre === "lotus"
+                      ? t("resume.branche_texte_lotus", locale)
+                      : choisie.aVenir
+                        ? t("resume.branche_texte_fleur_encore", locale)
+                        : t("resume.branche_texte_fleur", locale).replace("{b}", choisie.quandFleur).replace("{n}", choisie.ecart)
+                  )
+                    .replace("{a}", choisie.quandGraine)
+                    .replace("{sujet}", t(SUJET_FAMILLE[choisie.famille], locale))
+                )}
               </p>
-              <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">{t("resume.branche_tache_fleur", locale)}</p>
+              {choisie.genre === "fleur" ? (
+                <p className="mt-1 text-[11px] leading-snug text-text-body-subtle">{t("resume.branche_tache_fleur", locale)}</p>
+              ) : null}
             </div>
           ) : null}
         </div>

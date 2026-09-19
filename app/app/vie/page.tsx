@@ -143,6 +143,7 @@ export default function ViePage() {
               maintenant={maintenant}
               phasesAnnee={phases}
               phasesVie={timelinePhases}
+              birthData={birthData}
             />
           </div>
         </div>
