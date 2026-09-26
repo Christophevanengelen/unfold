@@ -202,7 +202,7 @@ export default async function LandingPage({
         </p>
 
         {/* 12. Final CTA */}
-        <FinalCTA t={tr} />
+        <FinalCTA t={tr} locale={locale} />
 
         {/* Le pied de page (liens légaux, copyright, signature hi-def.be)
             est rendu par <Footer /> dans app/[locale]/layout.tsx. */}

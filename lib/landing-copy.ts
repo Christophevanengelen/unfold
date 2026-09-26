@@ -34,6 +34,19 @@ export type LocaleCode =
 // ─── English — complete base (every key lives here) ──────────────────────
 
 const EN: TranslationMap = {
+  // ── La liste d attente ────────────────────────────────────────────────
+  // Tant que l app n est publiee nulle part, le bloc final de la page ne
+  // peut pas dire « telecharge » : AppStoreBadges ne rend rien et le
+  // visiteur le plus engage tombait sur un mur. Il laisse son adresse.
+  "waitlist.title": "Favorable is almost here",
+  "waitlist.subtitle": "The app lands on iOS and Android. Leave your address and we'll tell you the day it's out.",
+  "waitlist.placeholder": "your@email.com",
+  "waitlist.cta": "Tell me when it's out",
+  "waitlist.sending": "Sending…",
+  "waitlist.done": "Noted. We'll write to you on launch day.",
+  "waitlist.error": "That didn't go through. Try again in a moment.",
+  "waitlist.invalid": "This address doesn't look right.",
+  "waitlist.privacy": "One email, on launch day. No list, nothing passed on.",
   "hero.signal.unavailable":
     "We cannot compute your signal right now. Try again in a moment.",
   "hero.signal.disabled":
@@ -234,6 +247,15 @@ const EN: TranslationMap = {
 // ─── French — complete translation ───────────────────────────────────────
 
 const FR: TranslationMap = {
+  "waitlist.title": "Favorable arrive",
+  "waitlist.subtitle": "L'app sort sur iOS et Android. Laisse ton adresse, on te prévient le jour de la sortie.",
+  "waitlist.placeholder": "ton@adresse.com",
+  "waitlist.cta": "Préviens-moi",
+  "waitlist.sending": "Envoi…",
+  "waitlist.done": "C'est noté. On t'écrit le jour de la sortie.",
+  "waitlist.error": "Ça n'est pas passé. Réessaie dans un instant.",
+  "waitlist.invalid": "Cette adresse ne ressemble pas à une adresse.",
+  "waitlist.privacy": "Un seul courriel, le jour de la sortie. Aucune liste, rien de transmis.",
   "hero.signal.unavailable":
     "Impossible de calculer ton signal en ce moment. Réessaie dans un instant.",
   "hero.signal.disabled":
@@ -421,6 +443,15 @@ const FR: TranslationMap = {
 // Keys not listed here resolve to the English base above.
 
 const ES: TranslationMap = {
+  "waitlist.title": "Favorable está al caer",
+  "waitlist.subtitle": "La app llega a iOS y Android. Déjanos tu dirección y te avisamos el día del lanzamiento.",
+  "waitlist.placeholder": "tu@correo.com",
+  "waitlist.cta": "Avísame",
+  "waitlist.sending": "Enviando…",
+  "waitlist.done": "Anotado. Te escribimos el día del lanzamiento.",
+  "waitlist.error": "No ha salido. Inténtalo de nuevo en un momento.",
+  "waitlist.invalid": "Esta dirección no parece correcta.",
+  "waitlist.privacy": "Un solo correo, el día del lanzamiento. Sin listas, sin cederla a nadie.",
   "hero.v2.eyebrow": "Astrología premium · Timing personal",
   "hero.v2.title": "Descubre cuándo la vida se mueve a tu favor",
   "hero.v2.subtitle":
@@ -448,6 +479,15 @@ const ES: TranslationMap = {
 };
 
 const PT: TranslationMap = {
+  "waitlist.title": "O Favorable está quase aí",
+  "waitlist.subtitle": "A app chega ao iOS e ao Android. Deixa o teu endereço e avisamos-te no dia do lançamento.",
+  "waitlist.placeholder": "o.teu@email.com",
+  "waitlist.cta": "Avisa-me",
+  "waitlist.sending": "A enviar…",
+  "waitlist.done": "Ficou registado. Escrevemos-te no dia do lançamento.",
+  "waitlist.error": "Não passou. Tenta outra vez daqui a pouco.",
+  "waitlist.invalid": "Este endereço não parece correto.",
+  "waitlist.privacy": "Um só email, no dia do lançamento. Sem listas, sem partilhas.",
   "hero.v2.eyebrow": "Astrologia premium · Timing pessoal",
   "hero.v2.title": "Saiba quando a vida age a seu favor",
   "hero.v2.subtitle":
@@ -475,6 +515,15 @@ const PT: TranslationMap = {
 };
 
 const DE: TranslationMap = {
+  "waitlist.title": "Favorable kommt bald",
+  "waitlist.subtitle": "Die App erscheint für iOS und Android. Lass deine Adresse da, wir sagen dir am Tag des Starts Bescheid.",
+  "waitlist.placeholder": "deine@adresse.de",
+  "waitlist.cta": "Sag mir Bescheid",
+  "waitlist.sending": "Wird gesendet…",
+  "waitlist.done": "Notiert. Wir schreiben dir am Starttag.",
+  "waitlist.error": "Das hat nicht geklappt. Versuch es gleich noch einmal.",
+  "waitlist.invalid": "Diese Adresse sieht nicht richtig aus.",
+  "waitlist.privacy": "Eine einzige E-Mail, am Starttag. Keine Liste, nichts wird weitergegeben.",
   "hero.v2.eyebrow": "Premium-Astrologie · Persönliches Timing",
   "hero.v2.title": "Wisse wann das Leben für dich spielt",
   "hero.v2.subtitle":
@@ -502,6 +551,15 @@ const DE: TranslationMap = {
 };
 
 const IT: TranslationMap = {
+  "waitlist.title": "Favorable sta per arrivare",
+  "waitlist.subtitle": "L'app arriva su iOS e Android. Lascia il tuo indirizzo e ti avvisiamo il giorno dell'uscita.",
+  "waitlist.placeholder": "tua@email.it",
+  "waitlist.cta": "Avvisami",
+  "waitlist.sending": "Invio…",
+  "waitlist.done": "Annotato. Ti scriviamo il giorno dell'uscita.",
+  "waitlist.error": "Non è andata. Riprova tra un istante.",
+  "waitlist.invalid": "Questo indirizzo non sembra corretto.",
+  "waitlist.privacy": "Una sola email, il giorno dell'uscita. Nessuna lista, niente di ceduto.",
   "hero.v2.eyebrow": "Astrologia premium · Timing personale",
   "hero.v2.title": "Sappi quando la vita gioca a tuo favore",
   "hero.v2.subtitle":
@@ -529,6 +587,15 @@ const IT: TranslationMap = {
 };
 
 const NL: TranslationMap = {
+  "waitlist.title": "Favorable komt eraan",
+  "waitlist.subtitle": "De app verschijnt op iOS en Android. Laat je adres achter, we laten het weten op de dag van de lancering.",
+  "waitlist.placeholder": "jouw@adres.nl",
+  "waitlist.cta": "Laat het me weten",
+  "waitlist.sending": "Versturen…",
+  "waitlist.done": "Genoteerd. We schrijven je op de dag van de lancering.",
+  "waitlist.error": "Dat is niet gelukt. Probeer het zo nog eens.",
+  "waitlist.invalid": "Dit adres ziet er niet goed uit.",
+  "waitlist.privacy": "Eén e-mail, op de dag van de lancering. Geen lijst, niets doorgegeven.",
   "hero.v2.eyebrow": "Premium astrologie · Persoonlijke timing",
   "hero.v2.title": "Weet wanneer het leven in jouw voordeel beweegt",
   "hero.v2.subtitle":
@@ -557,6 +624,15 @@ const NL: TranslationMap = {
 };
 
 const JA: TranslationMap = {
+  "waitlist.title": "Favorable、まもなく公開",
+  "waitlist.subtitle": "iOS と Android で公開します。メールアドレスを残していただければ、公開日にお知らせします。",
+  "waitlist.placeholder": "your@email.com",
+  "waitlist.cta": "公開日に知らせる",
+  "waitlist.sending": "送信中…",
+  "waitlist.done": "受け付けました。公開日にご連絡します。",
+  "waitlist.error": "送信できませんでした。少ししてからもう一度お試しください。",
+  "waitlist.invalid": "このアドレスは正しくないようです。",
+  "waitlist.privacy": "公開日にメールを一通だけ。リスト登録も第三者提供もありません。",
   "hero.v2.eyebrow": "プレミアム占星術 · パーソナルタイミング",
   "hero.v2.title": "人生があなたの味方をする時を知る",
   "hero.v2.subtitle":
@@ -585,6 +661,15 @@ const JA: TranslationMap = {
 };
 
 const ZH: TranslationMap = {
+  "waitlist.title": "Favorable 即将上线",
+  "waitlist.subtitle": "这款应用将登陆 iOS 和 Android。留下你的邮箱，上线当天我们会通知你。",
+  "waitlist.placeholder": "your@email.com",
+  "waitlist.cta": "上线时通知我",
+  "waitlist.sending": "发送中…",
+  "waitlist.done": "已记下。上线当天我们会写信给你。",
+  "waitlist.error": "没有发送成功，请稍后再试。",
+  "waitlist.invalid": "这个地址看起来不对。",
+  "waitlist.privacy": "只在上线当天发一封邮件。不入列表，不转给任何人。",
   "hero.v2.eyebrow": "高级占星 · 个人时机",
   "hero.v2.title": "知道何时生活向你倾斜",
   "hero.v2.subtitle":
@@ -612,6 +697,15 @@ const ZH: TranslationMap = {
 };
 
 const AR: TranslationMap = {
+  "waitlist.title": "Favorable على وشك الصدور",
+  "waitlist.subtitle": "التطبيق قادم إلى iOS وأندرويد. اترك بريدك ونُخبرك يوم الإطلاق.",
+  "waitlist.placeholder": "your@email.com",
+  "waitlist.cta": "أخبرني عند الصدور",
+  "waitlist.sending": "جارٍ الإرسال…",
+  "waitlist.done": "تم التسجيل. سنراسلك يوم الإطلاق.",
+  "waitlist.error": "لم تنجح العملية. حاول بعد قليل.",
+  "waitlist.invalid": "هذا البريد لا يبدو صحيحاً.",
+  "waitlist.privacy": "رسالة واحدة فقط، يوم الإطلاق. لا قوائم ولا مشاركة مع أحد.",
   "hero.v2.eyebrow":
     "علم الفلك المتميز · التوقيت الشخصي",
   "hero.v2.title":
