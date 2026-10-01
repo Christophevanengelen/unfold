@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { mesurer } from "@/lib/mesure";
 import { motion, AnimatePresence } from "motion/react";
 import { AppStoreBadges } from "./AppStoreBadges";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -32,12 +33,29 @@ const BG_BOUDINS = [
 
 const REAL_SIGNAL_ENABLED = process.env.NEXT_PUBLIC_LANDING_REAL_SIGNAL !== "false";
 
-// Lightweight analytics emitter — DNT-respecting, no PII.
-function trackEvent(name: string, props?: Record<string, unknown>) {
+// Seul le clic sur le bouton est mesure. Les props d'origine (mois de
+// naissance, pays) ne partent JAMAIS : donnees de naissance, voir CONFORMITE.md.
+function trackEvent(name: string, _props?: Record<string, unknown>) {
+  if (name === "hero_form_submit") mesurer("cta_clic", { cta_id: "hero_signal" });
+}
+
+function mesurerPageVue() {
   if (typeof window === "undefined") return;
-  if (navigator.doNotTrack === "1") return;
-  // Future: GA / Plausible. For now, surface in console for verification.
-  console.log("[hero-event]", name, props ?? {});
+  const q = new URLSearchParams(window.location.search);
+  const court = (v: string | null) => (v ? v.slice(0, 40) : undefined);
+  let referrer: string | undefined;
+  try {
+    referrer = document.referrer ? new URL(document.referrer).hostname.slice(0, 60) : undefined;
+  } catch {
+    referrer = undefined;
+  }
+  mesurer("page_vue", {
+    chemin: window.location.pathname.slice(0, 60),
+    utm_source: court(q.get("utm_source")),
+    utm_medium: court(q.get("utm_medium")),
+    utm_campaign: court(q.get("utm_campaign")),
+    referrer,
+  });
 }
 
 // ─── Main Hero ──────────────────────────────────────────────
@@ -49,6 +67,10 @@ export function Hero({ translations }: HeroProps) {
   const [signal, setSignal] = useState<RealSignal | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    mesurerPageVue();
+  }, []);
 
   const cardCopy = {
     actI: t(translations, "hero.signal.actI", "Comprends ton passé"),

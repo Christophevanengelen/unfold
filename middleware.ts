@@ -87,6 +87,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/app") ||
     pathname === "/unlock" ||
     pathname.startsWith("/unlock/") ||
+    pathname.startsWith("/q/") ||
     PUBLIC_FILE.test(pathname)
   ) {
     return applySecurityHeaders(NextResponse.next());

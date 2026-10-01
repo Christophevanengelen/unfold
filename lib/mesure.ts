@@ -45,7 +45,10 @@ export type Evenement =
   | "notif_demandee"
   | "notif_accordee"
   | "notif_refusee"
-  | "notif_echec";
+  | "notif_echec"
+  // Vitrine web : la seule etape qu'on ne voyait pas du tout.
+  | "page_vue"
+  | "cta_clic";
 
 function identifiantInstallation(): string | null {
   try {
