@@ -82,7 +82,10 @@ async function lireTout(appId: string, famille: Produit["famille"], jours: numbe
 async function lireProduits(): Promise<Produit[]> {
   try {
     const { data } = await getAdminClient().from("mesure_produits").select("app_id, nom, famille").eq("actif", true).order("app_id");
-    return data && data.length ? (data as Produit[]) : PAR_DEFAUT;
+    if (!data || data.length === 0) return PAR_DEFAUT;
+    // Favorable d'abord : c'est le produit qui a déjà des données, on ne veut
+    // pas ouvrir le tableau sur un produit vide.
+    return (data as Produit[]).sort((a, b) => Number(b.app_id === "unfold") - Number(a.app_id === "unfold"));
   } catch {
     return PAR_DEFAUT;
   }
