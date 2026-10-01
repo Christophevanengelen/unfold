@@ -157,6 +157,13 @@ export default async function KPIPage({ searchParams }: { searchParams: Promise<
       )}
 
       <nav className="mt-4 flex flex-wrap items-center gap-2 text-sm" aria-label="Produit et période">
+        <Link
+          href={`/admin/kpi/comparatif?jours=${jours}${suffixe}`}
+          className="rounded-full border border-text-heading bg-text-heading px-3 py-1 font-semibold text-bg-primary"
+        >
+          Comparer tous les produits
+        </Link>
+        <span className="mx-1 text-text-body-subtle">·</span>
         {produits.map((p) => (
           <Link
             key={p.app_id}

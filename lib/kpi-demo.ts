@@ -21,7 +21,27 @@ function lundi(semainesEnArriere: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function donneesDemo(famille: Famille) {
+/** Un echelonnement par produit pour que l'exemple ne montre pas quatre copies identiques. */
+function echelle(n: number, graine: number): number {
+  return Math.max(1, Math.round(n * (1 - 0.17 * graine) + graine * 3));
+}
+
+function varier<T extends { installations?: number; actifs?: number; taille?: number }>(rows: T[], graine: number): T[] {
+  if (graine === 0) return rows;
+  return rows.map((r) => ({
+    ...r,
+    ...(r.installations !== undefined ? { installations: echelle(r.installations, graine) } : {}),
+    ...(r.taille !== undefined ? { taille: echelle(r.taille, graine) } : {}),
+    ...(r.actifs !== undefined ? { actifs: echelle(r.actifs, graine) } : {}),
+  }));
+}
+
+export function donneesDemo(famille: Famille, graine = 0) {
+  const d = donneesDemoBrutes(famille);
+  return { ...d, entonnoir: varier(d.entonnoir, graine), cohortes: varier(d.cohortes, graine) };
+}
+
+function donneesDemoBrutes(famille: Famille) {
   if (famille === "landing") {
     return {
       comptes: [
