@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * La liste d attente — ce que la page propose tant que l app n est pas publiee.
@@ -30,7 +30,12 @@ export function ListeDAttente({ t, locale }: ListeDAttenteProps) {
   const [etat, setEtat] = useState<Etat>("attente");
   // L heure d affichage sert de piege de vitesse cote serveur : un robot
   // soumet en moins de trois secondes, une personne jamais.
-  const ouvertureLe = useRef(Date.now());
+  // Posee au montage et non au rendu : Date.now() n est pas pur (regle
+  // react-hooks/purity, qui faisait echouer le lint de la CI depuis le 27/09).
+  const ouvertureLe = useRef(0);
+  useEffect(() => {
+    ouvertureLe.current = Date.now();
+  }, []);
   const potDeMiel = useRef<HTMLInputElement>(null);
 
   async function envoyer(e: React.FormEvent) {

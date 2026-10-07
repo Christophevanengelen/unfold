@@ -17,6 +17,11 @@ mkdir -p "$ECART"
 # chemin d origine -> nom dans le dossier de mise a l ecart
 CHEMINS=(
   "app/api"
+  # Redirection des QR de l agenda imprime : route serveur qui compte le scan
+  # puis redirige. Elle n a pas sa place dans un binaire, et l export statique
+  # ne sait pas la produire (echec « Failed to collect page data for
+  # /q/[code] » constate le 01/10/2026, plus aucun build natif depuis).
+  "app/q"
   "middleware.ts"
   # Toute la vitrine web : page d accueil, tarifs, mentions legales, retour de
   # connexion. Rien de tout cela ne va dans un binaire : l app commence a /app.

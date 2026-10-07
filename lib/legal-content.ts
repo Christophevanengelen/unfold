@@ -65,10 +65,10 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         ],
       },
       {
-        heading: "6. Cookies and Tracking",
+        heading: "6. Analytics and Tracking",
         paragraphs: [
-          "Our website uses essential cookies required for the site to function. We use analytics cookies only with your explicit consent.",
-          "You can manage your cookie preferences at any time through the cookie settings banner on our website.",
+          "We do not use cookies for analytics. Instead, we record discrete events (app opened, signal viewed, etc.) with a random identifier stored locally on your device. This identifier is unique per installation, is not linked to your account, e-mail or IP address, and is never shared between our products. We use it to count how many installations come back from one week to the next. We do not follow you across devices. Events are kept for 12 months at most.",
+          "If your browser sends Do Not Track (DNT), we send no events at all. You can also stop the measurement at any time by clearing the site data in your browser or by uninstalling the app, which deletes the identifier from your device.",
         ],
       },
       {
@@ -110,7 +110,7 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         heading: "1. Informations que nous collectons",
         paragraphs: [
           "Informations de compte : Lors de la cr\u00e9ation de votre compte, nous collectons votre date de naissance, heure de naissance (optionnel) et lieu de naissance (optionnel). Ces donn\u00e9es servent uniquement \u00e0 calculer vos signaux de momentum personnels.",
-          "Donn\u00e9es d\u2019utilisation : Nous collectons des analyses d\u2019utilisation anonymis\u00e9es telles que la fr\u00e9quence d\u2019utilisation des fonctionnalit\u00e9s, la dur\u00e9e des sessions et les sch\u00e9mas de navigation.",
+          "Donn\u00e9es d\u2019utilisation : Nous enregistrons une liste courte d\u2019\u00e9v\u00e9nements discrets avec un identifiant al\u00e9atoire g\u00e9n\u00e9r\u00e9 sur votre appareil : app ouverte, onboarding d\u00e9marr\u00e9, signal vu. Cet identifiant est stocké localement sur votre appareil, propre à chaque installation, sans lien avec votre compte, votre e-mail ou votre adresse IP, et ne vous suit pas entre appareils. Il sert à compter combien d’installations reviennent d’une semaine à l’autre. Sur le site web, nous enregistrons aussi l’adresse de la page visitée. Nous ne mesurons pas la durée des sessions. Les événements sont conservés 12 mois au plus.",
           "Nous ne collectons NI ne stockons : noms r\u00e9els, adresses e-mail (sauf si vous en fournissez une pour la r\u00e9cup\u00e9ration de compte), num\u00e9ros de t\u00e9l\u00e9phone, donn\u00e9es de localisation, photos, contacts ou donn\u00e9es de sant\u00e9.",
         ],
       },
@@ -141,9 +141,10 @@ export const privacyPolicy: Record<string, LegalDocument> = {
         ],
       },
       {
-        heading: "6. Cookies",
+        heading: "6. Mesure et suivi",
         paragraphs: [
-          "Notre site web utilise des cookies essentiels au fonctionnement du site. Les cookies analytiques ne sont utilis\u00e9s qu\u2019avec votre consentement explicite.",
+          "Nous n\u2019utilisons pas de cookies pour la mesure. Au lieu de cela, nous enregistrons des \u00e9v\u00e9nements discrets (app ouverte, signal vu, etc.) avec un identifiant al\u00e9atoire stock\u00e9 localement sur votre appareil. Cet identifiant est unique par installation, sans lien avec votre compte, votre e-mail ou votre adresse IP, jamais partagé entre nos produits, et ne suit pas votre usage entre appareils. Il sert à compter combien d’installations reviennent d’une semaine à l’autre. Les événements sont conservés 12 mois au plus.",
+          "Si votre navigateur envoie Do Not Track (DNT), aucun \u00e9v\u00e9nement n\u2019est envoy\u00e9. Vous pouvez aussi arrêter la mesure à tout moment en effaçant les données du site dans votre navigateur ou en désinstallant l’app, ce qui supprime l’identifiant de votre appareil.",
         ],
       },
       {
